@@ -218,13 +218,17 @@ PRODUCT_COPY = {
             ("PACS 查询", "连接 DICOMweb PACS，查询检查并选择序列导入。"),
             ("工作区", "保存页签、布局和操作状态，下次继续处理。"),
         ),
-        "viewing_title": "从切片到三维，保持空间语境",
-        "viewing_body": "查看原始切片并联动比较多组序列；用 MPR、斜面重建和 3D 体绘制探索空间结构，CT 多时相可同步播放。",
-        "fusion_title": "在同一视图中理解解剖与代谢",
+        "viewing_title": "从二维切片到三维重建",
+        "viewing_body": "查看原始切片并联动比较多组序列；通过 MPR、斜面重建和 3D 体绘制查看空间结构，或同步播放 CT 多时相影像。",
+        "fusion_title": "PET/CT 联动融合",
         "fusion_body": "并排查看 CT、PET、融合与 MIP 视图，调整融合比例，并在需要时进行手动刚性配准。",
-        "analysis_title": "让测量与结果留在影像语境中",
-        "analysis_body": "使用长度、角度、曲线及 ROI 测量，进行阈值分割与 VOI 分析；导出 DICOM SEG、结构化测量报告及常用图像和表格格式。",
-        "viewing_caption": "MR 原始切片阅片", "fusion_caption": "PET/CT 联动融合", "analysis_caption": "MPR 分割与统计",
+        "analysis_title": "测量、分割与结果交换",
+        "analysis_body": "使用长度、角度、曲线和 ROI 测量，进行阈值分割与 VOI 分析；为当前影像导入或导出 DICOM SEG，并将测量导出为 DICOM SR。",
+        "viewing_caption": "MR 原始切片阅片", "viewing_4d_caption": "CT 多时相 4D 播放",
+        "fusion_caption": "PET/CT 联动融合", "analysis_caption": "MPR 分割与统计",
+        "quality_title": "CT 图像质量分析",
+        "quality_body": "水模 QA、点源 MTF 和斜坡线 FWHM 各自独立分析；曲线、层厚与统计指标显示在影像旁，便于复核。",
+        "quality_captions": ("水模 QA · CT 值与均匀性", "点源 MTF · 曲线与指标"),
         "closing_title": "开始使用 Voxenra", "closing_body": "适用于 macOS Apple Silicon 与 Windows。",
         "mac_download": "下载 DMG", "win_setup": "下载安装版", "win_portable": "下载便携版",
         "releases": "发布记录", "github": "GitHub 仓库", "alt_hero": "Voxenra 中的 MR 多平面重建与 3D 视图",
@@ -245,13 +249,17 @@ PRODUCT_COPY = {
             ("PACS query", "Connect to a DICOMweb PACS, find studies, and import selected series."),
             ("Workspace", "Save tabs, layouts, and work state so you can continue later."),
         ),
-        "viewing_title": "Keep spatial context from slices to 3D",
-        "viewing_body": "Read original slices and compare linked series. Explore anatomy with MPR, oblique views, and volume rendering, or play multi-phase CT in sync.",
-        "fusion_title": "View anatomy and metabolism together",
+        "viewing_title": "From 2D slices to 3D reconstruction",
+        "viewing_body": "Read original slices and compare linked series. Explore spatial structures with MPR, oblique views, and volume rendering, or play multi-phase CT in sync.",
+        "fusion_title": "Linked PET/CT fusion",
         "fusion_body": "See linked CT, PET, fused, and MIP views, adjust blending, and perform manual rigid registration when needed.",
-        "analysis_title": "Keep results connected to the image",
-        "analysis_body": "Measure lengths, angles, curves, and ROIs; work with threshold segments and VOIs; export DICOM SEG, structured measurement reports, images, and tables.",
-        "viewing_caption": "MR original-slice viewing", "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "MPR segmentation and statistics",
+        "analysis_title": "Measurement, segmentation, and DICOM results",
+        "analysis_body": "Measure lengths, angles, curves, and ROIs; work with threshold segments and VOIs; import or export DICOM SEG for the current image, and export measurements as DICOM SR.",
+        "viewing_caption": "MR original-slice viewing", "viewing_4d_caption": "Multi-phase CT 4D playback",
+        "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "MPR segmentation and statistics",
+        "quality_title": "CT image-quality analysis",
+        "quality_body": "Analyze water-phantom QA, point-source MTF, and ramp FWHM separately. Review curves, slice thickness, and metrics beside the image.",
+        "quality_captions": ("Water-phantom QA · CT values and uniformity", "Point-source MTF · curve and metrics"),
         "closing_title": "Get started with Voxenra", "closing_body": "Available for macOS Apple Silicon and Windows.",
         "mac_download": "Download DMG", "win_setup": "Download installer", "win_portable": "Download portable",
         "releases": "Releases", "github": "GitHub repository", "alt_hero": "MR multiplanar and 3D views in Voxenra",
@@ -276,12 +284,12 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     feature_rows = []
     for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.png")):
         title = escape(copy[key + "_title"])
-        if code == "zh":
-            title = {
-                "viewing": "从切片到三维，<br>保持空间语境",
-                "fusion": "在同一视图中<br>理解解剖与代谢",
-                "analysis": "让测量与结果<br>留在影像语境中",
-            }[key]
+        if key == "viewing":
+            feature_rows.append(f'''<section class="product-feature product-feature-viewing" id="viewing">
+<div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy["viewing_body"])}</p></div>
+<div class="feature-media-grid"><figure><img src="{prefix}assets/{image}" alt="{escape(copy["alt_viewing"])}" loading="lazy"><figcaption>{escape(copy["viewing_caption"])}</figcaption></figure>
+<figure><img src="{prefix}assets/feature-4d.gif" alt="{escape(copy["viewing_4d_caption"])}" loading="lazy"><figcaption>{escape(copy["viewing_4d_caption"])}</figcaption></figure></div></section>''')
+            continue
         feature_rows.append(f'''<section class="product-feature" id="{key}">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
 <figure><img src="{prefix}assets/{image}" alt="{escape(copy["alt_" + key])}" loading="lazy"><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
@@ -290,6 +298,17 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
         f'<article class="workflow-card"><h3>{escape(title)}</h3><p>{escape(body)}</p></article>'
         for title, body in copy["workflow_cards"]
     )
+    quality_images = []
+    for caption, image in zip(copy["quality_captions"], ("feature-water-qa.png", "feature-mtf.png"), strict=True):
+        image_class = "quality-image quality-image-mtf" if image == "feature-mtf.png" else "quality-image"
+        image_url = f"{prefix}assets/{image}"
+        full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
+        quality_images.append(
+            f'<figure class="{image_class}"><a href="{image_url}" target="_blank" rel="noopener" '
+            f'aria-label="{escape(full_image_label)}"><span class="quality-image-frame">'
+            f'<img src="{image_url}" alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<figcaption>{escape(caption)}</figcaption></figure>'
+        )
     return f'''<!doctype html><html lang="{copy["lang"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(copy["description"])}"><title>{escape(copy["title"])}</title>
 <link rel="icon" href="{prefix}assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset(prefix, 'site-shell.css')}"><link rel="stylesheet" href="{site_asset(prefix, 'product.css')}">
@@ -299,7 +318,8 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <figure class="hero-visual"><img src="{prefix}assets/hero-mpr.png" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
 <div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{workflow_cards}</div></section>
-<div class="product-features product-container">{"".join(feature_rows)}</div></div>
+<div class="product-features product-container">{"".join(feature_rows)}</div>
+<section class="product-quality product-container" id="quality"><div class="product-feature-copy"><h2>{escape(copy["quality_title"])}</h2><p>{escape(copy["quality_body"])}</p></div><div class="feature-media-grid">{"".join(quality_images)}</div></section></div>
 <section class="product-closing product-container" id="download"><h2>{escape(copy["closing_title"])}</h2><p>{escape(copy["closing_body"])}</p>
 <div class="download-platforms"><div class="download-platform"><img src="{prefix}assets/macos.svg" alt=""><h3>macOS</h3><p>Apple Silicon · {version}</p><div class="download-links"><a href="{mac_url}">{escape(copy["mac_download"])}</a></div></div>
 <div class="download-platform"><img src="{prefix}assets/windows.svg" alt=""><h3>Windows</h3><p>x64 · {version}</p><div class="download-links"><a href="{win_setup_url}">{escape(copy["win_setup"])}</a><a href="{win_portable_url}">{escape(copy["win_portable"])}</a></div></div></div>
@@ -333,6 +353,9 @@ def build(output: Path) -> None:
         "feature-mr-reading.png": "07-mr-reading.png",
         "feature-fusion.png": "05-pet-ct-fusion.png",
         "feature-analysis.png": "02-mpr-segmentation.png",
+        "feature-4d.gif": "03-4d-playback.gif",
+        "feature-water-qa.png": "19-water-qa.png",
+        "feature-mtf.png": "28-mtf-analysis.png",
     }
     for target, source in screenshots.items():
         shutil.copy2(ROOT / "docs/screenshots" / source, asset_output / target)

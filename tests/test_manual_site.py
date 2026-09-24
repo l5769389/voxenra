@@ -80,6 +80,13 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert manual in source
         assert "hero-mpr.png" in source
         assert "feature-fusion.png" in source
+        assert "feature-4d.gif" in source
+        assert "feature-water-qa.png" in source
+        assert "feature-mtf.png" in source
+        assert 'class="product-quality product-container"' in source
+        assert source.count('class="feature-media-grid"') == 2
+        assert ("从二维切片到三维重建" if page.parent == tmp_path else "From 2D slices to 3D reconstruction") in source
+        assert ("DICOM SR" if page.parent == tmp_path else "DICOM SR") in source
         assert 'id="workflow"' in source
         assert 'class="workflow-grid"' in source
         assert ("PACS 查询" if page.parent == tmp_path else "PACS query") in source
