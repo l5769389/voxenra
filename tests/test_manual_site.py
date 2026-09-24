@@ -78,11 +78,14 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         for key in ("macos", "windows_installer", "windows_portable"):
             assert f'/releases/download/{release["tag"]}/{release[key]}' in source
         assert manual in source
+        assert 'class="site-brand"' in source
+        assert ('产品主页' if page.parent == tmp_path else 'Product home') not in source
         assert "hero-mpr.png" in source
         assert "feature-fusion.png" in source
         assert "feature-pacs.png?v=" in source
+        assert "feature-zip-drop.png?v=" in source
         assert "feature-workspace.png?v=" in source
-        assert 'class="workflow-media-grid"' in source
+        assert source.count('class="workflow-card"') == 3
         assert "feature-4d.gif" in source
         assert "feature-water-qa.png" in source
         assert "feature-mtf.png" in source

@@ -1,6 +1,6 @@
 # 功能图集
 
-Voxenra 的实际应用界面：35 张截图、8 段操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
+Voxenra 的实际应用界面：36 张截图、8 段操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
 
 ## 操作动画
 
@@ -78,8 +78,12 @@ Voxenra 的实际应用界面：35 张截图、8 段操作动画。[中文首页
 
 <table>
 <tr>
-<td width="50%"><b>本地导入</b><br><a href="15-mixed-import.png"><img src="15-mixed-import.png" alt="本地导入" width="100%"></a></td>
+<td width="50%"><b>拖拽 ZIP 到内容区</b><br><a href="35-zip-drop.png"><img src="35-zip-drop.png" alt="拖拽 ZIP 到内容区" width="100%"></a></td>
 <td width="50%"><b>PACS 浏览器</b><br><a href="16-pacs-browser.png"><img src="16-pacs-browser.png" alt="PACS 浏览器" width="100%"></a></td>
+</tr>
+<tr>
+<td width="50%"><b>本地导入</b><br><a href="15-mixed-import.png"><img src="15-mixed-import.png" alt="本地导入" width="100%"></a></td>
+<td width="50%"><b>工作区保存</b><br><a href="17-workspace.png"><img src="17-workspace.png" alt="工作区保存" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>PACS 导入</b><br><a href="23-pacs-import.png"><img src="23-pacs-import.png" alt="PACS 导入" width="100%"></a></td>
@@ -87,7 +91,7 @@ Voxenra 的实际应用界面：35 张截图、8 段操作动画。[中文首页
 </tr>
 <tr>
 <td width="50%"><b>导出</b><br><a href="18-export.png"><img src="18-export.png" alt="导出" width="100%"></a></td>
-<td width="50%"><b>工作区保存</b><br><a href="17-workspace.png"><img src="17-workspace.png" alt="工作区保存" width="100%"></a></td>
+<td width="50%"><b>关联导入</b><br><a href="33-associated-import.png"><img src="33-associated-import.png" alt="关联导入" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>独立窗口</b><br><a href="13-detached-tabs.png"><img src="13-detached-tabs.png" alt="独立窗口" width="100%"></a></td>
