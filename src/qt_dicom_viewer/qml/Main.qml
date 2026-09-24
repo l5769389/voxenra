@@ -300,8 +300,10 @@ ApplicationWindow {
             else drop.accepted = false
         }
         Rectangle {
-            anchors.fill: parent
-            anchors.margins: 10
+            x: workspaceRow.x + centerView.x
+            y: workspaceRow.y + centerView.y
+            width: centerView.width
+            height: centerView.height
             visible: fileDrop.containsDrag
             color: "#101d27"
             border.width: 2

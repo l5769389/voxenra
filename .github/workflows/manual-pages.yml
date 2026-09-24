@@ -19,6 +19,7 @@ on:
       - "docs/screenshots/16-pacs-browser.png"
       - "docs/screenshots/17-workspace.png"
       - "docs/screenshots/35-zip-drop.png"
+      - "docs/screenshots/36-workspace-full.png"
       - "docs/screenshots/19-water-qa.png"
       - "docs/screenshots/28-mtf-analysis.png"
   workflow_dispatch:

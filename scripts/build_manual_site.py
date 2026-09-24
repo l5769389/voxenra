@@ -23,7 +23,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-analysis.png": "02-mpr-segmentation.png",
     "feature-pacs.png": "16-pacs-browser.png",
     "feature-zip-drop.png": "35-zip-drop.png",
-    "feature-workspace.png": "17-workspace.png",
+    "feature-workspace.png": "36-workspace-full.png",
     "feature-4d.gif": "03-4d-playback.gif",
     "feature-water-qa.png": "19-water-qa.png",
     "feature-mtf.png": "28-mtf-analysis.png",

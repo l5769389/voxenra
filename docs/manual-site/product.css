@@ -34,7 +34,6 @@ a { color: inherit; }
 .workflow-image-frame { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid #ccd9e4; border-radius: 7px; box-shadow: 0 11px 25px #0b2b5114; background: #1d252d; }
 .workflow-image a:hover .workflow-image-frame, .workflow-image a:focus-visible .workflow-image-frame { border-color: var(--accent); }
 .workflow-image-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.workflow-card:first-child .workflow-image-frame img { object-fit: cover; }
 .workflow-image figcaption { margin-top: 12px; color: var(--body); font-size: 13px; }
 .product-feature { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: clamp(50px, 6vw, 104px); align-items: center; padding: clamp(76px, 7.5vw, 124px) 0; border-bottom: 1px solid var(--line); }
 .product-feature:nth-child(even) { grid-template-columns: minmax(0, 1.14fr) minmax(0, .86fr); }
