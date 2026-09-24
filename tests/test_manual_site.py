@@ -83,6 +83,7 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert "hero-mpr.png" in source
         assert "feature-fusion.png" in source
         assert "feature-pacs.png?v=" in source
+        assert "feature-zip-drag.gif?v=" in source
         assert "feature-zip-drop.png?v=" in source
         assert "feature-workspace.png?v=" in source
         assert source.count('class="workflow-card"') == 3

@@ -1,9 +1,10 @@
 # 功能图集
 
-Voxenra 的实际应用界面：37 张截图、8 段操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
+Voxenra 的实际应用界面：37 张截图、9 段操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
 
 ## 操作动画
 
+- [ZIP 压缩包拖拽导入](06-zip-drag.gif)
 - [自由形状 ROI 绘制与统计](01-freehand-measurement.gif)
 - [分割结果导出与导入](02-segmentation-exchange.gif)
 - [4D 多时相播放](03-4d-playback.gif)
@@ -78,7 +79,7 @@ Voxenra 的实际应用界面：37 张截图、8 段操作动画。[中文首页
 
 <table>
 <tr>
-<td width="50%"><b>拖拽 ZIP 到内容区</b><br><a href="35-zip-drop.png"><img src="35-zip-drop.png" alt="拖拽 ZIP 到内容区" width="100%"></a></td>
+<td width="50%"><b>拖拽 ZIP 到内容区</b><br><a href="35-zip-drop.png"><img src="06-zip-drag.gif" alt="拖拽 ZIP 到内容区并完成导入的动画" width="100%"></a></td>
 <td width="50%"><b>PACS 浏览器</b><br><a href="16-pacs-browser.png"><img src="16-pacs-browser.png" alt="PACS 浏览器" width="100%"></a></td>
 </tr>
 <tr>

@@ -276,6 +276,8 @@ ApplicationWindow {
         id: fileDrop
         objectName: "dicomFileDropArea"
         property string draggedFileName: ""
+        property real dragX: 0
+        property real dragY: 0
         anchors.fill: parent
         enabled: window.pacsController?.localEnabled !== false && !window.documentController?.restoring
         onEntered: drag => {
@@ -283,11 +285,17 @@ ApplicationWindow {
                     && (drag.supportedActions & Qt.CopyAction)) {
                 draggedFileName = drag.urls.length === 1
                     ? decodeURIComponent(String(drag.urls[0]).split("/").pop()) : ""
+                dragX = drag.x
+                dragY = drag.y
                 drag.accept(Qt.CopyAction)
             } else {
                 draggedFileName = ""
                 drag.accepted = false
             }
+        }
+        onPositionChanged: drag => {
+            dragX = drag.x
+            dragY = drag.y
         }
         onExited: draggedFileName = ""
         onDropped: drop => {
@@ -310,29 +318,31 @@ ApplicationWindow {
             border.color: Theme.primaryColor
             radius: 8
             Column {
-                anchors.centerIn: parent
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: parent.height * 0.29
                 spacing: 12
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible: fileDrop.draggedFileName !== ""
-                    width: Math.min(fileName.implicitWidth + 36, fileDrop.width - 64)
-                    height: 52
-                    radius: 9
-                    color: Theme.overlayCard
-                    border.width: 1
-                    border.color: Theme.primaryColor
-                    Text {
-                        id: fileName
-                        anchors.centerIn: parent
-                        width: Math.min(implicitWidth, parent.width - 36)
-                        elide: Text.ElideMiddle
-                        text: fileDrop.draggedFileName
-                        color: Theme.overlayText
-                        font.pixelSize: 18
-                    }
-                }
                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: qsTrId("text.0609"); color: Theme.overlayText; font.pixelSize: 22 }
                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: qsTrId("text.0610"); color: Theme.overlayMuted; font.pixelSize: 13 }
+            }
+            Rectangle {
+                visible: fileDrop.draggedFileName !== ""
+                x: Math.max(16, Math.min(parent.width - width - 16, fileDrop.dragX - parent.x + 16))
+                y: Math.max(16, Math.min(parent.height - height - 16, fileDrop.dragY - parent.y + 16))
+                width: Math.min(fileName.implicitWidth + 36, parent.width - 32)
+                height: 52
+                radius: 9
+                color: Theme.overlayCard
+                border.width: 1
+                border.color: Theme.primaryColor
+                Text {
+                    id: fileName
+                    anchors.centerIn: parent
+                    width: Math.min(implicitWidth, parent.width - 36)
+                    elide: Text.ElideMiddle
+                    text: fileDrop.draggedFileName
+                    color: Theme.overlayText
+                    font.pixelSize: 18
+                }
             }
         }
     }
