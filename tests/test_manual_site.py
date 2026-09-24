@@ -37,7 +37,8 @@ def test_generated_manual_has_all_chapters_and_local_assets(tmp_path):
         assert "site-shell.css" in landing
         assert 'class="site-header"' in landing
         assert 'class="site-nav"' in landing
-        assert 'class="home-visual"' not in landing
+        assert 'class="home-visual"' in landing
+        assert 'hero-mpr.png' in landing
         assert ('入门与导入' if language == 'zh' else 'Getting started &amp; importing') in landing
         assert landing.count('href="quick-start.html"') == 1
         assert landing.count('data-search=') == len(chapter_ids)
@@ -78,6 +79,9 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert manual in source
         assert "hero-mpr.png" in source
         assert "feature-fusion.png" in source
+        assert 'id="workflow"' in source
+        assert 'class="workflow-grid"' in source
+        assert ("PACS 查询" if page.parent == tmp_path else "PACS query") in source
         assert 'class="site-header"' in source
         assert "site-shell.css" in source
         links = Links()

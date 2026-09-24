@@ -16,12 +16,20 @@ a { color: inherit; }
 .hero-visual { margin: 0; overflow: hidden; border: 1px solid #cad6e0; border-radius: 8px; box-shadow: 0 13px 32px #0b2b511a; background: #111a22; }
 .hero-visual img { display: block; width: 100%; height: auto; }
 
-.product-topics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.product-topics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .product-topics a { min-height: 75px; display: flex; justify-content: center; align-items: center; padding: 16px; text-align: center; text-decoration: none; color: var(--body); font-size: 15px; font-weight: 610; }
 .product-topics a + a { border-left: 1px solid var(--line); }
 .product-topics a:hover, .product-topics a:focus-visible { color: var(--accent-dark); }
-.product-features { scroll-margin-top: 24px; }
-.product-feature { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: clamp(50px, 6vw, 104px); align-items: center; padding: clamp(76px, 7.5vw, 124px) 0; border-bottom: 1px solid var(--line); scroll-margin-top: 24px; }
+#features, .product-workflow, .product-feature { scroll-margin-top: calc(var(--site-header-height) + 12px); }
+.product-workflow { padding-top: clamp(76px, 7vw, 112px); padding-bottom: clamp(70px, 6vw, 100px); border-bottom: 1px solid var(--line); }
+.workflow-heading h2 { margin: 0 0 16px; font-size: clamp(33px, 3vw, 48px); line-height: 1.25; letter-spacing: -.035em; font-weight: 730; }
+.workflow-heading > p { max-width: 780px; margin: 0; color: var(--body); font-size: clamp(17px, 1.28vw, 20px); line-height: 1.75; }
+.workflow-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 44px; border-top: 1px solid var(--line); }
+.workflow-card { min-width: 0; padding: 27px 32px 0 0; }
+.workflow-card + .workflow-card { border-left: 1px solid var(--line); padding-left: 32px; }
+.workflow-card h3 { margin: 0 0 12px; font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+.workflow-card p { max-width: 400px; margin: 0; color: var(--body); font-size: 15px; line-height: 1.8; }
+.product-feature { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: clamp(50px, 6vw, 104px); align-items: center; padding: clamp(76px, 7.5vw, 124px) 0; border-bottom: 1px solid var(--line); }
 .product-feature:nth-child(even) { grid-template-columns: minmax(0, 1.14fr) minmax(0, .86fr); }
 .product-feature:nth-child(even) figure { order: -1; }
 .product-feature-copy h2 { max-width: 650px; margin: 0 0 25px; font-size: clamp(33px, 3vw, 48px); line-height: 1.25; letter-spacing: -.035em; font-weight: 730; }
@@ -69,6 +77,14 @@ a { color: inherit; }
   .product-topics { display: flex; overflow-x: auto; padding-right: 24px; }
   .product-topics a { min-height: 66px; min-width: max-content; justify-content: flex-start; padding: 15px 18px; font-size: 13px; }
   .product-topics a:first-child { padding-left: 0; }
+  .product-workflow { padding-top: 68px; padding-bottom: 64px; }
+  .workflow-heading h2 { font-size: 32px; }
+  .workflow-heading > p { font-size: 16px; }
+  .workflow-grid { display: block; margin-top: 30px; }
+  .workflow-card, .workflow-card + .workflow-card { border-left: 0; padding: 23px 0 0; }
+  .workflow-card + .workflow-card { border-top: 1px solid var(--line); margin-top: 23px; }
+  .workflow-card h3 { font-size: 18px; }
+  .workflow-card p { font-size: 14px; }
   .product-feature { padding: 64px 0; }
   .product-feature-copy h2 { font-size: 32px; }
   .product-feature-copy p { font-size: 16px; }

@@ -40,6 +40,10 @@ def rich(value: str) -> str:
     )
 
 
+def icon(name: str) -> str:
+    return f'<img src="../assets/icons/{escape(name)}.svg" alt="" aria-hidden="true">'
+
+
 def site_header(code: str, section: str, chapter_id: str | None = None) -> str:
     """Keep navigation identical across the product site and both manual views."""
     prefix = "../" if section == "manual" or code == "en" else ""
@@ -181,13 +185,13 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
             searchable = " ".join([title, messages[f'manual.{chapter["id"]}.summary']] +
                                   [messages[section.get("messageId", f'manual.{chapter["id"]}.section{i}') + ".body"] for i, section in enumerate(chapter["sections"])])
             links.append(f'<a href="{escape(chapter["id"])}.html" data-search="{escape(searchable.lower())}">{escape(title)}</a>')
-        groups.append(f'<section class="home-group"><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</section>')
+        groups.append(f'<section class="home-group">{icon(category["icon"])}<div><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</div></section>')
     return f'''<!doctype html><html lang="{language["pack"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(description)}"><title>Voxenra · {escape(heading)}</title>
 <link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/site-shell.css"><link rel="stylesheet" href="../assets/manual.css">
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
 <body class="home">{header}
-<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div></div>
+<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img src="../assets/hero-mpr.png" alt="{'Voxenra 多平面重建与三维视图' if code == 'zh' else 'Voxenra multiplanar and 3D views'}" loading="eager"></figure></div>
 <div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
 <footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main><script src="../assets/manual.js" defer></script></body></html>'''
 
@@ -195,11 +199,18 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 PRODUCT_COPY = {
     "zh": {
         "lang": "zh-CN", "title": "Voxenra · DICOM 医学影像工作台",
-        "description": "面向 CT、MR 与 PET 的跨平台 DICOM 工作台：阅片、MPR 与 3D、PET/CT 融合、测量分割和结果导出。",
+        "description": "跨平台 DICOM 影像工作台：本地与 PACS 导入、工作区保存、CT/MR/PET 阅片、MPR 与 3D、融合、测量分割和导出。",
         "features": "功能", "manual": "操作手册", "language": "English",
-        "heading": "让医学影像工作更连贯", "intro": "在一个工作台中完成 CT、MR 与 PET 阅片、多平面重建、三维显示、融合与分析。",
+        "heading": "让医学影像工作更连贯", "intro": "导入 CT、MR 与 PET 影像，在同一工作区中完成阅片、重建、融合与分析。",
         "download": "下载应用", "explore": "阅读操作手册",
-        "topics": (("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量、分割与导出", "analysis")),
+        "topics": (("导入与工作区", "workflow"), ("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量与导出", "analysis")),
+        "workflow_title": "导入与工作区",
+        "workflow_intro": "从获取影像到恢复工作状态，常用流程都在同一工作台中完成。",
+        "workflow_cards": (
+            ("本地导入", "文件、文件夹和压缩包可混合选择，也可拖入窗口。"),
+            ("PACS 查询", "连接 DICOMweb PACS，查询检查并选择序列导入。"),
+            ("工作区", "保存页签、布局和操作状态，下次继续处理。"),
+        ),
         "viewing_title": "从切片到三维，保持空间语境",
         "viewing_body": "查看原始切片并联动比较多组序列；用 MPR、斜面重建和 3D 体绘制探索空间结构，CT 多时相可同步播放。",
         "fusion_title": "在同一视图中理解解剖与代谢",
@@ -215,11 +226,18 @@ PRODUCT_COPY = {
     },
     "en": {
         "lang": "en-US", "title": "Voxenra · DICOM imaging workspace",
-        "description": "A cross-platform DICOM workspace for CT, MR, and PET viewing, MPR and 3D, PET/CT fusion, measurement, segmentation, and export.",
+        "description": "A cross-platform DICOM workspace for local and PACS import, CT/MR/PET viewing, MPR and 3D, fusion, measurement, segmentation, and export.",
         "features": "Features", "manual": "Manual", "language": "简体中文",
-        "heading": "A connected workspace for medical imaging", "intro": "View CT, MR, and PET studies, explore multiplanar and 3D reconstructions, and keep fusion and analysis in one workspace.",
+        "heading": "A connected workspace for medical imaging", "intro": "Import CT, MR, and PET studies, then view, reconstruct, fuse, and analyze them in one workspace.",
         "download": "Download", "explore": "Read the manual",
-        "topics": (("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & segmentation", "analysis")),
+        "topics": (("Import & workspace", "workflow"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis")),
+        "workflow_title": "Import and workspace",
+        "workflow_intro": "Bring images in, then pick up your work where you left off.",
+        "workflow_cards": (
+            ("Local import", "Select files, folders, and archives together, or drag them into the window."),
+            ("PACS query", "Connect to a DICOMweb PACS, find studies, and import selected series."),
+            ("Workspace", "Save tabs, layouts, and work state so you can continue later."),
+        ),
         "viewing_title": "Keep spatial context from slices to 3D",
         "viewing_body": "Read original slices and compare linked series. Explore anatomy with MPR, oblique views, and volume rendering, or play multi-phase CT in sync.",
         "fusion_title": "View anatomy and metabolism together",
@@ -261,6 +279,10 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
 <figure><img src="{prefix}assets/{image}" alt="{escape(copy["alt_" + key])}" loading="lazy"><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
     topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
+    workflow_cards = "".join(
+        f'<article class="workflow-card"><h3>{escape(title)}</h3><p>{escape(body)}</p></article>'
+        for title, body in copy["workflow_cards"]
+    )
     return f'''<!doctype html><html lang="{copy["lang"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(copy["description"])}"><title>{escape(copy["title"])}</title>
 <link rel="icon" href="{prefix}assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{prefix}assets/site-shell.css"><link rel="stylesheet" href="{prefix}assets/product.css">
@@ -269,7 +291,8 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
 <figure class="hero-visual"><img src="{prefix}assets/hero-mpr.png" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
-<div class="product-features product-container" id="features">{"".join(feature_rows)}</div>
+<div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{workflow_cards}</div></section>
+<div class="product-features product-container">{"".join(feature_rows)}</div></div>
 <section class="product-closing product-container" id="download"><h2>{escape(copy["closing_title"])}</h2><p>{escape(copy["closing_body"])}</p>
 <div class="download-platforms"><div class="download-platform"><img src="{prefix}assets/macos.svg" alt=""><h3>macOS</h3><p>Apple Silicon · {version}</p><div class="download-links"><a href="{mac_url}">{escape(copy["mac_download"])}</a></div></div>
 <div class="download-platform"><img src="{prefix}assets/windows.svg" alt=""><h3>Windows</h3><p>x64 · {version}</p><div class="download-links"><a href="{win_setup_url}">{escape(copy["win_setup"])}</a><a href="{win_portable_url}">{escape(copy["win_portable"])}</a></div></div></div>
@@ -311,6 +334,10 @@ def build(output: Path) -> None:
     shutil.copy2(SITE / "product.css", asset_output / "product.css")
     for name in ("macos.svg", "windows.svg"):
         shutil.copy2(SITE / name, asset_output / name)
+    used_icons = {item["icon"] for item in categories}
+    (asset_output / "icons").mkdir(exist_ok=True)
+    for name in used_icons:
+        shutil.copy2(ASSETS / "icons" / f"{name}.svg", asset_output / "icons" / f"{name}.svg")
     used_images = {name for chapter in chapters for name in ([chapter["example"]] if "example" in chapter else chapter.get("examples", []))}
     for name in used_images:
         for prefix in ("", "en/"):

@@ -62,28 +62,31 @@ article h1 { margin: 0 0 9px; font-size: clamp(32px, 3vw, 40px); font-weight: 76
 .page-outline a:hover, .page-outline a:focus-visible { color: var(--blue); }
 footer { max-width: 1110px; margin: 70px auto 0; border-top: 1px solid var(--line); padding-top: 22px; color: var(--muted); font-size: 12px; }
 
-.home-main { max-width: 1536px; margin: 0 auto; padding: 0 clamp(24px, 4vw, 70px) 65px; }
-.home-hero { padding: clamp(62px, 6vw, 96px) 0 62px; border-bottom: 1px solid var(--line); }
-.home-copy { max-width: 820px; }
-.home-eyebrow { display: block; margin-bottom: 19px; color: var(--accent-dark); font-size: 13px; font-weight: 720; letter-spacing: .08em; }
-.home-copy h1 { margin: 0 0 18px; font-size: clamp(42px, 4vw, 64px); font-weight: 750; line-height: 1.17; letter-spacing: -.045em; }
-.home-copy p { font-size: clamp(17px, 1.32vw, 21px); line-height: 1.82; color: var(--body); max-width: 710px; margin: 0 0 32px; }
-.home-search { max-width: 640px; }
+.home-main { max-width: 1440px; margin: 0 auto; padding: 44px clamp(24px, 5vw, 72px) 65px; }
+.home-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.13fr); align-items: center; gap: 45px; padding: 0 0 50px; border-bottom: 1px solid var(--line); }
+.home-eyebrow { display: block; margin-bottom: 15px; color: var(--accent-dark); font-size: 12px; font-weight: 720; letter-spacing: .08em; }
+.home-copy h1 { margin: 0 0 17px; font-size: clamp(34px, 3.6vw, 54px); font-weight: 760; line-height: 1.15; letter-spacing: -.04em; }
+.home-copy p { font-size: clamp(16px, 1.3vw, 19px); line-height: 1.65; color: var(--body); max-width: 570px; margin: 0 0 26px; }
+.home-search { max-width: 580px; }
 .home-search::before { left: 20px; top: 17px; width: 13px; height: 13px; }
 .home-search::after { left: 33px; top: 31px; }
-.home-search input { height: 54px; padding-left: 53px; font-size: 15px; border-radius: 6px; }
-.home-directory { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 30px; }
-.home-group { min-width: 0; padding: 26px 24px 27px 0; border-bottom: 1px solid var(--line); }
+.home-search input { height: 52px; padding-left: 53px; font-size: 15px; }
+.home-visual { margin: 0; border: 1px solid #c9d6e1; border-radius: 7px; overflow: hidden; box-shadow: 0 8px 25px #18395218; background: #0d151f; }
+.home-visual img { display: block; width: 100%; }
+.home-directory { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 29px; }
+.home-group { display: grid; grid-template-columns: 25px minmax(0, 1fr); gap: 12px; min-width: 0; padding: 22px 24px 22px 5px; border-bottom: 1px solid var(--line); }
 .home-group:not(:nth-child(4n+1)) { border-left: 1px solid var(--line); padding-left: 24px; }
 .home-group:nth-last-child(-n+4) { border-bottom: 0; }
-.home-group h2 { margin: 0 0 14px; font-size: 17px; font-weight: 720; }
-.home-group a { display: block; padding: 5px 0; color: var(--body); font-size: 14px; line-height: 1.4; text-decoration: none; }
-.home-group a:hover { color: var(--accent-dark); text-decoration: underline; }
+.home-group > img { width: 22px; height: 22px; margin-top: 2px; filter: brightness(.62) saturate(1.7); }
+.home-group h2 { margin: 0 0 12px; font-size: 17px; font-weight: 720; }
+.home-group a { display: block; padding: 5px 0; font-size: 13px; line-height: 1.35; text-decoration: none; }
+.home-group a:hover { text-decoration: underline; }
 .home-main footer { margin-top: 45px; }
 
 @media (max-width: 1160px) {
   .reading-layout { display: block; max-width: 820px; }
   .page-outline { display: none; }
+  .home-hero { gap: 28px; }
 }
 @media (max-width: 920px) {
   .home-directory { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -105,10 +108,11 @@ footer { max-width: 1110px; margin: 70px auto 0; border-top: 1px solid var(--lin
   .breadcrumbs { margin-bottom: 21px; }
   article h1 { font-size: 31px; }
   .examples img { max-height: none; }
-  .home-main { padding-bottom: 52px; }
-  .home-hero { padding: 48px 0 39px; }
-  .home-copy h1 { font-size: clamp(37px, 8vw, 48px); }
+  .home-main { padding: 29px 22px 52px; }
+  .home-hero { display: flex; flex-direction: column; align-items: stretch; padding-bottom: 32px; }
+  .home-copy h1 { font-size: clamp(33px, 8vw, 42px); }
   .home-copy p { font-size: 16px; }
+  .home-visual { max-width: 600px; }
 }
 @media (max-width: 560px) {
   .home-directory { display: block; margin-top: 12px; }
