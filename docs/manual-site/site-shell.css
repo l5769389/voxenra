@@ -41,13 +41,19 @@ button, input { font: inherit; }
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 13px;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
 }
 .site-brand img { width: 34px; height: 34px; }
-.site-brand span { font-size: 22px; font-weight: 760; letter-spacing: -.035em; }
+.site-brand span {
+  font-family: "Avenir Next", Inter, "Segoe UI", sans-serif;
+  font-size: 23px;
+  font-weight: 670;
+  letter-spacing: .012em;
+  line-height: 1;
+}
 .site-nav {
   display: flex;
   align-items: center;
@@ -65,6 +71,7 @@ button, input { font: inherit; }
 @media (max-width: 750px) {
   :root { --site-header-height: 64px; }
   .site-header-inner { gap: 14px; }
+  .site-brand { gap: 10px; }
   .site-brand img { width: 29px; height: 29px; }
   .site-brand span { font-size: 18px; }
   .site-nav { gap: 13px; font-size: 13px; }
