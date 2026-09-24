@@ -35,6 +35,7 @@ def test_generated_manual_has_all_chapters_and_local_assets(tmp_path):
         assert len(pages) == len(chapter_ids) + 1
         landing = (tmp_path / language / "index.html").read_text(encoding="utf-8")
         assert "site-shell.css" in landing
+        assert "manual.css?v=" in landing
         assert 'class="site-header"' in landing
         assert 'class="site-nav"' in landing
         assert 'class="home-visual"' in landing
@@ -83,7 +84,8 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert 'class="workflow-grid"' in source
         assert ("PACS 查询" if page.parent == tmp_path else "PACS query") in source
         assert 'class="site-header"' in source
-        assert "site-shell.css" in source
+        assert "site-shell.css?v=" in source
+        assert "product.css?v=" in source
         links = Links()
         links.feed(source)
         for reference in links.references:
