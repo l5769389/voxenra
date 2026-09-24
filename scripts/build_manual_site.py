@@ -16,6 +16,15 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "src/qt_dicom_viewer/qml/assets"
 HELP = ASSETS / "help"
 SITE = ROOT / "docs/manual-site"
+PRODUCT_SCREENSHOTS = {
+    "hero-mpr.png": "11-mpr-3d-layout.png",
+    "feature-mr-reading.png": "07-mr-reading.png",
+    "feature-fusion.png": "05-pet-ct-fusion.png",
+    "feature-analysis.png": "02-mpr-segmentation.png",
+    "feature-4d.gif": "03-4d-playback.gif",
+    "feature-water-qa.png": "19-water-qa.png",
+    "feature-mtf.png": "28-mtf-analysis.png",
+}
 LANGUAGES = {
     "zh": {"pack": "zh-CN", "name": "简体中文", "search": "搜索章节与正文", "menu": "目录", "site": "操作手册", "home": "手册首页", "related": "相关章节", "shortcuts": "快捷键", "figure": "示意图", "examples": ("CT 示例", "PET 示例"), "repo": "GitHub 仓库"},
     "en": {"pack": "en-US", "name": "English", "search": "Search chapters and content", "menu": "Contents", "site": "Manual", "home": "Manual home", "related": "Related chapters", "shortcuts": "Shortcuts", "figure": "Diagram", "examples": ("CT example", "PET example"), "repo": "GitHub repository"},
@@ -25,6 +34,13 @@ LANGUAGES = {
 def site_asset(prefix: str, name: str) -> str:
     """Change the URL when CSS or JS changes so cached layouts stay in sync."""
     digest = hashlib.sha256((SITE / name).read_bytes()).hexdigest()[:12]
+    return f"{prefix}assets/{name}?v={digest}"
+
+
+def product_image_asset(prefix: str, name: str) -> str:
+    """Refresh product screenshots when their source file changes."""
+    source = ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name]
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()[:12]
     return f"{prefix}assets/{name}?v={digest}"
 
 
@@ -198,7 +214,7 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 <link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
 <body class="home">{header}
-<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img src="../assets/hero-mpr.png" alt="{'Voxenra 多平面重建与三维视图' if code == 'zh' else 'Voxenra multiplanar and 3D views'}" loading="eager"></figure></div>
+<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img src="{product_image_asset('../', 'hero-mpr.png')}" alt="{'Voxenra 多平面重建与三维视图' if code == 'zh' else 'Voxenra multiplanar and 3D views'}" loading="eager"></figure></div>
 <div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
 <footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main><script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
 
@@ -206,11 +222,11 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 PRODUCT_COPY = {
     "zh": {
         "lang": "zh-CN", "title": "Voxenra · DICOM 医学影像工作台",
-        "description": "跨平台 DICOM 影像工作台：本地与 PACS 导入、工作区保存、CT/MR/PET 阅片、MPR 与 3D、融合、测量分割和导出。",
+        "description": "跨平台 DICOM 影像工作台：本地与 PACS 导入、工作区保存、CT/MR/PET 阅片、MPR 与 3D、融合、测量分割、CT 图像质量分析和导出。",
         "features": "功能", "manual": "操作手册", "language": "English",
         "heading": "让医学影像工作更连贯", "intro": "导入 CT、MR 与 PET 影像，在同一工作区中完成阅片、重建、融合与分析。",
         "download": "下载应用", "explore": "阅读操作手册",
-        "topics": (("导入与工作区", "workflow"), ("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量与导出", "analysis")),
+        "topics": (("导入与工作区", "workflow"), ("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量与导出", "analysis"), ("图像质量分析", "quality")),
         "workflow_title": "导入与工作区",
         "workflow_intro": "从获取影像到恢复工作状态，常用流程都在同一工作台中完成。",
         "workflow_cards": (
@@ -237,11 +253,11 @@ PRODUCT_COPY = {
     },
     "en": {
         "lang": "en-US", "title": "Voxenra · DICOM imaging workspace",
-        "description": "A cross-platform DICOM workspace for local and PACS import, CT/MR/PET viewing, MPR and 3D, fusion, measurement, segmentation, and export.",
+        "description": "A cross-platform DICOM workspace for local and PACS import, CT/MR/PET viewing, MPR and 3D, fusion, measurement, segmentation, CT image-quality analysis, and export.",
         "features": "Features", "manual": "Manual", "language": "简体中文",
         "heading": "A connected workspace for medical imaging", "intro": "Import CT, MR, and PET studies, then view, reconstruct, fuse, and analyze them in one workspace.",
         "download": "Download", "explore": "Read the manual",
-        "topics": (("Import & workspace", "workflow"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis")),
+        "topics": (("Import & workspace", "workflow"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis"), ("Image-quality analysis", "quality")),
         "workflow_title": "Import and workspace",
         "workflow_intro": "Bring images in, then pick up your work where you left off.",
         "workflow_cards": (
@@ -284,15 +300,16 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     feature_rows = []
     for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.png")):
         title = escape(copy[key + "_title"])
+        image_url = product_image_asset(prefix, image)
         if key == "viewing":
             feature_rows.append(f'''<section class="product-feature product-feature-viewing" id="viewing">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy["viewing_body"])}</p></div>
-<div class="feature-media-grid"><figure><img src="{prefix}assets/{image}" alt="{escape(copy["alt_viewing"])}" loading="lazy"><figcaption>{escape(copy["viewing_caption"])}</figcaption></figure>
-<figure><img src="{prefix}assets/feature-4d.gif" alt="{escape(copy["viewing_4d_caption"])}" loading="lazy"><figcaption>{escape(copy["viewing_4d_caption"])}</figcaption></figure></div></section>''')
+<div class="feature-media-grid"><figure><img src="{image_url}" alt="{escape(copy["alt_viewing"])}" loading="lazy"><figcaption>{escape(copy["viewing_caption"])}</figcaption></figure>
+<figure><img src="{product_image_asset(prefix, 'feature-4d.gif')}" alt="{escape(copy["viewing_4d_caption"])}" loading="lazy"><figcaption>{escape(copy["viewing_4d_caption"])}</figcaption></figure></div></section>''')
             continue
         feature_rows.append(f'''<section class="product-feature" id="{key}">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
-<figure><img src="{prefix}assets/{image}" alt="{escape(copy["alt_" + key])}" loading="lazy"><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
+<figure><img src="{image_url}" alt="{escape(copy["alt_" + key])}" loading="lazy"><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
     topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
     workflow_cards = "".join(
         f'<article class="workflow-card"><h3>{escape(title)}</h3><p>{escape(body)}</p></article>'
@@ -301,7 +318,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     quality_images = []
     for caption, image in zip(copy["quality_captions"], ("feature-water-qa.png", "feature-mtf.png"), strict=True):
         image_class = "quality-image quality-image-mtf" if image == "feature-mtf.png" else "quality-image"
-        image_url = f"{prefix}assets/{image}"
+        image_url = product_image_asset(prefix, image)
         full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
         quality_images.append(
             f'<figure class="{image_class}"><a href="{image_url}" target="_blank" rel="noopener" '
@@ -315,7 +332,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <link rel="alternate" hreflang="zh-CN" href="{prefix}index.html"><link rel="alternate" hreflang="en-US" href="{prefix}en-us/index.html"></head>
 <body><a class="skip-link" href="#main">{'跳转到正文' if code == 'zh' else 'Skip to content'}</a>{header}
 <main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
-<figure class="hero-visual"><img src="{prefix}assets/hero-mpr.png" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
+<figure class="hero-visual"><img src="{product_image_asset(prefix, 'hero-mpr.png')}" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
 <div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{workflow_cards}</div></section>
 <div class="product-features product-container">{"".join(feature_rows)}</div>
@@ -348,16 +365,7 @@ def build(output: Path) -> None:
     asset_output = output / "assets"
     asset_output.mkdir(exist_ok=True)
     shutil.copy2(ASSETS / "brand/voxenra-mark.svg", asset_output / "voxenra-mark.svg")
-    screenshots = {
-        "hero-mpr.png": "11-mpr-3d-layout.png",
-        "feature-mr-reading.png": "07-mr-reading.png",
-        "feature-fusion.png": "05-pet-ct-fusion.png",
-        "feature-analysis.png": "02-mpr-segmentation.png",
-        "feature-4d.gif": "03-4d-playback.gif",
-        "feature-water-qa.png": "19-water-qa.png",
-        "feature-mtf.png": "28-mtf-analysis.png",
-    }
-    for target, source in screenshots.items():
+    for target, source in PRODUCT_SCREENSHOTS.items():
         shutil.copy2(ROOT / "docs/screenshots" / source, asset_output / target)
     for name in ("site-shell.css", "manual.css", "manual.js"):
         shutil.copy2(SITE / name, asset_output / name)

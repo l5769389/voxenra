@@ -83,7 +83,11 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert "feature-4d.gif" in source
         assert "feature-water-qa.png" in source
         assert "feature-mtf.png" in source
+        assert 'feature-mtf.png?v=' in source
         assert 'class="product-quality product-container"' in source
+        assert source.count('href="#quality"') == 1
+        assert ('图像质量分析</a>' if page.parent == tmp_path else 'Image-quality analysis</a>') in source
+        assert source.count('class="product-topics product-container"') == 1
         assert source.count('class="feature-media-grid"') == 2
         assert ("从二维切片到三维重建" if page.parent == tmp_path else "From 2D slices to 3D reconstruction") in source
         assert ("DICOM SR" if page.parent == tmp_path else "DICOM SR") in source
