@@ -16,6 +16,8 @@ on:
       - "docs/screenshots/05-pet-ct-fusion.png"
       - "docs/screenshots/02-mpr-segmentation.png"
       - "docs/screenshots/03-4d-playback.gif"
+      - "docs/screenshots/16-pacs-browser.png"
+      - "docs/screenshots/17-workspace.png"
       - "docs/screenshots/19-water-qa.png"
       - "docs/screenshots/28-mtf-analysis.png"
   workflow_dispatch:

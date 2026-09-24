@@ -21,6 +21,8 @@ PRODUCT_SCREENSHOTS = {
     "feature-mr-reading.png": "07-mr-reading.png",
     "feature-fusion.png": "05-pet-ct-fusion.png",
     "feature-analysis.png": "02-mpr-segmentation.png",
+    "feature-pacs.png": "16-pacs-browser.png",
+    "feature-workspace.png": "17-workspace.png",
     "feature-4d.gif": "03-4d-playback.gif",
     "feature-water-qa.png": "19-water-qa.png",
     "feature-mtf.png": "28-mtf-analysis.png",
@@ -234,6 +236,7 @@ PRODUCT_COPY = {
             ("PACS 查询", "连接 DICOMweb PACS，查询检查并选择序列导入。"),
             ("工作区", "保存页签、布局和操作状态，下次继续处理。"),
         ),
+        "workflow_images": (("PACS 检索与序列选择", "feature-pacs.png"), ("保存与恢复工作区", "feature-workspace.png")),
         "viewing_title": "从二维切片到三维重建",
         "viewing_body": "查看原始切片并联动比较多组序列；通过 MPR、斜面重建和 3D 体绘制查看空间结构，或同步播放 CT 多时相影像。",
         "fusion_title": "PET/CT 联动融合",
@@ -265,6 +268,7 @@ PRODUCT_COPY = {
             ("PACS query", "Connect to a DICOMweb PACS, find studies, and import selected series."),
             ("Workspace", "Save tabs, layouts, and work state so you can continue later."),
         ),
+        "workflow_images": (("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace.png")),
         "viewing_title": "From 2D slices to 3D reconstruction",
         "viewing_body": "Read original slices and compare linked series. Explore spatial structures with MPR, oblique views, and volume rendering, or play multi-phase CT in sync.",
         "fusion_title": "Linked PET/CT fusion",
@@ -315,6 +319,16 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
         f'<article class="workflow-card"><h3>{escape(title)}</h3><p>{escape(body)}</p></article>'
         for title, body in copy["workflow_cards"]
     )
+    workflow_images = []
+    for caption, image in copy["workflow_images"]:
+        image_url = product_image_asset(prefix, image)
+        full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
+        workflow_images.append(
+            f'<figure class="workflow-image"><a href="{image_url}" target="_blank" rel="noopener" '
+            f'aria-label="{escape(full_image_label)}"><span class="workflow-image-frame">'
+            f'<img src="{image_url}" alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<figcaption>{escape(caption)}</figcaption></figure>'
+        )
     quality_images = []
     for caption, image in zip(copy["quality_captions"], ("feature-water-qa.png", "feature-mtf.png"), strict=True):
         image_class = "quality-image quality-image-mtf" if image == "feature-mtf.png" else "quality-image"
@@ -334,7 +348,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
 <figure class="hero-visual"><img src="{product_image_asset(prefix, 'hero-mpr.png')}" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
-<div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{workflow_cards}</div></section>
+<div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{workflow_cards}</div><div class="workflow-media-grid">{"".join(workflow_images)}</div></section>
 <div class="product-features product-container">{"".join(feature_rows)}</div>
 <section class="product-quality product-container" id="quality"><div class="product-feature-copy"><h2>{escape(copy["quality_title"])}</h2><p>{escape(copy["quality_body"])}</p></div><div class="feature-media-grid">{"".join(quality_images)}</div></section></div>
 <section class="product-closing product-container" id="download"><h2>{escape(copy["closing_title"])}</h2><p>{escape(copy["closing_body"])}</p>

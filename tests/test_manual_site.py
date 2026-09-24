@@ -80,6 +80,9 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert manual in source
         assert "hero-mpr.png" in source
         assert "feature-fusion.png" in source
+        assert "feature-pacs.png?v=" in source
+        assert "feature-workspace.png?v=" in source
+        assert 'class="workflow-media-grid"' in source
         assert "feature-4d.gif" in source
         assert "feature-water-qa.png" in source
         assert "feature-mtf.png" in source
