@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light;
+  --paper: #fff;
+  --ink: #102648;
+  --body: #4c607d;
+  --muted: #6b7f97;
+  --line: #dce6ef;
+  --accent: #0799c7;
+  --accent-dark: #087ea8;
+  --accent-soft: #eaf7fb;
+  --site-header-height: 76px;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); }
+button, input { font: inherit; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.site-header {
+  height: var(--site-header-height);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fffffff5;
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+}
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 100%;
+  max-width: 1536px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 4vw, 70px);
+}
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-brand img { width: 34px; height: 34px; }
+.site-brand span { font-size: 22px; font-weight: 760; letter-spacing: -.035em; }
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2.6vw, 42px);
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.site-nav a { color: var(--ink); text-decoration: none; }
+.site-nav a:hover, .site-nav a:focus-visible { color: var(--accent-dark); }
+.site-nav .is-active { color: var(--accent-dark); font-weight: 700; }
+.site-nav-language { padding-left: 23px; border-left: 1px solid var(--line); }
+
+@media (max-width: 750px) {
+  :root { --site-header-height: 64px; }
+  .site-header-inner { gap: 14px; }
+  .site-brand img { width: 29px; height: 29px; }
+  .site-brand span { font-size: 18px; }
+  .site-nav { gap: 13px; font-size: 13px; }
+  .site-nav-features, .site-nav-github { display: none; }
+  .site-nav-language { padding-left: 13px; }
+}
+@media (max-width: 390px) {
+  .site-nav { gap: 11px; font-size: 12px; }
+  .site-brand span { font-size: 17px; }
+  .site-nav a:first-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

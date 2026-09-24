@@ -2,7 +2,7 @@
   "categories": [
     {
       "id": "start",
-      "title": "快速开始",
+      "title": "入门与导入",
       "icon": "manual",
       "file": "chapters/start.json"
     },

@@ -34,13 +34,19 @@ def test_generated_manual_has_all_chapters_and_local_assets(tmp_path):
         pages = list((tmp_path / language).glob("*.html"))
         assert len(pages) == len(chapter_ids) + 1
         landing = (tmp_path / language / "index.html").read_text(encoding="utf-8")
-        assert "hero-mpr.png" in landing
+        assert "site-shell.css" in landing
+        assert 'class="site-header"' in landing
+        assert 'class="site-nav"' in landing
+        assert 'class="home-visual"' not in landing
+        assert ('入门与导入' if language == 'zh' else 'Getting started &amp; importing') in landing
+        assert landing.count('href="quick-start.html"') == 1
         assert landing.count('data-search=') == len(chapter_ids)
         for chapter_id in chapter_ids:
             page = tmp_path / language / f"{chapter_id}.html"
             source = page.read_text(encoding="utf-8")
             assert "<h1>" in source
             assert 'class="step' in source
+            assert 'class="site-header"' in source
             links = Links()
             links.feed(source)
             for reference in links.references:
@@ -72,6 +78,8 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert manual in source
         assert "hero-mpr.png" in source
         assert "feature-fusion.png" in source
+        assert 'class="site-header"' in source
+        assert "site-shell.css" in source
         links = Links()
         links.feed(source)
         for reference in links.references:

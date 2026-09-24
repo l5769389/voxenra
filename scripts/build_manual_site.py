@@ -40,8 +40,34 @@ def rich(value: str) -> str:
     )
 
 
-def icon(name: str, css_class: str = "") -> str:
-    return f'<img class="{css_class}" src="../assets/icons/{escape(name)}.svg" alt="" aria-hidden="true">'
+def site_header(code: str, section: str, chapter_id: str | None = None) -> str:
+    """Keep navigation identical across the product site and both manual views."""
+    prefix = "../" if section == "manual" or code == "en" else ""
+    home = prefix + ("index.html" if code == "zh" else "en-us/index.html")
+    manual = prefix + ("zh/index.html" if code == "zh" else "en/index.html")
+    if section == "manual":
+        other = "en" if code == "zh" else "zh"
+        alternate = f"../{other}/{escape(chapter_id or 'index')}.html"
+    else:
+        alternate = prefix + ("en-us/index.html" if code == "zh" else "index.html")
+    labels = {
+        "zh": ("产品主页", "功能", "操作手册", "English", "主导航", "目录"),
+        "en": ("Product home", "Features", "Manual", "简体中文", "Main navigation", "Contents"),
+    }[code]
+    menu = (f'<button type="button" class="menu-toggle" aria-label="{labels[5]}" '
+            'aria-expanded="false" aria-controls="sidebar"><span></span><span></span><span></span></button>'
+            if chapter_id else "")
+    active_home = ' class="is-active" aria-current="location"' if section == "product" else ' class="site-nav-home"'
+    active_manual = ' class="is-active" aria-current="location"' if section == "manual" else ""
+    return (f'<header class="site-header"><div class="site-header-inner">{menu}'
+            f'<a class="site-brand" href="{home}" aria-label="Voxenra"><img src="{prefix}assets/voxenra-mark.svg" alt=""><span>Voxenra</span></a>'
+            f'<nav class="site-nav" aria-label="{labels[4]}">'
+            f'<a{active_home} href="{home}">{labels[0]}</a>'
+            f'<a class="site-nav-features" href="{home}#features">{labels[1]}</a>'
+            f'<a{active_manual} href="{manual}">{labels[2]}</a>'
+            '<a class="site-nav-github" href="https://github.com/l5769389/voxenra">GitHub</a>'
+            f'<a class="site-nav-language" href="{alternate}" lang="{"en-US" if code == "zh" else "zh-CN"}">{labels[3]}</a>'
+            '</nav></div></header>')
 
 
 def figure(kind: str, messages: dict[str, str], language: dict[str, str]) -> str:
@@ -119,9 +145,9 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
             links.append(f'<a href="{escape(item["id"])}.html"{selected} data-search="{escape(searchable.lower())}">{escape(titles[item["id"]])}</a>')
         groups.append(f'<section class="nav-group"><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</section>')
     title = titles[chapter["id"]]
-    other = "en" if code == "zh" else "zh"
     nav = "\n".join(groups)
     article = render_chapter(chapter, messages, language, titles, aliases)
+    header = site_header(code, "manual", chapter["id"])
     outline_links = []
     for index, section in enumerate(chapter["sections"]):
         key = section.get("messageId", f'manual.{chapter["id"]}.section{index}')
@@ -131,22 +157,20 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
 <html lang="{language["pack"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(messages[f'manual.{chapter["id"]}.summary'])}">
 <title>{escape(title)} · Voxenra {escape(language["site"])}</title>
-<link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/manual.css">
+<link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/site-shell.css"><link rel="stylesheet" href="../assets/manual.css">
 <link rel="alternate" hreflang="zh-CN" href="../zh/{escape(chapter["id"])}.html"><link rel="alternate" hreflang="en-US" href="../en/{escape(chapter["id"])}.html">
-</head><body><header class="topbar"><button type="button" class="menu-toggle" aria-label="{escape(language["menu"])}" aria-expanded="false" aria-controls="sidebar"><span></span><span></span><span></span></button>
-<a class="brand" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}"><img src="../assets/voxenra-mark.svg" alt=""><strong>Voxenra</strong><span>{escape(language["site"])}</span></a>
-<nav class="toplinks" aria-label="Languages"><a class="site-home" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}">{'产品主页' if code == 'zh' else 'Product home'}</a><span class="current-language">{escape(language["name"])}</span><a href="../{other}/{escape(chapter["id"])}.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a><a class="github-link" href="https://github.com/l5769389/voxenra" target="_blank" rel="noopener"><img src="../assets/icons/github.svg" alt="">GitHub</a></nav></header>
-<div class="layout"><aside id="sidebar" class="sidebar"><div class="search"><label class="sr-only" for="manual-search">{escape(language["search"])}</label><input id="manual-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><nav aria-label="{escape(language["menu"])}">{nav}</nav><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p></aside>
+</head><body>{header}
+<div class="layout"><aside id="sidebar" class="sidebar"><div class="search"><label class="sr-only" for="manual-search">{escape(language["search"])}</label><input id="manual-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><a class="sidebar-home" href="index.html">{escape(language["home"])}</a><nav aria-label="{escape(language["menu"])}">{nav}</nav><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p></aside>
 <main id="content"><div class="reading-layout"><article>{article}</article><aside class="page-outline"><h2>{'本页内容' if code == 'zh' else 'On this page'}</h2><nav>{outline}</nav></aside></div><footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main></div>
 <script src="../assets/manual.js" defer></script></body></html>'''
 
 
 def render_landing(categories: list[dict], chapters: list[dict], messages: dict[str, str], code: str) -> str:
     language = LANGUAGES[code]
-    other = "en" if code == "zh" else "zh"
-    heading = "Voxenra 操作手册" if code == "zh" else "Voxenra Manual"
+    heading = "操作手册" if code == "zh" else "Manual"
     description = ("从导入影像到测量、分割与导出，按任务查找操作步骤。" if code == "zh"
                    else "Find practical steps for importing, viewing, measuring, segmenting, and exporting medical images.")
+    header = site_header(code, "manual")
     groups = []
     for category in categories:
         links = []
@@ -157,14 +181,13 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
             searchable = " ".join([title, messages[f'manual.{chapter["id"]}.summary']] +
                                   [messages[section.get("messageId", f'manual.{chapter["id"]}.section{i}') + ".body"] for i, section in enumerate(chapter["sections"])])
             links.append(f'<a href="{escape(chapter["id"])}.html" data-search="{escape(searchable.lower())}">{escape(title)}</a>')
-        groups.append(f'<section class="home-group">{icon(category["icon"])}<div><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</div></section>')
+        groups.append(f'<section class="home-group"><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</section>')
     return f'''<!doctype html><html lang="{language["pack"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="{escape(description)}"><title>{escape(heading)}</title>
-<link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/manual.css">
+<meta name="description" content="{escape(description)}"><title>Voxenra · {escape(heading)}</title>
+<link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/site-shell.css"><link rel="stylesheet" href="../assets/manual.css">
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
-<body class="home"><header class="topbar"><a class="brand" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}"><img src="../assets/voxenra-mark.svg" alt=""><strong>Voxenra</strong><span>{escape(language["site"])}</span></a>
-<nav class="toplinks" aria-label="Languages"><a class="site-home" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}">{'产品主页' if code == 'zh' else 'Product home'}</a><span class="current-language">{escape(language["name"])}</span><a href="../{other}/index.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a><a class="github-link" href="https://github.com/l5769389/voxenra" target="_blank" rel="noopener"><img src="../assets/icons/github.svg" alt="">GitHub</a></nav></header>
-<main class="home-main"><div class="home-hero"><div class="home-copy"><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><div class="home-actions"><a href="quick-start.html">{escape(messages["manual.quick-start.title"])}</a><a href="../{other}/index.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a></div></div><div class="home-visual"><img src="../assets/hero-mpr.png" alt="Voxenra MPR and 3D views" loading="eager"></div></div>
+<body class="home">{header}
+<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div></div>
 <div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
 <footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main><script src="../assets/manual.js" defer></script></body></html>'''
 
@@ -215,6 +238,7 @@ PRODUCT_COPY = {
 
 def render_product_home(code: str, release: dict[str, str]) -> str:
     copy = PRODUCT_COPY[code]
+    header = site_header(code, "product")
     heading = "让医学影像<br>工作更连贯" if code == "zh" else escape(copy["heading"])
     prefix = "" if code == "zh" else "../"
     other_home = "en-us/index.html" if code == "zh" else "index.html"
@@ -239,11 +263,9 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
     return f'''<!doctype html><html lang="{copy["lang"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(copy["description"])}"><title>{escape(copy["title"])}</title>
-<link rel="icon" href="{prefix}assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{prefix}assets/product.css">
+<link rel="icon" href="{prefix}assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{prefix}assets/site-shell.css"><link rel="stylesheet" href="{prefix}assets/product.css">
 <link rel="alternate" hreflang="zh-CN" href="{prefix}index.html"><link rel="alternate" hreflang="en-US" href="{prefix}en-us/index.html"></head>
-<body><a class="skip-link" href="#main">Skip to content</a><header class="product-header"><div class="product-container header-inner">
-<a class="product-brand" href="{prefix}index.html" aria-label="Voxenra"><img src="{prefix}assets/voxenra-mark.svg" alt=""><span>Voxenra</span></a>
-<nav aria-label="{'主导航' if code == 'zh' else 'Main navigation'}"><a href="#features">{escape(copy["features"])}</a><a href="{prefix}{manual_home}">{escape(copy["manual"])}</a><a class="nav-github" href="https://github.com/l5769389/voxenra">GitHub</a><a class="nav-language" href="{prefix}{other_home}" lang="{'en-US' if code == 'zh' else 'zh-CN'}">{escape(copy["language"])}</a></nav></div></header>
+<body><a class="skip-link" href="#main">{'跳转到正文' if code == 'zh' else 'Skip to content'}</a>{header}
 <main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
 <figure class="hero-visual"><img src="{prefix}assets/hero-mpr.png" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
@@ -284,15 +306,11 @@ def build(output: Path) -> None:
     }
     for target, source in screenshots.items():
         shutil.copy2(ROOT / "docs/screenshots" / source, asset_output / target)
-    for name in ("manual.css", "manual.js"):
+    for name in ("site-shell.css", "manual.css", "manual.js"):
         shutil.copy2(SITE / name, asset_output / name)
     shutil.copy2(SITE / "product.css", asset_output / "product.css")
     for name in ("macos.svg", "windows.svg"):
         shutil.copy2(SITE / name, asset_output / name)
-    used_icons = {item["icon"] for item in categories} | {"github"}
-    (asset_output / "icons").mkdir(exist_ok=True)
-    for name in used_icons:
-        shutil.copy2(ASSETS / "icons" / f"{name}.svg", asset_output / "icons" / f"{name}.svg")
     used_images = {name for chapter in chapters for name in ([chapter["example"]] if "example" in chapter else chapter.get("examples", []))}
     for name in used_images:
         for prefix in ("", "en/"):
