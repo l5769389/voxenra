@@ -1,4 +1,4 @@
-name: Publish operation manual
+name: Publish website and manual
 
 on:
   push:
@@ -12,6 +12,9 @@ on:
       - "src/qt_dicom_viewer/qml/assets/icons/**"
       - "src/qt_dicom_viewer/qml/assets/brand/voxenra-mark.svg"
       - "docs/screenshots/11-mpr-3d-layout.png"
+      - "docs/screenshots/07-mr-reading.png"
+      - "docs/screenshots/05-pet-ct-fusion.png"
+      - "docs/screenshots/02-mpr-segmentation.png"
   workflow_dispatch:
 
 permissions:
@@ -36,7 +39,7 @@ jobs:
           persist-credentials: false
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
-      - name: Build bilingual manual
+      - name: Build bilingual website and manual
         run: python3 scripts/build_manual_site.py /tmp/voxenra-manual-site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4

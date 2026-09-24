@@ -56,6 +56,37 @@ def test_generated_manual_has_all_chapters_and_local_assets(tmp_path):
     assert "Quick start" in (tmp_path / "en/quick-start.html").read_text(encoding="utf-8")
 
 
+def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
+    SITE.build(tmp_path)
+    release = json.loads((SITE.SITE / "release.json").read_text(encoding="utf-8"))
+    for page, heading, manual in (
+        (tmp_path / "index.html", "让医学影像工作更连贯", "zh/index.html"),
+        (tmp_path / "en-us/index.html", "A connected workspace for medical imaging", "en/index.html"),
+    ):
+        source = page.read_text(encoding="utf-8")
+        assert heading in source.replace("<br>", "")
+        assert "#download" in source
+        assert "v" + release["version"] in source
+        for key in ("macos", "windows_installer", "windows_portable"):
+            assert f'/releases/download/{release["tag"]}/{release[key]}' in source
+        assert manual in source
+        assert "hero-mpr.png" in source
+        assert "feature-fusion.png" in source
+        links = Links()
+        links.feed(source)
+        for reference in links.references:
+            parsed = urlsplit(reference)
+            if parsed.scheme or parsed.netloc:
+                continue
+            target = (page.parent / parsed.path).resolve() if parsed.path else page
+            assert target.is_relative_to(tmp_path.resolve()), reference
+            assert target.is_file(), f"{page}: {reference}"
+            if parsed.fragment:
+                assert f'id="{parsed.fragment}"' in target.read_text(encoding="utf-8")
+    assert (tmp_path / "zh/index.html").is_file()
+    assert (tmp_path / "en/index.html").is_file()
+
+
 def test_manual_rich_text_escapes_untrusted_markup():
     assert SITE.rich("<script>x</script> **重点** `Ctrl+O`") == (
         "&lt;script&gt;x&lt;/script&gt; <strong>重点</strong> <strong>Ctrl+O</strong>"

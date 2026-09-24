@@ -1,0 +1,7 @@
+{
+  "version": "1.6.0",
+  "tag": "v1.6.0",
+  "macos": "Voxenra-1.6.0-macos-arm64.dmg",
+  "windows_installer": "Voxenra-1.6.0-windows-x64-setup.exe",
+  "windows_portable": "Voxenra-1.6.0-windows-x64-portable.exe"
+}

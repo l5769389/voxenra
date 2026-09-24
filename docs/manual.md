@@ -1,6 +1,6 @@
 # 离线操作手册
 
-网页版本：[简体中文](https://l5769389.github.io/voxenra/zh/) · [English](https://l5769389.github.io/voxenra/en/)。网页由下述章节与语言包自动生成；应用内手册继续离线可用。
+网站首页：[简体中文](https://l5769389.github.io/voxenra/) · [English](https://l5769389.github.io/voxenra/en-us/)。操作手册：[简体中文](https://l5769389.github.io/voxenra/zh/) · [English](https://l5769389.github.io/voxenra/en/)。手册由下述章节与语言包自动生成；应用内手册继续离线可用。
 
 点击左下角书本图标打开手册，无需导入影像。右侧测量、分割、VOI、QA、导出等面板的帮助入口直接进入对应章节；工作区窗口的「使用说明」也可直达。
 

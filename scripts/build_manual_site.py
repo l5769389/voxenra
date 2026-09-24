@@ -1,4 +1,4 @@
-"""Build the GitHub Pages manual from the desktop app's chapter and locale JSON."""
+"""Build the product website and manual from the desktop app's content."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import json
 import re
 import shutil
 from pathlib import Path
+from urllib.parse import quote
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -133,8 +134,8 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
 <link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/manual.css">
 <link rel="alternate" hreflang="zh-CN" href="../zh/{escape(chapter["id"])}.html"><link rel="alternate" hreflang="en-US" href="../en/{escape(chapter["id"])}.html">
 </head><body><header class="topbar"><button type="button" class="menu-toggle" aria-label="{escape(language["menu"])}" aria-expanded="false" aria-controls="sidebar"><span></span><span></span><span></span></button>
-<a class="brand" href="index.html"><img src="../assets/voxenra-mark.svg" alt=""><strong>Voxenra</strong><span>{escape(language["site"])}</span></a>
-<nav class="toplinks" aria-label="Languages"><span class="current-language">{escape(language["name"])}</span><a href="../{other}/{escape(chapter["id"])}.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a><a class="github-link" href="https://github.com/l5769389/voxenra" target="_blank" rel="noopener"><img src="../assets/icons/github.svg" alt="">GitHub</a></nav></header>
+<a class="brand" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}"><img src="../assets/voxenra-mark.svg" alt=""><strong>Voxenra</strong><span>{escape(language["site"])}</span></a>
+<nav class="toplinks" aria-label="Languages"><a class="site-home" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}">{'产品主页' if code == 'zh' else 'Product home'}</a><span class="current-language">{escape(language["name"])}</span><a href="../{other}/{escape(chapter["id"])}.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a><a class="github-link" href="https://github.com/l5769389/voxenra" target="_blank" rel="noopener"><img src="../assets/icons/github.svg" alt="">GitHub</a></nav></header>
 <div class="layout"><aside id="sidebar" class="sidebar"><div class="search"><label class="sr-only" for="manual-search">{escape(language["search"])}</label><input id="manual-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><nav aria-label="{escape(language["menu"])}">{nav}</nav><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p></aside>
 <main id="content"><div class="reading-layout"><article>{article}</article><aside class="page-outline"><h2>{'本页内容' if code == 'zh' else 'On this page'}</h2><nav>{outline}</nav></aside></div><footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main></div>
 <script src="../assets/manual.js" defer></script></body></html>'''
@@ -161,11 +162,97 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 <meta name="description" content="{escape(description)}"><title>{escape(heading)}</title>
 <link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="../assets/manual.css">
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
-<body class="home"><header class="topbar"><a class="brand" href="index.html"><img src="../assets/voxenra-mark.svg" alt=""><strong>Voxenra</strong><span>{escape(language["site"])}</span></a>
-<nav class="toplinks" aria-label="Languages"><span class="current-language">{escape(language["name"])}</span><a href="../{other}/index.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a><a class="github-link" href="https://github.com/l5769389/voxenra" target="_blank" rel="noopener"><img src="../assets/icons/github.svg" alt="">GitHub</a></nav></header>
+<body class="home"><header class="topbar"><a class="brand" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}"><img src="../assets/voxenra-mark.svg" alt=""><strong>Voxenra</strong><span>{escape(language["site"])}</span></a>
+<nav class="toplinks" aria-label="Languages"><a class="site-home" href="{'../index.html' if code == 'zh' else '../en-us/index.html'}">{'产品主页' if code == 'zh' else 'Product home'}</a><span class="current-language">{escape(language["name"])}</span><a href="../{other}/index.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a><a class="github-link" href="https://github.com/l5769389/voxenra" target="_blank" rel="noopener"><img src="../assets/icons/github.svg" alt="">GitHub</a></nav></header>
 <main class="home-main"><div class="home-hero"><div class="home-copy"><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><div class="home-actions"><a href="quick-start.html">{escape(messages["manual.quick-start.title"])}</a><a href="../{other}/index.html" lang="{LANGUAGES[other]["pack"]}">{escape(LANGUAGES[other]["name"])}</a></div></div><div class="home-visual"><img src="../assets/hero-mpr.png" alt="Voxenra MPR and 3D views" loading="eager"></div></div>
 <div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
 <footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main><script src="../assets/manual.js" defer></script></body></html>'''
+
+
+PRODUCT_COPY = {
+    "zh": {
+        "lang": "zh-CN", "title": "Voxenra · DICOM 医学影像工作台",
+        "description": "面向 CT、MR 与 PET 的跨平台 DICOM 工作台：阅片、MPR 与 3D、PET/CT 融合、测量分割和结果导出。",
+        "features": "功能", "manual": "操作手册", "language": "English",
+        "heading": "让医学影像工作更连贯", "intro": "在一个工作台中完成 CT、MR 与 PET 阅片、多平面重建、三维显示、融合与分析。",
+        "download": "下载应用", "explore": "阅读操作手册",
+        "topics": (("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量、分割与导出", "analysis")),
+        "viewing_title": "从切片到三维，保持空间语境",
+        "viewing_body": "查看原始切片并联动比较多组序列；用 MPR、斜面重建和 3D 体绘制探索空间结构，CT 多时相可同步播放。",
+        "fusion_title": "在同一视图中理解解剖与代谢",
+        "fusion_body": "并排查看 CT、PET、融合与 MIP 视图，调整融合比例，并在需要时进行手动刚性配准。",
+        "analysis_title": "让测量与结果留在影像语境中",
+        "analysis_body": "使用长度、角度、曲线及 ROI 测量，进行阈值分割与 VOI 分析；导出 DICOM SEG、结构化测量报告及常用图像和表格格式。",
+        "viewing_caption": "MR 原始切片阅片", "fusion_caption": "PET/CT 联动融合", "analysis_caption": "MPR 分割与统计",
+        "closing_title": "开始使用 Voxenra", "closing_body": "适用于 macOS Apple Silicon 与 Windows。",
+        "mac_download": "下载 DMG", "win_setup": "下载安装版", "win_portable": "下载便携版",
+        "releases": "发布记录", "github": "GitHub 仓库", "alt_hero": "Voxenra 中的 MR 多平面重建与 3D 视图",
+        "alt_viewing": "Voxenra 中的 MR 原始切片视图", "alt_fusion": "Voxenra 中的 CT、PET 与融合视图",
+        "alt_analysis": "Voxenra 中的 MPR 分割与统计面板",
+    },
+    "en": {
+        "lang": "en-US", "title": "Voxenra · DICOM imaging workspace",
+        "description": "A cross-platform DICOM workspace for CT, MR, and PET viewing, MPR and 3D, PET/CT fusion, measurement, segmentation, and export.",
+        "features": "Features", "manual": "Manual", "language": "简体中文",
+        "heading": "A connected workspace for medical imaging", "intro": "View CT, MR, and PET studies, explore multiplanar and 3D reconstructions, and keep fusion and analysis in one workspace.",
+        "download": "Download", "explore": "Read the manual",
+        "topics": (("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & segmentation", "analysis")),
+        "viewing_title": "Keep spatial context from slices to 3D",
+        "viewing_body": "Read original slices and compare linked series. Explore anatomy with MPR, oblique views, and volume rendering, or play multi-phase CT in sync.",
+        "fusion_title": "View anatomy and metabolism together",
+        "fusion_body": "See linked CT, PET, fused, and MIP views, adjust blending, and perform manual rigid registration when needed.",
+        "analysis_title": "Keep results connected to the image",
+        "analysis_body": "Measure lengths, angles, curves, and ROIs; work with threshold segments and VOIs; export DICOM SEG, structured measurement reports, images, and tables.",
+        "viewing_caption": "MR original-slice viewing", "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "MPR segmentation and statistics",
+        "closing_title": "Get started with Voxenra", "closing_body": "Available for macOS Apple Silicon and Windows.",
+        "mac_download": "Download DMG", "win_setup": "Download installer", "win_portable": "Download portable",
+        "releases": "Releases", "github": "GitHub repository", "alt_hero": "MR multiplanar and 3D views in Voxenra",
+        "alt_viewing": "MR original-slice view in Voxenra", "alt_fusion": "CT, PET, and fused views in Voxenra",
+        "alt_analysis": "MPR segmentation and statistics panel in Voxenra",
+    },
+}
+
+
+def render_product_home(code: str, release: dict[str, str]) -> str:
+    copy = PRODUCT_COPY[code]
+    heading = "让医学影像<br>工作更连贯" if code == "zh" else escape(copy["heading"])
+    prefix = "" if code == "zh" else "../"
+    other_home = "en-us/index.html" if code == "zh" else "index.html"
+    manual_home = "zh/index.html" if code == "zh" else "en/index.html"
+    download_base = f'https://github.com/l5769389/voxenra/releases/download/{quote(release["tag"], safe="")}/'
+    mac_url = escape(download_base + quote(release["macos"], safe=""))
+    win_setup_url = escape(download_base + quote(release["windows_installer"], safe=""))
+    win_portable_url = escape(download_base + quote(release["windows_portable"], safe=""))
+    version = escape('v' + release["version"])
+    feature_rows = []
+    for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.png")):
+        title = escape(copy[key + "_title"])
+        if code == "zh":
+            title = {
+                "viewing": "从切片到三维，<br>保持空间语境",
+                "fusion": "在同一视图中<br>理解解剖与代谢",
+                "analysis": "让测量与结果<br>留在影像语境中",
+            }[key]
+        feature_rows.append(f'''<section class="product-feature" id="{key}">
+<div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
+<figure><img src="{prefix}assets/{image}" alt="{escape(copy["alt_" + key])}" loading="lazy"><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
+    topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
+    return f'''<!doctype html><html lang="{copy["lang"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="{escape(copy["description"])}"><title>{escape(copy["title"])}</title>
+<link rel="icon" href="{prefix}assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{prefix}assets/product.css">
+<link rel="alternate" hreflang="zh-CN" href="{prefix}index.html"><link rel="alternate" hreflang="en-US" href="{prefix}en-us/index.html"></head>
+<body><a class="skip-link" href="#main">Skip to content</a><header class="product-header"><div class="product-container header-inner">
+<a class="product-brand" href="{prefix}index.html" aria-label="Voxenra"><img src="{prefix}assets/voxenra-mark.svg" alt=""><span>Voxenra</span></a>
+<nav aria-label="{'主导航' if code == 'zh' else 'Main navigation'}"><a href="#features">{escape(copy["features"])}</a><a href="{prefix}{manual_home}">{escape(copy["manual"])}</a><a class="nav-github" href="https://github.com/l5769389/voxenra">GitHub</a><a class="nav-language" href="{prefix}{other_home}" lang="{'en-US' if code == 'zh' else 'zh-CN'}">{escape(copy["language"])}</a></nav></div></header>
+<main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
+<figure class="hero-visual"><img src="{prefix}assets/hero-mpr.png" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
+<nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
+<div class="product-features product-container" id="features">{"".join(feature_rows)}</div>
+<section class="product-closing product-container" id="download"><h2>{escape(copy["closing_title"])}</h2><p>{escape(copy["closing_body"])}</p>
+<div class="download-platforms"><div class="download-platform"><img src="{prefix}assets/macos.svg" alt=""><h3>macOS</h3><p>Apple Silicon · {version}</p><div class="download-links"><a href="{mac_url}">{escape(copy["mac_download"])}</a></div></div>
+<div class="download-platform"><img src="{prefix}assets/windows.svg" alt=""><h3>Windows</h3><p>x64 · {version}</p><div class="download-links"><a href="{win_setup_url}">{escape(copy["win_setup"])}</a><a href="{win_portable_url}">{escape(copy["win_portable"])}</a></div></div></div>
+<a class="closing-manual" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></section></main>
+<footer class="product-footer"><div class="product-container"><div><strong>Voxenra</strong><p>{escape(copy["description"])}</p></div><nav aria-label="{'页脚' if code == 'zh' else 'Footer'}"><a href="https://github.com/l5769389/voxenra">{escape(copy["github"])}</a><a href="{prefix}{manual_home}">{escape(copy["manual"])}</a><a href="https://github.com/l5769389/voxenra/releases">{escape(copy["releases"])}</a><a href="{prefix}{other_home}">{escape(copy["language"])}</a></nav></div></footer></body></html>'''
 
 
 def build(output: Path) -> None:
@@ -179,12 +266,28 @@ def build(output: Path) -> None:
     for chapter in chapters:
         if any(related not in known_ids and related not in aliases for related in chapter.get("related", [])):
             raise ValueError(f'Unknown related chapter in {chapter["id"]}')
+    release = load_json(SITE / "release.json")
+    if release["tag"] != "v" + release["version"] or any(
+        not re.fullmatch(r"[A-Za-z0-9._-]+", release[key])
+        for key in ("macos", "windows_installer", "windows_portable")
+    ):
+        raise ValueError("Invalid product release metadata")
     output.mkdir(parents=True, exist_ok=True)
     asset_output = output / "assets"
     asset_output.mkdir(exist_ok=True)
     shutil.copy2(ASSETS / "brand/voxenra-mark.svg", asset_output / "voxenra-mark.svg")
-    shutil.copy2(ROOT / "docs/screenshots/11-mpr-3d-layout.png", asset_output / "hero-mpr.png")
+    screenshots = {
+        "hero-mpr.png": "11-mpr-3d-layout.png",
+        "feature-mr-reading.png": "07-mr-reading.png",
+        "feature-fusion.png": "05-pet-ct-fusion.png",
+        "feature-analysis.png": "02-mpr-segmentation.png",
+    }
+    for target, source in screenshots.items():
+        shutil.copy2(ROOT / "docs/screenshots" / source, asset_output / target)
     for name in ("manual.css", "manual.js"):
+        shutil.copy2(SITE / name, asset_output / name)
+    shutil.copy2(SITE / "product.css", asset_output / "product.css")
+    for name in ("macos.svg", "windows.svg"):
         shutil.copy2(SITE / name, asset_output / name)
     used_icons = {item["icon"] for item in categories} | {"github"}
     (asset_output / "icons").mkdir(exist_ok=True)
@@ -197,7 +300,9 @@ def build(output: Path) -> None:
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(HELP / prefix / name, destination)
     (output / ".nojekyll").touch()
-    (output / "index.html").write_text('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=zh/index.html"><link rel="canonical" href="zh/index.html"><title>Voxenra 操作手册</title></head><body><a href="zh/index.html">Voxenra 操作手册</a></body></html>', encoding="utf-8")
+    (output / "index.html").write_text(render_product_home("zh", release), encoding="utf-8")
+    (output / "en-us").mkdir(exist_ok=True)
+    (output / "en-us/index.html").write_text(render_product_home("en", release), encoding="utf-8")
     for code, language in LANGUAGES.items():
         messages = load_json(ASSETS / "languages" / f'{language["pack"]}.json')["messages"]
         directory = output / code

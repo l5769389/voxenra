@@ -27,6 +27,7 @@ button, input { font: inherit; }
 .toplinks { margin-left: auto; display: flex; align-items: center; gap: 15px; font-size: 13px; white-space: nowrap; }
 .toplinks a { text-decoration: none; }
 .toplinks a:hover, .toplinks a:focus-visible { text-decoration: underline; }
+.site-home { color: var(--ink); font-weight: 600; }
 .current-language { color: var(--ink); }
 .github-link { display: inline-flex; align-items: center; gap: 7px; border-left: 1px solid var(--line); margin-left: 4px; padding-left: 18px; color: var(--ink); font-weight: 600; }
 .github-link img { width: 16px; height: 16px; }
@@ -124,7 +125,7 @@ footer { max-width: 1110px; margin: 70px auto 0; border-top: 1px solid var(--lin
   .topbar { height: 58px; padding: 0 17px; }
   .brand img { width: 27px; height: 27px; }
   .brand strong { font-size: 18px; }
-  .brand span, .github-link { display: none; }
+  .brand span, .github-link, .site-home { display: none; }
   .toplinks { gap: 10px; font-size: 12px; }
   .menu-toggle { display: flex; flex-direction: column; justify-content: center; gap: 4px; width: 31px; height: 30px; padding: 6px; background: white; border: 1px solid var(--line); border-radius: 5px; cursor: pointer; }
   .menu-toggle span { display: block; height: 1.5px; width: 100%; background: var(--ink); }
