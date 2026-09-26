@@ -130,6 +130,7 @@
         <file>src/qt_dicom_viewer/qml/theme/qmldir</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/SettingsPage.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/UpdateSettingsPage.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/FeedbackDialog.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/UpdateDialog.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/ExportSettingsPage.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/WorkspaceSettingsPage.qml</file>

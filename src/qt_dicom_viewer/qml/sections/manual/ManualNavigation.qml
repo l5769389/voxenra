@@ -173,5 +173,13 @@ Rectangle {
                 }
             }
         }
+        Rectangle { Layout.fillWidth: true; height: 1; color: Theme.dividerColor }
+        Components.AppButton {
+            objectName: "manualFeedback"
+            Layout.fillWidth: true
+            text: qsTrId("feedback.title")
+            normalColor: "transparent"
+            onClicked: appController.feedbackController.show()
+        }
     }
 }

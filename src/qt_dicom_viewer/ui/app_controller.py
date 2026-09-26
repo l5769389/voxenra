@@ -62,6 +62,8 @@ class AppController(QObject):
         from qt_dicom_viewer.ui.controller.update_controller import UpdateController
         self._update_controller = UpdateController(self._settings_controller, self,
             cache=Path(settings_path).parent / "updates" if settings_path else None)
+        from qt_dicom_viewer.ui.controller.feedback_controller import FeedbackController
+        self._feedback_controller = FeedbackController(self._settings_controller, self)
         # The workspace document event filter handles save/discard/cancel for all
         # windows before accepting this normal Qt quit request.
         self._update_controller.exitRequested.connect(QCoreApplication.quit)
@@ -126,6 +128,10 @@ class AppController(QObject):
     @Property(QObject, constant=True)
     def languageController(self):
         return self._language_controller
+
+    @Property(QObject, constant=True)
+    def feedbackController(self):
+        return self._feedback_controller
 
     @Property(QObject, constant=True)
     def updateController(self):

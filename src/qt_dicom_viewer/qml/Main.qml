@@ -140,6 +140,22 @@ ApplicationWindow {
             window.workspaceController.openManual("workspace")
         }
     }
+    Sections.FeedbackDialog {
+        id: feedbackDialog
+        controller: appController.feedbackController
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        onManualRequested: window.workspaceController.openManual("")
+    }
+    Connections {
+        target: appController.feedbackController
+        function onShowDialog() {
+            if (!window.windowManager || window.windowManager.focusedWindowId === window.workspaceController.windowId) {
+                appController.feedbackController.prepare(window, window.workspaceController.activeTabType)
+                feedbackDialog.open()
+            }
+        }
+    }
     Sections.UpdateDialog {
         id: applicationUpdateDialog
         controller: appController.updateController
