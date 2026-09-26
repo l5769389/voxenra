@@ -164,3 +164,39 @@ def test_pacs_configuration_entry_opens_sources_after_other_settings(scene):
     assert app.settingsController.activeCategory == 'sources'
     assert find(window, 'pacsAddProfile').isEnabled()
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize('theme,locale', [('graphite', 'zh-CN'), ('light', 'en-US')])
+def test_window_preset_file_reload_and_location(scene, tmp_path, monkeypatch, theme, locale):
+    import json
+    window, app, warnings = scene
+    window.resize(1280, 720)
+    app.settingsController.setValue('appearance', 'theme', theme)
+    app.languageController.selectLanguage(locale)
+    app.workspaceController.openSettings()
+    click(window, find(window, 'settingsCategory-window'))
+    QTest.qWait(80)
+    path = Path(app.settingsController.windowPresetsPath)
+    assert path.is_file()
+    urls = []
+    monkeypatch.setattr('qt_dicom_viewer.ui.controller.settings_controller.QDesktopServices.openUrl',
+                        lambda url: urls.append(url.toLocalFile()) or True)
+    click(window, find(window, 'openWindowPresetsLocation'))
+    assert urls == [str(path.parent)]
+    data = json.loads(path.read_text())
+    data['presets'][0].update(width=321, center=54)
+    path.write_text(json.dumps(data))
+    click(window, find(window, 'reloadWindowPresets'))
+    QTest.qWait(80)
+    assert find(window, 'windowWW-ct-brain').property('text') == '321'
+    assert find(window, 'windowWL-ct-brain').property('text') == '54'
+    assert not app.settingsController.messageIsError
+    destination = Path('build/window-presets-preview'); destination.mkdir(parents=True, exist_ok=True)
+    shot(window, theme + '-' + locale, destination)
+    old = app.settingsController.windowTemplates
+    path.write_text('{broken')
+    click(window, find(window, 'reloadWindowPresets'))
+    assert app.settingsController.windowTemplates == old
+    assert app.settingsController.messageIsError
+    assert find(window, 'settingsError').property('text')
+    assert not warnings, warnings

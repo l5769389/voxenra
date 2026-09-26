@@ -26,7 +26,7 @@ Item {
             Layout.fillWidth: true
             visible: text.length > 0
             text: page.settingsController.message
-            color: Theme.dangerColor
+            color: page.settingsController.messageIsError ? Theme.dangerColor : Theme.textSecondary
             wrapMode: Text.Wrap
         }
         Basic.ScrollView {

@@ -1486,7 +1486,7 @@
         "manual.colormap.section0.title": "Choose a color map",
         "manual.colormap.section0.body": "Set separate defaults for grayscale and PET in Settings. The tool on the right changes the current view; **Tiles synchronizes every cell**. Colors do not change original pixels.",
         "manual.colormap.section1.title": "Manage window presets",
-        "manual.colormap.section1.body": "Brain, lung, bone and soft tissue are **CT presets** that can be enabled or disabled. Add up to **20** custom CT presets with unique names and positive WW, or use **Save as preset** in the CT window panel. **MR does not use CT presets**; use the DICOM initial window, Auto window or manual values.",
+        "manual.colormap.section1.body": "Window presets are stored in **window-presets.json**. In **Settings → Window presets**, choose **Open file location**, edit the file, then **Reload presets** without restarting. Existing custom presets and enabled states migrate automatically. Adding, saving or enabling presets in the app writes to the same file. Up to 100 presets are supported. Reloading updates the list without changing the current image window; invalid files leave the current list unchanged and show a reason.\n\nThe JSON root contains `schemaVersion: 1` and a `presets` array. Each entry has a unique `presetId`, name `label`, window width `width` (WW), window level `center` (WL), and `enabled`. An empty `label` on a default CT preset uses its translated name; a nonempty label overrides it. Array order controls display order; `enabled: false` hides the entry.\n\nExample entry: `{\"presetId\":\"custom-lung\",\"label\":\"Lung\",\"width\":1500,\"center\":-600,\"enabled\":true}`. Width must be 1–1000000, center −1000000–1000000; names must be unique. **MR does not use CT window presets**.",
         "manual.colormap.section2.title": "Apply and reset",
         "manual.colormap.section2.body": "A preset applies **when clicked**; editing its list does not change the image. Reset 2D windowing to restore initial values. CT 3D uses separate volume presets.",
         "manual.crosshair.title": "Crosshair styles",
@@ -2150,6 +2150,14 @@
         "feedback.mailBusy": "Complete the action in the system mail window. The app does not send automatically.",
         "feedback.mailWorking": "Mail window active",
         "feedback.mailCancelled": "Email action cancelled. Your attachment selection is retained.",
-        "feedback.mailReturned": "The mail client has finished this action. Check delivery status in your mail client."
+        "feedback.mailReturned": "The mail client has finished this action. Check delivery status in your mail client.",
+        "windowFile.title": "Local window presets",
+        "windowFile.hint": "Presets are stored in window-presets.json. Edit the file, then reload. Presets saved in the app use this file too. width is WW; center is WL.",
+        "windowFile.open": "Open file location",
+        "windowFile.reload": "Reload presets",
+        "windowFile.loaded": "Window presets reloaded.",
+        "windowFile.invalid": "Window presets could not be loaded or saved. Current presets are unchanged. Reason: {value1}",
+        "windowFile.changed": "The file has changed or is invalid. Correct it and reload before saving presets.",
+        "windowFile.openFailed": "Could not open the window preset folder."
     }
 }

@@ -1486,7 +1486,7 @@
         "manual.colormap.section0.title": "选择伪彩",
         "manual.colormap.section0.body": "设置中分别选择普通灰阶影像和 PET 的默认色表；右侧伪彩工具可调整当前视图，**平铺同步所有宫格**。颜色不改变原始像素。",
         "manual.colormap.section1.title": "管理窗模板",
-        "manual.colormap.section1.body": "脑组织、肺窗、骨窗、软组织为 **CT 系统模板**，可启停。可新增最多 **20 个** 自定义 CT 模板，名称不可重复、WW 必须为正；CT 调窗面板也可 **保存为模板**。**MR 不使用 CT 窗模板**，请用 DICOM 初始窗、自动窗或手动调窗。",
+        "manual.colormap.section1.body": "窗值模板统一保存在本地 **window-presets.json**。在 **设置 → 窗模板** 点击 **打开文件位置**，修改后点击 **重新加载**，无需重启。原有自定义模板和启停状态会自动迁移；应用内新增、保存或启停也写入此文件。最多 100 个模板；重新加载仅更新列表，不改变当前影像窗值。文件无效时保留当前列表并显示原因。\n\nJSON 顶层为 `schemaVersion: 1` 和 `presets` 数组。每项包含唯一 `presetId`、名称 `label`、窗宽 `width`（WW）、窗位 `center`（WL）及启用状态 `enabled`。默认 CT 模板的 `label` 为空时随界面语言显示名称；填入文本即可覆盖。数组顺序决定列表顺序，`enabled: false` 隐藏该模板。\n\n示例条目：`{\"presetId\":\"custom-lung\",\"label\":\"Lung\",\"width\":1500,\"center\":-600,\"enabled\":true}`。窗宽范围 1～1000000，窗位范围 −1000000～1000000；名称不可重复。**MR 不使用 CT 窗模板**。",
         "manual.colormap.section2.title": "应用与重置",
         "manual.colormap.section2.body": "**点击模板才应用**，编辑模板列表不改变当前图像。二维调窗重置恢复初始窗值；CT 3D 使用独立三维模板。",
         "manual.crosshair.title": "十字线样式",
@@ -2150,6 +2150,14 @@
         "feedback.mailBusy": "请在系统邮件窗口中完成操作；软件不会自动发送。",
         "feedback.mailWorking": "邮件窗口已打开",
         "feedback.mailCancelled": "已取消邮件操作，附件选择已保留。",
-        "feedback.mailReturned": "邮件客户端已完成本次操作。投递结果请在邮件客户端查看。"
+        "feedback.mailReturned": "邮件客户端已完成本次操作。投递结果请在邮件客户端查看。",
+        "windowFile.title": "本地窗值配置",
+        "windowFile.hint": "窗值模板保存在 window-presets.json。修改文件后点击“重新加载”；应用内保存的模板也会写入此文件。窗宽为 width（WW），窗位为 center（WL）。",
+        "windowFile.open": "打开文件位置",
+        "windowFile.reload": "重新加载",
+        "windowFile.loaded": "已重新加载窗值配置。",
+        "windowFile.invalid": "窗值配置未加载或保存，当前预设保持不变。原因：{value1}",
+        "windowFile.changed": "配置文件已更改或无效。请先修正文件并重新加载，再保存模板。",
+        "windowFile.openFailed": "无法打开窗值配置所在文件夹。"
     }
 }

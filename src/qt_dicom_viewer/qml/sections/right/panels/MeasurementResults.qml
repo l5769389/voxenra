@@ -43,6 +43,7 @@ ColumnLayout {
             }
             RowLayout {
                 Layout.fillWidth: true
+                spacing: 4
                 Basic.TextField {
                     objectName: "measurementName-" + row.index
                     Layout.fillWidth: true
@@ -59,6 +60,33 @@ ColumnLayout {
                     }
                 }
                 Widgets.AppButton {
+                    id: visibilityButton
+                    objectName: "measurementVisible-" + row.index
+                    Layout.preferredWidth: 28
+                    minimumButtonWidth: 28
+                    compact: true
+                    checkable: true
+                    checked: !row.modelData.hidden
+                    iconName: checked ? "visible" : "hidden"
+                    Accessible.name: qsTrId("results.visible")
+                    onClicked: root.controller.setHidden(row.modelData.key, !checked)
+                    Widgets.AppToolTip { visible: visibilityButton.hovered; text: qsTrId("results.visible") }
+                }
+                Widgets.AppButton {
+                    id: lockButton
+                    objectName: "measurementLock-" + row.index
+                    Layout.preferredWidth: 28
+                    minimumButtonWidth: 28
+                    compact: true
+                    checkable: true
+                    checked: row.modelData.locked
+                    iconName: checked ? "locked" : "unlocked"
+                    Accessible.name: qsTrId("results.lock")
+                    onClicked: root.controller.setLocked(row.modelData.key, checked)
+                    Widgets.AppToolTip { visible: lockButton.hovered; text: qsTrId("results.lock") }
+                }
+                Widgets.AppButton {
+                    id: deleteButton
                     objectName: "deleteMeasurement-" + row.index
                     iconName: "delete"
                     Accessible.name: qsTrId("results.delete")
@@ -66,6 +94,7 @@ ColumnLayout {
                     Layout.preferredWidth: 28
                     compact: true
                     onClicked: root.controller.remove(row.modelData.key)
+                    Widgets.AppToolTip { visible: deleteButton.hovered; text: qsTrId("results.delete") }
                 }
             }
             Widgets.AppButton {
@@ -75,27 +104,6 @@ ColumnLayout {
                 text: (row.modelData.value ? row.modelData.value + " · " : "") + row.modelData.location
                 checked: row.modelData.selected
                 onClicked: root.controller.locate(row.modelData.key)
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                Widgets.AppCheckBox {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    objectName: "measurementVisible-" + row.index
-                    text: qsTrId("results.visible")
-                    checked: !row.modelData.hidden
-                    onClicked: root.controller.setHidden(row.modelData.key, !checked)
-                }
-                Widgets.AppCheckBox {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    objectName: "measurementLock-" + row.index
-                    text: qsTrId("results.lock")
-                    checked: row.modelData.locked
-                    onClicked: root.controller.setLocked(row.modelData.key, checked)
-                }
             }
             Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.borderDefault }
         }

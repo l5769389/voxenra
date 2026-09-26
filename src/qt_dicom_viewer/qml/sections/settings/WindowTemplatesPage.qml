@@ -11,6 +11,37 @@ ColumnLayout {
     function clearEditor() { editingId = ""; name.text = ""; ww.text = "400"; wl.text = "40" }
     SettingsSection {
         Layout.fillWidth: true
+        title: qsTrId("windowFile.title")
+        description: qsTrId("windowFile.hint")
+        Text {
+            objectName: "windowPresetsPath"
+            Layout.fillWidth: true
+            text: root.settingsController.windowPresetsPath
+            textFormat: Text.PlainText
+            color: Theme.textSecondary
+            font.pixelSize: 12
+            wrapMode: Text.WrapAnywhere
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Components.AppButton {
+                objectName: "openWindowPresetsLocation"
+                text: qsTrId("windowFile.open")
+                iconName: "folder"
+                enabled: root.settingsController.windowPresetsPath !== ""
+                onClicked: root.settingsController.openWindowPresetsLocation()
+            }
+            Components.AppButton {
+                objectName: "reloadWindowPresets"
+                text: qsTrId("windowFile.reload")
+                iconName: "reset"
+                enabled: root.settingsController.windowPresetsPath !== ""
+                onClicked: { if (root.settingsController.reloadWindowPresets()) root.clearEditor() }
+            }
+        }
+    }
+    SettingsSection {
+        Layout.fillWidth: true
         title: qsTrId("text.0778")
         description: qsTrId("text.0779")
         RowLayout {
@@ -90,7 +121,7 @@ ColumnLayout {
         }
         RowLayout {
             Layout.fillWidth: true
-            Text { text: root.settingsController.values.window.custom.length + " / 20"; color: Theme.textSubtle; font.pixelSize: 11 }
+            Text { text: root.settingsController.windowTemplates.length + " / 100"; color: Theme.textSubtle; font.pixelSize: 11 }
             Item { Layout.fillWidth: true }
             Components.AppButton {
                 objectName: "cancelWindowTemplate"

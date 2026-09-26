@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QPointF
 from PySide6.QtTest import QTest
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click
@@ -23,6 +23,12 @@ def test_result_list_actions_and_narrow_panel(sidebar_scene, locale, theme):
     tab.toolController.activateTool('measure')
     wait_until(lambda: find(window, 'measurementResultsToggle').isVisible())
     QTest.qWait(60)
+    names = ('measurementName-0', 'measurementVisible-0', 'measurementLock-0', 'deleteMeasurement-0')
+    controls = [find(window, name) for name in names]
+    centers = [control.mapToScene(QPointF(0, control.height() / 2)).y() for control in controls]
+    assert max(centers) - min(centers) < 2
+    assert all(control.width() >= 28 for control in controls)
+    assert find(window, 'measurementVisible-0').property('iconName') == 'visible'
     click(window, find(window, 'measurementLock-0'))
     assert view.measurementController.presentation(mid)['locked']
     click(window, find(window, 'measurementVisible-0'))

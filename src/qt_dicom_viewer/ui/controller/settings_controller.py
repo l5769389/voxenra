@@ -7,8 +7,11 @@ import json
 from pathlib import Path
 import uuid
 
-from PySide6.QtCore import QObject, Property, Signal, Slot, QStandardPaths, QSaveFile, QIODevice
+from PySide6.QtCore import QObject, Property, Signal, Slot, QStandardPaths, QSaveFile, QIODevice, QUrl
 
+from PySide6.QtGui import QDesktopServices
+
+from qt_dicom_viewer.settings import window_presets as preset_file
 from qt_dicom_viewer import __version__
 from qt_dicom_viewer.core.color_maps import COLOR_MAPS
 from qt_dicom_viewer.core.measurement_format import format_measurement
@@ -43,6 +46,23 @@ class SettingsController(QObject):
             except (OSError, ValueError):
                 self._message = _msg('text.0521')
 
+        self._window_path = self._path.with_name("window-presets.json") if self._path else None
+        self._window_entries = preset_file.from_legacy(self._data["window"])
+        self._window_revision = None
+        self._window_file_valid = True
+        if self._window_path:
+            try:
+                if self._window_path.exists():
+                    self._window_entries, self._window_revision = preset_file.read_document(self._window_path)
+                else:
+                    self._window_revision = preset_file.write_document(self._window_path, self._window_entries)
+                self._data["window"] = preset_file.legacy_view(self._window_entries)
+            except (OSError, ValueError) as exc:
+                self._window_file_valid = False
+                self._message = _msg("windowFile.invalid", value1=str(exc))
+
+        self._message_is_error = bool(self._message)
+
     @Property(str, constant=True)
     def applicationVersion(self):
         return __version__
@@ -64,6 +84,10 @@ class SettingsController(QObject):
     @_TextProperty(str, notify=_i18n_message, notify_name='_i18n_message', source_notify='messageChanged')
     def message(self):
         return self._message
+
+    @Property(bool, notify=messageChanged)
+    def messageIsError(self):
+        return self._message_is_error
 
     @Property(str, constant=True)
     def defaultExportDirectory(self):
@@ -96,9 +120,55 @@ class SettingsController(QObject):
 
     @_TextProperty('QVariantList', notify=_i18n_windowTemplates, notify_name='_i18n_windowTemplates', source_notify='changed')
     def windowTemplates(self):
-        builtins = [dict(presetId=p.preset_id, label=p.label, center=p.center, width=p.width,
-                         enabled=p.preset_id not in self._data["window"]["hidden"], builtin=True) for p in CT_WINDOW_PRESETS]
-        return builtins + [dict(p, builtin=False) for p in self._data["window"]["custom"]]
+        labels = {p.preset_id: p.label for p in CT_WINDOW_PRESETS}
+        return [dict(p, label=p["label"] or labels.get(p["presetId"], p["presetId"]),
+                     builtin=p["presetId"] in preset_file.BUILTIN_IDS) for p in self._window_entries]
+
+    @Property(str, constant=True)
+    def windowPresetsPath(self):
+        return str(self._window_path) if self._window_path else ""
+
+    @Slot(result=bool)
+    def openWindowPresetsLocation(self):
+        if not self._window_path:
+            return False
+        opened = QDesktopServices.openUrl(QUrl.fromLocalFile(str(self._window_path.parent)))
+        return True if opened else self._error(_msg("windowFile.openFailed"))
+
+    @Slot(result=bool)
+    def reloadWindowPresets(self):
+        if not self._window_path:
+            return False
+        try:
+            entries, revision = preset_file.read_document(self._window_path)
+        except (OSError, ValueError) as exc:
+            return self._error(_msg("windowFile.invalid", value1=str(exc)))
+        self._window_entries, self._window_revision = entries, revision
+        self._window_file_valid = True
+        self._data["window"] = preset_file.legacy_view(entries)
+        self._error(_msg("windowFile.loaded"), is_error=False)
+        self.changed.emit()
+        self.sectionChanged.emit("window")
+        return True
+
+    def _save_window_entries(self, entries):
+        try:
+            entries = preset_file.validate_document(dict(schemaVersion=1, presets=entries))
+            if self._window_path:
+                # Do not overwrite edits made in an external editor since loading.
+                if (not self._window_file_valid or self._window_path.stat().st_size > preset_file.MAX_BYTES
+                        or self._window_path.read_bytes() != self._window_revision):
+                    return self._error(_msg("windowFile.changed"))
+                revision = preset_file.write_document(self._window_path, entries)
+                self._window_revision = revision
+        except (OSError, ValueError) as exc:
+            return self._error(_msg("windowFile.invalid", value1=str(exc)))
+        self._window_entries = entries
+        self._data["window"] = preset_file.legacy_view(entries)
+        self._error("")
+        self.changed.emit()
+        self.sectionChanged.emit("window")
+        return True
 
     @property
     def window_presets(self):
@@ -111,17 +181,27 @@ class SettingsController(QObject):
     def section(self, name):
         return deepcopy(self._data[name])
 
-    def _error(self, message):
+    def _error(self, message, *, is_error=True):
+        self._message_is_error = bool(message) and is_error
         self._message = message
         self.messageChanged.emit()
         return False
 
     def _commit(self, section, candidate):
+        if section == "window":
+            state = candidate["window"]
+            entries = [dict(p, enabled=p["presetId"] not in state["hidden"])
+                       for p in self._window_entries if p["presetId"] in preset_file.BUILTIN_IDS]
+            return self._save_window_entries(entries + state["custom"])
         if self._path:
             try:
                 self._path.parent.mkdir(parents=True, exist_ok=True)
                 target = QSaveFile(str(self._path))
-                payload = json.dumps({"schemaVersion": 1, **candidate}, ensure_ascii=False, indent=2).encode("utf-8")
+                # Remove legacy presets only after the separate file is usable.
+                # A failed first migration must survive saving unrelated settings.
+                saved = {key: value for key, value in candidate.items()
+                         if key != "window" or not self._window_file_valid}
+                payload = json.dumps({"schemaVersion": 1, **saved}, ensure_ascii=False, indent=2).encode("utf-8")
                 if not target.open(QIODevice.WriteOnly) or target.write(payload) != len(payload) or not target.commit():
                     raise OSError("Cannot save settings")
             except OSError:
@@ -152,6 +232,8 @@ class SettingsController(QObject):
 
     @Slot(str, result=bool)
     def resetSection(self, section):
+        if section == "window":
+            return self._save_window_entries(preset_file.from_legacy(DEFAULTS["window"]))
         if section not in DEFAULTS:
             return self._error(_msg('text.0524'))
         candidate = deepcopy(self._data)
@@ -160,28 +242,24 @@ class SettingsController(QObject):
 
     @Slot(str, str, float, float, result=bool)
     def saveWindowTemplate(self, identifier, label, width, center):
-        templates = self.section("window")["custom"]
-        item = dict(presetId=identifier or "custom-" + str(uuid.uuid4()), label=label, width=width, center=center, enabled=True)
+        entries = deepcopy(self._window_entries)
+        item = dict(presetId=identifier or "custom-" + str(uuid.uuid4()), label=label,
+                    width=width, center=center, enabled=True)
         if identifier:
-            if not any(p["presetId"] == identifier for p in templates):
+            if not any(p["presetId"] == identifier for p in entries):
                 return self._error(_msg('text.0525'))
-            templates = [dict(item, enabled=p["enabled"]) if p["presetId"] == identifier else p for p in templates]
+            entries = [dict(item, enabled=p["enabled"]) if p["presetId"] == identifier else p for p in entries]
         else:
-            templates.append(item)
-        return self.setValue("window", "custom", templates)
+            entries.append(item)
+        return self._save_window_entries(entries)
 
     @Slot(str, result=bool)
     def deleteWindowTemplate(self, identifier):
-        return self.setValue("window", "custom", [p for p in self._data["window"]["custom"] if p["presetId"] != identifier])
+        return self._save_window_entries([p for p in self._window_entries if p["presetId"] != identifier])
 
     @Slot(str, bool, result=bool)
     def enableWindowTemplate(self, identifier, enabled):
-        if identifier in {p.preset_id for p in CT_WINDOW_PRESETS}:
-            hidden = [i for i in self._data["window"]["hidden"] if i != identifier]
-            if not enabled:
-                hidden.append(identifier)
-            return self.setValue("window", "hidden", hidden)
-        return self.setValue("window", "custom", [dict(p, enabled=enabled) if p["presetId"] == identifier else p for p in self._data["window"]["custom"]])
+        return self._save_window_entries([dict(p, enabled=enabled) if p["presetId"] == identifier else p for p in self._window_entries])
 
     @Slot(str, str, result=bool)
     def addCornerField(self, corner, field):
