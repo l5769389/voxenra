@@ -186,7 +186,7 @@ def test_window_preset_file_reload_and_location(scene, tmp_path, monkeypatch, th
     monkeypatch.setattr('qt_dicom_viewer.ui.controller.settings_controller.QDesktopServices.openUrl',
                         lambda url: urls.append(url.toLocalFile()) or True)
     click(window, find(window, 'openWindowPresetsLocation'))
-    assert urls == [str(path.parent)]
+    assert [Path(url) for url in urls] == [path.parent]
     data = json.loads(path.read_text())
     data['presets'][0].update(width=321, center=54)
     path.write_text(json.dumps(data))

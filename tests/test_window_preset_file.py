@@ -102,7 +102,7 @@ def test_open_location_and_reload_notifies_live_tools(qt_app, tmp_path, monkeypa
     tools.windowPresetsChanged.connect(lambda: signals.append(True))
     monkeypatch.setattr('qt_dicom_viewer.ui.controller.settings_controller.QDesktopServices.openUrl', lambda url: urls.append(url.toLocalFile()) or True)
     assert settings.openWindowPresetsLocation()
-    assert urls == [str(tmp_path)]
+    assert [Path(url) for url in urls] == [tmp_path]
     write(Path(settings.windowPresetsPath), [dict(presetId='only', label='Only', width=999, center=33)])
     assert settings.reloadWindowPresets()
     assert signals and tools.windowPresets[0]['width'] == 999
