@@ -36,7 +36,7 @@ def test_drafts_are_encoded_and_info_is_optional(feedback):
     c.openDraft('github', title, 'suggestion', description, False)
     assert 'Version:' not in parse_qs(urlsplit(urls[-1]).query)['body'][0]
     count = len(urls)
-    c.openDraft('github', ' ', 'bug', description, True)
+    c.openDraft('email', ' ', 'bug', description, True)
     c.openDraft('arbitrary', title, 'bug', description, True)
     assert len(urls) == count
 
@@ -70,3 +70,21 @@ def test_collection_ignores_unknown_view_and_does_not_read_patient_or_host(feedb
     monkeypatch.setattr('platform.node', lambda: pytest.fail('Hostname must not be collected'))
     c.prepare(None, '/private/patient/name')
     assert 'View:' not in c.systemInfo and '/private' not in c.systemInfo
+
+
+def test_github_accepts_empty_draft_and_untitled_description(feedback):
+    c, urls = feedback
+    c.openDraft('github', ' ', 'bug', ' ', True)
+    assert urls[-1] == 'https://github.com/l5769389/voxenra/issues/new'
+    c.openDraft('github', '', 'bug', 'Steps to reproduce', True)
+    query = parse_qs(urlsplit(urls[-1]).query)
+    assert 'title' not in query
+    assert 'Steps to reproduce' in query['body'][0] and c.systemInfo in query['body'][0]
+
+
+def test_feedback_icon_is_registered_and_distinct(qt_app):
+    from qt_dicom_viewer.ui.svg_icon_provider import NAMES, render_icon
+    assert 'feedback' in NAMES
+    feedback = render_icon('feedback', '#aabcc8', 'transparent', 32, 32)
+    assert not feedback.isNull()
+    assert feedback != render_icon('help', '#aabcc8', 'transparent', 32, 32)

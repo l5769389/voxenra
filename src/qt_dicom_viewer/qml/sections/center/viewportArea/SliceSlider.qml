@@ -152,7 +152,7 @@ Item {
         onValueChanged: Qt.callLater(function() {
             // Accessible value setters do not emit moved(). Wait for range and
             // controller bindings to settle before forwarding an external value.
-            if (!sliceControl.pressed && root.sliceCount > 0
+            if (sliceControl && root && !sliceControl.pressed && root.sliceCount > 0
                     && Math.round(sliceControl.value) !== Math.max(1, Math.min(root.sliceCount, root.sliceNumber)))
                 root.selectSlice(Math.round(sliceControl.value) - 1)
         })

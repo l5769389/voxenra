@@ -145,7 +145,6 @@ ApplicationWindow {
         controller: appController.feedbackController
         parent: Overlay.overlay
         anchors.centerIn: parent
-        onManualRequested: window.workspaceController.openManual("")
     }
     Connections {
         target: appController.feedbackController

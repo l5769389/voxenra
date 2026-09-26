@@ -255,6 +255,7 @@
         <file>src/qt_dicom_viewer/qml/assets/help/workspace.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/measurement.png</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/manual.svg</file>
+        <file>src/qt_dicom_viewer/qml/assets/icons/feedback.svg</file>
         <file>src/qt_dicom_viewer/qml/components/WidthResizeHandle.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/StandalonePetVolumePanel.qml</file>
         <file>src/qt_dicom_viewer/qml/components/ApplicationTitleBar.qml</file>

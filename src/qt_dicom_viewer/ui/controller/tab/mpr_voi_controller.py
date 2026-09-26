@@ -62,6 +62,8 @@ class MprVoiController(QObject):
             self.changed.emit()
 
     def _activate(self):
+        if self.tools.restoring_selection:
+            return
         if self.tools.activeInteraction in ("mpr:segmentation", "mpr:voi"):
             self.tools.setMprProjectionEnabled(False)
             if getattr(self.parent(), "registrationActive", False):

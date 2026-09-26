@@ -397,7 +397,7 @@ class MprLayoutController(QObject):
             pet["scale"] = view.volume.pixel_value_meta.scale_from_source
         return dict(layout=self._layout, reference=self._reference_mode, linked=self._link_rotation,
                     camera=view.state, display=view.display_state,
-                    pet=pet, tool=str(self._tools.activeTool))
+                    pet=pet, tool=str(self._tools.activeTool), toolSelection=self._tools.persistent_selection())
 
     def restore(self, record):
         self.setLinkRotation(False)
@@ -413,7 +413,7 @@ class MprLayoutController(QObject):
         self._restore_pet_parameters()
         self._view.displayStateChanged.emit()
         self.setLinkRotation(record.get("linked", True))
-        self._tools.activateTool(record.get("tool", "volume-rotate"))
+        self._tools.restore_selection(record.get("toolSelection"), record.get("tool", "volume-rotate"))
 
     def dispose(self):
         self._disposed = True

@@ -42,6 +42,7 @@ ColumnLayout {
             model: measurePanel.toolController ? measurePanel.toolController.measureActions : []
             delegate: Components.ToolActionButton {
                 id: measureButton
+                objectName: "measureEntry-" + measureButton.modelData.action.split(":")[1]
                 required property var modelData
                 readonly property bool btnChecked: measureButton.modelData.action === (measurePanel.toolController?.activeInteraction ?? "")
 

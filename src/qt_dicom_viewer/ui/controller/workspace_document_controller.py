@@ -228,6 +228,15 @@ class WorkspaceDocumentController(QObject):
                 signal = getattr(tab, name, None)
                 if signal is not None:
                     signal.connect(self.mark_dirty)
+            tools = [getattr(tab, "toolController", None)]
+            tools.extend(group.toolController for group in getattr(tab, "groups", ()))
+            layout = getattr(tab, "mprLayout", None)
+            if layout is not None:
+                tools.append(layout.volumeTools)
+            for controller in tools:
+                if controller is not None:
+                    for name in ("activeToolChanged", "activePanelChanged", "activeInteractionChanged", "activeServiceChanged"):
+                        getattr(controller, name).connect(self.mark_dirty)
             history = getattr(tab, "_edit_history", None)
             if history is not None:
                 history.changed.connect(self.mark_dirty)

@@ -9,11 +9,11 @@ Components.AppDialog {
     id: dialog
     objectName: "feedbackDialog"
     required property var controller
-    signal manualRequested()
     readonly property bool hasAttachments: controller.attachments.length > 0
     readonly property bool canEmail: !controller.busy && subject.text.trim().length > 0 && (!hasAttachments || controller.attachmentsReviewed)
     width: Math.min(620, parent ? parent.width - 32 : 620)
     height: Math.min(680, parent ? parent.height - 40 : 680)
+    titleIcon: "feedback"
     title: qsTrId("feedback.title")
     subtitle: qsTrId("feedback.subtitle")
     function send(channel) {
@@ -40,12 +40,6 @@ Components.AppDialog {
                     Accessible.name: qsTrId("feedback.kind")
                 }
                 Item { Layout.fillWidth: true }
-                Components.AppButton {
-                    text: qsTrId("feedback.manual")
-                    iconName: "manual"
-                    normalColor: "transparent"
-                    onClicked: { dialog.close(); dialog.manualRequested() }
-                }
             }
             Components.AppTextField {
                 id: subject
@@ -240,7 +234,7 @@ Components.AppDialog {
                     text: qsTrId("feedback.github")
                     iconName: "github"
                     actionRole: "primary"
-                    enabled: subject.text.trim().length > 0 && !dialog.controller.busy
+                    enabled: !dialog.controller.busy
                     onClicked: dialog.send("github")
                 }
             }

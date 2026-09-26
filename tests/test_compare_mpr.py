@@ -409,3 +409,25 @@ def test_always_visible_link_controls_physical_scale_and_range_recovery(sidebar_
     wait_until(lambda: not warning.isVisible())
     assert a._target_mpr_state == original_a and tab.positionLinked
     assert not warnings, warnings
+
+
+def test_comparison_secondary_tools_restore_and_mark_workspace_dirty(comparison, tmp_path):
+    app, records = comparison
+    tab = open_pair(app, records)
+    a, b = tab.groups
+    for group, action in ((a, 'measure:curve'), (b, 'measure:ellipse')):
+        group.toolController.activateTool('measure')
+        group.toolController.selectInteraction(action)
+    manager = app.workspaceDocumentController
+    path = tmp_path / 'tools.voxworkspace'
+    assert manager.save_to(path)
+    wait_until(lambda: not manager.busy)
+    assert not manager.isError and not manager.dirty
+    a.toolController.selectInteraction('measure:angle')
+    assert manager.dirty
+    assert manager.restore_from(path)
+    wait_until(lambda: not manager.busy)
+    assert not manager.isError, manager.message
+    restored = app.workspaceController.activeTab
+    assert [g.toolController.activeInteraction for g in restored.groups] == ['measure:curve', 'measure:ellipse']
+    assert not restored.playing and not manager.dirty

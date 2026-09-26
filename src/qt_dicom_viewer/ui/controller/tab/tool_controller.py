@@ -92,6 +92,7 @@ class ToolController(QObject):
         if tab_type == TabType.PETCT_FUSION:
             self._active_tool = self._active_panel = ToolType.CT_WINDOW
         self._active_service = ""
+        self.restoring_selection = False
         self._mpr_projection_settings = MprProjectionSettings()
         self._locked_tool: ToolType | None = None
         if tab_type == TabType.THREE_D:
@@ -293,6 +294,60 @@ class ToolController(QObject):
 
     def lock_to_tool(self, tool: ToolType | None) -> None:
         self._locked_tool = tool
+
+    def persistent_selection(self) -> dict:
+        return dict(version=1, tool=str(self.activeTool), panel=self.activePanel,
+                    interaction=self.activeInteraction, service=self.activeService)
+
+    def restore_selection(self, state=None, legacy_tool=None) -> None:
+        """Restore selection only: never dispatch commands or select a service.
+
+        Notify observers after assigning the complete state. Activation observers
+        must respect restoring_selection so restored QA/VOI tools stay idle.
+        """
+        state = state if isinstance(state, dict) and state.get("version") == 1 else {}
+        value = state.get("tool", legacy_tool)
+        available = {item["toolType"] for item in self.tools if item.get("available")}
+        if not isinstance(value, str) or value not in available:
+            return
+        tool = ToolType(value)
+        definition = TOOL_DEFINITIONS[tool]
+        if definition.behavior in (ToolBehavior.COMMAND, ToolBehavior.TOGGLE):
+            return
+        if self._locked_tool is not None and tool != self._locked_tool:
+            return
+        service = state.get("service", "")
+        if not isinstance(service, str) or "service" not in available or service not in {item.action for item in SERVICE_ACTIONS}:
+            service = ""
+        interaction = definition.default_interaction
+        if tool == ToolType.MEASURE:
+            allowed = {item.action for item in MEASURE_ACTIONS}
+            if isinstance(state.get("interaction"), str) and state["interaction"] in allowed:
+                interaction = InteractionType(state["interaction"])
+        elif tool == ToolType.ANNOTATE:
+            if state.get("interaction") in ("annotate:arrow", "annotate:text"):
+                interaction = InteractionType(state["interaction"])
+        elif tool == ToolType.SERVICE and service:
+            interaction = InteractionType(service)
+        elif tool == ToolType.SEGMENTATION and self._modality == "MR":
+            interaction = InteractionType.PAN
+        panel = tool if definition.behavior != ToolBehavior.INTERACTION else None
+        if state.get("panel") == "" or (self._tab_type == TabType.THREE_D
+                and tool == ToolType.WINDOW and self._modality not in ("CT", "MR", "PETCT3D")):
+            panel = None
+        fields = (("_active_tool", tool, self.activeToolChanged),
+                  ("_active_panel", panel, self.activePanelChanged),
+                  ("_active_interaction", interaction, self.activeInteractionChanged),
+                  ("_active_service", service, self.activeServiceChanged))
+        changed = [signal for name, value, signal in fields if getattr(self, name) != value]
+        self.restoring_selection = True
+        try:
+            for name, value, _ in fields:
+                setattr(self, name, value)
+            for signal in changed:
+                signal.emit()
+        finally:
+            self.restoring_selection = False
 
     @Slot(str)
     def selectService(self, action: str) -> None:

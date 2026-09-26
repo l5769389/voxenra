@@ -686,3 +686,18 @@ def test_reference_maximize_restores_layout_and_workspace_state(loaded):
     layout.toggleMaximized()
     layout.setLayout('rows')
     assert tab.focusedViewportId == '' and not layout.active
+
+
+def test_workspace_restores_slice_and_reference_tool_selections(loaded):
+    _, tab, _, _, failures = loaded
+    tab.toolController.activateTool('measure')
+    tab.toolController.selectInteraction('measure:curve')
+    tab.mprLayout.volumeTools.activateTool('viewport-settings')
+    record = tab_snapshot(tab)
+    tab.toolController.activateTool('window')
+    tab.mprLayout.volumeTools.activateTool('pan')
+    apply_tab_snapshot(tab, record)
+    assert tab.toolController.activeTool == 'measure'
+    assert tab.toolController.activeInteraction == 'measure:curve'
+    assert tab.mprLayout.volumeTools.activeTool == 'viewport-settings'
+    assert not tab.playing and not failures

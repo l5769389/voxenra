@@ -21,7 +21,7 @@ NAMES = frozenset({
     'rotate-3d', 'rotate-ccw90', 'rotate-cw90', 'save', 'scroll',
     'segmentation', 'service', 'viewport-settings', 'voi', 'volume-crop',
     'window', 'zoom', 'workspace', 'status-pending',
-    'fwhm', 'github', 'check', 'chevron-left', 'chevron-right', 'chevron-down', 'chevron-up', 'close', 'folder', 'fullscreen', 'help', 'info',
+    'fwhm', 'github', 'feedback', 'check', 'chevron-left', 'chevron-right', 'chevron-down', 'chevron-up', 'close', 'folder', 'fullscreen', 'help', 'info',
     'pet-window', 'pseudocolor', 'registration', 'rotate-3d-variant', 'settings',
     'shield', 'slice-next', 'slice-previous', 'view-tile', 'volume-bed',
 })

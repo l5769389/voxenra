@@ -170,7 +170,7 @@ Rectangle {
                     objectName: "settingsFeedback"
                     Layout.fillWidth: true
                     text: qsTrId("feedback.title")
-                    iconName: "manual"
+                    iconName: "feedback"
                     normalColor: "transparent"
                     onClicked: appController.feedbackController.show()
                 }

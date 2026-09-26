@@ -228,7 +228,7 @@ class FeedbackController(QObject):
 
     @Slot(str, str, str, str, bool)
     def openDraft(self, channel, title, kind, description, include_info):
-        if self._busy or channel not in ('github', 'email') or not title.strip():
+        if self._busy or channel not in ('github', 'email') or (channel == 'email' and not title.strip()):
             return
         title = title.strip()[:160]
         body = self._body(kind, description, include_info)
@@ -238,8 +238,10 @@ class FeedbackController(QObject):
             return
         base = 'mailto:' + FEEDBACK_EMAIL if mail else ISSUE_URL
         key = 'subject' if mail else 'title'
-        query = {key: '[Voxenra] ' + title, 'body': body}
-        url = base + '?' + urlencode(query, quote_via=quote)
+        query = {'body': body} if title or description.strip() else {}
+        if title:
+            query[key] = '[Voxenra] ' + title
+        url = base + ('?' + urlencode(query, quote_via=quote) if query else '')
         # URL handlers have different limits. Preserve full drafts via explicit
         # clipboard fallback instead of silently truncating user descriptions.
         copied = len(url) > (1800 if mail else 7500)

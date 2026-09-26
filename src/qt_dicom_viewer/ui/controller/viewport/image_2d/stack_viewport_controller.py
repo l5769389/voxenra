@@ -49,6 +49,8 @@ class StackViewportController(Image2DViewportController):
             self._qa_controller.activate()
 
     def _service_panel_changed(self):
+        if self._tool_controller.restoring_selection:
+            return
         if self._tool_controller.activePanel == "service" and self._tool_controller.activeService == "service:qa":
             self._qa_controller.activate()
 

@@ -112,7 +112,8 @@ def tab_snapshot(tab):
                   focusedView=view_key(focused) if focused is not None else "",
                   mpr=tab._target_mpr_state, projection=tab.toolController.mpr_projection_settings,
                   linkedWindow=tab._linked_mpr_window, phase=tab._current_phase_index,
-                  fps=tab._fps, playbackMode=tab.playbackMode, tool=str(tab.toolController.activeTool))
+                  fps=tab._fps, playbackMode=tab.playbackMode, tool=str(tab.toolController.activeTool),
+                  toolSelection=tab.toolController.persistent_selection())
     if tab.mprLayout is not None:
         record["mprLayout"] = tab.mprLayout.snapshot()
     if hasattr(tab, "twoDLayout"):
@@ -169,12 +170,14 @@ def apply_tab_snapshot(tab, record):
     """Apply after initial loading, then render through the existing scheduler."""
     if "views" not in record:
         return
+    tab.pausePlayback()
     if tab.tab_config.tab_type == TabType.COMPARE_MPR:
         tab.restore_comparison(record["mprCompare"])
         for view in tab.viewports_by_id.values():
             if view_key(view) == record.get("activeView"):
                 tab.activateViewport(view.viewportId)
         apply_edits(tab, record["edits"])
+        tab.toolController.restore_selection(record.get("toolSelection"), record.get("tool"))
         return
     from qt_dicom_viewer.ui.controller.viewport.image_2d.montage_viewport_controller import MontageViewportController
     if hasattr(tab, "twoDLayout"):
@@ -265,8 +268,7 @@ def apply_tab_snapshot(tab, record):
     if tab.tab_config.tab_type == TabType.COMPARE_2D:
         tab.restore_sync(record.get("compareSync", {}))
         tab.setScrollMode(record.get("compareScrollMode", "relative"))
-    if record.get("tool"):
-        tab.toolController.activateTool(record["tool"])
+    tab.toolController.restore_selection(record.get("toolSelection"), record.get("tool"))
     if tab.mprLayout is not None:
         tab.mprLayout.sync_state()
         if record.get("activeView") == view_key(tab.mprLayout.volumeViewport):
