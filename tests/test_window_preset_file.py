@@ -3,7 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 import pytest
 from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.settings.window_presets import validate_document
+from qt_dicom_viewer.preset import CT_WINDOW_PRESETS
 from test_dicom_tags import qt_app
 
 
@@ -74,7 +74,7 @@ def test_external_edits_are_not_overwritten_and_failed_save_is_atomic(tmp_path, 
     monkeypatch.setattr('qt_dicom_viewer.settings.window_presets.write_document', fail)
     assert not settings.saveWindowTemplate('', 'New', 123, 0)
     assert settings.windowTemplates == old
-    assert len(json.loads(path.read_text())['presets']) == 4
+    assert len(json.loads(path.read_text())['presets']) == len(CT_WINDOW_PRESETS)
 
 
 def test_empty_list_is_valid_and_malformed_startup_file_is_not_replaced(tmp_path):
@@ -88,7 +88,7 @@ def test_empty_list_is_valid_and_malformed_startup_file_is_not_replaced(tmp_path
     assert settings.reloadWindowPresets() and not settings.window_presets
     assert not SettingsController(path=tmp_path / 'settings.json').window_presets
     assert settings.resetSection('window')
-    assert len(settings.window_presets) == 4
+    assert len(settings.window_presets) == len(CT_WINDOW_PRESETS)
 
 
 def test_open_location_and_reload_notifies_live_tools(qt_app, tmp_path, monkeypatch):
@@ -123,3 +123,53 @@ def test_failed_first_migration_preserves_legacy_when_saving_other_settings(tmp_
     restored = SettingsController(path=settings_path)
     assert restored.window_presets[-1]['label'] == 'Existing'
     assert Path(restored.windowPresetsPath).exists()
+
+
+def test_catalog_upgrade_preserves_values_and_only_adds_once(tmp_path):
+    path = tmp_path / 'window-presets.json'
+    original = [dict(presetId='ct-brain', label='My brain', width=99, center=44, enabled=False),
+                dict(presetId='custom-user', label='Custom', width=600, center=80, enabled=True),
+                dict(presetId='ct-liver', label='My liver', width=160, center=45, enabled=True)]
+    write(path, original)  # The previous application wrote schema 1 without catalogVersion.
+    settings = SettingsController(path=tmp_path / 'settings.json')
+    upgraded = json.loads(path.read_text())
+    assert upgraded['catalogVersion'] == 2
+    assert upgraded['presets'][:3] == original
+    assert 'ct-lung' not in {p['presetId'] for p in upgraded['presets']}  # Earlier deletion stays deleted.
+    assert sum(p['presetId'] == 'ct-liver' for p in upgraded['presets']) == 1
+    assert next(p for p in upgraded['presets'] if p['presetId'] == 'ct-mediastinum')['width'] == 350
+    assert settings.enableWindowTemplate('ct-mediastinum', False)
+    assert settings.deleteWindowTemplate('ct-posterior-fossa')
+    reloaded = SettingsController(path=tmp_path / 'settings.json')
+    assert not any(p['presetId'] == 'ct-posterior-fossa' for p in reloaded.windowTemplates)
+    assert not next(p for p in reloaded.windowTemplates if p['presetId'] == 'ct-mediastinum')['enabled']
+
+
+def test_new_defaults_and_reload_do_not_apply_an_upgrade_to_user_file(tmp_path):
+    settings = SettingsController(path=tmp_path / 'settings.json')
+    assert len(settings.windowTemplates) == 13
+    expected = {'ct-mediastinum': (350, 50), 'ct-abdomen': (400, 50), 'ct-liver': (150, 30),
+                'ct-subdural': (210, 100), 'ct-brain-narrow': (40, 40), 'ct-posterior-fossa': (250, 80),
+                'ct-temporal-bone': (2800, 600), 'ct-spine-soft-tissue': (250, 50), 'ct-spine-bone': (1800, 400)}
+    for item in settings.windowTemplates:
+        if item['presetId'] in expected:
+            assert (item['width'], item['center']) == expected[item['presetId']]
+    path = Path(settings.windowPresetsPath)
+    write(path, [dict(presetId='ct-brain', label='', width=100, center=50)])
+    assert settings.reloadWindowPresets()
+    assert len(settings.window_presets) == 1
+
+
+def test_failed_catalog_upgrade_retains_existing_entries(tmp_path, monkeypatch):
+    path = tmp_path / 'window-presets.json'
+    original = [dict(presetId='ct-brain', label='Changed', width=111, center=55, enabled=True),
+                dict(presetId='custom-user', label='Custom', width=888, center=99, enabled=True)]
+    write(path, original)
+    before = path.read_bytes()
+    def fail(*args): raise OSError('write failed')
+    monkeypatch.setattr('qt_dicom_viewer.settings.window_presets.write_document', fail)
+    settings = SettingsController(path=tmp_path / 'settings.json')
+    assert settings.message
+    assert settings.windowTemplates[0]['width'] == 111
+    assert settings.values['window']['custom'] == original[1:]
+    assert path.read_bytes() == before

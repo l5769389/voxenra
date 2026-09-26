@@ -13,15 +13,6 @@ ColumnLayout {
         Layout.fillWidth: true
         title: qsTrId("windowFile.title")
         description: qsTrId("windowFile.hint")
-        Text {
-            objectName: "windowPresetsPath"
-            Layout.fillWidth: true
-            text: root.settingsController.windowPresetsPath
-            textFormat: Text.PlainText
-            color: Theme.textSecondary
-            font.pixelSize: 12
-            wrapMode: Text.WrapAnywhere
-        }
         RowLayout {
             Layout.fillWidth: true
             Components.AppButton {

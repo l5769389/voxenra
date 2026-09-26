@@ -54,13 +54,17 @@ class SettingsController(QObject):
             try:
                 if self._window_path.exists():
                     self._window_entries, self._window_revision = preset_file.read_document(self._window_path)
+                    upgraded = preset_file.upgraded_defaults(self._window_entries, self._window_revision)
+                    if upgraded is not None:
+                        self._window_revision = preset_file.write_document(self._window_path, upgraded)
+                        self._window_entries = upgraded
                 else:
                     self._window_revision = preset_file.write_document(self._window_path, self._window_entries)
-                self._data["window"] = preset_file.legacy_view(self._window_entries)
             except (OSError, ValueError) as exc:
                 self._window_file_valid = False
                 self._message = _msg("windowFile.invalid", value1=str(exc))
 
+        self._data["window"] = preset_file.legacy_view(self._window_entries)
         self._message_is_error = bool(self._message)
 
     @Property(str, constant=True)

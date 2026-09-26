@@ -303,6 +303,12 @@ ColumnLayout {
 
             required property var modelData
             objectName: "windowPreset-" + modelData.presetId
+            Accessible.name: modelData.label + ", WW " + modelData.width + ", WL " + modelData.center
+
+            Components.AppToolTip {
+                visible: presetItem.hovered
+                text: presetItem.modelData.label + " · WW " + presetItem.modelData.width + " / WL " + presetItem.modelData.center
+            }
 
             width: presetList.width
             height: 36

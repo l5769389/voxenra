@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QPointF, Qt
+from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtTest import QTest
 
 from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
@@ -51,9 +51,12 @@ def test_real_settings_edits_and_reload(scene, tmp_path):
     click(window, find(window, 'setting-roi-mean'))
     assert not app.settingsController.values['roi']['mean']
     click(window, find(window, 'settingsCategory-window'))
+    from test_settings_redesign import reveal_setting
+    reveal_setting(window, find(window, 'windowTemplateName'))
     type_text(window, find(window, 'windowTemplateName'), 'My Lung')
     type_text(window, find(window, 'windowTemplateWidth'), '1234')
     type_text(window, find(window, 'windowTemplateCenter'), '-456')
+    reveal_setting(window, find(window, 'saveWindowTemplate'))
     click(window, find(window, 'saveWindowTemplate'))
     assert app.settingsController.values['window']['custom'][0]['width'] == 1234
     assert SettingsController(path=tmp_path / 'display-settings.json').values == app.settingsController.values
@@ -178,6 +181,7 @@ def test_window_preset_file_reload_and_location(scene, tmp_path, monkeypatch, th
     QTest.qWait(80)
     path = Path(app.settingsController.windowPresetsPath)
     assert path.is_file()
+    assert window.findChild(QObject, "windowPresetsPath") is None
     urls = []
     monkeypatch.setattr('qt_dicom_viewer.ui.controller.settings_controller.QDesktopServices.openUrl',
                         lambda url: urls.append(url.toLocalFile()) or True)
@@ -199,4 +203,31 @@ def test_window_preset_file_reload_and_location(scene, tmp_path, monkeypatch, th
     assert app.settingsController.windowTemplates == old
     assert app.settingsController.messageIsError
     assert find(window, 'settingsError').property('text')
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('theme,locale', [('graphite', 'zh-CN'), ('light', 'en-US')])
+def test_added_presets_apply_from_scrollable_window_panel(scene, tmp_path, theme, locale):
+    from test_series_sidebar import phantom_series
+    window, app, warnings = scene
+    window.resize(1280, 720)
+    app.settingsController.setValue('appearance', 'theme', theme)
+    app.languageController.selectLanguage(locale)
+    series = phantom_series(tmp_path, 1, 'SYNTHETIC', '1.2.3.1', '20260903')
+    app.panelController.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 3, 3, 0, [series]))
+    wait_until(lambda: app.workspaceController.activeViewport is not None and bool(app.workspaceController.activeViewport.imageSource))
+    view = app.workspaceController.activeViewport
+    QTest.qWait(100)
+    scroll = find(window, 'toolDetailFlickable')
+    for identifier, width, center in [('ct-liver', 150, 30), ('ct-spine-bone', 1800, 400)]:
+        item = find(window, 'windowPreset-' + identifier)
+        point = item.mapToItem(scroll, QPointF(0, 0))
+        maximum = max(0, scroll.property('contentHeight') - scroll.height())
+        scroll.setProperty('contentY', min(maximum, max(0, scroll.property('contentY') + point.y() - scroll.height()/2)))
+        QTest.qWait(70)
+        click(window, item)
+        wait_until(lambda: view.current_window.width == width and view.current_window.center == center)
+        assert item.property('checked')
+    destination = Path('build/window-presets-preview'); destination.mkdir(parents=True, exist_ok=True)
+    shot(window, 'new-presets-' + theme + '-' + locale, destination)
     assert not warnings, warnings

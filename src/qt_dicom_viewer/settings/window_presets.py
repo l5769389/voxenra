@@ -9,6 +9,24 @@ from qt_dicom_viewer.preset import CT_WINDOW_PRESETS
 
 BUILTIN_IDS = frozenset(p.preset_id for p in CT_WINDOW_PRESETS)
 MAX_BYTES = 1024 * 1024
+CATALOG_VERSION = 2
+ORIGINAL_IDS = frozenset(('ct-brain', 'ct-lung', 'ct-bone', 'ct-soft-tissue'))
+
+
+def upgraded_defaults(entries, payload):
+    """Append newly shipped presets once, preserving user values/order/deletions."""
+    version = json.loads(payload.decode('utf-8-sig')).get('catalogVersion', 1)
+    if type(version) is not int or version != 1:
+        return None
+    identifiers = {p['presetId'] for p in entries}
+    # An empty or wholly custom file is intentional; do not populate it.
+    if not identifiers & ORIGINAL_IDS:
+        return None
+    additions = [dict(presetId=p.preset_id, label='', width=p.width, center=p.center, enabled=True)
+                 for p in CT_WINDOW_PRESETS if p.preset_id not in ORIGINAL_IDS | identifiers]
+    if len(entries) + len(additions) > 100:
+        return None
+    return deepcopy(entries) + additions
 
 
 def from_legacy(settings):
@@ -63,7 +81,7 @@ def read_document(path):
 
 
 def write_document(path, entries):
-    payload = (json.dumps(dict(schemaVersion=1, presets=entries), ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+    payload = (json.dumps(dict(schemaVersion=1, catalogVersion=CATALOG_VERSION, presets=entries), ensure_ascii=False, indent=2) + '\n').encode('utf-8')
     path.parent.mkdir(parents=True, exist_ok=True)
     target = QSaveFile(str(path))
     if not target.open(QIODevice.WriteOnly) or target.write(payload) != len(payload) or not target.commit():

@@ -1486,7 +1486,7 @@
         "manual.colormap.section0.title": "Choose a color map",
         "manual.colormap.section0.body": "Set separate defaults for grayscale and PET in Settings. The tool on the right changes the current view; **Tiles synchronizes every cell**. Colors do not change original pixels.",
         "manual.colormap.section1.title": "Manage window presets",
-        "manual.colormap.section1.body": "Window presets are stored in **window-presets.json**. In **Settings → Window presets**, choose **Open file location**, edit the file, then **Reload presets** without restarting. Existing custom presets and enabled states migrate automatically. Adding, saving or enabling presets in the app writes to the same file. Up to 100 presets are supported. Reloading updates the list without changing the current image window; invalid files leave the current list unchanged and show a reason.\n\nThe JSON root contains `schemaVersion: 1` and a `presets` array. Each entry has a unique `presetId`, name `label`, window width `width` (WW), window level `center` (WL), and `enabled`. An empty `label` on a default CT preset uses its translated name; a nonempty label overrides it. Array order controls display order; `enabled: false` hides the entry.\n\nExample entry: `{\"presetId\":\"custom-lung\",\"label\":\"Lung\",\"width\":1500,\"center\":-600,\"enabled\":true}`. Width must be 1–1000000, center −1000000–1000000; names must be unique. **MR does not use CT window presets**.",
+        "manual.colormap.section1.body": "Window presets are stored in **window-presets.json**. In **Settings → Window presets**, choose **Open file location**, edit the file, then **Reload presets** without restarting. Existing custom presets and enabled states migrate automatically. Adding, saving or enabling presets in the app writes to the same file. Up to 100 presets are supported. Reloading updates the list without changing the current image window; invalid files leave the current list unchanged and show a reason.\n\nThe JSON root contains `schemaVersion: 1` and a `presets` array. Each entry has a unique `presetId`, name `label`, window width `width` (WW), window level `center` (WL), and `enabled`. An empty `label` on a default CT preset uses its translated name; a nonempty label overrides it. Array order controls display order; `enabled: false` hides the entry.\n\nExample entry: `{\"presetId\":\"custom-lung\",\"label\":\"Lung\",\"width\":1500,\"center\":-600,\"enabled\":true}`. Width must be 1–1000000, center −1000000–1000000; names must be unique. **MR does not use CT window presets**. There are 13 default CT presets: brain, lung, bone, soft tissue, mediastinum, abdomen, liver, subdural, narrow brain, posterior fossa, temporal bone, spine soft tissue and spine bone. These are display starting points and may need adjustment for each image. Older configurations receive the new presets once, preserving existing values, names and enabled states. Subsequent deletions stay deleted after restarting.",
         "manual.colormap.section2.title": "Apply and reset",
         "manual.colormap.section2.body": "A preset applies **when clicked**; editing its list does not change the image. Reset 2D windowing to restore initial values. CT 3D uses separate volume presets.",
         "manual.crosshair.title": "Crosshair styles",
@@ -2158,6 +2158,15 @@
         "windowFile.loaded": "Window presets reloaded.",
         "windowFile.invalid": "Window presets could not be loaded or saved. Current presets are unchanged. Reason: {value1}",
         "windowFile.changed": "The file has changed or is invalid. Correct it and reload before saving presets.",
-        "windowFile.openFailed": "Could not open the window preset folder."
+        "windowFile.openFailed": "Could not open the window preset folder.",
+        "windowPreset.mediastinum": "Mediastinum",
+        "windowPreset.abdomen": "Abdomen",
+        "windowPreset.liver": "Liver",
+        "windowPreset.subdural": "Subdural",
+        "windowPreset.brain-narrow": "Brain narrow",
+        "windowPreset.posterior-fossa": "Posterior fossa",
+        "windowPreset.temporal-bone": "Temporal bone",
+        "windowPreset.spine-soft-tissue": "Spine soft tissue",
+        "windowPreset.spine-bone": "Spine bone"
     }
 }
