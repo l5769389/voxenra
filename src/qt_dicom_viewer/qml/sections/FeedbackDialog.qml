@@ -10,6 +10,8 @@ Components.AppDialog {
     objectName: "feedbackDialog"
     required property var controller
     signal manualRequested()
+    readonly property bool hasAttachments: controller.attachments.length > 0
+    readonly property bool canEmail: !controller.busy && subject.text.trim().length > 0 && (!hasAttachments || controller.attachmentsReviewed)
     width: Math.min(620, parent ? parent.width - 32 : 620)
     height: Math.min(680, parent ? parent.height - 40 : 680)
     title: qsTrId("feedback.title")
@@ -19,6 +21,8 @@ Components.AppDialog {
     }
     contentItem: Basic.ScrollView {
         id: scroller
+        objectName: "feedbackScroll"
+        rightPadding: 10
         clip: true
         contentWidth: availableWidth
         Basic.ScrollBar.horizontal.policy: Basic.ScrollBar.AlwaysOff
@@ -77,6 +81,71 @@ Components.AppDialog {
             }
             RowLayout {
                 Layout.fillWidth: true
+                Components.AppButton {
+                    objectName: "feedbackAddAttachments"
+                    text: qsTrId("feedback.addAttachments")
+                    enabled: !dialog.controller.busy
+                    onClicked: dialog.controller.chooseAttachments()
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTrId("feedback.attachmentHint")
+                    color: Theme.textMuted
+                    wrapMode: Text.Wrap
+                    font.pixelSize: 12
+                }
+            }
+            Repeater {
+                model: dialog.controller.attachments
+                delegate: RowLayout {
+                    id: attachmentRow
+                    required property int index
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        text: attachmentRow.modelData.name
+                        textFormat: Text.PlainText
+                        elide: Text.ElideMiddle
+                        color: Theme.textSecondary
+                        font.pixelSize: 12
+                    }
+                    Text {
+                        text: attachmentRow.modelData.size < 0 ? qsTrId("feedback.missingFile") : attachmentRow.modelData.size >= 1048576
+                            ? (attachmentRow.modelData.size / 1048576).toFixed(1) + " MiB"
+                            : (attachmentRow.modelData.size / 1024).toFixed(1) + " KiB"
+                        color: Theme.textMuted
+                        font.pixelSize: 12
+                    }
+                    Components.AppButton {
+                        objectName: "feedbackRemoveAttachment-" + attachmentRow.index
+                        iconName: "close"
+                        compact: true
+                        Accessible.name: qsTrId("feedback.removeAttachment") + " " + attachmentRow.modelData.name
+                        enabled: !dialog.controller.busy
+                        onClicked: dialog.controller.removeAttachment(attachmentRow.index)
+                    }
+                }
+            }
+            Components.AppCheckBox {
+                objectName: "feedbackReviewAttachments"
+                visible: dialog.hasAttachments
+                Layout.fillWidth: true
+                text: qsTrId("feedback.reviewAttachments")
+                checked: dialog.controller.attachmentsReviewed
+                enabled: !dialog.controller.busy
+                onClicked: dialog.controller.setAttachmentsReviewed(checked)
+            }
+            Components.AppButton {
+                objectName: "feedbackSaveEmail"
+                visible: dialog.hasAttachments
+                text: qsTrId("feedback.saveEmail")
+                enabled: dialog.canEmail
+                onClicked: dialog.controller.saveEmail(subject.text, kind.currentIndex === 1 ? "suggestion" : "bug", description.text, includeInfo.checked)
+            }
+            RowLayout {
+                Layout.fillWidth: true
                 Components.AppCheckBox {
                     id: includeInfo
                     objectName: "feedbackIncludeInfo"
@@ -129,6 +198,16 @@ Components.AppDialog {
                     onClicked: dialog.controller.copyEmail()
                 }
             }
+
+        }
+    }
+    footer: Item {
+        implicitHeight: footerContent.implicitHeight + 32
+        ColumnLayout {
+            id: footerContent
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 10
             Text {
                 objectName: "feedbackStatus"
                 Layout.fillWidth: true
@@ -141,33 +220,29 @@ Components.AppDialog {
                 Accessible.role: Accessible.StaticText
                 Accessible.name: text
             }
-        }
-    }
-    footer: Item {
-        implicitHeight: 64
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: 16
-            spacing: 8
-            Components.AppButton {
-                objectName: "feedbackCopy"
-                text: qsTrId("feedback.copy")
-                onClicked: dialog.controller.copyFeedback(subject.text, kind.currentIndex === 1 ? "suggestion" : "bug", description.text, includeInfo.checked)
-            }
-            Item { Layout.fillWidth: true }
-            Components.AppButton {
-                objectName: "feedbackEmail"
-                text: qsTrId("feedback.email")
-                enabled: subject.text.trim().length > 0
-                onClicked: dialog.send("email")
-            }
-            Components.AppButton {
-                objectName: "feedbackGitHub"
-                text: qsTrId("feedback.github")
-                iconName: "github"
-                actionRole: "primary"
-                enabled: subject.text.trim().length > 0
-                onClicked: dialog.send("github")
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Components.AppButton {
+                    objectName: "feedbackCopy"
+                    text: qsTrId("feedback.copy")
+                    onClicked: dialog.controller.copyFeedback(subject.text, kind.currentIndex === 1 ? "suggestion" : "bug", description.text, includeInfo.checked)
+                }
+                Item { Layout.fillWidth: true }
+                Components.AppButton {
+                    objectName: "feedbackEmail"
+                    text: dialog.controller.busy ? qsTrId("feedback.mailWorking") : qsTrId("feedback.email")
+                    enabled: dialog.canEmail
+                    onClicked: dialog.send("email")
+                }
+                Components.AppButton {
+                    objectName: "feedbackGitHub"
+                    text: qsTrId("feedback.github")
+                    iconName: "github"
+                    actionRole: "primary"
+                    enabled: subject.text.trim().length > 0 && !dialog.controller.busy
+                    onClicked: dialog.send("github")
+                }
             }
         }
     }

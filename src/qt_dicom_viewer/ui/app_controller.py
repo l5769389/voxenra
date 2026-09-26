@@ -159,6 +159,7 @@ class AppController(QObject):
 
     @Slot()
     def shutdown(self) -> None:
+        self._feedback_controller.shutdown()
         self._update_controller.shutdown()
         self._dialog_locations.deactivate()
         self._workspace_document_controller.shutdown()

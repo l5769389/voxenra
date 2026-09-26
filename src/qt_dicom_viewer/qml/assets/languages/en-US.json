@@ -2131,6 +2131,25 @@
         "feedback.openFailed": "Could not open the feedback channel. Copy your feedback and open GitHub in a browser or send an email manually.",
         "feedback.draftOpened": "Requested opening a draft. Review it before submitting. If no draft appears, copy the feedback and send it manually.",
         "manual.settings.feedback.title": "Help & feedback",
-        "manual.settings.feedback.body": "Open **Help & feedback** at the bottom of Settings navigation or the manual contents. Enter a title and description, review the optional system information, then choose **Open GitHub** or **Email**. GitHub opens a prefilled issue; email opens a draft addressed to **5769389@qq.com**. Review and submit it yourself. Long feedback is copied in full for pasting into the draft; you can also copy feedback or the address directly. System information excludes patient data, images, file paths and logs. Add screenshots manually and hide patient details first."
+        "manual.settings.feedback.body": "Open **Help & feedback** at the bottom of Settings navigation or the manual contents. Enter a title and description, review the optional system information, then choose **Open GitHub** or **Email**. GitHub opens a prefilled issue; email opens a draft addressed to **5769389@qq.com**. Review and submit it yourself. Long feedback is copied in full for pasting into the draft; you can also copy feedback or the address directly. System information excludes patient data, images, file paths and logs. Add screenshots manually and hide patient details first. Use **Add attachments** for images, DICOM, PDF, ZIP or other regular files (up to 32 files, 25 MiB total). Check patient information and confirm sharing, then **Email** requests a system composer with attachments for you to review and send. macOS uses its email sharing service; Windows requires a MAPI-compatible mail client. Otherwise, **Save email file** (.eml) and edit or forward it in your mail client. Mail providers may impose lower size limits, and attachment encoding increases message size. Attachments are not automatically anonymized or uploaded to GitHub.",
+        "feedback.addAttachments": "Add attachments",
+        "feedback.chooseAttachments": "Choose feedback attachments",
+        "feedback.fileFilter": "Common attachments (*.png *.jpg *.jpeg *.dcm *.dicom *.pdf *.zip);;All files (*)",
+        "feedback.attachmentHint": "For email only: up to 32 files, 25 MiB total. Add files on GitHub manually.",
+        "feedback.removeAttachment": "Remove attachment",
+        "feedback.missingFile": "Missing file",
+        "feedback.reviewAttachments": "I have checked patient details; these files can be shared.",
+        "feedback.reviewRequired": "Check attachments for patient information and confirm they can be shared.",
+        "feedback.attachmentInvalid": "An attachment is missing, unreadable or not a regular file. Select it again.",
+        "feedback.attachmentLimit": "Choose up to 32 attachments totaling no more than 25 MiB. Reduce the selection or choose an archive.",
+        "feedback.saveEmail": "Save email file…",
+        "feedback.saveFailed": "Could not save the email file. Check the attachments, destination and free space; do not overwrite a source attachment.",
+        "feedback.savedEmail": "Email file saved with the message and all attachments. Open it in a mail client to edit or forward; direct editing depends on the client.",
+        "feedback.attachmentDraft": "Requested an email composer with attachments. Check the recipient and files before sending. If it does not open, save an email file.",
+        "feedback.mailUnavailable": "The mail client could not accept attachments. Save an email file or attach the selected files manually in your mail client.",
+        "feedback.mailBusy": "Complete the action in the system mail window. The app does not send automatically.",
+        "feedback.mailWorking": "Mail window active",
+        "feedback.mailCancelled": "Email action cancelled. Your attachment selection is retained.",
+        "feedback.mailReturned": "The mail client has finished this action. Check delivery status in your mail client."
     }
 }

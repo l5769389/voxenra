@@ -7,7 +7,7 @@ import weakref
 from PySide6.QtCore import QIODevice, QSaveFile, QStandardPaths
 
 _current = None
-_KEYS = {"images", "workspace", "attachments", "export"}
+_KEYS = {"images", "workspace", "attachments", "export", "feedback"}
 
 
 def current_locations():
@@ -74,6 +74,8 @@ class DialogLocations:
 def location_key(caption):
     """Stable message IDs keep histories shared across application languages."""
     key = getattr(caption, "key", "")
+    if key in {"feedback.chooseAttachments", "feedback.saveEmail"}:
+        return "feedback"
     if key in {"text.0414", "text.0417"}:
         return "workspace"
     if key in {"seg.chooseFile", "text.0565"}:

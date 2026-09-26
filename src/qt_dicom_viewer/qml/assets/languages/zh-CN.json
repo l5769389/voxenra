@@ -2131,6 +2131,25 @@
         "feedback.openFailed": "无法打开反馈渠道。请复制反馈内容，在浏览器中打开 GitHub 或手动发送邮件。",
         "feedback.draftOpened": "已请求打开草稿，请检查内容后自行提交。若未打开，可复制内容后手动发送。",
         "manual.settings.feedback.title": "帮助与反馈",
-        "manual.settings.feedback.body": "点击 **设置导航底部 → 帮助与反馈**，或操作手册目录底部的同名入口。填写标题和问题描述，检查可选的基础信息，再选择 **前往 GitHub** 或 **邮件反馈**。GitHub 会预填新议题，邮件会打开写给 **5769389@qq.com** 的草稿，均由你检查后发送。内容过长时会完整复制到剪贴板，请粘贴到草稿中；也可直接复制反馈内容或邮箱。基础信息不包含患者资料、影像、文件路径或日志；截图需自行添加并遮挡患者信息。"
+        "manual.settings.feedback.body": "点击 **设置导航底部 → 帮助与反馈**，或操作手册目录底部的同名入口。填写标题和问题描述，检查可选的基础信息，再选择 **前往 GitHub** 或 **邮件反馈**。GitHub 会预填新议题，邮件会打开写给 **5769389@qq.com** 的草稿，均由你检查后发送。内容过长时会完整复制到剪贴板，请粘贴到草稿中；也可直接复制反馈内容或邮箱。基础信息不包含患者资料、影像、文件路径或日志；截图需自行添加并遮挡患者信息。 可在反馈窗口 **添加附件**，支持图片、DICOM、PDF、ZIP 等普通文件（最多 32 个、合计 25 MiB）。检查患者信息并勾选确认后，**邮件反馈**会请求系统邮件编辑窗口携带附件，由你核对后发送。macOS 使用邮件分享服务，Windows 需要支持 MAPI 的邮件客户端；不支持时可 **保存邮件文件**（.eml），再用邮件客户端编辑或转发。邮件服务的实际大小限制可能更低，附件编码也会增加邮件大小。附件不会自动匿名化，不会上传到 GitHub。",
+        "feedback.addAttachments": "添加附件",
+        "feedback.chooseAttachments": "选择反馈附件",
+        "feedback.fileFilter": "常用附件 (*.png *.jpg *.jpeg *.dcm *.dicom *.pdf *.zip);;所有文件 (*)",
+        "feedback.attachmentHint": "仅用于邮件；最多 32 个文件、合计 25 MiB。GitHub 需手动添加。",
+        "feedback.removeAttachment": "移除附件",
+        "feedback.missingFile": "文件缺失",
+        "feedback.reviewAttachments": "已检查附件中的患者信息，可以分享",
+        "feedback.reviewRequired": "请先检查附件是否包含患者信息，再确认可以分享。",
+        "feedback.attachmentInvalid": "附件不存在、无法读取或不是普通文件，请重新选择。",
+        "feedback.attachmentLimit": "附件最多 32 个、合计不超过 25 MiB。请减少文件或选择压缩包。",
+        "feedback.saveEmail": "保存邮件文件…",
+        "feedback.saveFailed": "无法保存邮件文件。请检查附件、目标位置和可用空间，不要覆盖原始附件。",
+        "feedback.savedEmail": "邮件文件已保存，包含正文和全部附件。可用邮件客户端打开并编辑或转发；是否可直接编辑取决于客户端。",
+        "feedback.attachmentDraft": "已请求打开含附件的邮件编辑窗口。请核对收件人和附件后发送；未打开时可保存邮件文件。",
+        "feedback.mailUnavailable": "当前邮件客户端无法接收附件。请保存邮件文件，或在邮件中手动添加所选文件。",
+        "feedback.mailBusy": "请在系统邮件窗口中完成操作；软件不会自动发送。",
+        "feedback.mailWorking": "邮件窗口已打开",
+        "feedback.mailCancelled": "已取消邮件操作，附件选择已保留。",
+        "feedback.mailReturned": "邮件客户端已完成本次操作。投递结果请在邮件客户端查看。"
     }
 }
