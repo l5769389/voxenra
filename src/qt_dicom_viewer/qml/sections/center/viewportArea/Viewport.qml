@@ -311,8 +311,8 @@ Item {
         measurementCursorKind:
             viewportRoot.viewportController
                 ? (activeInteraction === "service:qa" && viewportRoot.viewportController.qaController
-                    ? viewportRoot.viewportController.qaController.hoverCursorKind
-                    : viewportRoot.viewportController.activeAnnotationController.hoverCursorKind)
+                    ? (viewportRoot.viewportController.qaController?.hoverCursorKind ?? "")
+                    : (viewportRoot.viewportController.activeAnnotationController?.hoverCursorKind ?? ""))
                 : ""
         regionCursorKind: viewportRoot.viewportController?.regionCursorKind ?? ""
 

@@ -80,7 +80,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 32
-        text: measurementLayer.measurementController ? measurementLayer.measurementController.instruction : ""
+        text: measurementLayer.measurementController?.instruction ?? ""
         visible: text.length > 0
         color: Theme.measurementSelected
         font.pixelSize: 13

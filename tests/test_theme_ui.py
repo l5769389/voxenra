@@ -69,7 +69,7 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
         capture(window, theme + '-settings', tmp_path)
         dialog = LocalImportDialog(str(tmp_path))
         try:
-            dialog.show(); QTest.qWait(100)
+            dialog.show(); wait_until(lambda: not dialog._loading)
             assert palette['panelBackground'] in dialog.styleSheet()
             assert dialog.open_button.isEnabled()
             capture(dialog, theme + '-import', tmp_path)

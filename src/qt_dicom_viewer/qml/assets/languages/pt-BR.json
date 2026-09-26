@@ -551,6 +551,8 @@
     "text.0537": "Caminho da pasta ou do arquivo",
     "text.0538": "Selecione pastas, arquivos e arquivos compactados juntos; segure Ctrl / ⌘ para várias seleções. Clique duas vezes em uma pasta para navegar.",
     "text.0539": "Cancelar",
+    "import.readingDirectory": "Lendo pasta…",
+    "import.directoryUnavailable": "Não foi possível ler esta pasta. Verifique o caminho ou as permissões de acesso.",
     "text.0540": "Este caminho não existe. Verifique e tente novamente.",
     "text.0541": "Selecionados {value1} pastas e {value2} arquivos",
     "text.0542": "Sem nenhuma seleção, você pode abrir a pasta atual.",

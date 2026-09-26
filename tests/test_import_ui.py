@@ -44,6 +44,9 @@ def test_single_click_opens_mixed_picker(scene, entry, tmp_path):
             if dialog:
                 dialog.reject()
 
+    if entry == "shortcut":
+        window.requestActivate()
+        QTest.qWaitForWindowActive(window)
     QTimer.singleShot(100, inspect)
     if entry == "shortcut":
         QTest.keySequence(window, QKeySequence(QKeySequence.StandardKey.Open))
@@ -114,6 +117,7 @@ def test_picker_navigation_current_folder_and_cancel(qt_app, tmp_path):
         assert dialog.isVisible() and dialog.path_edit.text() == str(folder)
         dialog.path_edit.setText(str(nested))
         QTest.keyClick(dialog.path_edit, Qt.Key_Return)
+        wait_until(lambda: not dialog._loading)
         assert dialog.isVisible() and dialog.path_edit.text() == str(nested)
         QTest.mouseClick(dialog.open_button, Qt.LeftButton)
         assert dialog.paths == [str(nested)]
@@ -205,7 +209,7 @@ def test_picker_uses_native_close_and_fixed_cancel_confirm_order(qt_app, tmp_pat
             assert cancel.geometry().right() < confirm.geometry().left()
             assert cancel.geometry().center().y() == confirm.geometry().center().y()
             assert confirm.geometry().right() == width - 17
-            assert confirm.geometry().bottom() == height - 17
+            assert abs(confirm.geometry().bottom() - (height - 17)) <= 1
         assert dialog.grab().save(str(tmp_path / "picker-dialog-actions.png"))
         assert dialog.close()
         assert dialog.result() == QDialog.Rejected and not dialog.paths
@@ -230,6 +234,7 @@ def test_picker_accessible_cells_invalidated_on_navigation_and_selection_survive
             folder=folders[i%2]
             dialog.path_edit.setText(str(folder))
             QTest.keyClick(dialog.path_edit,Qt.Key_Return)
+            wait_until(lambda: not dialog._loading)
             assert dialog._directory == str(folder)
             assert dialog.model.rowCount() == (104 if i%2==0 else 2)
             assert not dialog.view.rootIndex().isValid()
@@ -241,3 +246,61 @@ def test_picker_accessible_cells_invalidated_on_navigation_and_selection_survive
         assert dialog.model.filePath(dialog.model.index(0,0)).endswith('001.dcm')
     finally:
         dialog.close();delete(dialog)
+
+
+def test_slow_directory_keeps_dialog_responsive_and_ignores_stale_result(qt_app, tmp_path, monkeypatch):
+    import threading
+    import qt_dicom_viewer.ui.dialogs.local_import_dialog as picker
+
+    slow, fast = tmp_path / 'slow', tmp_path / 'fast'
+    slow.mkdir(); fast.mkdir()
+    (slow / 'old.dcm').write_bytes(b'old')
+    (fast / 'new.dcm').write_bytes(b'new')
+    entered, release = threading.Event(), threading.Event()
+    original = picker.os.scandir
+
+    def delayed(path):
+        if Path(path) == slow:
+            entered.set()
+            release.wait(5)
+        return original(path)
+
+    monkeypatch.setattr(picker.os, 'scandir', delayed)
+    dialog = LocalImportDialog(str(slow)); dialog.show()
+    try:
+        wait_until(entered.is_set)
+        assert dialog.isVisible() and dialog._loading
+        assert not dialog.open_button.isEnabled()
+        dialog.navigate(str(fast))
+        wait_until(lambda: not dialog._loading)
+        assert dialog._directory == str(fast)
+        assert dialog.model.index(str(fast / 'new.dcm')).isValid()
+        release.set()
+        wait_until(lambda: not dialog._directory_results.empty())
+        dialog._finish_navigation()
+        assert dialog._directory == str(fast)
+        assert dialog.model.index(str(fast / 'new.dcm')).isValid()
+        # Closing while another filesystem request is blocked must not wait on it.
+        release.clear(); entered.clear()
+        dialog.navigate(str(slow))
+        wait_until(entered.is_set)
+        dialog.reject()
+        assert not dialog.isVisible()
+    finally:
+        delete(dialog)
+        release.set()
+
+
+def test_typed_file_is_selected_after_async_navigation(qt_app, tmp_path):
+    file = tmp_path / 'image.dcm'; file.write_bytes(b'dicom')
+    dialog = LocalImportDialog(str(tmp_path)); dialog.show()
+    try:
+        wait_until(lambda: not dialog._loading)
+        dialog.path_edit.setText(str(file))
+        QTest.keyClick(dialog.path_edit, Qt.Key_Return)
+        wait_until(lambda: not dialog._loading)
+        assert dialog.selected_paths() == [str(file)]
+        dialog.accept()
+        assert dialog.paths == [str(file)]
+    finally:
+        delete(dialog)

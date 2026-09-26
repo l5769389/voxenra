@@ -559,6 +559,8 @@
         "text.0537": "Folder or file path",
         "text.0538": "Select folders, files and archives together; hold Ctrl / ⌘ for multiple selections. Double-click a folder to browse.",
         "text.0539": "Cancel",
+        "import.readingDirectory": "Reading folder…",
+        "import.directoryUnavailable": "Cannot read this folder. Check its path or access permissions.",
         "text.0540": "This path does not exist. Check it and try again.",
         "text.0541": "Selected {value1} folders and {value2} files",
         "text.0542": "With no selection, you can open the current folder.",

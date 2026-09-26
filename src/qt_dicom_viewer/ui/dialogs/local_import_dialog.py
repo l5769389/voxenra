@@ -2,6 +2,9 @@
 from qt_dicom_viewer.i18n import message as _msg, localize
 
 from pathlib import Path
+import os
+import queue
+import threading
 
 from PySide6.QtCore import QEvent, QDir, QFileInfo, QFileSystemWatcher, QTimer, QAbstractTableModel, QLocale, QModelIndex, QItemSelectionModel, QStandardPaths, Qt
 from PySide6.QtGui import QGuiApplication
@@ -49,17 +52,10 @@ class ImportFileModel(QAbstractTableModel):
                 return info.lastModified().toString('yyyy-MM-dd HH:mm')
         return None
 
-    def load_directory(self, directory):
-        # Enumerate before resetting: failed navigation preserves the old view.
-        if directory:
-            import os
-            with os.scandir(directory) as entries:
-                files = [QFileInfo(entry.path) for entry in entries if not entry.name.startswith('.')]
-        else:
-            files = QDir.drives()
+    def set_files(self, files):
         self.beginResetModel()
         self._files = files
-        self._rows = {info.absoluteFilePath(): row for row, info in enumerate(files)}
+        self._rows = {QDir.toNativeSeparators(info.absoluteFilePath()): row for row, info in enumerate(files)}
         self.endResetModel()
 
     def sort(self, column, order=Qt.AscendingOrder):
@@ -73,17 +69,17 @@ class ImportFileModel(QAbstractTableModel):
         old = self.persistentIndexList()
         locations = [(self.filePath(i), i.column()) for i in old]
         self._files.sort(key=keys[column], reverse=order == Qt.DescendingOrder)
-        self._rows = {info.absoluteFilePath(): row for row, info in enumerate(self._files)}
+        self._rows = {QDir.toNativeSeparators(info.absoluteFilePath()): row for row, info in enumerate(self._files)}
         self.changePersistentIndexList(old, [self.index(self._rows[path], col) for path, col in locations])
         self.layoutChanged.emit()
 
     def index(self, row, column=0, parent=QModelIndex()):
         if isinstance(row, str):
-            row = self._rows.get(str(Path(row).absolute()), -1)
+            row = self._rows.get(QDir.toNativeSeparators(QFileInfo(row).absoluteFilePath()), -1)
         return super().index(row, column, parent)
 
     def filePath(self, index):
-        return self._files[index.row()].absoluteFilePath() if index.isValid() and 0 <= index.row() < len(self._files) else ""
+        return QDir.toNativeSeparators(self._files[index.row()].absoluteFilePath()) if index.isValid() and 0 <= index.row() < len(self._files) else ""
 
     def isDir(self, index):
         return self._files[index.row()].isDir() if index.isValid() and 0 <= index.row() < len(self._files) else False
@@ -98,6 +94,12 @@ class LocalImportDialog(QDialog):
         self.setMinimumSize(620, 400)
         self.paths = []
         self._directory = ""
+        self._navigation_id = 0
+        self._loading = False
+        self._directory_results = queue.SimpleQueue()
+        self._directory_timer = QTimer(self)
+        self._directory_timer.setInterval(20)
+        self._directory_timer.timeout.connect(self._finish_navigation)
         self._apply_theme()
         from qt_dicom_viewer.ui.controller import appearance_controller
         appearance = appearance_controller._current() if appearance_controller._current else None
@@ -164,7 +166,7 @@ class LocalImportDialog(QDialog):
         self.cancel_button.setMinimumWidth(80)
         self.cancel_button.clicked.connect(self.reject)
         buttons.addWidget(self.cancel_button)
-        self.open_button = QPushButton()
+        self.open_button = QPushButton(_msg('text.0544'))
         self.open_button.setObjectName("importOpen")
         self.open_button.setMinimumWidth(144)
         self.open_button.setDefault(True)
@@ -176,7 +178,7 @@ class LocalImportDialog(QDialog):
             or QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
             or str(Path.home())
         )
-        self.navigate(initial if Path(initial).is_dir() else str(Path.home()))
+        self.navigate(initial)
 
     def _apply_theme(self, *_):
         from qt_dicom_viewer.ui.controller.appearance_controller import current_colors
@@ -229,38 +231,77 @@ class LocalImportDialog(QDialog):
             for index in self.view.selectionModel().selectedRows(0)
         ]
 
-    def navigate(self, directory):
-        if directory and not Path(directory).is_dir():
-            return
-        target = str(Path(directory).resolve()) if directory else ""
-        try:
-            self.model.load_directory(target)
-        except OSError:
-            self.selection_label.setText(_msg('text.0540'))
-            return
-        self._directory = target
-        if self._watcher.directories() != ([target] if target else []):
-            if self._watcher.directories():
-                self._watcher.removePaths(self._watcher.directories())
-            if target:
-                self._watcher.addPath(target)
-        self.view.sortByColumn(self.view.horizontalHeader().sortIndicatorSection(),
-                               self.view.horizontalHeader().sortIndicatorOrder())
-        self.view.setColumnWidth(0, 420)
-        self.view.clearSelection()
-        self.path_edit.setText(self._directory)
-        self.update_selection()
+    def navigate(self, directory, *, typed=False, restore_selection=()):
+        self._navigation_id += 1
+        request = self._navigation_id
+        results = self._directory_results
+        self._loading = True
+        self.path_edit.setText(directory)
+        self.view.setEnabled(False)
+        self.open_button.setEnabled(False)
+        self.selection_label.setText(_msg('import.readingDirectory'))
+        self._directory_timer.start()
+
+        # Filesystem access may wait on a network mount or OS consent. Keep it
+        # outside both the GUI thread and Qt's shutdown-waited thread pool.
+        # Only the queue is captured: closing the dialog cannot access deleted Qt objects.
+        def read_directory():
+            try:
+                path = Path(directory).expanduser() if directory else None
+                selected = list(restore_selection)
+                if typed and path.is_file():
+                    selected = [str(path.absolute())]
+                    path = path.parent
+                target = str(path.resolve()) if path is not None else ""
+                if target:
+                    with os.scandir(target) as entries:
+                        files = [QFileInfo(entry.path) for entry in entries if not entry.name.startswith('.')]
+                else:
+                    files = QDir.drives()
+                for info in files:
+                    info.isDir()
+                    info.size()
+                    info.lastModified()
+                results.put((request, target, files, selected, False))
+            except (OSError, ValueError):
+                results.put((request, directory, [], [], True))
+
+        threading.Thread(target=read_directory, daemon=True, name="import-directory").start()
+
+    def _finish_navigation(self):
+        while not self._directory_results.empty():
+            request, target, files, selected, error = self._directory_results.get()
+            if request != self._navigation_id:
+                continue
+            self._loading = False
+            self._directory_timer.stop()
+            self.view.setEnabled(True)
+            if error:
+                self.path_edit.setText(self._directory)
+                self.update_selection()
+                self.selection_label.setText(_msg('import.directoryUnavailable'))
+                continue
+            self.model.set_files(files)
+            self._directory = target
+            if self._watcher.directories() != ([target] if target else []):
+                if self._watcher.directories():
+                    self._watcher.removePaths(self._watcher.directories())
+                if target:
+                    self._watcher.addPath(target)
+            self.view.sortByColumn(self.view.horizontalHeader().sortIndicatorSection(),
+                                   self.view.horizontalHeader().sortIndicatorOrder())
+            self.view.setColumnWidth(0, 420)
+            self.path_edit.setText(target)
+            for path in selected:
+                index = self.model.index(path)
+                if index.isValid():
+                    self.view.selectionModel().select(index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+                    self.view.scrollTo(index)
+            self.update_selection()
 
     def _refresh_directory(self):
-        if not self.isVisible():
-            return
-        selected, typed_path = self.selected_paths(), self.path_edit.text()
-        self.navigate(self._directory)
-        self.path_edit.setText(typed_path)
-        for path in selected:
-            index = self.model.index(path)
-            if index.isValid():
-                self.view.selectionModel().select(index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        if self.isVisible() and not self._loading:
+            self.navigate(self._directory, restore_selection=self.selected_paths())
 
     def up(self):
         if self._directory:
@@ -268,18 +309,7 @@ class LocalImportDialog(QDialog):
             self.navigate("" if parent == self._directory else parent)
 
     def open_typed_path(self):
-        path = Path(self.path_edit.text()).expanduser()
-        if path.is_dir():
-            self.navigate(str(path))
-        elif path.is_file():
-            self.navigate(str(path.parent))
-            index = self.model.index(str(path.resolve()))
-            self.view.selectionModel().select(
-                index, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
-            )
-            self.view.scrollTo(index)
-        else:
-            self.selection_label.setText(_msg('text.0540'))
+        self.navigate(self.path_edit.text(), typed=True)
 
     def open_item(self, index):
         if self.model.isDir(index):
@@ -288,6 +318,8 @@ class LocalImportDialog(QDialog):
             self.accept()
 
     def update_selection(self, *_):
+        if self._loading:
+            return
         paths = self.selected_paths()
         directories = sum(Path(path).is_dir() for path in paths)
         self.selection_label.setText(
@@ -299,6 +331,8 @@ class LocalImportDialog(QDialog):
         self.open_button.setEnabled(bool(paths or self._directory))
 
     def accept(self):
+        if self._loading:
+            return
         paths = self.selected_paths() or ([self._directory] if self._directory else [])
         if not paths or not all(Path(path).exists() for path in paths):
             self.selection_label.setText(_msg('text.0545'))
