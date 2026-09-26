@@ -183,7 +183,17 @@ try {
     $owner = Get-Process -Id $c.pid -ErrorAction SilentlyContinue
     if ($owner -and -not $owner.WaitForExit(120000)) { throw 'Application did not exit.' }
     $exited = $true
-    if ((Get-FileHash -LiteralPath $c.package -Algorithm SHA256).Hash.ToLowerInvariant() -ne $c.digest) {
+    # Do not depend on PowerShell module discovery inherited from another shell.
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $stream = $null
+    try {
+        $stream = [System.IO.File]::OpenRead($c.package)
+        $digest = [System.BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '').ToLowerInvariant()
+    } finally {
+        if ($null -ne $stream) { $stream.Dispose() }
+        $sha.Dispose()
+    }
+    if ($digest -ne $c.digest) {
         throw 'Package checksum mismatch.'
     }
     if ($c.kind -eq 'windows_installer') {

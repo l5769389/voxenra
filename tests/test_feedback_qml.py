@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, QPointF
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 
-from test_dicom_tags import qt_app
+from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_tag_qml import find, click
 
@@ -87,6 +87,9 @@ def test_feedback_attachment_selection_review_export_and_remove(scene, tmp_path,
         def close(self):
             pass
     app.feedbackController._mac_mail = Mail()
+    # Never invoke a real system mail composer from GUI regression tests.
+    monkeypatch.setattr('qt_dicom_viewer.ui.controller.feedback_controller.windows_compose',
+                        lambda *args: 'unavailable')
     app.workspaceController.openSettings()
     QTest.qWait(80)
     click(window, find(window, 'settingsFeedback'))
@@ -113,6 +116,7 @@ def test_feedback_attachment_selection_review_export_and_remove(scene, tmp_path,
     destination = Path('build/feedback-preview'); destination.mkdir(parents=True, exist_ok=True)
     assert window.grabWindow().save(str(destination / f'attachments-ready-{theme}.png'))
     click(window, find(window, 'feedbackEmail'))
+    wait_until(lambda: not app.feedbackController.busy)
     if QGuiApplication.platformName() == 'cocoa':
         assert len(calls) == 1 and calls[0][3] == files
     assert app.feedbackController.status
