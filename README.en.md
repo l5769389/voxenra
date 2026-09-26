@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, segmentation, and export.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v1.6.0/Voxenra-1.6.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v1.6.0/Voxenra-1.6.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v1.6.0/Voxenra-1.6.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 ## Features
 
@@ -22,7 +22,7 @@ A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fu
 | PET/CT fusion | Linked CT, PET, fused, and MIP views; manual rigid registration; blend controls; fused 3D. |
 | Measurement and segmentation | Length, angle, curve, rectangle, ellipse, and free-shape ROIs; threshold segmentation, VOI, segment management, and statistics. |
 | Analysis and reports | CT water phantom QA, point-source MTF, ramp FWHM and slice thickness; PNG, DICOM, CSV/PDF, SEG, and SR export. |
-| Workspace | Tabs, detached windows, layouts, save and restore, light and dark themes, language packs, and an offline manual. |
+| Workspace | Tabs, detached windows, layouts, save and restore, dark, neutral gray, and light themes, language packs, and an offline manual. |
 
 ## 2D viewing and comparison
 
@@ -79,9 +79,9 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 ## Measurement, segmentation, and reporting
 
-- **Measurements:** length, angle, curve, rectangle, ellipse, and free-shape ROIs, with area, perimeter, and intensity statistics; edit, copy and paste, undo and redo.
+- **Measurements:** length, angle, curve, rectangle, ellipse, and free-shape ROIs, with area, perimeter, and intensity statistics; list navigation, renaming, visibility, locking, copy/paste, undo and redo.
 - **Segmentation:** MPR threshold segmentation, single-slice segment creation from free-shape ROIs, VOI analysis, and independently named, colored, and managed segments.
-- **Results:** export measurements as CSV/PDF or DICOM SR; export DICOM SEG and import SEG associated with the current image.
+- **Results:** export measurements as CSV/PDF or DICOM SR, with matching reference images in PDFs; export DICOM SEG and import SEG associated with the current image.
 
 **Free-shape measurement:** click to place control points and create a smooth closed contour.
 
@@ -110,7 +110,7 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 Import source images on the left and associated SEG results on the right. Mix files, folders, and archives, drag in images, query PACS, inspect DICOM tags, and export PNG or source DICOM.
 
-Detach tabs into separate windows. Workspaces preserve image references, layouts, and editing state, with automatic recovery. Use light or dark themes, bundled Chinese, English, and Brazilian Portuguese, local JSON language packs, collapsible sidebars, and a searchable offline manual.
+Workspaces preserve image references, layouts, measurements, analysis results, and the selected tools, with automatic recovery. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual, feedback, and optional startup update checks.
 
 <table>
 <tr>
@@ -123,11 +123,14 @@ Detach tabs into separate windows. Workspaces preserve image references, layouts
 </tr>
 </table>
 
+![MR viewing in the neutral gray theme](docs/screenshots/37-theme-graphite.png)
+
 [View the interface gallery](docs/screenshots/README.md)
 
 ## Supported formats and limits
 
 - Supports conventional and Enhanced CT/MR/PET and RLE, JPEG, JPEG-LS, and JPEG 2000 pixel decoding. MPR/3D require regular spatial sampling; PET quantification depends on image metadata.
+- Common RGB, YBR, and PALETTE COLOR DICOM support 2D viewing, montage, multi-frame playback, and PNG export. Physical measurements require valid pixel spacing; color MPR / 3D and HU analysis are unavailable.
 - NIfTI/NRRD, dynamic or gated PET, MR 4D, fMRI/DTI analysis, and SR/RTSTRUCT import are not currently supported.
 - SEG/SR keep source identity and image references; PNG/plain DICOM anonymization options do not apply to them.
 

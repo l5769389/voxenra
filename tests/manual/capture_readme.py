@@ -122,6 +122,8 @@ def capture(samples, output, scene, ct_samples=None):
         area = (QGuiApplication.screenAt(window.position()) or QGuiApplication.primaryScreen()).availableGeometry()
         window.resize(min(1440, area.width() - 40), min(900, area.height() - 60))
         window.setPosition(area.x() + 20, area.y() + 20)
+        if QGuiApplication.platformName() == "offscreen":
+            window.resize(1440, 900)
         window.requestActivate()
         ws = app.workspaceController
         backdrop = None

@@ -50,7 +50,8 @@ def test_compare_picker_layout_shared_slider_and_tools(sidebar_scene, tmp_path, 
                        if i.isVisible() and i.inherits('QQuickSlider')]
     assert len(visible_sliders) == 1
     # Dragging the QML shared control really navigates both decoded stacks.
-    point = slider.mapToScene(QPointF(slider.width() / 2, slider.height() - 12)).toPoint()
+    control = next(i for i in descendants(slider) if i.isVisible() and i.inherits('QQuickSlider'))
+    point = control.mapToScene(QPointF(control.width() / 2, 12)).toPoint()
     QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, point)
     wait_until(lambda: left._frame_meta.slice_index == 2 and right._frame_meta.slice_index == 2)
     click(window, canvases[1])

@@ -36,7 +36,8 @@ def render_references(pictures, catalog, cancelled, progress):
                 raise ValueError(_msg("analysis.sourceMismatch"))
             if picture["source"].get("pixelFingerprint"):
                 import hashlib
-                actual_hash = hashlib.blake2b(np.ascontiguousarray(result.modality_pixel).view(np.uint8), digest_size=16).hexdigest()
+                pixels = result.image if result.frame_meta.pixel_value_meta.quantification == "color" else result.modality_pixel
+                actual_hash = hashlib.blake2b(np.ascontiguousarray(pixels).view(np.uint8), digest_size=16).hexdigest()
                 if actual_hash != picture["source"]["pixelFingerprint"]:
                     raise ValueError(_msg("analysis.sourceMismatch"))
             array = np.ascontiguousarray(result.image, dtype=np.uint8)

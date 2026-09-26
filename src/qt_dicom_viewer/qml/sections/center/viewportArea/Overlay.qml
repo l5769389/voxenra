@@ -95,6 +95,7 @@ Item {
             : [label("kvp", "kV: "), label("tubeCurrentMa", "mA: ")].filter(Boolean).join("   ")
         case "sliceThickness": return label("sliceThickness", petWorkspace ? "Source thickness: " : "Thickness: ", " mm")
         case "window": {
+            if (overlay.sourceColor === true) return ""
             if (overlay.derivedMapping) {
                 const mode = overlay.mappingMode === "custom" ? "Custom range" : "Source mapping"
                 return value("mappingLower") && value("mappingUpper")
@@ -114,7 +115,7 @@ Item {
         }
         case "cursor": if (overlay.registrationPreview) return "Preview MIP · Release to refine"
             return (petWorkspace ? "Col: " : "X: ") + (cursorInfo.x ?? "--") + (petWorkspace ? "   Row: " : "   Y: ") + (cursorInfo.y ?? "--")
-            + "\n" + (value("viewRole") === "mip" ? "PET max" : cursorInfo.label ?? "Value") + ": " + (cursorInfo.value ?? "--") + " " + (cursorInfo.unit ?? "")
+            + (overlay.sourceColor === true ? "" : "\n" + (value("viewRole") === "mip" ? "PET max" : cursorInfo.label ?? "Value") + ": " + (cursorInfo.value ?? "--") + " " + (cursorInfo.unit ?? ""))
             + (viewportController?.secondaryCursorText ? "\n" + viewportController.secondaryCursorText : "")
         case "zoom": return label("zoom", "Zoom: ")
         case "matrix": return value("rows") && value("columns") ? (petWorkspace ? "Matrix: " : "") + value("rows") + " × " + value("columns") : ""

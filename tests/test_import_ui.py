@@ -212,3 +212,32 @@ def test_picker_uses_native_close_and_fixed_cancel_confirm_order(qt_app, tmp_pat
     finally:
         dialog.close()
         delete(dialog)
+
+
+def test_picker_accessible_cells_invalidated_on_navigation_and_selection_survives_sort(qt_app,tmp_path):
+    from PySide6.QtGui import QAccessible
+    folders=[tmp_path/'many',tmp_path/'few']
+    for folder,count in zip(folders,(104,2)):
+        folder.mkdir()
+        for i in range(count): (folder/f'{i:03}.dcm').write_bytes(bytes(i+1))
+    dialog=LocalImportDialog(str(folders[0]));dialog.show()
+    try:
+        for i in range(20):
+            interface=QAccessible.queryAccessibleInterface(dialog.view)
+            assert interface is not None
+            for child in range(min(8, interface.childCount())):
+                assert interface.child(child) is not None
+            folder=folders[i%2]
+            dialog.path_edit.setText(str(folder))
+            QTest.keyClick(dialog.path_edit,Qt.Key_Return)
+            assert dialog._directory == str(folder)
+            assert dialog.model.rowCount() == (104 if i%2==0 else 2)
+            assert not dialog.view.rootIndex().isValid()
+        selected=folders[1]/'000.dcm'
+        from PySide6.QtCore import QItemSelectionModel
+        dialog.view.selectionModel().select(dialog.model.index(str(selected)),QItemSelectionModel.Select|QItemSelectionModel.Rows)
+        dialog.view.sortByColumn(1,Qt.DescendingOrder)
+        assert dialog.selected_paths() == [str(selected)]
+        assert dialog.model.filePath(dialog.model.index(0,0)).endswith('001.dcm')
+    finally:
+        dialog.close();delete(dialog)

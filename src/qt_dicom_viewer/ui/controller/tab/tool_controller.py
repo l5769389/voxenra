@@ -78,6 +78,8 @@ class ToolController(QObject):
             tab_type: TabType | None = None,
             modality: str = "",
             supports_ct_analysis: bool = True,
+            is_color: bool = False,
+            color_calibrated: bool = False,
     ):
         super().__init__(parent)
 
@@ -85,7 +87,9 @@ class ToolController(QObject):
         self._settings_controller.changed.connect(self._settings_changed)
         self._tab_type = tab_type
         self._modality = modality.strip().upper()
-        self._supports_ct_analysis = supports_ct_analysis
+        self._supports_ct_analysis = supports_ct_analysis and not is_color
+        self._is_color = is_color
+        self._color_calibrated = color_calibrated
         self._active_tool = ToolType.WINDOW
         self._active_panel: ToolType | None = ToolType.WINDOW
         self._active_interaction = InteractionType.WINDOW
@@ -99,8 +103,25 @@ class ToolController(QObject):
             self._active_tool = ToolType.VOLUME_ROTATE
             self._active_panel = None
             self._active_interaction = InteractionType.VOLUME_ROTATE
+        if is_color:
+            self._active_tool = ToolType.PAN
+            self._active_panel = None
+            self._active_interaction = InteractionType.PAN
         self.activeToolChanged.connect(self.resetStateChanged.emit)
         self.activeServiceChanged.connect(self.resetStateChanged.emit)
+
+    def set_series_capabilities(self, meta):
+        """Refresh tools when a mixed 2D layout activates a different source."""
+        values = (meta.modality.upper(), meta.supports_ct_analysis and not meta.is_color,
+                  meta.is_color, meta.color_calibrated)
+        if values == (self._modality, self._supports_ct_analysis, self._is_color, self._color_calibrated):
+            return
+        self._modality, self._supports_ct_analysis, self._is_color, self._color_calibrated = values
+        self._i18n_tools.emit()
+        self.windowPresetsChanged.emit()
+        self.resetStateChanged.emit()
+        if not tool_available(ToolType(self.activeTool), self._tab_type, *values):
+            self.activateTool("pan" if meta.is_color else "window")
 
     @Slot()
     def _settings_changed(self):
@@ -210,7 +231,7 @@ class ToolController(QObject):
             return
         if not definition.enabled:
             return
-        if not tool_available(tool_type, self._tab_type, self._modality, self._supports_ct_analysis):
+        if not tool_available(tool_type, self._tab_type, self._modality, self._supports_ct_analysis, self._is_color, self._color_calibrated):
             logger.warning(
                 "Tool %s is not available for tab type %s",
                 tool_type.value,
@@ -290,6 +311,9 @@ class ToolController(QObject):
             )
             return
 
+        if self._is_color and (interaction == InteractionType.WINDOW
+                or (interaction.value.startswith("measure:") and not self._color_calibrated)):
+            return
         self._set_active_interaction(interaction)
 
     def lock_to_tool(self, tool: ToolType | None) -> None:
@@ -464,7 +488,7 @@ class ToolController(QObject):
 
     @_TextProperty(list, notify=_i18n_tools, notify_name='_i18n_tools')
     def tools(self) -> list[dict]:
-        return build_tool_items(self._tab_type, self._modality, self._supports_ct_analysis)
+        return build_tool_items(self._tab_type, self._modality, self._supports_ct_analysis, self._is_color, self._color_calibrated)
 
     @_TextProperty(list, notify=_i18n_rotateActions, notify_name='_i18n_rotateActions')
     def rotateActions(self) -> list[dict]:
@@ -517,6 +541,8 @@ def build_tool_items(
         tab_type: TabType | None = None,
         modality: str = "",
         supports_ct_analysis: bool = True,
+        is_color: bool = False,
+        color_calibrated: bool = False,
 ) -> list[dict]:
     items = [
         {
@@ -536,7 +562,7 @@ def build_tool_items(
             "enabled": definition.enabled,
         }
         for definition in TOOL_CATALOG
-        if tool_available(definition.tool_type, tab_type, modality, supports_ct_analysis)
+        if tool_available(definition.tool_type, tab_type, modality, supports_ct_analysis, is_color, color_calibrated)
     ]
     priority = {tool: index for index, tool in enumerate(TOOL_ORDER)}
     items.sort(key=lambda item: priority[item["toolType"]])
@@ -556,7 +582,19 @@ def tool_available(
     tab_type: TabType | None,
     modality: str = "",
     supports_ct_analysis: bool = True,
+    is_color: bool = False,
+    color_calibrated: bool = False,
 ) -> bool:
+    if is_color:
+        allowed = {ToolType.PAN, ToolType.ZOOM, ToolType.ROTATE, ToolType.SCROLL,
+                   ToolType.SLICE_PLAY, ToolType.PLAY, ToolType.ANNOTATE, ToolType.EXPORT, ToolType.RESET,
+                   ToolType.VIEWPORT_SETTINGS}
+        if tab_type == TabType.TWO_D:
+            allowed.add(ToolType.MPR_LAYOUT)
+        if color_calibrated:
+            allowed.add(ToolType.MEASURE)
+        if tool not in allowed:
+            return False
     if tab_type in (TabType.COMPARE_MPR, TabType.COMPARE_2D) and tool == ToolType.PLAY:
         return False
     if tab_type == TabType.COMPARE_MPR:

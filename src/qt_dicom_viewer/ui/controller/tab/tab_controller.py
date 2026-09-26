@@ -460,6 +460,8 @@ class TabController(QObject):
             tab_type=self._tab_config.tab_type,
             modality=modality,
             supports_ct_analysis=all(m.supports_ct_analysis for m in self._tab_config.series_metas),
+            is_color=any(m.is_color for m in self._tab_config.series_metas),
+            color_calibrated=all(not m.is_color or m.color_calibrated for m in self._tab_config.series_metas),
             parent=self
         )
         self._tool_controller.commandRequested.connect(

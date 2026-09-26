@@ -42,6 +42,8 @@ class DisplayMappingCapabilities:
 
 def capabilities(*, modality, value_meta, supplemental=False, hu_analysis=True, volume=False):
     unit = value_meta.unit if value_meta else ''
+    if value_meta and value_meta.quantification == "color":
+        return DisplayMappingCapabilities('color', '', 'presentation')
     if volume:
         return DisplayMappingCapabilities('transfer', unit, 'quantitative' if modality == 'PT' else 'modality')
     if supplemental:

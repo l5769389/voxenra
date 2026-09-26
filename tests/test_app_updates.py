@@ -267,7 +267,7 @@ def test_redirect_and_timeout_are_bounded(updater):
 
 def test_development_runtime_cannot_replace_python(qt_app, tmp_path):
     controller = UpdateController(SettingsController(path=False), installation=Installation('', None, 'updates.development'),
-                                  cache=tmp_path, network=Network())
+                                  cache=tmp_path, network=Network(), version="1.6.0")
     controller.check()
     controller._network.last.deliver(json.dumps(release_payload()).encode())
     assert controller.hasUpdate and not controller.canInstall

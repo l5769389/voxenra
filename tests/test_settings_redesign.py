@@ -114,19 +114,23 @@ def test_window_table_columns_align_and_editor_stays_compact(scene, width, tmp_p
         header = find(window, 'windowHeader' + suffix)
         right = header.mapToScene(QPointF(header.width(), 0)).x()
         cells = [i for i in descendants(window.contentItem()) if i.isVisible() and i.objectName().startswith('window' + suffix + '-')]
-        assert len(cells) == 4
+        assert len(cells) == len(app.settingsController.windowTemplates) == 13
         for cell in cells:
             assert cell.mapToScene(QPointF(cell.width(), 0)).x() == pytest.approx(right, abs=1)
     for field_name in ['windowTemplateWidth', 'windowTemplateCenter']:
         assert find(window, field_name).width() <= 100
+    reveal_setting(window, find_any(window, 'windowTemplateName'))
     type_text(window, find(window, 'windowTemplateName'), 'Review preset')
     click(window, find(window, 'saveWindowTemplate'))
     identifier = app.settingsController.values['window']['custom'][0]['presetId']
+    reveal_setting(window, find_any(window, 'windowEdit-' + identifier))
     click(window, find(window, 'windowEdit-' + identifier))
+    reveal_setting(window, find_any(window, 'windowTemplateCenter'))
     type_text(window, find(window, 'windowTemplateCenter'), '-100')
     click(window, find(window, 'saveWindowTemplate'))
     assert app.settingsController.values['window']['custom'][0]['center'] == -100
     assert window.grabWindow().save(str(tmp_path / f'window-{width}.png'))
+    reveal_setting(window, find_any(window, 'windowDelete-' + identifier))
     click(window, find(window, 'windowDelete-' + identifier))
     assert not app.settingsController.values['window']['custom']
     assert not warnings, warnings

@@ -22,8 +22,13 @@ class SeriesCatalog:
             return None
         first_instance = series.instances[0] if series.instances else None
         from qt_dicom_viewer.core.ct import ct_hu_tools_supported
+        import math
+        color = any(i.samples_per_pixel > 1 or i.photometric_interpretation == "PALETTE COLOR" for i in series.instances)
+        calibrated = all(i.pixel_spacing and all(math.isfinite(v) and v > 0
+            for v in (i.pixel_spacing.row, i.pixel_spacing.column)) for i in series.instances)
         return SeriesDisplayMeta(
-            supports_ct_analysis=ct_hu_tools_supported(series),
+            is_color=color, color_calibrated=bool(calibrated),
+            supports_ct_analysis=not color and ct_hu_tools_supported(series),
             series_uid=series.series_instance_uid,
             patient_name=series.patient_name,
             patient_id=series.patient_id,

@@ -290,10 +290,18 @@ class DicomLoader:
                                                         header=header,
                                                         index=frame_index), dataset)
             else:
-                dataset = pydicom.dcmread(instance_path)
-                pixels = self.to_modality_pixels(dataset)
+                dataset = header
+                from qt_dicom_viewer.core.color_image import is_color
+                if is_color(header):
+                    pixels = decode_pixels(instance_path, index=frame_index if frame_index is not None else 0)
+                else:
+                    dataset = pydicom.dcmread(instance_path)
+                    pixels = self.to_modality_pixels(dataset)
                 # Keep the header and decoded frame, not a second raw PixelData buffer.
                 dataset = header
+                if frame_index is not None:
+                    dataset = header.copy()
+                    dataset._voxenra_frame_index = frame_index
             validate_ct_dataset(dataset)
             validate_mr_dataset(dataset)
             self._decoded[key] = (dataset, pixels)
@@ -311,6 +319,15 @@ class DicomLoader:
         modality_pixels: np.ndarray | None = None,
     ) -> DicomLoadResult:
         """Load one source DICOM frame and prepare its display result."""
+        from qt_dicom_viewer.core.color_image import is_color, color_pixels
+        if is_color(dataset):
+            if modality_pixels is None:
+                from qt_dicom_viewer.core.pixel_codecs import decode_pixels
+                modality_pixels = decode_pixels(dataset, index=0)
+            return DicomLoadResult(window=WindowLevel(127.5, 255), inverted=False,
+                image=color_pixels(modality_pixels, dataset), modality_pixel=None,
+                instance_meta=self.extract_instance_meta(dataset),
+                pixel_value_meta=PixelValueMeta(quantification="color", unit_id="color"))
         validate_ct_dataset(dataset)
         validate_mr_dataset(dataset)
         if modality_pixels is None:
@@ -390,6 +407,9 @@ class DicomLoader:
 
     @staticmethod
     def rescale_pixels(stored: np.ndarray, dataset: FileDataset) -> np.ndarray:
+        from qt_dicom_viewer.core.color_image import is_color
+        if is_color(dataset):
+            return np.ascontiguousarray(stored)
         padding_mask = DicomLoader._padding_mask(stored, dataset)
         values = np.asarray(
             apply_modality_lut(stored, dataset),

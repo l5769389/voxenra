@@ -10,7 +10,7 @@
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合、测量分割与结果导出于一体。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v1.6.0/Voxenra-1.6.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v1.6.0/Voxenra-1.6.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v1.6.0/Voxenra-1.6.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
 
 ## 功能概览
 
@@ -22,7 +22,7 @@
 | PET/CT 融合 | CT、PET、融合与 MIP 联动；手动刚性配准、融合比例调整、融合 3D。 |
 | 测量与分割 | 长度、角度、曲线、矩形／椭圆／自由形状 ROI；阈值分割、VOI、区域管理与统计。 |
 | 分析与报告 | CT 水模 QA、点源 MTF、斜坡线 FWHM 与层厚；PNG、DICOM、CSV / PDF、SEG / SR 导出。 |
-| 工作区 | 多页签、独立窗口、灵活布局、保存恢复；深浅主题、语言包与离线手册。 |
+| 工作区 | 多页签、独立窗口、灵活布局、保存恢复；深色／中性深灰／浅色主题、语言包与离线手册。 |
 
 ## 二维阅片与序列对比
 
@@ -79,9 +79,9 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 ## 测量、分割与报告
 
-- **测量**：长度、角度、曲线、矩形／椭圆／自由形状 ROI，提供面积、周长和强度统计；支持编辑、复制粘贴、撤销重做。
+- **测量**：长度、角度、曲线、矩形／椭圆／自由形状 ROI，提供面积、周长和强度统计；支持列表定位、重命名、显隐、锁定、复制粘贴与撤销重做。
 - **分割**：MPR 阈值分割、自由形状 ROI 转单层分割、VOI 分析；多个区域可独立命名、着色、显隐与统计。
-- **结果**：测量导出 CSV / PDF 或 DICOM SR；分割导出 DICOM SEG，并可导入匹配当前影像的 SEG。
+- **结果**：测量导出 CSV / PDF 或 DICOM SR，PDF 自动匹配测量所在平面的参考图；分割导出 DICOM SEG，并可导入匹配当前影像的 SEG。
 
 **自由形状测量**：逐点点击添加控制点，生成平滑闭合轮廓并统计。
 
@@ -110,7 +110,7 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 左侧导入原始影像，右侧导入关联 SEG。支持文件／文件夹／压缩包混选和拖入、PACS 查询下载、DICOM 标签查看，以及 PNG 和源 DICOM 导出。
 
-多页签可拖出成为独立窗口；工作区保存影像引用、布局与操作状态，并提供自动恢复。支持深浅主题、中英葡内置语言与本地 JSON 语言包、可收起侧栏及可搜索的离线手册。
+多页签可拖出成为独立窗口；工作区保存影像引用、布局、测量与分析结果，并恢复之前选择的工具。支持自动恢复、深色／中性深灰／浅色主题、本地 JSON 语言包与窗模板、离线手册、反馈和可关闭的启动更新检查。
 
 <table>
 <tr>
@@ -123,11 +123,14 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 </tr>
 </table>
 
+![中性深灰主题下的 MR 阅片](docs/screenshots/37-theme-graphite.png)
+
 [查看完整界面图集](docs/screenshots/README.md)
 
 ## 支持范围
 
 - 支持常规 CT / MR / PET、Enhanced CT / MR，以及 RLE、JPEG、JPEG-LS、JPEG 2000 像素解码。MPR / 3D 需要规则空间采样，PET 定量取决于影像元数据。
+- 常见 RGB、YBR 与 PALETTE COLOR DICOM 支持二维、平铺、多帧播放及 PNG 导出；物理尺寸测量需要有效像素间距，不开放彩色 MPR / 3D 或 HU 分析。
 - 暂不支持 NIfTI / NRRD、动态／门控 PET、MR 4D、fMRI / DTI 分析，以及 SR / RTSTRUCT 导入。
 - SEG / SR 保留源身份与影像引用，不使用 PNG / 普通 DICOM 导出的匿名选项。
 

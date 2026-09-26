@@ -118,7 +118,8 @@ class ViewportController(QObject):
                 low, high = (float(v) for v in np.percentile(finite, [1,99]))
                 self._mapping_default_range = (low, max(high, low+0.001))
         state = getattr(self, '_state', None)
-        if state is not None and state.display_mapping.mode == 'custom' and state.display_mapping.unit != frame.pixel_value_meta.unit:
+        if state is not None and state.display_mapping.mode == 'custom' and (
+                state.display_mapping.unit != frame.pixel_value_meta.unit or frame.pixel_value_meta.quantification == 'color'):
             self._state = replace(state, display_mapping=DisplayMappingIntent())
         self.displayMappingChanged.emit()
 

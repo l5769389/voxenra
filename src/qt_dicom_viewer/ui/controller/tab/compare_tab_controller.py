@@ -111,17 +111,7 @@ class CompareTabController(TabController):
             return
         tools = self.toolController
         meta = self._viewport_dict[viewport_id].viewport_config.series_meta
-        modality = meta.modality.upper()
-        if modality != tools._modality or meta.supports_ct_analysis != tools._supports_ct_analysis:
-            from .tool_controller import tool_available
-            from qt_dicom_viewer.model import ToolType
-            tools._modality = modality
-            tools._supports_ct_analysis = meta.supports_ct_analysis
-            tools._i18n_tools.emit()
-            tools.windowPresetsChanged.emit()
-            tools.resetStateChanged.emit()
-            if not tool_available(ToolType(tools.activeTool), tools._tab_type, modality, tools._supports_ct_analysis):
-                tools.activateTool("window")
+        tools.set_series_capabilities(meta)
         super().activateViewport(viewport_id)
 
     def _create_viewport_dict(self):

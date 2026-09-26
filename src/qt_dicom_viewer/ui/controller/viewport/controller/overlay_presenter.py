@@ -184,6 +184,7 @@ class OverlayPresenter:
             "mappingLower": _display_number(bounds[0], 3) if bounds else "",
             "mappingUpper": _display_number(bounds[1], 3) if bounds else "",
             "pixelUnit": value_meta.unit if value_meta else "",
+            "sourceColor": bool(value_meta and value_meta.quantification == "color"),
             "supplementalColor": frame is not None and frame.supplemental_overlay is not None,
             "decayCorrection": (
                 instance.decay_correction or ""

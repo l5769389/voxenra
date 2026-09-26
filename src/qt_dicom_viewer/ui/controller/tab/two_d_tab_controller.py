@@ -346,15 +346,8 @@ class TwoDTabController(TabController):
         if view is None:
             return
         tools = self.toolController
-        modality = view.viewport_config.series_meta.modality.upper()
-        if tools._modality != modality:
-            tools._modality = modality
-            tools._i18n_tools.emit()
-            tools.windowPresetsChanged.emit()
-        from .tool_controller import tool_available
-        from qt_dicom_viewer.model import ToolType
-        if (not tool_available(ToolType(tools.activeTool), tools._tab_type, modality)
-                or isinstance(view, PlaneViewportController) and tools.activeTool == "service"):
+        tools.set_series_capabilities(view.viewport_config.series_meta)
+        if isinstance(view, PlaneViewportController) and tools.activeTool == "service":
             tools.activateTool("window")
         super().activateViewport(viewport_id)
         layout = getattr(self, "_two_d_layout", None)

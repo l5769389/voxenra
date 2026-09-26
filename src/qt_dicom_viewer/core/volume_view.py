@@ -152,6 +152,8 @@ def camera_parameters(geometry: VolumeGeometry, state: VolumeViewState, size):
 def validate_volume_series(series: DicomSeriesRecord) -> None:
     """A 3D texture needs a regular orthogonal grid, not a median-spacing guess."""
     instances = series.instances
+    if any(i.samples_per_pixel > 1 or i.photometric_interpretation == "PALETTE COLOR" for i in instances):
+        raise ValueError(_msg("viewer.colorVolumeUnsupported"))
     if len(instances) < 2:
         raise ValueError(_msg('text.0227'))
     first = instances[0]

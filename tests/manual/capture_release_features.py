@@ -46,7 +46,8 @@ def capture_feature(app, window, uid, scene, output, folder, pump, wait, ready):
 
     def reveal(name):
         pump(150)
-        item = find(window, name)
+        from test_settings_redesign import find_any
+        item = find_any(window, name)
         flick = find(window, 'toolDetailFlickable')
         y = item.mapToScene(QPointF(0, item.height())).y()
         bottom = flick.mapToScene(QPointF(0, flick.height())).y()

@@ -112,7 +112,7 @@
       },
       {
         "title": "尚未支持",
-        "body": "尚未支持 SR 导入、RTSTRUCT 交换、概率或 LABELMAP SEG、画笔体素编辑、跨层轮廓插值及分割表面生成。已支持二值 SEG 导入导出、SR 导出和自由形状单层转换。主阅片不支持通用多帧／彩色对象；Enhanced PET、Mosaic 及 MR 定量分析尚未开放；灰度 Enhanced MR 已支持。非规则体数据不在当前规则重建范围。",
+        "body": "尚未支持 SR 导入、RTSTRUCT 交换、概率或 LABELMAP SEG、画笔体素编辑、跨层轮廓插值及分割表面生成。已支持二值 SEG 导入导出、SR 导出和自由形状单层转换。支持常见彩色二维及可逐帧解码的普通彩色多帧对象；视频编码、彩色 MPR／3D 和超声区域标定尚未支持；Enhanced PET、Mosaic 及 MR 定量分析尚未开放；灰度 Enhanced MR 已支持。非规则体数据不在当前规则重建范围。",
         "messageId": "manual.faq.section3"
       }
     ],

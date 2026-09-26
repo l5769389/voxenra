@@ -461,10 +461,11 @@ class Image2DViewportController(ViewportController):
         if phase_identifier is not None:
             source_context += ("phase", phase_identifier)
         source = dict(getattr(self, "_measurement_requests", {}).get(result.response_id, {}))
-        if source and result.modality_pixel is not None:
+        if source and (result.modality_pixel is not None or result.frame_meta.pixel_value_meta.quantification == "color"):
             import hashlib
+            fingerprint_pixels = result.image if result.frame_meta.pixel_value_meta.quantification == "color" else result.modality_pixel
             source["pixelFingerprint"] = hashlib.blake2b(
-                np.ascontiguousarray(result.modality_pixel).view(np.uint8), digest_size=16).hexdigest()
+                np.ascontiguousarray(fingerprint_pixels).view(np.uint8), digest_size=16).hexdigest()
             if source.get("kind") == "mpr" and getattr(result, "mpr_frame", None) is not None:
                 source["parameters"] = dict(source["parameters"], mpr_frame=result.mpr_frame)
                 if source.get("navigation") is None:
@@ -1061,7 +1062,7 @@ class Image2DViewportController(ViewportController):
 
     @Property(bool, constant=True)
     def supportsCtWindow(self):
-        return (self.viewport_config.series_meta.modality.strip().upper() == "CT"
+        return (not self.viewport_config.series_meta.is_color and self.viewport_config.series_meta.modality.strip().upper() == "CT"
                 and self.viewport_config.series_meta.supports_ct_analysis)
 
     @Property(bool, constant=True)
@@ -1070,7 +1071,7 @@ class Image2DViewportController(ViewportController):
 
     @Property(bool, constant=True)
     def supportsGrayscaleWindow(self):
-        return self.viewport_config.series_meta.modality.strip().upper() in ("CT", "MR")
+        return not self.viewport_config.series_meta.is_color and self.viewport_config.series_meta.modality.strip().upper() in ("CT", "MR")
 
     @Property(float, constant=True)
     def minimumWindowWidth(self):
@@ -1124,6 +1125,8 @@ class Image2DViewportController(ViewportController):
 
     def set_window_state(self, result: WindowLevelChange) -> bool:
         """Update display state without scheduling; linked views commit as a batch."""
+        if self.viewport_config.series_meta.is_color:
+            return False
         if result.window == self._state.window and result.inverted == self.inverted:
             return False
         self._state = replace(self._state, window=result.window, inverted=result.inverted)
@@ -1507,7 +1510,7 @@ class Image2DViewportController(ViewportController):
 
     @Property(bool, notify=viewportSettingsChanged)
     def showScaleBar(self) -> bool:
-        return self._state.display_settings.show_scale_bar and self._settings_controller.section("scale")["enabled"]
+        return (not self.viewport_config.series_meta.is_color or self.viewport_config.series_meta.color_calibrated) and self._state.display_settings.show_scale_bar and self._settings_controller.section("scale")["enabled"]
 
     @Property(bool, notify=viewportSettingsChanged)
     def showColorBar(self) -> bool:

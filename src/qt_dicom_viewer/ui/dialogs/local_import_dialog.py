@@ -3,22 +3,90 @@ from qt_dicom_viewer.i18n import message as _msg, localize
 
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QDir, QItemSelectionModel, QStandardPaths, Qt
+from PySide6.QtCore import QEvent, QDir, QFileInfo, QFileSystemWatcher, QTimer, QAbstractTableModel, QLocale, QModelIndex, QItemSelectionModel, QStandardPaths, Qt
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QAbstractItemView, QFileSystemModel, QHBoxLayout, QTreeView, QVBoxLayout
+from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QTableView, QVBoxLayout, QApplication, QStyle
 from qt_dicom_viewer.i18n.widgets import QDialog, QLabel, QLineEdit, QPushButton
 
 
-class ImportFileModel(QFileSystemModel):
+class ImportFileModel(QAbstractTableModel):
+    """Flat, lazy directory metadata; never change a tree's root index.
+
+    A model reset invalidates old accessible cells before publishing new rows.
+    File metadata is read only when shown or used for sorting, not at import.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._files = []
+        self._rows = {}
+
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole and 0 <= section < 4:
             return localize((_msg('text.0528'), _msg('text.0529'), _msg('text.0165'), _msg('text.0530'))[section])
         return super().headerData(section, orientation, role)
 
+    def rowCount(self, parent=QModelIndex()):
+        return 0 if parent.isValid() else len(self._files)
+
+    def columnCount(self, parent=QModelIndex()):
+        return 0 if parent.isValid() else 4
+
     def data(self, index, role=Qt.DisplayRole):
-        if role == Qt.DisplayRole and index.column() == 2 and self.isDir(index):
-            return localize(_msg('text.0531'))
-        return super().data(index, role)
+        if not index.isValid() or not 0 <= index.row() < len(self._files):
+            return None
+        info = self._files[index.row()]
+        column = index.column()
+        if role == Qt.DecorationRole and column == 0:
+            return QApplication.style().standardIcon(QStyle.SP_DirIcon if info.isDir() else QStyle.SP_FileIcon)
+        if role == Qt.DisplayRole:
+            if column == 0:
+                return info.fileName() or info.absoluteFilePath()
+            if column == 1:
+                return "" if info.isDir() else QLocale().formattedDataSize(info.size())
+            if column == 2:
+                return localize(_msg('text.0531')) if info.isDir() else info.suffix().upper()
+            if column == 3:
+                return info.lastModified().toString('yyyy-MM-dd HH:mm')
+        return None
+
+    def load_directory(self, directory):
+        # Enumerate before resetting: failed navigation preserves the old view.
+        if directory:
+            import os
+            with os.scandir(directory) as entries:
+                files = [QFileInfo(entry.path) for entry in entries if not entry.name.startswith('.')]
+        else:
+            files = QDir.drives()
+        self.beginResetModel()
+        self._files = files
+        self._rows = {info.absoluteFilePath(): row for row, info in enumerate(files)}
+        self.endResetModel()
+
+    def sort(self, column, order=Qt.AscendingOrder):
+        if not 0 <= column < 4:
+            return
+        keys = (lambda f: f.fileName().casefold(), lambda f: f.size(),
+                lambda f: (f.isDir(), f.suffix().casefold()),
+                lambda f: f.lastModified().toMSecsSinceEpoch())
+        self.layoutAboutToBeChanged.emit()
+        # Selection models create their persistent indexes in this signal.
+        old = self.persistentIndexList()
+        locations = [(self.filePath(i), i.column()) for i in old]
+        self._files.sort(key=keys[column], reverse=order == Qt.DescendingOrder)
+        self._rows = {info.absoluteFilePath(): row for row, info in enumerate(self._files)}
+        self.changePersistentIndexList(old, [self.index(self._rows[path], col) for path, col in locations])
+        self.layoutChanged.emit()
+
+    def index(self, row, column=0, parent=QModelIndex()):
+        if isinstance(row, str):
+            row = self._rows.get(str(Path(row).absolute()), -1)
+        return super().index(row, column, parent)
+
+    def filePath(self, index):
+        return self._files[index.row()].absoluteFilePath() if index.isValid() and 0 <= index.row() < len(self._files) else ""
+
+    def isDir(self, index):
+        return self._files[index.row()].isDir() if index.isValid() and 0 <= index.row() < len(self._files) else False
 
 
 class LocalImportDialog(QDialog):
@@ -64,13 +132,17 @@ class LocalImportDialog(QDialog):
         hint.setWordWrap(True)
         layout.addWidget(hint)
         self.model = ImportFileModel(self)
-        self.model.setReadOnly(True)
-        self.model.setFilter(QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot)
-        self.view = QTreeView()
+        self._watcher = QFileSystemWatcher(self)
+        self._refresh_timer = QTimer(self)
+        self._refresh_timer.setSingleShot(True)
+        self._watcher.directoryChanged.connect(lambda _: self._refresh_timer.start(150))
+        self._refresh_timer.timeout.connect(self._refresh_directory)
+        self.view = QTableView()
+        self.view.verticalHeader().hide()
+        self.view.verticalHeader().setDefaultSectionSize(28)
+        self.view.setShowGrid(False)
         self.view.setObjectName("importFileList")
         self.view.setModel(self.model)
-        self.view.setRootIsDecorated(False)
-        self.view.setItemsExpandable(False)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -112,11 +184,11 @@ class LocalImportDialog(QDialog):
         style = """
             QDialog { background: @panelBackground; color: @textPrimary; }
             QLabel { color: @textSecondary; }
-            QLineEdit, QTreeView { background: @controlBackground; color: @textPrimary;
+            QLineEdit, QTableView { background: @controlBackground; color: @textPrimary;
                 border: 1px solid @inputBorder; border-radius: 4px; padding: 5px; }
-            QLineEdit:focus, QTreeView:focus { border-color: @focusBorder; }
-            QTreeView::item { height: 28px; }
-            QTreeView::item:selected { background: @selectionBackground; color: @textPrimary; }
+            QLineEdit:focus, QTableView:focus { border-color: @focusBorder; }
+            QTableView::item { height: 28px; }
+            QTableView::item:selected { background: @selectionBackground; color: @textPrimary; }
             QHeaderView::section { background: @panelBackgroundStrong; color: @textSecondary;
                 padding: 6px; border: none; }
             QPushButton { background: @controlBackground; color: @textPrimary; padding: 7px 12px;
@@ -160,12 +232,35 @@ class LocalImportDialog(QDialog):
     def navigate(self, directory):
         if directory and not Path(directory).is_dir():
             return
-        self._directory = str(Path(directory).resolve()) if directory else ""
-        self.model.setRootPath(self._directory)
-        self.view.setRootIndex(self.model.index(self._directory))
+        target = str(Path(directory).resolve()) if directory else ""
+        try:
+            self.model.load_directory(target)
+        except OSError:
+            self.selection_label.setText(_msg('text.0540'))
+            return
+        self._directory = target
+        if self._watcher.directories() != ([target] if target else []):
+            if self._watcher.directories():
+                self._watcher.removePaths(self._watcher.directories())
+            if target:
+                self._watcher.addPath(target)
+        self.view.sortByColumn(self.view.horizontalHeader().sortIndicatorSection(),
+                               self.view.horizontalHeader().sortIndicatorOrder())
+        self.view.setColumnWidth(0, 420)
         self.view.clearSelection()
         self.path_edit.setText(self._directory)
         self.update_selection()
+
+    def _refresh_directory(self):
+        if not self.isVisible():
+            return
+        selected, typed_path = self.selected_paths(), self.path_edit.text()
+        self.navigate(self._directory)
+        self.path_edit.setText(typed_path)
+        for path in selected:
+            index = self.model.index(path)
+            if index.isValid():
+                self.view.selectionModel().select(index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
 
     def up(self):
         if self._directory:

@@ -21,6 +21,13 @@ class _App(QObject):
         super().__init__()
         self.workspace = workspace
         self.panel = panel
+        from qt_dicom_viewer.ui.controller.feedback_controller import FeedbackController
+        from qt_dicom_viewer.ui.controller.update_controller import UpdateController
+        self.feedback = FeedbackController(None, self)
+        self.updates = UpdateController(None, self)
+
+    feedbackController = Property(QObject, lambda self: self.feedback, constant=True)
+    updateController = Property(QObject, lambda self: self.updates, constant=True)
 
     @Property(QObject, constant=True)
     def workspaceController(self):

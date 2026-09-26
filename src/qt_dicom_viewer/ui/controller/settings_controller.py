@@ -246,6 +246,9 @@ class SettingsController(QObject):
 
     @Slot(str, str, float, float, result=bool)
     def saveWindowTemplate(self, identifier, label, width, center):
+        if label.strip() and any(p["presetId"] != identifier and p["label"].strip().casefold() == label.strip().casefold()
+                                 for p in self._window_entries):
+            return self._error(_msg('text.0060'))
         entries = deepcopy(self._window_entries)
         item = dict(presetId=identifier or "custom-" + str(uuid.uuid4()), label=label,
                     width=width, center=center, enabled=True)

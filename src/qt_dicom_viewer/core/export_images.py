@@ -26,9 +26,12 @@ def frame_image(pixels, dataset, frame_index=0):
     from qt_dicom_viewer.core.enhanced_frames import is_enhanced_image, frame_metadata
     if is_enhanced_image(dataset):
         metadata = frame_metadata(dataset, frame_index)
+    from qt_dicom_viewer.core.color_image import is_color, color_pixels
     photometric = str(getattr(metadata, "PhotometricInterpretation", ""))
-    if photometric == "PALETTE COLOR":
-        pixels = apply_color_lut(pixels, metadata)
+    if is_color(metadata):
+        rgb = color_pixels(pixels, metadata)
+        fmt = QImage.Format_RGB888 if rgb.shape[2] == 3 else QImage.Format_RGBA8888
+        return QImage(rgb.data, rgb.shape[1], rgb.shape[0], rgb.strides[0], fmt).copy()
     if (pixels.ndim == 2 and str(getattr(dataset, "Modality", "")).upper() in ("CT", "MR")
             and (is_enhanced_image(dataset) or (
                 str(getattr(dataset, "SOPClassUID", "")) == "1.2.840.10008.5.1.4.1.1.4"

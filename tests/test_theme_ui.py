@@ -33,6 +33,9 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     wait_until(lambda: ws.activeLoadState.status == 'ready')
     view = ws.activeViewport
     image_tab = ws.activeTab
+    find(window, "dicomPixelLayer")
+    assert not window.grabWindow().isNull()
+    wait_until(lambda: view._state.width > 100 and view._state.height > 100)
     draw_length(view)
     click(window, find(window, 'series-' + records[0].series_instance_uid))
     initial_state = deepcopy(view._state)

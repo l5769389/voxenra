@@ -113,6 +113,9 @@ def test_numeric_window_apply_template_validation_persistence_and_delete(display
     root = view.rootObject()
     settings = controller.settingsController
     settings._path = tmp_path / "preferences.json"
+    settings._window_path = tmp_path / "window-presets.json"
+    from qt_dicom_viewer.settings.window_presets import write_document
+    settings._window_revision = write_document(settings._window_path, settings._window_entries)
     _click(view, _find(root, "primaryTool-window"))
     width, center = _find(root, "windowWidthInput"), _find(root, "windowCenterInput")
     initial = controller.current_window

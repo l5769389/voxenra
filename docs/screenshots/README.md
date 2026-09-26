@@ -1,6 +1,6 @@
 # 功能图集
 
-Voxenra 的实际应用界面：37 张截图、9 段操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
+Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
 
 ## 操作动画
 
@@ -107,3 +107,9 @@ Voxenra 的实际应用界面：37 张截图、9 段操作动画。[中文首页
 <td width="50%"><b>离线手册</b><br><a href="30-offline-manual.png"><img src="30-offline-manual.png" alt="离线手册" width="100%"></a></td>
 </tr>
 </table>
+
+## 外观与预设
+
+- [中性深灰阅片](37-theme-graphite.png)
+- [主题与语言设置](38-appearance-settings.png)
+- [本地 JSON 窗模板](39-window-presets.png)

@@ -24,8 +24,9 @@ def read_series_thumbnail(path: Path, frame_index=None) -> QImage:
     pixels = decode_pixels(path, index=0, ds_out=metadata,
                          specific_tags=[0x00080060, 0x00080016, 0x00080008])
     photometric = str(getattr(metadata, "PhotometricInterpretation", ""))
-    if photometric == "PALETTE COLOR":
-        pixels = apply_color_lut(pixels, metadata)
+    from qt_dicom_viewer.core.color_image import is_color, color_pixels
+    if is_color(metadata):
+        pixels = color_pixels(pixels, metadata)
     if pixels.ndim == 2 and str(getattr(metadata, "Modality", "")).upper() == "MR":
         pixels = DicomLoader().load_dataset(metadata, None, False,
                     modality_pixels=DicomLoader.rescale_pixels(pixels, metadata)).image

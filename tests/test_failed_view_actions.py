@@ -14,7 +14,7 @@ from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, descendants
 
 
-@pytest.mark.parametrize("kind", ["incomplete_mr", "color"])
+@pytest.mark.parametrize("kind", ["incomplete_mr", "unsupported_color"])
 def test_double_click_creates_error_tab_and_blocks_png(scene, tmp_path, monkeypatch, kind):
     window, app, warnings = scene
     if kind == "incomplete_mr":
@@ -25,12 +25,12 @@ def test_double_click_creates_error_tab_and_blocks_png(scene, tmp_path, monkeypa
         dataset = mr_dataset()
         dataset.Modality = "OT"
         dataset.SOPClassUID = dataset.file_meta.MediaStorageSOPClassUID = SecondaryCaptureImageStorage
-        dataset.PhotometricInterpretation = "RGB"
+        dataset.PhotometricInterpretation = "HSV"
         dataset.SamplesPerPixel, dataset.PlanarConfiguration = 3, 0
         dataset.BitsAllocated = dataset.BitsStored = 8
         dataset.HighBit, dataset.PixelRepresentation = 7, 0
         dataset.PixelData = np.full((dataset.Rows, dataset.Columns, 3), 128, np.uint8).tobytes()
-        reason = "暂不支持彩色 DICOM"
+        reason = "暂不支持此彩色 DICOM 的颜色编码"
     path = tmp_path / (kind + ".dcm")
     dataset.save_as(path, enforce_file_format=True)
     scan = list(DicomFolderScanner().scan_files([path], folder=tmp_path))[-1]

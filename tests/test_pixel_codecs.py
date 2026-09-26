@@ -192,16 +192,14 @@ def test_jpeg_extended_12_bit_has_explicit_capability_message():
 
 
 @pytest.mark.parametrize('filename', ['SC_rgb_jpeg.dcm', 'SC_rgb_jpeg_gdcm.dcm'])
-def test_color_main_view_explains_display_limit_not_codec_failure(filename):
+def test_color_main_view_preserves_decoded_rgb_without_scalar_values(filename):
     path = Path(pydicom.__file__).parent / 'data/test_files' / filename
     dataset, pixels = DicomLoader().read_frame(path)
     assert pixels.shape[-1] == 3
-    with pytest.raises(ValueError) as error:
-        DicomLoader().load_dataset(dataset, None, False, modality_pixels=pixels)
-    assert error_message(error.value).key == 'viewer.colorUnsupported'
-    text = localize(error.value, builtin('en-US')['messages'])
-    assert 'cannot display the image or export a viewport PNG' in text
-    assert 'Open Tag' in text
+    result = DicomLoader().load_dataset(dataset, None, False, modality_pixels=pixels)
+    np.testing.assert_array_equal(result.image, pixels)
+    assert result.modality_pixel is None
+    assert result.pixel_value_meta.quantification == 'color'
 
 
 def test_streaming_decode_never_replays_frames_after_a_late_failure(monkeypatch, tmp_path):

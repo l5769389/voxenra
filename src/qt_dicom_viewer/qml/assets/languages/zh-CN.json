@@ -1037,7 +1037,7 @@
         "text.1015": "在文件资源管理器中显示",
         "text.1016": "测量结果",
         "text.1017": "包含所有页签",
-        "text.1018": "PDF 附当前切片参考图",
+        "text.1018": "PDF 附测量参考图",
         "text.1019": "测量 CSV",
         "text.1020": "测量 PDF",
         "text.1021": "操作手册 · PNG、DICOM 与测量结果导出",
@@ -1486,7 +1486,7 @@
         "manual.colormap.section0.title": "选择伪彩",
         "manual.colormap.section0.body": "设置中分别选择普通灰阶影像和 PET 的默认色表；右侧伪彩工具可调整当前视图，**平铺同步所有宫格**。颜色不改变原始像素。",
         "manual.colormap.section1.title": "管理窗模板",
-        "manual.colormap.section1.body": "窗值模板统一保存在本地 **window-presets.json**。在 **设置 → 窗模板** 点击 **打开文件位置**，修改后点击 **重新加载**，无需重启。原有自定义模板和启停状态会自动迁移；应用内新增、保存或启停也写入此文件。最多 100 个模板；重新加载仅更新列表，不改变当前影像窗值。文件无效时保留当前列表并显示原因。\n\nJSON 顶层为 `schemaVersion: 1` 和 `presets` 数组。每项包含唯一 `presetId`、名称 `label`、窗宽 `width`（WW）、窗位 `center`（WL）及启用状态 `enabled`。默认 CT 模板的 `label` 为空时随界面语言显示名称；填入文本即可覆盖。数组顺序决定列表顺序，`enabled: false` 隐藏该模板。\n\n示例条目：`{\"presetId\":\"custom-lung\",\"label\":\"Lung\",\"width\":1500,\"center\":-600,\"enabled\":true}`。窗宽范围 1～1000000，窗位范围 −1000000～1000000；名称不可重复。**MR 不使用 CT 窗模板**。 默认提供 13 个 CT 模板：脑组织、肺窗、骨窗、软组织、纵隔、腹部、肝脏、硬膜下、脑窄窗、后颅窝、颞骨、脊柱软组织及脊柱骨窗。预设是调窗起点，可按影像调整。旧版配置首次升级时补充新增模板，保留已有数值、名称和启停状态；之后删除的模板不会在重启后重新加入。",
+        "manual.colormap.section1.body": "窗值模板统一保存在本地 **window-presets.json**。在 **设置 → 窗模板** 点击 **打开文件位置**，修改后点击 **重新加载**，无需重启。原有自定义模板和启停状态会自动迁移；应用内新增、保存或启停也写入此文件。最多 100 个模板；重新加载仅更新列表，不改变当前影像窗值。文件无效时保留当前列表并显示原因。\n\nJSON 顶层为 `schemaVersion: 1` 和 `presets` 数组。每项包含唯一 `presetId`、名称 `label`、窗宽 `width`（WW）、窗位 `center`（WL）及启用状态 `enabled`。默认 CT 模板的 `label` 为空时随界面语言显示名称；填入文本即可覆盖。数组顺序决定列表顺序，`enabled: false` 隐藏该模板。\n\n示例字段：`presetId: custom-lung`、`label: Lung`、`width: 1500`、`center: -600`、`enabled: true`。窗宽范围 1～1000000，窗位范围 −1000000～1000000；名称不可重复。**MR 不使用 CT 窗模板**。 默认提供 13 个 CT 模板：脑组织、肺窗、骨窗、软组织、纵隔、腹部、肝脏、硬膜下、脑窄窗、后颅窝、颞骨、脊柱软组织及脊柱骨窗。预设是调窗起点，可按影像调整。旧版配置首次升级时补充新增模板，保留已有数值、名称和启停状态；之后删除的模板不会在重启后重新加入。",
         "manual.colormap.section2.title": "应用与重置",
         "manual.colormap.section2.body": "**点击模板才应用**，编辑模板列表不改变当前图像。二维调窗重置恢复初始窗值；CT 3D 使用独立三维模板。",
         "manual.crosshair.title": "十字线样式",
@@ -1543,7 +1543,7 @@
         "manual.faq.section2.title": "结果去哪里了",
         "manual.faq.section2.body": "回到原页签、切片和采样网格，并检查范围显隐。关闭页签会释放结果；可从保存的工作区恢复。",
         "manual.faq.section3.title": "尚未支持",
-        "manual.faq.section3.body": "尚未支持 SR 导入、RTSTRUCT 交换、概率或 LABELMAP SEG、画笔体素编辑、跨层轮廓插值及分割表面生成。已支持二值 SEG 导入导出、SR 导出和自由形状单层转换。主阅片不支持通用多帧／彩色对象；Enhanced PET、Mosaic 及 MR 定量分析尚未开放；灰度 Enhanced MR 已支持。非规则体数据不在当前规则重建范围。",
+        "manual.faq.section3.body": "尚未支持 SR 导入、RTSTRUCT 交换、概率或 LABELMAP SEG、画笔体素编辑、跨层轮廓插值及分割表面生成。已支持二值 SEG 导入导出、SR 导出和自由形状单层转换。支持常见彩色二维及可逐帧解码的普通彩色多帧对象；视频编码、彩色 MPR／3D 和超声区域标定尚未支持；Enhanced PET、Mosaic 及 MR 定量分析尚未开放；灰度 Enhanced MR 已支持。非规则体数据不在当前规则重建范围。",
         "appearance.title": "外观与语言",
         "appearance.theme": "界面主题",
         "appearance.dark": "深色",
@@ -1775,8 +1775,8 @@
         "manual.supported-images.section2.body": "MPR／3D 要求同一回波、扩散编码、时相、分量及规则几何。维度信息缺失时不猜测；定位像、重复位置或不规则切片不重建。**MR Color、Mosaic、波谱、MR 4D 播放和融合**尚不支持。已有 DWI／ADC 可按格式条件浏览，但不执行 ADC 计算、Real World Value Mapping、厂家私有定量缩放、DTI、灌注或 fMRI 分析。",
         "manual.supported-images.section3.title": "PET：经典静态或全身 PT",
         "manual.supported-images.section3.body": "支持经典 **PET Image Storage**，单帧 **MONOCHROME2**，SeriesType 为 **STATIC / IMAGE** 或 **WHOLE BODY / IMAGE**。可打开 **2D、Compare 2D、MPR、3D**，以及有效 CT / PET 配对的融合与融合 3D。单位按元数据提供，缺少必要信息时不换算 SUV。PET 平铺、4D、动态／门控及 Enhanced / 多帧 PET 暂不支持。",
-        "manual.supported-images.section4.title": "其他对象与多帧",
-        "manual.supported-images.section4.body": "CR、DX、US、XA 等尚未完成专项验证；部分可解码的单帧灰度图像可走通用 2D 路径。可读取的对象能查看 **Tag**，不代表支持其主阅片。附属结果支持二值 SEG 导入导出及 SR 导出；SR 导入和 RTSTRUCT 交换尚未实现。",
+        "manual.supported-images.section4.title": "彩色影像与其他对象",
+        "manual.supported-images.section4.body": "常见 **RGB、YBR 和 PALETTE COLOR** 图像支持二维、平铺、缩放、平移、旋转、标注及 PNG 导出；可逐帧解码的普通彩色多帧对象支持翻帧和播放。显示保留源颜色，不应用 CT 窗值、反白、伪彩或 HU／SUV／MTF 等标量分析。有有效 PixelSpacing 时可做物理尺寸测量；缺失标定时隐藏毫米标尺并关闭尺寸测量，超声区域专用标定尚未支持。彩色图像不进行 MPR／3D 重建；视频编码、大型病理切片和厂商专用对象未纳入本次支持。CR、DX、US、XA 等仍需按具体对象验证；可查看 Tag 不代表所有对象均可阅片。",
         "manual.supported-images.section5.title": "文件格式与像素解码",
         "manual.supported-images.section5.body": "文件名不要求 **.dcm** 后缀。ZIP、RAR、7z、TAR 等仅为外层归档；其中仍需是受支持的 DICOM。软件内置未压缩、RLE、JPEG Baseline／Extended（仅 8 位）／Lossless、JPEG-LS 和 JPEG 2000 的解码组件，阅片、缩略图及 PNG 导出使用相同策略。缺少组件、未支持编码与解码失败分别提示。像素解码支持不等于支持所有多帧、彩色或视频对象。**NIfTI（.nii / .nii.gz）、NRRD 和厂家原始 MR 数据**不是当前输入格式。",
         "mr.invalidFrames": "Enhanced MR 帧信息不完整或无效；可在 Tag 中查看源文件。",
@@ -2167,6 +2167,8 @@
         "windowPreset.posterior-fossa": "后颅窝",
         "windowPreset.temporal-bone": "颞骨",
         "windowPreset.spine-soft-tissue": "脊柱软组织",
-        "windowPreset.spine-bone": "脊柱骨窗"
+        "windowPreset.spine-bone": "脊柱骨窗",
+        "viewer.colorVolumeUnsupported": "彩色 DICOM 支持二维浏览，暂不支持 MPR 或三维重建。",
+        "viewer.colorEncodingUnsupported": "暂不支持此彩色 DICOM 的颜色编码。"
     }
 }

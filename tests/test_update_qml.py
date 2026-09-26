@@ -66,6 +66,7 @@ def test_workspace_cancel_prevents_installer_handoff(scene, tmp_path, monkeypatc
     target.mkdir()
     updater._installation = Installation('macos', target)
     updater._cache = tmp_path / 'updates'
+    updater._version = "1.6.0"
     updater._network = Network()
     calls = []
     monkeypatch.setattr(app.workspaceDocumentController, 'requestClose', lambda: calls.append('cancel') or False)

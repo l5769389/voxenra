@@ -286,6 +286,8 @@ class SeriesDisplayMeta:
     frame_of_reference_uid: str = ""
     slice_geometries: tuple = ()
     supports_ct_analysis: bool = True
+    is_color: bool = False
+    color_calibrated: bool = False
 
 
 @dataclass(frozen=True, slots=True)

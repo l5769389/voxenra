@@ -47,10 +47,11 @@ MONTAGE_CACHE_BYTES = 128 * 1024 * 1024
 
 @dataclass(frozen=True, slots=True)
 class _CachedMontageFrame:
-    modality_pixels: np.ndarray
+    modality_pixels: np.ndarray | None
     default_window: WindowLevel
     instance_meta: InstanceDisplayMeta
     automatic_window: WindowLevel | None = None
+    color_image: np.ndarray | None = field(default=None, compare=False, repr=False)
     pixel_value_meta: PixelValueMeta = PixelValueMeta()
     window_pixels: np.ndarray | None = field(default=None, compare=False, repr=False)
     supplemental_overlay: np.ndarray | None = field(default=None, compare=False, repr=False)
@@ -58,7 +59,7 @@ class _CachedMontageFrame:
 
     @property
     def nbytes(self):
-        return sum(a.nbytes for a in (self.modality_pixels, self.window_pixels, self.supplemental_overlay) if a is not None) + (self.source_palette.colors.nbytes if self.source_palette else 0)
+        return sum(a.nbytes for a in (self.modality_pixels, self.window_pixels, self.supplemental_overlay, self.color_image) if a is not None) + (self.source_palette.colors.nbytes if self.source_palette else 0)
 
 
 class _MontageFrameCache:
@@ -202,20 +203,14 @@ class DicomRenderWorker(QObject):
 
         if cached is None:
             dataset, modality_pixels = self._stack_loader.read_frame(instance.path, instance.frame_index)
-            if modality_pixels.ndim != 2:
-                raise ValueError(
-                    "Montage rendering requires a single-frame 2D image, "
-                    f"got shape={modality_pixels.shape}"
-                )
             loaded = loader.load_dataset(dataset, None, False, modality_pixels=modality_pixels)
             cached = _CachedMontageFrame(
                 window_pixels=loaded.window_pixels,
                 supplemental_overlay=loaded.supplemental_overlay,
                 source_palette=loaded.source_palette,
-                modality_pixels=np.ascontiguousarray(
-                    loaded.modality_pixel,
-                    dtype=np.float32,
-                ),
+                color_image=loaded.image if loaded.pixel_value_meta.quantification == "color" else None,
+                modality_pixels=None if loaded.modality_pixel is None else np.ascontiguousarray(
+                    loaded.modality_pixel, dtype=np.float32),
                 default_window=loaded.window,
                 automatic_window=automatic_mr_window(modality_pixels) if series.modality.upper() == "MR" else None,
                 pixel_value_meta=loaded.pixel_value_meta,
@@ -228,7 +223,7 @@ class DicomRenderWorker(QObject):
         effective_window = loader.normalize_window(
             request.window or cached.default_window, minimum_width=minimum
         )
-        image = loader.apply_window(
+        image = cached.color_image if cached.color_image is not None else loader.apply_window(
             modality_pixels=cached.window_pixels if cached.window_pixels is not None else cached.modality_pixels,
             target_window=effective_window,
             inverted=request.inverted ^ (is_mr and cached.instance_meta.photometric_interpretation == "MONOCHROME1"),
@@ -326,7 +321,9 @@ class DicomRenderWorker(QObject):
                     geometry=ImageGeometryMeta(
                         rows=instance.rows or 0,
                         columns=instance.columns or 0,
-                        pixel_spacing=instance.pixel_spacing,
+                        # Unit pixel grid for display only; instance metadata keeps
+                        # missing calibration and color measurement tools stay disabled.
+                        pixel_spacing=instance.pixel_spacing or PixelSpacing(1.0, 1.0),
                         image_position_patient=instance.image_position_patient,
                         image_orientation_patient=instance.image_orientation_patient,
                     ),

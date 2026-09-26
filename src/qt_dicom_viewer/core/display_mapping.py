@@ -25,6 +25,8 @@ def map_display(gray, values, value_meta, overlay=None, palette=None,
     Invalid/padding measurements keep their source appearance. Grayscale samples
     never acquire palette colors merely because a custom range includes them.
     """
+    if value_meta.quantification == "color":
+        return gray
     if values is not None and intent.applies_to(value_meta.unit):
         finite = np.isfinite(values)
         scaled = np.clip((np.where(finite, values, intent.lower).astype(np.float64)-intent.lower)

@@ -270,6 +270,9 @@ def _read_frames(file_path):
     if base is None:
         return ()
     if not is_enhanced_image(dataset):
+        from qt_dicom_viewer.core.color_image import is_color
+        if is_color(dataset) and base.number_of_frames > 1:
+            return tuple(replace(base, frame_index=index) for index in range(base.number_of_frames))
         return (base,)
     try:
         frames = []

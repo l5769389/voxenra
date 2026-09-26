@@ -66,8 +66,8 @@
         "messageId": "manual.supported-images.section3"
       },
       {
-        "title": "其他对象与多帧",
-        "body": "CR、DX、US、XA 等尚未完成专项验证；部分可解码的单帧灰度图像可走通用 2D 路径。可读取的对象能查看 **Tag**，不代表支持其主阅片。附属结果支持二值 SEG 导入导出及 SR 导出；SR 导入和 RTSTRUCT 交换尚未实现。",
+        "title": "彩色影像与其他对象",
+        "body": "常见 **RGB、YBR 和 PALETTE COLOR** 图像支持二维、平铺、缩放、平移、旋转、标注及 PNG 导出；可逐帧解码的普通彩色多帧对象支持翻帧和播放。显示保留源颜色，不应用 CT 窗值、反白、伪彩或 HU／SUV／MTF 等标量分析。有有效 PixelSpacing 时可做物理尺寸测量；缺失标定时隐藏毫米标尺并关闭尺寸测量，超声区域专用标定尚未支持。彩色图像不进行 MPR／3D 重建；视频编码、大型病理切片和厂商专用对象未纳入本次支持。CR、DX、US、XA 等仍需按具体对象验证；可查看 Tag 不代表所有对象均可阅片。",
         "messageId": "manual.supported-images.section4"
       },
       {

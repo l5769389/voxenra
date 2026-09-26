@@ -1037,7 +1037,7 @@
         "text.1015": "Show in File Explorer",
         "text.1016": "Measurement results",
         "text.1017": "Include all tabs",
-        "text.1018": "Include current slice in PDF",
+        "text.1018": "Include measurement reference images in PDF",
         "text.1019": "CSV report",
         "text.1020": "PDF report",
         "text.1021": "User manual · PNG, DICOM and measurement exports",
@@ -1486,7 +1486,7 @@
         "manual.colormap.section0.title": "Choose a color map",
         "manual.colormap.section0.body": "Set separate defaults for grayscale and PET in Settings. The tool on the right changes the current view; **Tiles synchronizes every cell**. Colors do not change original pixels.",
         "manual.colormap.section1.title": "Manage window presets",
-        "manual.colormap.section1.body": "Window presets are stored in **window-presets.json**. In **Settings → Window presets**, choose **Open file location**, edit the file, then **Reload presets** without restarting. Existing custom presets and enabled states migrate automatically. Adding, saving or enabling presets in the app writes to the same file. Up to 100 presets are supported. Reloading updates the list without changing the current image window; invalid files leave the current list unchanged and show a reason.\n\nThe JSON root contains `schemaVersion: 1` and a `presets` array. Each entry has a unique `presetId`, name `label`, window width `width` (WW), window level `center` (WL), and `enabled`. An empty `label` on a default CT preset uses its translated name; a nonempty label overrides it. Array order controls display order; `enabled: false` hides the entry.\n\nExample entry: `{\"presetId\":\"custom-lung\",\"label\":\"Lung\",\"width\":1500,\"center\":-600,\"enabled\":true}`. Width must be 1–1000000, center −1000000–1000000; names must be unique. **MR does not use CT window presets**. There are 13 default CT presets: brain, lung, bone, soft tissue, mediastinum, abdomen, liver, subdural, narrow brain, posterior fossa, temporal bone, spine soft tissue and spine bone. These are display starting points and may need adjustment for each image. Older configurations receive the new presets once, preserving existing values, names and enabled states. Subsequent deletions stay deleted after restarting.",
+        "manual.colormap.section1.body": "Window presets are stored in **window-presets.json**. In **Settings → Window presets**, choose **Open file location**, edit the file, then **Reload presets** without restarting. Existing custom presets and enabled states migrate automatically. Adding, saving or enabling presets in the app writes to the same file. Up to 100 presets are supported. Reloading updates the list without changing the current image window; invalid files leave the current list unchanged and show a reason.\n\nThe JSON root contains `schemaVersion: 1` and a `presets` array. Each entry has a unique `presetId`, name `label`, window width `width` (WW), window level `center` (WL), and `enabled`. An empty `label` on a default CT preset uses its translated name; a nonempty label overrides it. Array order controls display order; `enabled: false` hides the entry.\n\nExample fields: `presetId: custom-lung`, `label: Lung`, `width: 1500`, `center: -600`, `enabled: true`. Width must be 1–1000000, center −1000000–1000000; names must be unique. **MR does not use CT window presets**. There are 13 default CT presets: brain, lung, bone, soft tissue, mediastinum, abdomen, liver, subdural, narrow brain, posterior fossa, temporal bone, spine soft tissue and spine bone. These are display starting points and may need adjustment for each image. Older configurations receive the new presets once, preserving existing values, names and enabled states. Subsequent deletions stay deleted after restarting.",
         "manual.colormap.section2.title": "Apply and reset",
         "manual.colormap.section2.body": "A preset applies **when clicked**; editing its list does not change the image. Reset 2D windowing to restore initial values. CT 3D uses separate volume presets.",
         "manual.crosshair.title": "Crosshair styles",
@@ -1543,7 +1543,7 @@
         "manual.faq.section2.title": "Where are my results?",
         "manual.faq.section2.body": "Return to the original tab, slice and sampling grid, and check region visibility. Closing tabs releases results. Restore them from a saved workspace.",
         "manual.faq.section3.title": "Not yet supported",
-        "manual.faq.section3.body": "SR import, RTSTRUCT exchange, fractional or LABELMAP SEG, voxel brush editing, contour interpolation and segmentation surfaces are not supported. Binary SEG import/export, SR export and single-layer freehand conversion are supported. Generic multiframe/color viewing, Enhanced PET, Mosaic and MR quantitative analysis remain unavailable. Grayscale Enhanced MR is supported; reconstruction requires regular volumes.",
+        "manual.faq.section3.body": "SR import, RTSTRUCT exchange, probabilistic or LABELMAP SEG, voxel painting, contour interpolation and segmentation surface generation are not supported. Binary SEG import/export, SR export and single-slice freeform conversion are supported. Common color 2D and ordinary decodable color multiframe objects are supported; video codecs, color MPR/3D and ultrasound region calibration are not. Enhanced PET, Mosaic and MR quantitative analysis remain unavailable; grayscale Enhanced MR is supported. Irregular volumes are outside regular-grid reconstruction.",
         "appearance.title": "Appearance & language",
         "appearance.theme": "Theme",
         "appearance.dark": "Dark",
@@ -1775,8 +1775,8 @@
         "manual.supported-images.section2.body": "MPR/3D require one echo, diffusion encoding, time point and component with regular geometry. Missing dimensions are not guessed; localizers, duplicate positions and irregular slices cannot be reconstructed. **MR Color, Mosaic, spectroscopy, MR 4D playback and fusion** remain unsupported. DWI/ADC may be displayed when their format is supported, without ADC calculation, Real World Value Mapping, vendor-private quantitative scaling, DTI, perfusion or fMRI analysis.",
         "manual.supported-images.section3.title": "PET: classic static or whole-body PT",
         "manual.supported-images.section3.body": "Supports classic **PET Image Storage**, single-frame **MONOCHROME2**, with SeriesType **STATIC / IMAGE** or **WHOLE BODY / IMAGE**. Available views are **2D, Compare 2D, MPR and 3D**, plus fusion and fusion 3D for eligible CT / PET pairs. Units depend on metadata; missing required information prevents SUV conversion. PET Montage, 4D, dynamic / gated and Enhanced / multi-frame PET are unsupported.",
-        "manual.supported-images.section4.title": "Other objects and multi-frame data",
-        "manual.supported-images.section4.body": "CR, DX, US and XA have not completed dedicated validation; some decodable single-frame grayscale images use generic 2D viewing. **Tag** access does not imply full viewing support. Associated results support binary SEG import/export and SR export; SR import and RTSTRUCT exchange are not implemented.",
+        "manual.supported-images.section4.title": "Color images and other objects",
+        "manual.supported-images.section4.body": "Common **RGB, YBR and PALETTE COLOR** images support 2D and montage viewing, zoom, pan, rotation, annotations and PNG export. Ordinary color multiframe objects that can be decoded frame by frame support browsing and playback. Source colors are preserved without CT windows, inversion, pseudocolor or scalar HU/SUV/MTF analysis. Physical measurements require valid PixelSpacing; without calibration, millimetre scales and physical measurements are disabled. Ultrasound region-specific calibration is not supported. Color MPR/3D, video codecs, whole-slide pathology and vendor-specific objects are outside this scope. CR, DX, US and XA objects still require format-specific validation; Tag access alone does not imply viewing support.",
         "manual.supported-images.section5.title": "File formats and pixel decoding",
         "manual.supported-images.section5.body": "The **.dcm** extension is optional. ZIP, RAR, 7z and TAR are outer archives containing supported DICOM objects. The application bundles decoders for uncompressed pixels, RLE, JPEG Baseline/Extended (8-bit only)/Lossless, JPEG-LS and JPEG 2000. Viewing, thumbnails and PNG export share the same decoder policy. Missing components, unsupported encodings and decoding failures have distinct messages. Pixel decoding support does not imply support for all multi-frame, color or video objects. **NIfTI (.nii / .nii.gz), NRRD and vendor raw MR data** are not supported inputs.",
         "mr.invalidFrames": "Enhanced MR frame metadata is incomplete or invalid; inspect the source in Tag.",
@@ -2167,6 +2167,8 @@
         "windowPreset.posterior-fossa": "Posterior fossa",
         "windowPreset.temporal-bone": "Temporal bone",
         "windowPreset.spine-soft-tissue": "Spine soft tissue",
-        "windowPreset.spine-bone": "Spine bone"
+        "windowPreset.spine-bone": "Spine bone",
+        "viewer.colorVolumeUnsupported": "Color DICOM supports 2D viewing; MPR and 3D reconstruction are not supported.",
+        "viewer.colorEncodingUnsupported": "This color DICOM encoding is not supported."
     }
 }

@@ -157,6 +157,8 @@ class VolumeManager:
         from qt_dicom_viewer.core.ct import ct_series_error
         if error := ct_series_error(replace(series, instances=instances), volume=True):
             raise VolumeBuildError(error)
+        if any(i.samples_per_pixel > 1 or i.photometric_interpretation == "PALETTE COLOR" for i in instances):
+            raise VolumeBuildError(_msg("viewer.colorVolumeUnsupported"))
         self._validate_instances(instances=instances)
         from qt_dicom_viewer.core.volume_view import validate_volume_series
         from qt_dicom_viewer.core.pet import validate_pet_2d_series
