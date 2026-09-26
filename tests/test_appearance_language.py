@@ -247,7 +247,8 @@ def test_light_palette_text_contrast_and_image_color_independence():
         values=[int(color[i:i+2],16)/255 for i in (1,3,5)]
         linear=[v/12.92 if v<=.04045 else ((v+.055)/1.055)**2.4 for v in values]
         return sum(v*w for v,w in zip(linear,(.2126,.7152,.0722)))
-    for palette in (DARK,LIGHT):
+    from qt_dicom_viewer.ui.theme_palette import palette_for
+    for palette in (DARK, LIGHT, palette_for("graphite")):
         for fg,bg in [('textPrimary','panelBackground'),('textSecondary','controlBackground'),
                       ('textMuted','panelBackgroundStrong'),('textSubtle','panelBackground'),
                       ('textOnPrimary','primaryButtonBackground'),('textOnPrimary','primaryButtonHover'),
@@ -287,7 +288,7 @@ def test_live_switch_keeps_all_view_state_and_history(qt_app, paired_series, tmp
         ws.renderRequested.connect(lambda request: renders.append(request))
         app.workspaceDocumentController._autosave.stop()
         app.workspaceDocumentController._dirty = False
-        for theme, locale in [('light','en-US'),('dark','zh-CN')]*2:
+        for theme, locale in [('light','en-US'),('dark','zh-CN'),('graphite','en-US')]*2:
             app.settingsController.setValue('appearance','theme',theme)
             app.languageController.selectLanguage(locale)
             QTest.qWait(50)

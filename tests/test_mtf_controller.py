@@ -90,6 +90,60 @@ def finish(view, job):
     return result
 
 
+def test_numeric_roi_commit_is_atomic_square_and_rejects_stale_results(mtf_viewport, monkeypatch):
+    view, frame = mtf_viewport
+    controller = view.mtfController
+    jobs = capture_tasks(view, monkeypatch)
+    assert controller.applyRoi(63, 63, 8, 3)
+    assert len(jobs) == 1
+    geometry = controller.roiGeometry
+    assert geometry['width'] == pytest.approx(8)
+    assert geometry['height'] == pytest.approx(8)  # Anisotropic pixels, physical square.
+    assert controller.stateSnapshot['status'] == 'calculating'
+    assert controller.stateSnapshot['result'] == {}
+    first = jobs[0]
+    assert controller.applyRoi(64, 64, 9, 9)
+    assert len(controller.roiController.visible_measurements) == 1
+    finish(view, first)
+    assert controller.status == 'calculating'
+    finish(view, jobs[1])
+    assert controller.stateSnapshot['status'] == 'ready'
+    assert controller.stateSnapshot['sliceNumber'] == frame.frame_meta.slice_index + 1
+    saved = controller.stateSnapshot
+    for values in [(0, 0, 9, 9), (63, 63, 0, 1), (63, 63, .01, .01),
+                   (float('nan'), 63, 9, 9), (63, 63, float('inf'), 9)]:
+        assert not controller.applyRoi(*values)
+        assert controller.stateSnapshot == saved
+    assert len(jobs) == 2
+    controller.set_current_slice(1)
+    assert controller.stateSnapshot['result'] == {}
+    assert controller.frameToken == ''
+    assert not controller.applyRoi(63, 63, 8, 8)
+
+
+def test_numeric_fwhm_roi_keeps_rectangle_and_separate_cache(mtf_viewport, monkeypatch):
+    view, _ = mtf_viewport
+    mtf, fwhm = view.mtfController, view.fwhmController
+    jobs = capture_tasks(view, monkeypatch, fwhm)
+    assert fwhm.applyRoi(60, 60, 5, 2)
+    assert fwhm.roiGeometry['width'] == pytest.approx(5)
+    assert fwhm.roiGeometry['height'] == pytest.approx(2)
+    assert len(jobs) == 1
+    assert not mtf.roiController.visible_measurements
+
+
+def test_numeric_roi_requires_real_spacing_and_no_pointer_transaction(mtf_viewport):
+    view, frame = mtf_viewport
+    controller = view.mtfController
+    view.beginInteraction(0, 0, 1, True, 8, 8, .1, .1)
+    assert not controller.applyRoi(63, 63, 8, 8)
+    view.cancelMeasurement()
+    controller.set_frame('series', replace(frame.frame_meta,
+        instance_meta=replace(frame.frame_meta.instance_meta, pixel_spacing=None)), frame.modality_pixel)
+    assert controller.roiGeometry == {}
+    assert not controller.applyRoi(63, 63, 8, 8)
+
+
 def test_real_thread_result_and_independent_measurements(mtf_viewport):
     view, _ = mtf_viewport
     callback_threads = []
@@ -498,8 +552,12 @@ def test_ramp_roi_is_rectangular_and_angle_changes_do_not_recompute(mtf_viewport
     assert ramp['thickness'] == pytest.approx(ramp['fwhm'] * np.tan(np.deg2rad(23)))
     assert c.rampAngle == 23 and '23°' in c.roiMetricLabel
     view.settingsController.setValue('services', 'rampThicknessAngle', 45)
+    assert c.currentResult['ramp']['thickness'] == ramp['thickness']
+    assert '23°' in c.roiMetricLabel and len(jobs) == 1
+    c.recalculate()
+    result = finish(view, jobs[-1])
     assert c.currentResult['ramp']['thickness'] == pytest.approx(ramp['fwhm'])
-    assert '45°' in c.roiMetricLabel and len(jobs) == 1
+    assert '45°' in c.roiMetricLabel and len(jobs) == 2
     view.settingsController.setValue('services', 'mtfFrequencyUnit', 'lp/cm')
     assert c.currentResult['ramp']['fwhm'] == ramp['fwhm']
     assert c._current_analysis().result is result
@@ -600,7 +658,7 @@ def test_small_selection_automatically_samples_background_in_worker(mtf_viewport
     assert view.mtfController.currentResult["x"]["mtf10"] > 0
 
 
-def test_equivalent_is_default_and_live_toggle_restores_measured_results(qt_app, monkeypatch):
+def test_equivalent_settings_require_explicit_recalculation(qt_app, monkeypatch):
     import math
     view = _controller()
     try:
@@ -618,15 +676,21 @@ def test_equivalent_is_default_and_live_toggle_restores_measured_results(qt_app,
             assert axis['mtf50'] == pytest.approx(axis['mtf10']*math.sqrt(math.log(2)/math.log(10)))
         cached = c._current_analysis().result
         c.settingsController.setValue('services', 'mtfGaussianEquivalent', False)
+        assert c.actualAnalysisMethod == 'gaussian_equivalent'
+        assert len(jobs) == 1
+        c.recalculate()
+        measured = finish(view, jobs[-1])
         assert c.actualAnalysisMethod == 'tukey_fft'
         assert c.currentResult['x']['mtf50'] == measured.x.mtf50
         assert c.currentResult['x']['mtf'] == list(measured.x.mtf)
         assert '高斯等效' not in c.roiMetricLabel
         c.settingsController.setValue('services', 'mtfGaussianEquivalent', True)
+        c.recalculate()
+        cached = finish(view, jobs[-1])
         c.settingsController.setValue('services', 'mtfFrequencyUnit', 'lp/cm')
         assert c.currentResult['x']['mtf10'] == pytest.approx(measured.x.mtf10*10)
         assert c.currentResult['x']['mtf50'] == pytest.approx(measured.x.mtf10*10*math.sqrt(math.log(2)/math.log(10)))
-        assert c._current_analysis().result is cached and len(jobs) == 1
+        assert c._current_analysis().result is cached and len(jobs) == 3
         assert not view.fwhmController.currentResult
     finally:
         view.shutdown()

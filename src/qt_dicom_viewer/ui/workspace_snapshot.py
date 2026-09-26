@@ -19,9 +19,7 @@ def editable_state(tab):
         state = {}
         measure = getattr(view, "_measure_controller", None)
         if measure is not None:
-            state["measurements"] = dict(measure._measurements)
-            state["frames"] = dict(measure._measurement_frames)
-            state["labelPositions"] = {k:v for k,v in measure._label_positions.items() if k in measure._measurements}
+            state.update(measure.persistent_state())
         annotations = getattr(view, "_text_annotation_controller", None)
         if annotations is not None:
             state["annotations"] = {k: v for k, v in annotations._annotations.items()
@@ -51,7 +49,7 @@ def edit_signature(state):
                                     for k, m in view["measurements"].items()}
     # Adding an empty scene cell or caching another orientation is not an edit.
     state["views"] = {key: view for key, view in state["views"].items()
-                      if not set(view) <= {"measurements", "frames", "annotations", "labelPositions"}
+                      if not set(view) <= {"measurements", "frames", "annotations", "labelPositions", "presentation", "sources"}
                       or any(view.values())}
     return dumps(state)
 
@@ -61,13 +59,7 @@ def apply_edits(tab, state):
         record = state.get("views", {}).get(view_key(view), {})
         measure = getattr(view, "_measure_controller", None)
         if measure is not None:
-            measure.cancel_transaction()
-            measure.clear_selection()
-            measure._measurements = dict(record.get("measurements", {}))
-            measure._measurement_frames = dict(record.get("frames", {}))
-            measure._label_positions = {k:v for k,v in record.get("labelPositions", {}).items()
-                                        if k in measure._measurements}
-            measure.measurementsChanged.emit()
+            measure.restore_state(record)
             measure.refresh_roi_metrics(getattr(view, "_modality_pixel", None),
                                         getattr(view, "_frame_meta", None))
         annotations = getattr(view, "_text_annotation_controller", None)
@@ -127,6 +119,16 @@ def tab_snapshot(tab):
         record["twoDLayout"] = tab.twoDLayout.snapshot()
     for view in tab.viewports_by_id.values():
         state = {}
+        independent = getattr(view, "_independent_measurement_source", None)
+        if independent:
+            state["independentSource"] = independent
+        analyses = {}
+        for name in ("mtf", "fwhm", "qa"):
+            controller = getattr(view, "_" + name + "_controller", None)
+            if controller is not None:
+                analyses[name] = controller.persistent_state()
+        if analyses:
+            state["analyses"] = analyses
         if hasattr(view, "slice_frame"):
             state["sliceFrame"] = view.slice_frame
         if hasattr(view, "_state"):
@@ -209,6 +211,13 @@ def apply_tab_snapshot(tab, record):
         state = record["views"].get(view_key(view))
         if state is None:
             continue
+        view._independent_measurement_source = state.get("independentSource")
+        if view._independent_measurement_source:
+            view._mpr_state = view._independent_measurement_source.get("navigation", tab._target_mpr_state)
+        for name, analysis in state.get("analyses", {}).items():
+            controller = getattr(view, "_" + name + "_controller", None)
+            if controller is not None:
+                controller.restore_state(analysis)
         if hasattr(view, "slice_frame"):
             view.slice_frame = state.get("sliceFrame")
         if "image" in state:

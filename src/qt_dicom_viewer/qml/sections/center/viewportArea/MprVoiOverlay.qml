@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../../theme"
 import QtQuick.Shapes
 
 Item {
@@ -42,7 +43,7 @@ Item {
                     width: 8; height: 8; radius: 4
                     x: modelData.x - 4; y: modelData.y - 4
                     color: roi.modelData.color
-                    border.color: "#121820"
+                    border.color: Theme.imageHandleBorder
                 }
             }
         }

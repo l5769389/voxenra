@@ -20,6 +20,14 @@ ColumnLayout {
     spacing: 14
     onVisibleChanged: { if (!visible && infoPopup) infoPopup.close() }
 
+    Components.AppButton {
+        objectName: "recalculateAnalysis"
+        Layout.fillWidth: true
+        text: qsTrId("analysis.recalculate")
+        enabled: !!panel.controller && panel.controller.status !== "calculating" && panel.controller.status !== "editing"
+        onClicked: panel.controller.recalculate()
+    }
+
     function metric(value, missing) {
         return value === null || value === undefined || !settingsController ? missing
             : settingsController.formatMeasurement(value, decimalPlaces)
@@ -30,6 +38,10 @@ ColumnLayout {
         required property string value
         required property string label
         property bool selected: false
+        Accessible.name: label
+        Accessible.checkable: true
+        Accessible.checked: selected
+        Accessible.onPressAction: selector.click()
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignVCenter
@@ -87,6 +99,7 @@ ColumnLayout {
         }
         SelectorButton {
             objectName: "mtfAxis-x"
+            Accessible.name: qsTrId("analysis.axisX")
             value: "x"
             label: "X"
             selected: panel.controller?.showX ?? true
@@ -94,6 +107,7 @@ ColumnLayout {
         }
         SelectorButton {
             objectName: "mtfAxis-y"
+            Accessible.name: qsTrId("analysis.axisY")
             value: "y"
             label: "Y"
             selected: panel.controller?.showY ?? false
@@ -105,6 +119,10 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 1
         color: Theme.dividerColor
+    }
+    RoiGeometryEditor {
+        Layout.fillWidth: true
+        controller: panel.controller
     }
     RowLayout {
         Layout.fillWidth: true
@@ -164,6 +182,8 @@ ColumnLayout {
     }
     Text {
         objectName: "mtfStatus"
+        Accessible.role: Accessible.StaticText
+        Accessible.name: text
         Layout.fillWidth: true
         visible: text.length > 0
         text: panel.controller ? panel.controller.statusText : qsTrId("text.1143")
@@ -173,6 +193,8 @@ ColumnLayout {
     }
     Text {
         objectName: "mtfError"
+        Accessible.role: Accessible.StaticText
+        Accessible.name: text
         Layout.fillWidth: true
         visible: text.length > 0
         text: panel.controller ? panel.controller.error : ""
@@ -194,6 +216,8 @@ ColumnLayout {
         Layout.fillWidth: true
         Text {
             objectName: "mtfActualMethod"
+            Accessible.role: Accessible.StaticText
+            Accessible.name: text
             Layout.fillWidth: true
             text: !panel.ready ? "" : panel.controller?.actualAnalysisMethod === "gaussian_equivalent" ? qsTrId("mtf.usedEquivalent")
                 : panel.controller?.actualAnalysisMethod === "tukey_fft" ? qsTrId("mtf.usedWeighted")
@@ -233,10 +257,10 @@ ColumnLayout {
     AnalysisInfoPopup {
         id: infoPopup
         anchorItem: infoButton
-        explanation: panel.rampMode ? qsTrId("ramp.info")
+        explanation: (panel.rampMode ? qsTrId("ramp.info")
             : panel.controller?.actualAnalysisMethod === "gaussian_equivalent" ? qsTrId("mtf.equivalentHint")
             : panel.controller?.actualAnalysisMethod === "tukey_fft" ? qsTrId("mtf.weightedHint")
-            : panel.controller?.analysisMethod === "gaussian" ? qsTrId("mtf.gaussianHint") : qsTrId("mtf.directHint")
+            : panel.controller?.analysisMethod === "gaussian" ? qsTrId("mtf.gaussianHint") : qsTrId("mtf.directHint")) + "\n\n" + (panel.controller?.provenance ?? "") + "\n" + qsTrId("analysis.savedHint")
         warnings: panel.qualityWarnings
     }
     Connections {
@@ -245,6 +269,8 @@ ColumnLayout {
     }
     GridLayout {
         objectName: "rampMetrics"
+        Accessible.role: Accessible.StaticText
+        Accessible.name: panel.controller?.roiMetricLabel ?? ""
         Layout.fillWidth: true
         visible: panel.ready && panel.rampMode
         columns: 2
@@ -283,6 +309,8 @@ ColumnLayout {
     }
     GridLayout {
         objectName: "mtfMetrics"
+        Accessible.role: Accessible.StaticText
+        Accessible.name: panel.controller?.roiMetricLabel ?? ""
         Layout.fillWidth: true
         visible: panel.ready && !panel.rampMode
         columns: 3

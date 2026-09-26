@@ -131,7 +131,7 @@ ColumnLayout {
                 textColor: entry.modelData.color
                 Accessible.name: qsTrId("seg.color")
                 onClicked: {
-                    const colors = ["#ed55ed", "#43c6dc", "#ffbb55", "#87d980"]
+                    const colors = Theme.segmentationSwatches
                     panel.controller.setColor(entry.modelData.id,
                         colors[(colors.indexOf(entry.modelData.color) + 1) % colors.length])
                 }

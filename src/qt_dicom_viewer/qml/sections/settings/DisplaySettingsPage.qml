@@ -44,7 +44,7 @@ Item {
                 width: Math.min(scroll.availableWidth, ["window", "services"].includes(page.category) ? 760 : 1000)
                 sourceComponent: ({colormap: colorsPage, window: windowsPage, crosshair: crosshairPage,
                     corners: cornersPage, scale: scalePage, measurement: measurementPage, roi: roiPage,
-                    export: exportPage, workspace: workspacePage, appearance: appearancePage, services: servicesPage})[page.category]
+                    export: exportPage, workspace: workspacePage, appearance: appearancePage, services: servicesPage, updates: updatesPage})[page.category]
             }
         }
     }
@@ -59,4 +59,5 @@ Item {
     Component { id: exportPage; ExportSettingsPage { settingsController: page.settingsController } }
     Component { id: workspacePage; WorkspaceSettingsPage { settingsController: page.settingsController } }
     Component { id: appearancePage; AppearanceSettingsPage { settingsController: page.settingsController } }
+    Component { id: updatesPage; UpdateSettingsPage { settingsController: page.settingsController } }
 }

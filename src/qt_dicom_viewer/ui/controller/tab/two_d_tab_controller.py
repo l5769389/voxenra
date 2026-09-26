@@ -360,7 +360,14 @@ class TwoDTabController(TabController):
         layout = getattr(self, "_two_d_layout", None)
         if layout is not None:
             for i, cell in enumerate(layout._cells):
-                if cell["views"].get(cell["mode"]) is view and layout._active_cell != i:
+                mode = next((mode for mode, candidate in cell["views"].items() if candidate is view), None)
+                if mode is None:
+                    continue
+                # Results may belong to a cached plane that is not currently shown.
+                if cell["mode"] != mode:
+                    cell["mode"] = mode
+                    layout.cellsChanged.emit()
+                if layout._active_cell != i:
                     layout._active_cell = i
                     layout.activeChanged.emit()
-                    break
+                break

@@ -26,7 +26,7 @@ Rectangle {
         ? viewportController : null
 
     color: Theme.panelBackground
-    border.color: Theme.borderDefault
+    border.color: Theme.panelBorder
     border.width: 1
     radius: 8
     clip: true

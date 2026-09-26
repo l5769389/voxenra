@@ -307,9 +307,10 @@ def test_drag_preview_cancel_overlap_and_bounds_keep_complete_results(qa_view, q
     view.apply_slice_index(0)
     deliver_frame(view, frame)
     assert qa.currentResult["rois"][0] == saved["rois"][0]
+    moved = qa.currentResult
     qa.analyze()
     wait_qa(qt_app, qa)
-    assert qa.currentResult == saved
+    assert qa.currentResult == moved
 
 
 def test_copies_are_independent_protected_baselines_and_slice_cached(qa_view, qt_app):

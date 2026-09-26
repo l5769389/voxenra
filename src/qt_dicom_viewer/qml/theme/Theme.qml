@@ -1,132 +1,183 @@
 pragma Singleton
 
 import QtQuick
+import "PaletteData.js" as PaletteData
 
 QtObject {
     readonly property var palette: typeof appController !== "undefined" && appController.appearanceController
-        ? appController.appearanceController.colors : ({})
+        ? appController.appearanceController.colors : PaletteData.data.defaults
 
     // Brand colors: cold cyan is the main interaction color, while steel blue
     // is used for neutral secondary actions. Warm orange is intentionally rare.
-    readonly property color primaryColor: palette.primaryColor ?? "#66d0ff"
-    readonly property color primaryStrong: palette.primaryStrong ?? "#2a95e4"
-    readonly property color primaryHover: palette.primaryHover ?? "#7bd8ff"
-    readonly property color primaryPressed: palette.primaryPressed ?? "#237fbd"
-    readonly property color primarySoft: palette.primarySoft ?? "#17354a"
-    readonly property color primarySoftHover: palette.primarySoftHover ?? "#1d425b"
+    readonly property color primaryColor: palette.primaryColor ?? PaletteData.data.defaults.primaryColor
+    readonly property color primaryStrong: palette.primaryStrong ?? PaletteData.data.defaults.primaryStrong
+    readonly property color primaryHover: palette.primaryHover ?? PaletteData.data.defaults.primaryHover
+    readonly property color primaryPressed: palette.primaryPressed ?? PaletteData.data.defaults.primaryPressed
+    readonly property color primarySoft: palette.primarySoft ?? PaletteData.data.defaults.primarySoft
+    readonly property color primarySoftHover: palette.primarySoftHover ?? PaletteData.data.defaults.primarySoftHover
 
-    readonly property color secondaryColor: palette.secondaryColor ?? "#91a4b6"
-    readonly property color secondaryStrong: palette.secondaryStrong ?? "#61768a"
-    readonly property color secondaryHover: palette.secondaryHover ?? "#a8bac9"
-    readonly property color secondaryPressed: palette.secondaryPressed ?? "#4d6072"
-    readonly property color secondarySoft: palette.secondarySoft ?? "#28323c"
+    readonly property color secondaryColor: palette.secondaryColor ?? PaletteData.data.defaults.secondaryColor
+    readonly property color secondaryStrong: palette.secondaryStrong ?? PaletteData.data.defaults.secondaryStrong
+    readonly property color secondaryHover: palette.secondaryHover ?? PaletteData.data.defaults.secondaryHover
+    readonly property color secondaryPressed: palette.secondaryPressed ?? PaletteData.data.defaults.secondaryPressed
+    readonly property color secondarySoft: palette.secondarySoft ?? PaletteData.data.defaults.secondarySoft
 
-    readonly property color accentWarm: palette.accentWarm ?? "#ff8a5b"
+    readonly property color accentWarm: palette.accentWarm ?? PaletteData.data.defaults.accentWarm
 
     // Surface hierarchy. Keep the DICOM canvas darker than application chrome.
-    readonly property color appBackground: palette.appBackground ?? "#101317"
-    readonly property color shellBackground: palette.shellBackground ?? "#101317"
-    readonly property color panelBackground: palette.panelBackground ?? "#171c22"
-    readonly property color panelBackgroundSoft: palette.panelBackgroundSoft ?? "#14191f"
-    readonly property color panelBackgroundStrong: palette.panelBackgroundStrong ?? "#1b2128"
-    readonly property color workspaceBackground: palette.workspaceBackground ?? "#0c0f13"
-    readonly property color canvasBackground: palette.canvasBackground ?? "#050709"
-    readonly property color cardBackground: palette.cardBackground ?? "#1d242c"
-    readonly property color cardBackgroundHover: palette.cardBackgroundHover ?? "#252e38"
-    readonly property color elevatedBackground: palette.elevatedBackground ?? "#29333e"
+    readonly property color appBackground: palette.appBackground ?? PaletteData.data.defaults.appBackground
+    readonly property color shellBackground: palette.shellBackground ?? PaletteData.data.defaults.shellBackground
+    readonly property color panelBackground: palette.panelBackground ?? PaletteData.data.defaults.panelBackground
+    readonly property color panelBackgroundSoft: palette.panelBackgroundSoft ?? PaletteData.data.defaults.panelBackgroundSoft
+    readonly property color panelBackgroundStrong: palette.panelBackgroundStrong ?? PaletteData.data.defaults.panelBackgroundStrong
+    readonly property color workspaceBackground: palette.workspaceBackground ?? PaletteData.data.defaults.workspaceBackground
+    readonly property color canvasBackground: PaletteData.data.imaging.canvasBackground
+    readonly property color cardBackground: palette.cardBackground ?? PaletteData.data.defaults.cardBackground
+    readonly property color cardBackgroundHover: palette.cardBackgroundHover ?? PaletteData.data.defaults.cardBackgroundHover
+    readonly property color elevatedBackground: palette.elevatedBackground ?? PaletteData.data.defaults.elevatedBackground
 
     // Image cards retain their contrast independently from application chrome.
-    readonly property color overlayMuted: "#a1adb9"
-    readonly property color overlayDivider: "#303a45"
-    readonly property color overlayCard: "#e60d1722"
-    // Image frames keep their contrast on the dark canvas in either UI theme.
-    readonly property color viewportActiveBorder: "#66d0ff"
-    readonly property color viewportHoverBorder: "#8599a8"
-    readonly property color viewportBorder: "#30404d"
-    readonly property color chartX: palette.chartX ?? "#41cce5"
-    readonly property color chartY: palette.chartY ?? "#f6bf66"
+    readonly property color overlayMuted: PaletteData.data.imaging.overlayMuted
+    readonly property color overlayDivider: PaletteData.data.imaging.overlayDivider
+    readonly property color overlayCard: PaletteData.data.imaging.overlayCard
+    // Viewport selection is interface chrome; image and annotation colors stay fixed.
+    readonly property color viewportActiveBorder: palette.viewportActiveBorder ?? PaletteData.data.defaults.viewportActiveBorder
+    readonly property color viewportHoverBorder: palette.viewportHoverBorder ?? PaletteData.data.defaults.viewportHoverBorder
+    readonly property color viewportBorder: palette.viewportBorder ?? PaletteData.data.defaults.viewportBorder
+    readonly property color chartX: palette.chartX ?? PaletteData.data.defaults.chartX
+    readonly property color chartY: palette.chartY ?? PaletteData.data.defaults.chartY
+
+    readonly property color panelBorder: palette.panelBorder ?? PaletteData.data.defaults.panelBorder
+
+    readonly property color tabSelectedBorder: palette.tabSelectedBorder ?? PaletteData.data.defaults.tabSelectedBorder
 
     // Borders and separators.
-    readonly property color borderSubtle: palette.borderSubtle ?? "#29313a"
-    readonly property color borderDefault: palette.borderDefault ?? "#36414d"
-    readonly property color borderStrong: palette.borderStrong ?? "#566675"
-    readonly property color dividerColor: palette.dividerColor ?? "#303a45"
-    readonly property color focusBorder: palette.focusBorder ?? "#66d0ff"
+    readonly property color borderSubtle: palette.borderSubtle ?? PaletteData.data.defaults.borderSubtle
+    readonly property color borderDefault: palette.borderDefault ?? PaletteData.data.defaults.borderDefault
+    readonly property color borderStrong: palette.borderStrong ?? PaletteData.data.defaults.borderStrong
+    readonly property color dividerColor: palette.dividerColor ?? PaletteData.data.defaults.dividerColor
+    readonly property color focusBorder: palette.focusBorder ?? PaletteData.data.defaults.focusBorder
 
     // Typography.
-    readonly property color textPrimary: palette.textPrimary ?? "#edf1f5"
-    readonly property color textSecondary: palette.textSecondary ?? "#c3ccd5"
-    readonly property color textMuted: palette.textMuted ?? "#a1adb9"
-    readonly property color textSubtle: palette.textSubtle ?? "#909daa"
-    readonly property color textDisabled: palette.textDisabled ?? "#73808c"
-    readonly property color textOnPrimary: palette.textOnPrimary ?? "#f8fbff"
-    readonly property color overlayText: palette.overlayText ?? "#eaf3fb"
-    readonly property color overlayOutline: palette.overlayOutline ?? "#cc000000"
+    readonly property color textPrimary: palette.textPrimary ?? PaletteData.data.defaults.textPrimary
+    readonly property color textSecondary: palette.textSecondary ?? PaletteData.data.defaults.textSecondary
+    readonly property color textMuted: palette.textMuted ?? PaletteData.data.defaults.textMuted
+    readonly property color textSubtle: palette.textSubtle ?? PaletteData.data.defaults.textSubtle
+    readonly property color textDisabled: palette.textDisabled ?? PaletteData.data.defaults.textDisabled
+    readonly property color textOnPrimary: palette.textOnPrimary ?? PaletteData.data.defaults.textOnPrimary
+    readonly property color overlayText: PaletteData.data.imaging.overlayText
+    readonly property color overlayOutline: PaletteData.data.imaging.overlayOutline
 
     // Generic controls.
-    readonly property color controlBackground: palette.controlBackground ?? "#202831"
-    readonly property color controlHover: palette.controlHover ?? "#2b3743"
-    readonly property color controlPressed: palette.controlPressed ?? "#17212b"
-    readonly property color controlDisabled: palette.controlDisabled ?? "#1b2128"
-    readonly property color controlBorder: palette.controlBorder ?? "#3a4856"
-    readonly property color controlHoverBorder: palette.controlHoverBorder ?? "#758b9d"
+    readonly property color controlBackground: palette.controlBackground ?? PaletteData.data.defaults.controlBackground
+    readonly property color controlHover: palette.controlHover ?? PaletteData.data.defaults.controlHover
+    readonly property color controlPressed: palette.controlPressed ?? PaletteData.data.defaults.controlPressed
+    readonly property color controlDisabled: palette.controlDisabled ?? PaletteData.data.defaults.controlDisabled
+    readonly property color controlBorder: palette.controlBorder ?? PaletteData.data.defaults.controlBorder
+    readonly property color controlHoverBorder: palette.controlHoverBorder ?? PaletteData.data.defaults.controlHoverBorder
 
     // Selection / active interaction. A selected item is not a status message.
-    readonly property color selectionBackground: palette.selectionBackground ?? "#203b4c"
-    readonly property color selectionHover: palette.selectionHover ?? "#28485b"
-    readonly property color selectionPressed: palette.selectionPressed ?? "#173044"
-    readonly property color selectionBorder: palette.selectionBorder ?? "#579fc6"
-    readonly property color activeIndicator: palette.activeIndicator ?? "#66d0ff"
-    readonly property color iconDefault: palette.iconDefault ?? "#b0bfcc"
-    readonly property color iconDisabled: palette.iconDisabled ?? "#73808c"
-    readonly property color iconHover: palette.iconHover ?? "#dce8f1"
-    readonly property color iconActive: palette.iconActive ?? "#66d0ff"
+    readonly property color selectionBackground: palette.selectionBackground ?? PaletteData.data.defaults.selectionBackground
+    readonly property color selectionHover: palette.selectionHover ?? PaletteData.data.defaults.selectionHover
+    readonly property color selectionPressed: palette.selectionPressed ?? PaletteData.data.defaults.selectionPressed
+    readonly property color selectionBorder: palette.selectionBorder ?? PaletteData.data.defaults.selectionBorder
+    readonly property color activeIndicator: palette.activeIndicator ?? PaletteData.data.defaults.activeIndicator
+    readonly property color iconDefault: palette.iconDefault ?? PaletteData.data.defaults.iconDefault
+    readonly property color iconDisabled: palette.iconDisabled ?? PaletteData.data.defaults.iconDisabled
+    readonly property color iconHover: palette.iconHover ?? PaletteData.data.defaults.iconHover
+    readonly property color iconActive: palette.iconActive ?? PaletteData.data.defaults.iconActive
 
     // 两侧工具栏使用图标；完整操作名称由悬停和键盘焦点提示提供。
-    readonly property int toolbarIconSize: 24
-    readonly property int navigationIconSize: 28
-    readonly property int toolbarLabelSize: 11
-    readonly property int toolbarButtonHeight: 48
-    readonly property int controlRadius: 6
-    readonly property int bodyFontSize: 13
+    readonly property int toolbarIconSize: PaletteData.data.metrics.toolbarIconSize
+    readonly property int navigationIconSize: PaletteData.data.metrics.navigationIconSize
+    readonly property int toolbarLabelSize: PaletteData.data.metrics.toolbarLabelSize
+    readonly property int toolbarButtonHeight: PaletteData.data.metrics.toolbarButtonHeight
+    readonly property int controlRadius: PaletteData.data.metrics.controlRadius
+    readonly property int bodyFontSize: PaletteData.data.metrics.bodyFontSize
 
-    readonly property color folderAccent: palette.folderAccent ?? "#66d0ff"
-    readonly property color folderSurface: palette.folderSurface ?? "#17354a"
-    readonly property color fusionAccent: palette.fusionAccent ?? "#77c8bb"
-    readonly property int controlHeight: 32
-    readonly property int compactControlHeight: 32
-    readonly property color inputBorder: palette.inputBorder ?? "#667888"
-    readonly property color sliderTrack: palette.sliderTrack ?? "#667888"
+    readonly property color folderAccent: palette.folderAccent ?? PaletteData.data.defaults.folderAccent
+    readonly property color folderSurface: palette.folderSurface ?? PaletteData.data.defaults.folderSurface
+    readonly property color fusionAccent: palette.fusionAccent ?? PaletteData.data.defaults.fusionAccent
+    readonly property int controlHeight: PaletteData.data.metrics.controlHeight
+    readonly property int compactControlHeight: PaletteData.data.metrics.compactControlHeight
+    readonly property color inputBorder: palette.inputBorder ?? PaletteData.data.defaults.inputBorder
+    readonly property color sliderTrack: palette.sliderTrack ?? PaletteData.data.defaults.sliderTrack
 
     // Primary command buttons, such as "Open DICOM folder".
-    readonly property color primaryButtonBackground: palette.primaryButtonBackground ?? "#21698f"
-    readonly property color primaryButtonHover: palette.primaryButtonHover ?? "#2879a1"
-    readonly property color primaryButtonPressed: palette.primaryButtonPressed ?? "#195574"
-    readonly property color primaryButtonDisabled: palette.primaryButtonDisabled ?? "#183344"
-    readonly property color primaryButtonBorder: palette.primaryButtonBorder ?? "#70c9ef"
+    readonly property color primaryButtonBackground: palette.primaryButtonBackground ?? PaletteData.data.defaults.primaryButtonBackground
+    readonly property color primaryButtonHover: palette.primaryButtonHover ?? PaletteData.data.defaults.primaryButtonHover
+    readonly property color primaryButtonPressed: palette.primaryButtonPressed ?? PaletteData.data.defaults.primaryButtonPressed
+    readonly property color primaryButtonDisabled: palette.primaryButtonDisabled ?? PaletteData.data.defaults.primaryButtonDisabled
+    readonly property color primaryButtonBorder: palette.primaryButtonBorder ?? PaletteData.data.defaults.primaryButtonBorder
 
     // Semantic status colors. Use their surface variants for backgrounds.
-    readonly property color infoColor: palette.infoColor ?? "#66d0ff"
-    readonly property color infoSurface: palette.infoSurface ?? "#123247"
-    readonly property color successColor: palette.successColor ?? "#7bd7a4"
-    readonly property color successSurface: palette.successSurface ?? "#17392b"
-    readonly property color warningColor: palette.warningColor ?? "#f3c66b"
-    readonly property color warningSurface: palette.warningSurface ?? "#3d3119"
-    readonly property color dangerColor: palette.dangerColor ?? "#ef7777"
-    readonly property color dangerSurface: palette.dangerSurface ?? "#412124"
-    readonly property color dangerButtonHover: palette.dangerButtonHover ?? "#5b2a2f"
-    readonly property color dangerButtonPressed: palette.dangerButtonPressed ?? "#32191d"
+    readonly property color infoColor: palette.infoColor ?? PaletteData.data.defaults.infoColor
+    readonly property color infoSurface: palette.infoSurface ?? PaletteData.data.defaults.infoSurface
+    readonly property color successColor: palette.successColor ?? PaletteData.data.defaults.successColor
+    readonly property color successSurface: palette.successSurface ?? PaletteData.data.defaults.successSurface
+    readonly property color warningColor: palette.warningColor ?? PaletteData.data.defaults.warningColor
+    readonly property color warningSurface: palette.warningSurface ?? PaletteData.data.defaults.warningSurface
+    readonly property color dangerColor: palette.dangerColor ?? PaletteData.data.defaults.dangerColor
+    readonly property color dangerSurface: palette.dangerSurface ?? PaletteData.data.defaults.dangerSurface
+    readonly property color dangerButtonHover: palette.dangerButtonHover ?? PaletteData.data.defaults.dangerButtonHover
+    readonly property color dangerButtonPressed: palette.dangerButtonPressed ?? PaletteData.data.defaults.dangerButtonPressed
 
     // 重置保留琥珀图标提示；常态使用中性表面，避免抢占影像注意力。
-    readonly property color resetActionColor: palette.resetActionColor ?? "#f3c66b"
-    readonly property color resetActionSurface: palette.resetActionSurface ?? "#302819"
-    readonly property color resetActionHover: palette.resetActionHover ?? "#40351e"
-    readonly property color resetActionPressed: palette.resetActionPressed ?? "#241e14"
-    readonly property color resetActionBorder: palette.resetActionBorder ?? "#8f7438"
+    readonly property color resetActionColor: palette.resetActionColor ?? PaletteData.data.defaults.resetActionColor
+    readonly property color resetActionSurface: palette.resetActionSurface ?? PaletteData.data.defaults.resetActionSurface
+    readonly property color resetActionHover: palette.resetActionHover ?? PaletteData.data.defaults.resetActionHover
+    readonly property color resetActionPressed: palette.resetActionPressed ?? PaletteData.data.defaults.resetActionPressed
+    readonly property color resetActionBorder: palette.resetActionBorder ?? PaletteData.data.defaults.resetActionBorder
 
     // Measurement colors are separate from UI selection colors so overlays
     // remain visible on grayscale and pseudo-color images.
-    readonly property color measurementPrimary: palette.measurementPrimary ?? "#ffd45c"
-    readonly property color measurementSelected: palette.measurementSelected ?? "#66d0ff"
-    readonly property color measurementHandle: palette.measurementHandle ?? "#f8fbff"
+    readonly property color measurementPrimary: PaletteData.data.imaging.measurementPrimary
+    readonly property color measurementSelected: PaletteData.data.imaging.measurementSelected
+    readonly property color measurementHandle: PaletteData.data.imaging.measurementHandle
+
+    // Shared semantic tokens; image overlays remain independent of UI themes.
+    readonly property color modalScrim: palette.modalScrim ?? PaletteData.data.defaults.modalScrim
+    readonly property color dateModalScrim: palette.dateModalScrim ?? PaletteData.data.defaults.dateModalScrim
+    readonly property color dropBackground: palette.dropBackground ?? PaletteData.data.defaults.dropBackground
+    readonly property color dropText: palette.dropText ?? PaletteData.data.defaults.dropText
+    readonly property color dropMuted: palette.dropMuted ?? PaletteData.data.defaults.dropMuted
+    readonly property color dropCard: palette.dropCard ?? PaletteData.data.defaults.dropCard
+    readonly property color diagramBackground: palette.diagramBackground ?? PaletteData.data.defaults.diagramBackground
+    readonly property color diagramText: palette.diagramText ?? PaletteData.data.defaults.diagramText
+    readonly property color diagramFill: palette.diagramFill ?? PaletteData.data.defaults.diagramFill
+    readonly property color diagramVolume: palette.diagramVolume ?? PaletteData.data.defaults.diagramVolume
+    readonly property color diagramPrimary: palette.diagramPrimary ?? PaletteData.data.defaults.diagramPrimary
+    readonly property color diagramAccent: palette.diagramAccent ?? PaletteData.data.defaults.diagramAccent
+    readonly property color diagramMuted: palette.diagramMuted ?? PaletteData.data.defaults.diagramMuted
+    readonly property color diagramBand: palette.diagramBand ?? PaletteData.data.defaults.diagramBand
+    readonly property color imageBlack: PaletteData.data.imaging.imageBlack
+    readonly property color imageHandleBorder: PaletteData.data.imaging.imageHandleBorder
+    readonly property color imageBadgeBackground: PaletteData.data.imaging.imageBadgeBackground
+    readonly property color qaCardBackground: PaletteData.data.imaging.qaCardBackground
+    readonly property color annotationHandle: PaletteData.data.imaging.annotationHandle
+    readonly property color annotationBackground: PaletteData.data.imaging.annotationBackground
+    readonly property color annotationSelectedBackground: PaletteData.data.imaging.annotationSelectedBackground
+    readonly property color annotationArrowBackground: PaletteData.data.imaging.annotationArrowBackground
+    readonly property color annotationBorder: PaletteData.data.imaging.annotationBorder
+    readonly property color overlayDarkText: PaletteData.data.imaging.overlayDarkText
+    readonly property color overlayLightOutline: PaletteData.data.imaging.overlayLightOutline
+    readonly property color scaleText: PaletteData.data.imaging.scaleText
+    readonly property color scaleOutline: PaletteData.data.imaging.scaleOutline
+    readonly property color crosshairPreview: PaletteData.data.imaging.crosshairPreview
+    readonly property color annotationDefault: PaletteData.data.imaging.annotationDefault
+    readonly property color previewGradientTop: PaletteData.data.imaging.previewGradientTop
+    readonly property color previewGradientMiddle: PaletteData.data.imaging.previewGradientMiddle
+    readonly property color previewGradientBottom: PaletteData.data.imaging.previewGradientBottom
+    readonly property color intensityBlack: PaletteData.data.imaging.intensityBlack
+    readonly property color intensityWhite: PaletteData.data.imaging.intensityWhite
+    readonly property color axisAxial: PaletteData.data.imaging.axisAxial
+    readonly property color axisCoronal: PaletteData.data.imaging.axisCoronal
+    readonly property color axisSagittal: PaletteData.data.imaging.axisSagittal
+    readonly property var segmentationSwatches: PaletteData.data.swatches.segmentation
+    readonly property var annotationSwatches: PaletteData.data.swatches.annotation
+    readonly property var overlaySwatches: PaletteData.data.swatches.overlay
+
+    function previewColors(theme) {
+        return Object.assign({}, PaletteData.data.defaults, PaletteData.data.themes[theme] || {}, PaletteData.data.imaging)
+    }
 }

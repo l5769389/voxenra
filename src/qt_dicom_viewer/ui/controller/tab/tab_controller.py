@@ -65,6 +65,7 @@ class TabController(QObject):
     imageRemovalRequested = Signal(str)
     stackNavigationRequested = Signal(str, int, float, float, bool)
     viewLayoutChanged = Signal()
+    persistenceChanged = Signal()
 
     def __init__(self, tab_config: TabConfig, parent=None, *, tag_controller: TagController | None = None, enable_mpr_layout=True):
         super().__init__(parent)
@@ -132,9 +133,59 @@ class TabController(QObject):
         self._mpr_request_window_revisions: dict[str, int] = {}
         self.activeViewportChanged.connect(self.pausePlayback)
         self.activeViewportChanged.connect(self.playbackAvailabilityChanged.emit)
+        self.renderRequested.connect(self._remember_measurement_request)
+        self._measurement_results = None
         self._create_viewport_dict()
         from .mpr_layout_controller import MprLayoutController
         self._mpr_layout = MprLayoutController(self) if enable_mpr_layout and tab_config.tab_type in (TabType.MPR, TabType.FOUR_D) else None
+
+    @Property(QObject, constant=True)
+    def measurementResults(self):
+        if self._measurement_results is None:
+            from qt_dicom_viewer.ui.controller.measurement_results_controller import MeasurementResultsController
+            self._measurement_results = MeasurementResultsController(self)
+        return self._measurement_results
+
+    def _remember_measurement_request(self, request):
+        from qt_dicom_viewer.ui.measurement_source import capture_request
+        view = self.viewports_by_id.get(request.viewport_id)
+        if view is None:
+            return
+        requests = getattr(view, "_measurement_requests", {})
+        if request.request_id in requests:
+            return
+        requests[request.request_id] = capture_request(request)
+        if isinstance(request, MprRenderRequest):
+            requests[request.request_id]["navigation"] = (getattr(view, "_independent_measurement_source", {}) or {}).get("navigation", self._target_mpr_state)
+            view._latest_request_id = request.request_id
+        while len(requests) > 16:
+            requests.pop(next(iter(requests)))
+        view._measurement_requests = requests
+
+    def navigate_measurement(self, view, source):
+        from qt_dicom_viewer.ui.measurement_source import restore_request, display_parameters
+        request = restore_request(source, view.viewportId, display=display_parameters(view))
+        self.pausePlayback()
+        self.activateViewport(view.viewportId)
+        view._measure_controller.cancel_transaction()
+        if isinstance(request, MprRenderRequest) and not hasattr(view, "slice_frame"):
+            # Route this one physical plane without broadcasting navigation to peers.
+            for key, target in list(self._active_mpr_requests.items()):
+                if target == view.viewportId:
+                    self._active_mpr_requests.pop(key)
+                    self._mpr_request_phase_identifiers.pop(key, None)
+                    self._mpr_request_window_revisions.pop(key, None)
+            navigation = source.get("navigation")
+            if navigation is not None:
+                view._mpr_state = navigation
+            view._independent_measurement_source = dict(source)
+            self._dirty_mpr_viewport_ids.discard(view.viewportId)
+            self._active_mpr_requests[request.request_id] = view.viewportId
+            self._mpr_request_phase_identifiers[request.request_id] = request.phase_identifier
+            self._mpr_request_window_revisions[request.request_id] = self._mpr_window_revision
+        view._latest_request_id = request.request_id
+        view.render_pending = True
+        self.renderRequested.emit(request)
 
     @Property(QObject, constant=True)
     def mprLayout(self):
@@ -270,7 +321,8 @@ class TabController(QObject):
             self._pending_phase_index = index
             self.playbackAvailabilityChanged.emit()
             return
-        if index == self._current_phase_index:
+        if index == self._current_phase_index and not any(
+                getattr(v, "_independent_measurement_source", None) for v in self._viewport_dict.values()):
             return
         self._start_phase_render(index)
 
@@ -372,6 +424,8 @@ class TabController(QObject):
         )
 
     def _start_phase_render(self, index: int) -> None:
+        if self._target_mpr_state is not None:
+            self._set_target_mpr_state(self._target_mpr_state)
         if self._voi_controller is not None:
             self._voi_controller.set_phase(index, ready=False)
         self._rendering_phase_index = index
@@ -1078,6 +1132,12 @@ class TabController(QObject):
             if not isinstance(viewport, MprViewportController):
                 continue
 
+            source = getattr(viewport, "_independent_measurement_source", None)
+            if source:
+                from qt_dicom_viewer.ui.measurement_source import restore_request, display_parameters
+                requests.append(restore_request(source, viewport_id, display=display_parameters(viewport)))
+                continue
+
             requests.append(
                 viewport.build_mpr_render_request(
                     mpr_state=self._target_mpr_state,
@@ -1123,4 +1183,5 @@ class TabController(QObject):
             self._mpr_layout.sync_state()
         for viewport in self._viewport_dict.values():
             if isinstance(viewport, MprViewportController):
+                viewport._independent_measurement_source = None
                 viewport.apply_mpr_state(state)

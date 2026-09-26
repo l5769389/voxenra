@@ -15,7 +15,7 @@ Components.AppDialog {
     height: Math.min(640, parent ? parent.height - 32 : 640)
     padding: 16
     modal: true
-    Basic.Overlay.modal: Rectangle { color: "#99000000" }
+    Basic.Overlay.modal: Rectangle { color: Theme.modalScrim }
     title: qsTrId("text.0658")
     titleIcon: "fusion"
     subtitle: qsTrId("text.0659")

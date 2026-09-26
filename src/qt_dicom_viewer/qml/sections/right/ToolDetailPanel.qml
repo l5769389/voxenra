@@ -283,6 +283,7 @@ Rectangle {
     Component {
         id: measureComponent
         Panels.MeasurePanel {
+            resultsController: detailPanel.tabController?.measurementResults ?? null
             dicomResults: detailPanel.exportController?.dicomResults ?? null
             viewportController: detailPanel.viewportController
             maskConversionAvailable: !!detailPanel.tabController?.voiController && !detailPanel.tabController?.isFusion

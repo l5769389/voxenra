@@ -41,6 +41,10 @@ Canvas {
             Components.AppButton {
                 id: xLegend
                 objectName: "mtfLegend-x"
+                Accessible.name: qsTrId("analysis.axisX")
+                Accessible.checkable: true
+                Accessible.checked: chart.showX
+                Accessible.onPressAction: xLegend.click()
                 implicitWidth: 43
                 implicitHeight: 20
                 hoverEnabled: true
@@ -66,6 +70,10 @@ Canvas {
             Components.AppButton {
                 id: yLegend
                 objectName: "mtfLegend-y"
+                Accessible.name: qsTrId("analysis.axisY")
+                Accessible.checkable: true
+                Accessible.checked: chart.showY
+                Accessible.onPressAction: yLegend.click()
                 implicitWidth: 43
                 implicitHeight: 20
                 hoverEnabled: true

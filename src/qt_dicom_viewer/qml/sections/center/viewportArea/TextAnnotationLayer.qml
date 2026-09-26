@@ -134,7 +134,7 @@ Item {
                 visible: annotationItem.modelData.selected
                     && annotationItem.arrowLength > 1
                 color: annotationItem.arrowColor
-                border.color: "#ffffff"
+                border.color: Theme.annotationHandle
                 border.width: 1
             }
 
@@ -147,7 +147,7 @@ Item {
                 visible: annotationItem.modelData.selected
                     && annotationItem.arrowLength > 1
                 color: annotationItem.arrowColor
-                border.color: "#ffffff"
+                border.color: Theme.annotationHandle
                 border.width: 1
             }
 
@@ -167,11 +167,11 @@ Item {
                 radius: 4
                 visible: !annotationLayer.hideText && annotationItem.modelData.text.length > 0
                 color: annotationItem.modelData.draft
-                    ? "#6602070e"
+                    ? Theme.annotationArrowBackground
                     : annotationItem.modelData.selected
-                    ? "#b30b1b27" : "#8a02070e"
+                    ? Theme.annotationSelectedBackground : Theme.annotationBackground
                 border.color: annotationItem.modelData.selected
-                    ? annotationItem.arrowColor : "#552f3b48"
+                    ? annotationItem.arrowColor : Theme.annotationBorder
                 border.width: 1
 
                 Text {

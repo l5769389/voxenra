@@ -71,6 +71,10 @@ class MeasurementController(QObject):
         self._drag_start: PointerPosition | None = None
         self._frame_key: tuple | None = None
         self._measurement_frames: dict[str, tuple | None] = {}
+        self._presentation = {}
+        self._sources = {}
+        self.current_source = {}
+        self.source_valid = True
         self._visible_slice: int | None = None
         self._label_positions: dict[str, ImagePoint] = {}
         self._label_origins: dict[str, ImagePoint] = {}
@@ -85,6 +89,63 @@ class MeasurementController(QObject):
         self.activeTransactionChanged.connect(self.clearHover)
         # 选择变化会改变光标语义，但不改变“鼠标命中了哪个部位”这一事实。
         self.selectionChanged.connect(self.hoverChanged.emit)
+
+    def presentation(self, measurement_id):
+        return dict(name="", hidden=False, locked=False) | self._presentation.get(measurement_id, {})
+
+    def measurement_name(self, measurement):
+        info = self.presentation(measurement.measurement_id)
+        kind = "angle" if isinstance(measurement, AngleMeasurement) else str(measurement.kind)
+        label = {"length": _msg("text.0321"), "angle": _msg("text.0322"),
+                 "curve": _msg("measurement.curve"), "arrow": _msg("text.0377")}.get(kind, "ROI")
+        ordinal = info.get("ordinal", list(self._measurements).index(measurement.measurement_id) + 1)
+        return info["name"] or label + f" {ordinal}"
+
+    def source(self, measurement_id):
+        return dict(self._sources.get(measurement_id, {}))
+
+    def frame_for(self, measurement_id):
+        return self._measurement_frames.get(measurement_id)
+
+    def update_presentation(self, measurement_id, **changes):
+        if measurement_id not in self._measurements:
+            return
+        self.cancel_transaction()
+        value = self.presentation(measurement_id)
+        value.update(changes)
+        self._presentation[measurement_id] = value
+        if value["hidden"]:
+            self.clear_selection()
+        self.measurementsChanged.emit()
+
+    def delete_measurement(self, measurement_id):
+        if measurement_id not in self._measurements:
+            return
+        self.cancel_transaction()
+        self._measurements.pop(measurement_id, None)
+        self._measurement_frames.pop(measurement_id, None)
+        self._presentation.pop(measurement_id, None)
+        self._sources.pop(measurement_id, None)
+        self._label_positions.pop(measurement_id, None)
+        self.clear_selection()
+        self.measurementsChanged.emit()
+
+    def persistent_state(self):
+        keys = self._measurements
+        return dict(measurements=dict(keys), frames=dict(self._measurement_frames),
+                    labelPositions={k:v for k,v in self._label_positions.items() if k in keys},
+                    presentation={k:dict(v) for k,v in self._presentation.items() if k in keys},
+                    sources={k:dict(v) for k,v in self._sources.items() if k in keys})
+
+    def restore_state(self, record):
+        self.cancel_transaction()
+        self.clear_selection()
+        self._measurements = dict(record.get("measurements", {}))
+        self._measurement_frames = dict(record.get("frames", {}))
+        self._label_positions = dict(record.get("labelPositions", {}))
+        self._presentation = dict(record.get("presentation", {}))
+        self._sources = dict(record.get("sources", {}))
+        self.measurementsChanged.emit()
 
     @Property(QObject, constant=True)
     def settingsController(self):
@@ -138,7 +199,8 @@ class MeasurementController(QObject):
         self.measurementsChanged.emit()
 
     def _visible(self, measurement: Measurement) -> bool:
-        return ((self._visible_slice is None or measurement.slice_index == self._visible_slice)
+        return (self.source_valid and not self.presentation(measurement.measurement_id)["hidden"]
+                and (self._visible_slice is None or measurement.slice_index == self._visible_slice)
                 and self._measurement_frames.get(measurement.measurement_id) == self._frame_key)
 
     @property
@@ -214,7 +276,7 @@ class MeasurementController(QObject):
     def hoverCursorKind(self) -> str:
         """仅选中图形的可整体移动部位显示移动图标，控制点保持调整形状的语义。"""
         hit = self._hover_hit
-        if (hit is not None and not self.has_active_transaction
+        if (hit is not None and not self.presentation(hit.measurement_id)["locked"] and not self.has_active_transaction
                 and hit.measurement_id == self._selected_measurement_id
                 and hit.target.kind in (EditTargetKind.OUTLINE, EditTargetKind.INTERIOR, EditTargetKind.LABEL)):
             return "pan"
@@ -247,7 +309,7 @@ class MeasurementController(QObject):
         return self._active_transaction is not None or self._label_drag is not None
 
     def _to_qml_item(self, measurement: Measurement | MeasurementDraft) -> dict:
-        item = {"measurementId": measurement.measurement_id,
+        item = {"locked": self.presentation(measurement.measurement_id)["locked"], "measurementId": measurement.measurement_id,
                 "points": [{"column": p.column, "row": p.row} for p in measurement.points]}
         if isinstance(measurement, (LengthMeasurement, LengthMeasurementDraft)):
             item.update(type=measurement.kind.value, startColumn=measurement.points[0].column,
@@ -417,6 +479,9 @@ class MeasurementController(QObject):
             if hit is None:
                 self._begin_create_transaction(point=point, context=context)
             else:
+                if self.presentation(hit.measurement_id)["locked"]:
+                    self.select(hit)
+                    return
                 origin = self._label_origins.get(hit.measurement_id)
                 linked = self._settings_controller.section("measurement")["linkLabelToShape"]
                 if hit.target.kind == EditTargetKind.LABEL and not linked:
@@ -532,10 +597,16 @@ class MeasurementController(QObject):
             for old in same_frame[:max(0, len(same_frame) - self._max_per_frame + 1)]:
                 self._measurements.pop(old.measurement_id)
                 self._measurement_frames.pop(old.measurement_id, None)
+                self._presentation.pop(old.measurement_id, None)
+                self._sources.pop(old.measurement_id, None)
                 self._label_positions.pop(old.measurement_id, None)
         self._linked_label_reference = None
+        if measurement.measurement_id not in self._measurements:
+            self._presentation[measurement.measurement_id] = dict(name="", hidden=False, locked=False,
+                ordinal=1 + max((v.get("ordinal", 0) for v in self._presentation.values()), default=0))
         self._measurements[measurement.measurement_id] = measurement
         self._measurement_frames[measurement.measurement_id] = self._frame_key
+        self._sources[measurement.measurement_id] = dict(self.current_source)
         self._selected_measurement_id = measurement.measurement_id
         self._selected_measurement_state = "completed"
         self._active_transaction = None
@@ -545,6 +616,16 @@ class MeasurementController(QObject):
         self.activeTransactionChanged.emit()
         self.selectionChanged.emit()
         self.measurementCommitted.emit(measurement)
+
+    def commit_service_rectangle(self, points: list[ImagePoint], context: MeasureContext) -> bool:
+        """Submit validated service geometry through the same commit path as drawing."""
+        if (not self._geometry_only or self.has_active_transaction
+                or context.measurement_kind != MeasurementKind.RECT or len(points) != 2):
+            return False
+        self._begin_create_transaction(point=points[0], context=context)
+        self._active_transaction.draft.points = points
+        self._advance_angle_or_commit()
+        return self._selected_measurement_state == "completed"
 
     def selected_copy(self) -> dict | None:
         measurement = self._measurements.get(self._selected_measurement_id)
@@ -578,8 +659,12 @@ class MeasurementController(QObject):
         measurement = operation.commit(draft)
         if not operation.is_valid(measurement):
             return ""
+        if measurement.measurement_id not in self._measurements:
+            self._presentation[measurement.measurement_id] = dict(name="", hidden=False, locked=False,
+                ordinal=1 + max((v.get("ordinal", 0) for v in self._presentation.values()), default=0))
         self._measurements[measurement.measurement_id] = measurement
         self._measurement_frames[measurement.measurement_id] = self._frame_key
+        self._sources[measurement.measurement_id] = dict(self.current_source)
         self.measurementsChanged.emit()
         self.select_completed(measurement.measurement_id)
         self.measurementCommitted.emit(measurement)
@@ -633,6 +718,8 @@ class MeasurementController(QObject):
         self._label_positions.clear()
         self._label_origins.clear()
         self._measurements.clear()
+        self._presentation.clear()
+        self._sources.clear()
         self._measurement_frames.clear()
         self._active_transaction = None
         self._drag_reference = None
@@ -675,17 +762,15 @@ class MeasurementController(QObject):
             if (getattr(measurement, "kind", None) == MeasurementKind.ARROW) == arrows:
                 del self._measurements[key]
                 self._measurement_frames.pop(key, None)
+                self._presentation.pop(key, None)
+                self._sources.pop(key, None)
                 self._label_positions.pop(key, None)
         self.measurementsChanged.emit()
 
     def delete_selected(self) -> None:
         self.cancel_transaction()
         if self._selected_measurement_id is not None:
-            self._label_positions.pop(self._selected_measurement_id, None)
-            self._measurements.pop(self._selected_measurement_id, None)
-            self._measurement_frames.pop(self._selected_measurement_id, None)
-            self.clear_selection()
-            self.measurementsChanged.emit()
+            self.delete_measurement(self._selected_measurement_id)
 
     def select(self, hit: MeasurementHit) -> None:
         if hit.measurement_id in self._measurements and (

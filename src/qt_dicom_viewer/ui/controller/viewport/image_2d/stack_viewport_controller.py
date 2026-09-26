@@ -35,6 +35,10 @@ class StackViewportController(Image2DViewportController):
         self._mtf_controller = MtfController(self)
         self._fwhm_controller = FwhmController(self)
         self._qa_controller = WaterQaController(viewport_config.series_meta.modality, self)
+        owner = self.workspaceTab
+        if owner is not None:
+            for service in (self._mtf_controller, self._fwhm_controller, self._qa_controller):
+                service.recordsChanged.connect(owner.persistenceChanged.emit)
         tool_controller.serviceSelected.connect(self._service_selected)
         tool_controller.activePanelChanged.connect(self._service_panel_changed)
         self.transformChanged.connect(self._mtf_controller.roiController.clearHover)

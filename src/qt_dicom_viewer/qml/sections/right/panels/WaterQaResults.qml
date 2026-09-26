@@ -16,6 +16,29 @@ ColumnLayout {
     readonly property bool editing: controller ? controller.dragging : false
     spacing: 10
 
+    RowLayout {
+        Layout.fillWidth: true
+        Components.AppButton {
+            objectName: "recalculateQa"
+            Layout.fillWidth: true
+            text: qsTrId("analysis.recalculate")
+            enabled: !!panel.controller && panel.controller.status !== "calculating" && !panel.editing
+            onClicked: panel.controller.analyze()
+        }
+        Components.AppButton {
+            id: provenanceButton
+            text: "ⓘ"
+            Accessible.description: qsTrId("mtf.details")
+            onClicked: provenancePopup.open()
+        }
+    }
+    AnalysisInfoPopup {
+        id: provenancePopup
+        anchorItem: provenanceButton
+        explanation: (panel.controller?.provenance ?? "") + "\n" + qsTrId("analysis.savedHint")
+        warnings: []
+    }
+
     function metric(value) {
         return settingsController ? settingsController.formatMeasurement(value, decimalPlaces) : "—"
     }

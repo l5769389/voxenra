@@ -457,6 +457,21 @@ class Image2DViewportController(ViewportController):
         if projection is not None or self.viewportRole == "mip":
             source_context = ("projection", str(projection or "mip"),
                               getattr(result, "slab_thickness_mm", 0.0))
+        phase_identifier = getattr(result, "phase_identifier", None)
+        if phase_identifier is not None:
+            source_context += ("phase", phase_identifier)
+        source = dict(getattr(self, "_measurement_requests", {}).get(result.response_id, {}))
+        if source and result.modality_pixel is not None:
+            import hashlib
+            source["pixelFingerprint"] = hashlib.blake2b(
+                np.ascontiguousarray(result.modality_pixel).view(np.uint8), digest_size=16).hexdigest()
+            if source.get("kind") == "mpr" and getattr(result, "mpr_frame", None) is not None:
+                source["parameters"] = dict(source["parameters"], mpr_frame=result.mpr_frame)
+                if source.get("navigation") is None:
+                    from qt_dicom_viewer.model.dicom_core import MprState, MprViewAnchors
+                    source["navigation"] = MprState(frame=result.mpr_frame, view_grids=result.mpr_view_grids,
+                        view_anchors=MprViewAnchors.centered(result.mpr_view_grids) if result.mpr_view_grids else None)
+        self._measure_controller.current_source = source
         self._measure_controller.set_frame(result.series_uid, result.frame_meta,
                                            source_context=source_context)
         self._text_annotation_controller.set_frame(

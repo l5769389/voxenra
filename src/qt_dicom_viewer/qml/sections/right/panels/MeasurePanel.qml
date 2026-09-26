@@ -9,6 +9,7 @@ ColumnLayout {
     id: measurePanel
     spacing: 8
     required property var toolController
+    property var resultsController: null
     property var dicomResults: null
     property var viewportController: null
     property bool maskConversionAvailable: false
@@ -30,56 +31,6 @@ ColumnLayout {
     }
 
     signal actionTriggered(string action)
-
-    FontMetrics {
-        id: instructionFont
-        font.pixelSize: 11
-        font.weight: Font.DemiBold
-    }
-    readonly property real instructionLabelWidth: Math.min(width * 0.35, Math.max(28,
-        ...[qsTrId("text.0864"), qsTrId("text.0782"), qsTrId("text.1034"),
-            qsTrId("text.1037"), qsTrId("text.0539"), qsTrId("text.0761")]
-            .map(label => instructionFont.advanceWidth(label))))
-
-    ColumnLayout {
-        objectName: "measurementInstructions"
-        Layout.fillWidth: true
-        spacing: 7
-        Repeater {
-            model: [
-                { label: qsTrId("text.0864"), detail: ["measure:curve", "measure:freehand"].includes(measurePanel.toolController?.activeInteraction) ? qsTrId("measurement.pathFinish") : qsTrId("text.1032") },
-                { label: qsTrId("text.0782"), detail: qsTrId("text.1033") },
-                { label: qsTrId("text.1034"), detail: Qt.platform.os === "osx" ? qsTrId("text.1035") : qsTrId("text.1036") },
-                { label: qsTrId("text.1037"), detail: Qt.platform.os === "osx" ? qsTrId("text.1038") : qsTrId("text.1039") },
-                { label: qsTrId("text.0539"), detail: qsTrId("text.1040") },
-                { label: qsTrId("text.0761"), detail: qsTrId("text.1041") }
-            ]
-            delegate: RowLayout {
-                id: instructionRow
-                required property var modelData
-                required property int index
-                objectName: "measurementInstruction" + index
-                Layout.fillWidth: true
-                spacing: 8
-                Text {
-                    Layout.alignment: Qt.AlignTop
-                    Layout.preferredWidth: measurePanel.instructionLabelWidth
-                    text: instructionRow.modelData.label
-                    color: Theme.textSecondary
-                    font.pixelSize: 11
-                    font.weight: Font.DemiBold
-                    wrapMode: Text.Wrap
-                }
-                Text {
-                    Layout.fillWidth: true
-                    text: instructionRow.modelData.detail
-                    color: Theme.textSubtle
-                    font.pixelSize: 11
-                    wrapMode: Text.Wrap
-                }
-            }
-        }
-    }
 
     GridLayout {
         Layout.fillWidth: true
@@ -107,8 +58,9 @@ ColumnLayout {
         }
     }
 
-    Item {
-        Layout.fillHeight: true
+    MeasurementResults {
+        Layout.fillWidth: true
+        controller: measurePanel.resultsController
     }
     Widgets.AppButton {
         objectName: "freehandToSegmentation"

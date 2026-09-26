@@ -464,7 +464,7 @@ Rectangle {
         padding: 16
         spacing: 0
         modal: true
-        Basic.Overlay.modal: Rectangle { color: "#99000000" }
+        Basic.Overlay.modal: Rectangle { color: Theme.modalScrim }
         title: panel.detailTitle
         subtitle: panel.detailMetadata
         closeButtonName: "tagCloseValue"

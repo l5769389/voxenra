@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from PySide6.QtCore import Property, QObject, Signal, Slot
+from PySide6.QtCore import Property, QObject, Signal, Slot, QCoreApplication
 from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
 from qt_dicom_viewer.ui.controller.series_export_controller import SeriesExportController
 
@@ -59,6 +59,12 @@ class AppController(QObject):
         self._file_drop_filter = NativeFileDropFilter(self)
         from qt_dicom_viewer.ui.controller.workspace_document_controller import WorkspaceDocumentController
         self._workspace_document_controller = WorkspaceDocumentController(self, settings_path=settings_path)
+        from qt_dicom_viewer.ui.controller.update_controller import UpdateController
+        self._update_controller = UpdateController(self._settings_controller, self,
+            cache=Path(settings_path).parent / "updates" if settings_path else None)
+        # The workspace document event filter handles save/discard/cancel for all
+        # windows before accepting this normal Qt quit request.
+        self._update_controller.exitRequested.connect(QCoreApplication.quit)
 
 
     @Slot(QObject)
@@ -122,6 +128,10 @@ class AppController(QObject):
         return self._language_controller
 
     @Property(QObject, constant=True)
+    def updateController(self):
+        return self._update_controller
+
+    @Property(QObject, constant=True)
     def settingsController(self):
         return self._settings_controller
 
@@ -143,6 +153,7 @@ class AppController(QObject):
 
     @Slot()
     def shutdown(self) -> None:
+        self._update_controller.shutdown()
         self._dialog_locations.deactivate()
         self._workspace_document_controller.shutdown()
         self._series_export_controller.shutdown()

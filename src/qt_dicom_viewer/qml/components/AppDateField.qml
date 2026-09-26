@@ -35,7 +35,7 @@ AppTextField {
         y: parent ? Math.max(8, Math.min(parent.height - height - 8, root.mapToItem(parent, 0, root.height).y)) : 0
         width: Math.min(292, (parent?.width ?? 308) - 16)
         padding: 10; modal: true; focus: true
-        Basic.Overlay.modal: Rectangle { color: "#88000000" }
+        Basic.Overlay.modal: Rectangle { color: Theme.dateModalScrim }
         property date displayed: new Date()
         onOpened: {
             if (root.text && root.validDate) {

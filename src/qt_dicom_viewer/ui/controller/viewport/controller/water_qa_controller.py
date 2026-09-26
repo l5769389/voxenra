@@ -20,15 +20,19 @@ class _Signals(QObject):
 
 
 class _QaTask(QRunnable):
-    def __init__(self, token, key, pixels, spacing, settings):
+    def __init__(self, token, key, pixels, spacing, settings, previous=None):
         super().__init__()
         self.token, self.key = token, key
         self.pixels, self.spacing, self.settings = pixels, spacing, settings
+        self.previous = previous
         self.signals = _Signals()
 
     def run(self):
         try:
-            result = analyze_water_phantom(self.pixels, self.spacing, self.settings)
+            result = (measure_water_phantom(self.pixels, self.spacing, self.previous.phantom,
+                self.settings, centers=[(r.column, r.row) for r in self.previous.rois[:5]],
+                extra_rois=self.previous.rois[5:]) if self.previous is not None and self.previous.settings == self.settings else
+                analyze_water_phantom(self.pixels, self.spacing, self.settings))
         except Exception as exc:
             self.signals.completed.emit(self.token, self.key, None, error_message(exc) or _msg('text.0591'))
         else:
@@ -36,6 +40,8 @@ class _QaTask(QRunnable):
 
 
 class WaterQaController(QObject):
+    recordsChanged = Signal()
+    _i18n_provenance = Signal()
     _i18n_currentResult = Signal()
     _i18n_error = Signal()
     _i18n_roiItems = Signal()
@@ -53,6 +59,8 @@ class WaterQaController(QObject):
         self._tasks = {}
         self._pending = None
         self._cache = OrderedDict()
+        self._records = {}
+        self._restored = False
         self._token = 0
         self._closed = False
         self._enabled = False
@@ -61,6 +69,55 @@ class WaterQaController(QObject):
         self._drag = self._draft_centers = None
         self._hover_key = ""
         self._selected_key = ""
+
+    def _remember_result(self):
+        if self._result is None or self._key is None:
+            return
+        from datetime import datetime, timezone
+        from qt_dicom_viewer import __version__
+        self._records[repr(self._key)] = dict(key=self._key, result=self._result,
+            timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"), algorithm="1", app=__version__)
+        self.recordsChanged.emit()
+
+    @_TextProperty(str, notify=_i18n_provenance, notify_name="_i18n_provenance", source_notify="stateChanged")
+    def provenance(self):
+        record = self._records.get(repr(self._key))
+        return (_msg("analysis.provenance", value1=record["app"], value2=record["algorithm"], value3=record["timestamp"])
+                if record else "")
+
+    def persistent_state(self):
+        return dict(version=1, enabled=self._enabled, settings=self._settings,
+                    records=list(self._records.values()))
+
+    def restore_state(self, state):
+        if not state or state.get("version") != 1:
+            return
+        self._invalidate()
+        self._cache.clear()
+        self._restored = bool(state.get("records") or state.get("enabled", False))
+        self._enabled = state.get("enabled", False)
+        self._settings = state.get("settings", WaterQaSettings())
+        self._records = {repr(r["key"]): r for r in state.get("records", [])}
+        self._restore_current_record()
+        self.settingsChanged.emit()
+        self.stateChanged.emit()
+
+    def _restore_current_record(self):
+        """Apply the same identity check on reopening and on frame navigation."""
+        if self._key is None:
+            return False
+        saved = self._records.get(repr(self._key))
+        if saved:
+            self._result, self._settings = saved["result"], saved["result"].settings
+            self._status, self._error = "ready", ""
+            return True
+        if self._restored:
+            self._result = None
+            self._status, self._error = "empty", ""
+            if any(tuple(r["key"][:3]) == self._key[:3] for r in self._records.values()):
+                self._status, self._error = "error", _msg("analysis.sourceMismatch")
+            return True
+        return False
 
     @Property(QObject, constant=True)
     def settingsController(self):
@@ -200,6 +257,7 @@ class WaterQaController(QObject):
         else:
             self._result, self._error = result, ""
             self._cache[self._cache_key()] = (result, "")
+            self._remember_result()
         self.stateChanged.emit()
 
     @Slot(str, result=bool)
@@ -237,6 +295,7 @@ class WaterQaController(QObject):
             return False
         self._result, self._selected_key, self._error = result, copy.key, ""
         self._cache[self._cache_key()] = (result, "")
+        self._remember_result()
         self.stateChanged.emit()
         return True
 
@@ -248,6 +307,7 @@ class WaterQaController(QObject):
         self._result = replace(self._result, rois=tuple(r for r in self._result.rois if r.key != key))
         self._selected_key = self._hover_key = self._error = ""
         self._cache[self._cache_key()] = (self._result, "")
+        self._remember_result()
         self.stateChanged.emit()
         return True
 
@@ -263,15 +323,19 @@ class WaterQaController(QObject):
         if self._closed:
             return
         array = None if pixels is None else np.ascontiguousarray(pixels)
-        fingerprint = None if array is None else hashlib.blake2b(array.view(np.uint8), digest_size=12).digest()
+        fingerprint = None if array is None else hashlib.blake2b(array.view(np.uint8), digest_size=12).hexdigest()
         key = (series_uid, frame.instance_meta.sop_instance_uid, frame.slice_index,
-               frame.instance_meta.pixel_spacing, None if array is None else array.shape, fingerprint)
+               frame.instance_meta.pixel_spacing, None if array is None else array.shape, fingerprint,
+               frame.geometry.image_position_patient, frame.geometry.image_orientation_patient, frame.instance_meta.frame_index)
         self._frame, self._pixels = frame, array
         if key == self._key:
             return  # Window/level and inversion do not alter the original HU data.
         self._invalidate()
         self._key = key
-        if self._enabled:
+        if self._restore_current_record():
+            self.settingsChanged.emit()
+            self.stateChanged.emit()
+        elif self._enabled:
             self._analyze()
         else:
             self.stateChanged.emit()
@@ -297,7 +361,7 @@ class WaterQaController(QObject):
         if self._closed or not self.available:
             return
         self._enabled = True
-        if self._status not in ("ready", "calculating"):
+        if self._status not in ("ready", "calculating") and not self._restored:
             self._analyze()
 
     @Slot()
@@ -337,7 +401,8 @@ class WaterQaController(QObject):
         if self._tasks:
             self._pending = (token, key, pixels, spacing, settings)
             return
-        task = _QaTask(token, key, pixels, spacing, settings)
+        task = _QaTask(token, key, pixels, spacing, settings,
+                       self._records.get(repr(key[0]), {}).get("result"))
         self._tasks[token] = task
         task.signals.completed.connect(self._receive_result, Qt.QueuedConnection)
         self._pool.start(task)
@@ -353,6 +418,8 @@ class WaterQaController(QObject):
         self._result, self._error = result, error
         self._status = "error" if error else "ready"
         self._cache[key] = (result, error)
+        if result is not None and not error:
+            self._remember_result()
         while len(self._cache) > 16:
             self._cache.popitem(last=False)
         self.stateChanged.emit()
@@ -372,6 +439,7 @@ class WaterQaController(QObject):
         if settings == self._settings:
             return
         self._settings = settings
+        self.recordsChanged.emit()
         self._cache.clear()
         self.settingsChanged.emit()
         self._invalidate()
@@ -382,7 +450,10 @@ class WaterQaController(QObject):
 
     @Slot()
     def reset(self):
+        self._restored = False
         self._enabled = False
+        self._records.clear()
+        self.recordsChanged.emit()
         self._cache.clear()
         self._invalidate()
         self._settings = WaterQaSettings()

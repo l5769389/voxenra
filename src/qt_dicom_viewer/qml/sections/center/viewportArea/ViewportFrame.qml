@@ -20,7 +20,7 @@ Item {
         anchors.fill: parent
         anchors.margins: 1
         color: "transparent"
-        border.width: frame.active ? 3 : 1
+        border.width: frame.active ? 2 : 1
         border.color: frame.active ? Theme.viewportActiveBorder
             : frame.hovered ? Theme.viewportHoverBorder : Theme.viewportBorder
     }

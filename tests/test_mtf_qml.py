@@ -343,6 +343,7 @@ def test_quality_notes_only_appear_in_dismissible_info_popup(workspace, tmp_path
     # A compound target produces actual multiple-crossing quality notes.
     analysis = controller.mtfController._current_analysis()
     analysis.result = replace(analysis.result, warnings=tuple(notes) + ('X：MTF 多次穿越阈值，取首次下降交点。',))
+    analysis.presented = analysis.result
     controller.mtfController.stateChanged.emit()
     QTest.qWait(40)
     if view.width() < 900:
@@ -376,7 +377,7 @@ def test_quality_notes_only_appear_in_dismissible_info_popup(workspace, tmp_path
     assert not warnings, warnings
 
 
-def test_ramp_metrics_profile_and_live_angle_conversion(workspace, tmp_path):
+def test_ramp_metrics_profile_and_explicit_angle_recalculation(workspace, tmp_path):
     view, controller, pixels, warnings = workspace
     controller._tool_controller.selectService('service:mtf')
     _click(view, _find(view, 'serviceEntry-fwhm'))
@@ -399,6 +400,9 @@ def test_ramp_metrics_profile_and_live_angle_conversion(workspace, tmp_path):
     assert float(_find(view, 'rampFwhmMetric').property('text')) == pytest.approx(fwhm, abs=.005)
     assert float(_find(view, 'rampThicknessMetric').property('text')) == pytest.approx(fwhm * np.tan(np.deg2rad(23)), abs=.005)
     controller.settingsController.setValue('services', 'rampThicknessAngle', 45)
+    assert c.currentResult == saved_result
+    _click(view, _find(view, 'recalculateAnalysis'))
+    wait_result(c)
     QTest.qWait(30)
     assert _find(view, 'rampThicknessMetric').property('text') == _find(view, 'rampFwhmMetric').property('text')
     assert '45°' in _find(view, 'mtfRoiLabel').property('text')
@@ -666,7 +670,7 @@ def test_sensitive_metric_is_dash_with_explanation_and_other_metrics_preserved(w
     assert not warnings
 
 
-def test_equivalent_toggle_updates_chart_label_and_metrics_without_recalculation(workspace, tmp_path):
+def test_equivalent_toggle_requires_explicit_recalculation(workspace, tmp_path):
     import math
     view, controller, pixels, warnings = workspace
     controller._tool_controller.selectService('service:mtf')
@@ -675,6 +679,9 @@ def test_equivalent_toggle_updates_chart_label_and_metrics_without_recalculation
     wait_result(c)
     measured, revision = c.currentResult, c._revision
     c.settingsController.setValue('services', 'mtfGaussianEquivalent', True)
+    assert c.currentResult == measured and c._revision == revision
+    _click(view, _find(view, 'recalculateAnalysis'))
+    wait_result(c)
     QTest.qWait(60)
     assert c.actualAnalysisMethod == 'gaussian_equivalent'
     assert '高斯等效' in _find(view, 'mtfActualMethod').property('text')
@@ -690,8 +697,10 @@ def test_equivalent_toggle_updates_chart_label_and_metrics_without_recalculation
     assert view.grabWindow().save(str(tmp_path/'mtf-equivalent-result.png'))
     QTest.keyClick(view, Qt.Key_Escape)
     c.settingsController.setValue('services', 'mtfGaussianEquivalent', False)
+    _click(view, _find(view, 'recalculateAnalysis'))
+    wait_result(c)
     QTest.qWait(40)
-    assert c.currentResult == measured and c._revision == revision
+    assert c.currentResult == measured and c._revision == revision + 2
     assert '边缘加权' in _find(view, 'mtfActualMethod').property('text')
     assert not warnings, warnings
 
@@ -729,4 +738,85 @@ def test_small_roi_area_visible_before_and_after_analysis_without_method_in_view
     assert '高斯等效' in _find(view, 'mtfActualMethod').property('text')
     assert any('自动取样' in w for w in c.warnings)
     assert view.grabWindow().save(str(tmp_path/'mtf-small-roi-ready.png'))
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize("workspace", [(1200, 820), (760, 560)], indirect=True)
+def test_accessible_numeric_roi_and_result_summary(workspace):
+    from PySide6.QtGui import QAccessible, QAccessibleActionInterface
+    from test_tag_qml import find, click, type_text
+    view, controller, _, warnings = workspace
+    _click(view, _find(view, 'primaryTool-service'))
+    _click(view, _find(view, 'serviceEntry-mtf'))
+    bead = QAccessible.queryAccessibleInterface(_find(view, 'mtfMeasurementMethod-bead'))
+    assert bead.text(QAccessible.Name)
+    assert bead.state().checked
+    button = _find(view, 'editAnalysisRoi')
+    QAccessible.queryAccessibleInterface(button).actionInterface().doAction(QAccessibleActionInterface.pressAction())
+    QTest.qWait(50)
+    for name, value in [('analysisRoiCenterX', '63'), ('analysisRoiCenterY', '63'), ('analysisRoiWidth', '8')]:
+        field = find(view, name)
+        assert QAccessible.queryAccessibleInterface(field).text(QAccessible.Name)
+        type_text(view, field, value)
+    QTest.keyClick(view, Qt.Key_Return)
+    wait_result(controller.mtfController)
+    QTest.qWait(60)
+    assert controller.mtfController.status == 'ready'
+    assert controller.mtfController.roiGeometry['centerX'] == 63
+    metrics = QAccessible.queryAccessibleInterface(_find(view, 'mtfMetrics'))
+    assert 'MTF10' in metrics.text(QAccessible.Name)
+    assert controller.mtfController.frequencyUnit in metrics.text(QAccessible.Name)
+    y = QAccessible.queryAccessibleInterface(_find(view, 'mtfAxis-y'))
+    assert not y.state().checked
+    y.actionInterface().doAction(QAccessibleActionInterface.pressAction())
+    assert controller.mtfController.showY and y.state().checked
+    assert 'Y ' in metrics.text(QAccessible.Name)
+    saved = controller.mtfController.currentResult
+    click(view, button)
+    type_text(view, find(view, 'analysisRoiWidth'), '10000')
+    click(view, find(view, 'applyAnalysisRoi'))
+    assert find(view, 'analysisRoiError').isVisible()
+    assert controller.mtfController.currentResult == saved
+    assert not warnings, warnings
+    output = Path('build/accessible-analysis')
+    output.mkdir(parents=True, exist_ok=True)
+    assert view.grabWindow().save(str(output / f'roi-editor-{view.width()}.png'))
+
+
+def test_roi_editor_closes_when_frame_changes(workspace):
+    from test_tag_qml import find
+    view, controller, _, warnings = workspace
+    _click(view, _find(view, 'primaryTool-service'))
+    _click(view, _find(view, 'serviceEntry-mtf'))
+    _click(view, _find(view, 'editAnalysisRoi'))
+    # Popup's content is reparented into the overlay; check its visible controls.
+    field = find(view, 'analysisRoiCenterX')
+    controller.mtfController.set_current_slice(1)
+    QTest.qWait(50)
+    assert not field.isVisible()
+    assert not _find(view, 'editAnalysisRoi').isEnabled()
+    assert not warnings, warnings
+
+
+def test_numeric_fwhm_editor_and_accessible_thickness(workspace):
+    from PySide6.QtGui import QAccessible
+    from test_tag_qml import find, type_text
+    view, controller, _, warnings = workspace
+    _click(view, _find(view, 'primaryTool-service'))
+    _click(view, _find(view, 'serviceEntry-fwhm'))
+    _click(view, _find(view, 'editAnalysisRoi'))
+    for name, value in [('analysisRoiCenterX', '63'), ('analysisRoiCenterY', '63'),
+                        ('analysisRoiWidth', '5'), ('analysisRoiHeight', '2')]:
+        type_text(view, find(view, name), value)
+    QTest.keyClick(view, Qt.Key_Return)
+    wait_result(controller.fwhmController)
+    QTest.qWait(50)
+    assert controller.fwhmController.status == 'ready'
+    geometry = controller.fwhmController.roiGeometry
+    assert geometry['width'] == pytest.approx(5)
+    assert geometry['height'] == pytest.approx(2)
+    assert controller.mtfController.currentResult == {}
+    metrics = QAccessible.queryAccessibleInterface(_find(view, 'rampMetrics'))
+    assert 'FWHM' in metrics.text(QAccessible.Name)
+    assert '23' in metrics.text(QAccessible.Name)
     assert not warnings, warnings

@@ -140,6 +140,19 @@ ApplicationWindow {
             window.workspaceController.openManual("workspace")
         }
     }
+    Sections.UpdateDialog {
+        id: applicationUpdateDialog
+        controller: appController.updateController
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+    }
+    Connections {
+        target: appController.updateController
+        function onShowDialog() {
+            if (!window.windowManager || window.windowManager.focusedWindowId === window.workspaceController.windowId)
+                applicationUpdateDialog.open()
+        }
+    }
     Connections {
         target: window.documentController
         property bool needsAttention: false
@@ -313,7 +326,7 @@ ApplicationWindow {
             width: centerView.width
             height: centerView.height
             visible: fileDrop.containsDrag
-            color: "#101d27"
+            color: Theme.dropBackground
             border.width: 2
             border.color: Theme.primaryColor
             radius: 8
@@ -321,8 +334,8 @@ ApplicationWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: parent.height * 0.29
                 spacing: 12
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: qsTrId("text.0609"); color: Theme.overlayText; font.pixelSize: 22 }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: qsTrId("text.0610"); color: Theme.overlayMuted; font.pixelSize: 13 }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: qsTrId("text.0609"); color: Theme.dropText; font.pixelSize: 22 }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: qsTrId("text.0610"); color: Theme.dropMuted; font.pixelSize: 13 }
             }
             Rectangle {
                 visible: fileDrop.draggedFileName !== ""
@@ -331,7 +344,7 @@ ApplicationWindow {
                 width: Math.min(fileName.implicitWidth + 36, parent.width - 32)
                 height: 52
                 radius: 9
-                color: Theme.overlayCard
+                color: Theme.dropCard
                 border.width: 1
                 border.color: Theme.primaryColor
                 Text {
@@ -340,7 +353,7 @@ ApplicationWindow {
                     width: Math.min(implicitWidth, parent.width - 36)
                     elide: Text.ElideMiddle
                     text: fileDrop.draggedFileName
-                    color: Theme.overlayText
+                    color: Theme.dropText
                     font.pixelSize: 18
                 }
             }

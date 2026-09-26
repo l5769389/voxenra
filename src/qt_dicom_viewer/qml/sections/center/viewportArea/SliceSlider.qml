@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import "../../../components" as Components
 import QtQuick.Controls.Basic as Basic
 import "../../../theme"
@@ -10,6 +11,7 @@ Item {
 
     required property var viewportController
     readonly property int sliceCount: viewportController?.sliceCount ?? 0
+    readonly property int sliceNumber: (viewportController?.sliceIndex ?? 0) + 1
 
     function selectSlice(index) {
         if (!root.viewportController) return
@@ -29,6 +31,66 @@ Item {
         radius: 4
     }
 
+    Components.AppButton {
+        id: jumpButton
+        objectName: "sliceJumpButton"
+        anchors.bottom: parent.bottom
+        width: parent.width
+        implicitHeight: 26
+        minimumButtonWidth: 0
+        leftPadding: 0
+        rightPadding: 0
+        text: String(root.sliceNumber)
+        fontPixelSize: 11
+        Accessible.name: qsTrId("slice.jump")
+        Accessible.description: qsTrId("slice.position").arg(root.sliceNumber).arg(root.sliceCount)
+        onClicked: jumpPopup.open()
+        Components.AppToolTip { visible: jumpButton.hovered; text: qsTrId("slice.jump") }
+    }
+    Basic.Popup {
+        id: jumpPopup
+        objectName: "sliceJumpPopup"
+        parent: Basic.Overlay.overlay
+        popupType: Basic.Popup.Item
+        width: Math.min(230, (parent?.width ?? 246) - 16)
+        padding: 12
+        focus: true
+        closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutside
+        onAboutToShow: {
+            const point = jumpButton.mapToItem(parent, 0, 0)
+            x = Math.max(8, Math.min(point.x, parent.width - width - 8))
+            y = Math.max(8, Math.min(point.y - height, parent.height - height - 8))
+            sliceInput.text = String(root.sliceNumber)
+            sliceInput.forceActiveFocus()
+            sliceInput.selectAll()
+        }
+        function apply() {
+            if (!sliceInput.acceptableInput) return
+            root.selectSlice(Number(sliceInput.text) - 1)
+            close()
+        }
+        background: Rectangle { color: Theme.elevatedBackground; radius: 6; border.color: Theme.borderStrong }
+        contentItem: ColumnLayout {
+            Text { text: qsTrId("slice.jump") + " (1–" + root.sliceCount + ")"; color: Theme.textPrimary }
+            Components.AppTextField {
+                id: sliceInput
+                objectName: "sliceNumberInput"
+                Layout.fillWidth: true
+                Accessible.name: qsTrId("slice.number")
+                validator: IntValidator { bottom: 1; top: root.sliceCount }
+                onAccepted: jumpPopup.apply()
+            }
+            Components.AppButton {
+                objectName: "sliceJumpApply"
+                Layout.fillWidth: true
+                text: qsTrId("slice.jump")
+                enabled: sliceInput.acceptableInput
+                onClicked: jumpPopup.apply()
+            }
+        }
+    }
+    onVisibleChanged: if (!visible) jumpPopup.close()
+
     Text {
         id: minimumLabel
         objectName: "sliceMinimum"
@@ -45,7 +107,7 @@ Item {
     Text {
         id: maximumLabel
         objectName: "sliceMaximum"
-        anchors.bottom: parent.bottom
+        anchors.bottom: jumpButton.top
         anchors.bottomMargin: 3
         anchors.horizontalCenter: parent.horizontalCenter
         height: 20
@@ -59,6 +121,10 @@ Item {
     Basic.Slider {
         id: sliceControl
         objectName: "sliceControl"
+        Accessible.onIncreaseAction: root.selectSlice(Math.min(root.sliceCount - 1, root.sliceNumber))
+        Accessible.onDecreaseAction: root.selectSlice(Math.max(0, root.sliceNumber - 2))
+        Accessible.name: qsTrId("slice.number")
+        Accessible.description: qsTrId("slice.position").arg(root.sliceNumber).arg(root.sliceCount)
 
         anchors.top: minimumLabel.bottom
         anchors.bottom: maximumLabel.top
@@ -70,27 +136,37 @@ Item {
         rightPadding: 7
 
         orientation: Qt.Vertical
-        // Qt 的垂直 Slider 默认把较大值放在上方。交换范围端点，
-        // 让小索引位于顶部、大索引位于底部，同时 value 仍是实际索引。
-        from: Math.max(0, root.sliceCount - 1)
-        to: 0
+        // Rotate the visual control, not its range: accessibility must still
+        // report minimum=1, maximum=count, with slice 1 at the top of the rail.
+        rotation: 180
+        from: 1
+        to: Math.max(1, root.sliceCount)
         stepSize: 1
         snapMode: Basic.Slider.SnapAlways
         live: true
         // Depend on the installed range as well as the index: a middle slice
-        // may arrive before the count, and Qt otherwise leaves it clamped to 0.
-        value: Math.max(0, Math.min(from, root.viewportController?.sliceIndex ?? 0))
+        // may arrive before the count, and Qt otherwise leaves it clamped to 1.
+        value: Math.max(1, Math.min(to, root.sliceNumber))
+        Keys.onUpPressed: root.selectSlice(Math.max(0, root.sliceNumber - 2))
+        Keys.onDownPressed: root.selectSlice(Math.min(root.sliceCount - 1, root.sliceNumber))
+        onValueChanged: Qt.callLater(function() {
+            // Accessible value setters do not emit moved(). Wait for range and
+            // controller bindings to settle before forwarding an external value.
+            if (!sliceControl.pressed && root.sliceCount > 0
+                    && Math.round(sliceControl.value) !== Math.max(1, Math.min(root.sliceCount, root.sliceNumber)))
+                root.selectSlice(Math.round(sliceControl.value) - 1)
+        })
 
         onMoved: {
             if (!root.viewportController)
                 return
-            root.selectSlice(Math.round(sliceControl.value))
+            root.selectSlice(Math.round(sliceControl.value) - 1)
         }
 
         Components.AppToolTip {
             visible: sliceControl.hovered || sliceControl.pressed
             delay: 250
-            text: Math.round(sliceControl.value) + 1
+            text: Math.round(sliceControl.value)
                 + " / " + (root.viewportController
                     ? root.viewportController.sliceCount
                     : 0)
@@ -110,8 +186,8 @@ Item {
             Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: parent.top
-                height: sliceControl.visualPosition
+                anchors.bottom: parent.bottom
+                height: sliceControl.position
                     * parent.height
                 radius: parent.radius
                 color: Theme.primaryStrong

@@ -168,6 +168,9 @@ Basic.TabBar {
 
             id: tabButton
             objectName: "workspaceTab-" + tabButton.modelData.tabId
+            Accessible.name: String(tabButton.modelData.tabType).toUpperCase() + " · " + tabButton.modelData.tabLabel
+            Accessible.selected: checked
+            Accessible.onPressAction: tabButton.click()
             width: workspaceTabs.tabWidth
             implicitWidth: workspaceTabs.tabWidth
             leftPadding: 10
@@ -333,7 +336,7 @@ Basic.TabBar {
             background: Rectangle {
                 objectName: "workspaceTabBackground-" + tabButton.modelData.tabId
                 readonly property color visualBorderColor: tabButton.checked
-                    ? Theme.controlHoverBorder : Theme.borderSubtle
+                    ? Theme.tabSelectedBorder : Theme.borderSubtle
                 radius: 6
                 color: tabButton.checked
                     ? Theme.selectionBackground

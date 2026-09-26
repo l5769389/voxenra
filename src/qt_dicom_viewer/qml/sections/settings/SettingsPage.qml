@@ -15,6 +15,7 @@ Rectangle {
     readonly property var categories: [
         {key: "appearance", title: qsTrId("appearance.title"), shortTitle: qsTrId("appearance.navigation"), subtitle: qsTrId("appearance.keywords"), group: qsTrId("text.0814")},
         {key: "workspace", title: qsTrId("text.0622"), subtitle: qsTrId("text.0813")},
+        {key: "updates", title: qsTrId("updates.title"), subtitle: qsTrId("updates.enable")},
         {key: "sources", title: qsTrId("text.0815"), subtitle: qsTrId("text.0816"), group: qsTrId("text.0817")},
         {key: "export", title: qsTrId("text.0315"), subtitle: qsTrId("text.0818"), group: qsTrId("text.0819")},
         {key: "colormap", title: qsTrId("text.0309"), subtitle: qsTrId("text.0820"), group: qsTrId("text.0821")},
@@ -56,17 +57,35 @@ Rectangle {
                         Layout.minimumWidth: 0
                         spacing: 3
                         Text { Layout.fillWidth: true; Layout.minimumWidth: 0; elide: Text.ElideRight; Layout.minimumHeight: implicitHeight; text: qsTrId("text.0694"); color: Theme.textPrimary; font.pixelSize: 15; font.bold: true }
-                        Text {
-                            objectName: "settingsApplicationVersion"
+                        RowLayout {
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.minimumHeight: Math.max(16, implicitHeight)
-                            maximumLineCount: 1
-                            verticalAlignment: Text.AlignVCenter
-                            text: I18n.format(qsTrId("app.version"), {version: page.settingsController.applicationVersion})
-                            color: Theme.textMuted
-                            font.pixelSize: 11
-                            elide: Text.ElideRight
+                            spacing: 4
+                            Text {
+                                objectName: "settingsApplicationVersion"
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                Layout.minimumHeight: Math.max(16, implicitHeight)
+                                maximumLineCount: 1
+                                verticalAlignment: Text.AlignVCenter
+                                text: I18n.format(qsTrId("app.version"), {version: page.settingsController.applicationVersion})
+                                color: Theme.textMuted
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
+                            }
+                            Components.AppButton {
+                                objectName: "settingsUpdateBadge"
+                                visible: appController.updateController.hasUpdate
+                                compact: true
+                                minimumButtonWidth: 24
+                                Layout.preferredWidth: 24
+                                Layout.preferredHeight: 24
+                                text: "↑"
+                                textColor: Theme.primaryColor
+                                normalColor: "transparent"
+                                Accessible.name: qsTrId("updates.details")
+                                onClicked: appController.updateController.show()
+                                Components.AppToolTip { visible: parent.hovered; text: I18n.format(qsTrId("updates.newVersion"), {version: appController.updateController.latestVersion}) }
+                            }
                         }
                     }
                     Components.AppButton {

@@ -99,8 +99,8 @@ ColumnLayout {
                     border.color: Theme.borderStrong
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0; color: "#02070e" }
-                        GradientStop { position: 1; color: "#f5f7fb" }
+                        GradientStop { position: 0; color: Theme.intensityBlack }
+                        GradientStop { position: 1; color: Theme.intensityWhite }
                     }
                 }
 

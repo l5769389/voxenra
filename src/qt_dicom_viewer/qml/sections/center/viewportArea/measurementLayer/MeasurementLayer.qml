@@ -37,7 +37,7 @@ Item {
         delegate: MeasurementItem {
             required property var modelData
             isDraft: false
-            selectedDraft: isSelected && measurementLayer.measurementController?.selectedMeasurementState === "draft"
+            selectedDraft: !modelData.locked && isSelected && measurementLayer.measurementController?.selectedMeasurementState === "draft"
             preferences: measurementLayer.preferences
             settingsController: measurementLayer.measurementController?.settingsController ?? null
             showRoiMetrics: measurementLayer.showRoiMetrics

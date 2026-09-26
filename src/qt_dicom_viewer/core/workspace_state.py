@@ -29,9 +29,11 @@ MAX_MASK_VOXELS = 512 * 1024**2
 @lru_cache(maxsize=1)
 def _types():
     from qt_dicom_viewer.model import display_mapping, dicom_core, dicom_types, image_geometry, measure, ui_models, volume_models, interaction, dicom_models
+    from qt_dicom_viewer.model import mtf, water_qa
     from qt_dicom_viewer.core import volume_view, mpr_voi
     from qt_dicom_viewer.ui.controller.viewport.controller import text_annotation_controller, pet_display_controller
     names = {
+        "MtfAxisResult", "BeadMtfResult", "RampFwhmResult", "WaterPhantom", "WaterQaSettings", "WaterQaRoi", "WaterQaResult",
         "DisplayMappingIntent", "WindowLevel", "PixelUnitOption", "PixelValueMeta", "PixelSpacing",
         "ImagePoint", "Point", "Offset", "ViewportState", "DisplayStyle",
         "ViewportDisplaySettings", "MprProjectionSettings", "MprProjectionMode",
@@ -41,7 +43,7 @@ def _types():
         "MeasurementKind", "TextAnnotation", "VoiRegion", "VolumeViewState",
         "VolumeDisplayState", "VolumeBlendMode", "PetDisplayState", "MprPlane",
     }
-    modules = (display_mapping, dicom_core, dicom_types, image_geometry, measure, ui_models,
+    modules = (mtf, water_qa, display_mapping, dicom_core, dicom_types, image_geometry, measure, ui_models,
                volume_models, interaction, dicom_models, volume_view, mpr_voi,
                text_annotation_controller, pet_display_controller)
     return {name: getattr(module, name) for module in modules for name in names
@@ -49,6 +51,11 @@ def _types():
 
 
 def encode(value):
+    from qt_dicom_viewer.i18n.messages import Message, JoinedMessage
+    if isinstance(value, Message):
+        return {"$message": value.key, "args": encode(value.args), "values": encode(value.values)}
+    if isinstance(value, JoinedMessage):
+        return {"$messageParts": encode(list(value.parts))}
     if isinstance(value, Enum):
         if type(value).__name__ not in _types():
             raise ValueError(_msg('text.0112', value1=type(value).__name__))
@@ -94,6 +101,21 @@ def decode(value, depth=0, *, budget=None):
         if isinstance(value, float) and not math.isfinite(value):
             raise ValueError(_msg('text.0115'))
         return value
+    if "$message" in value:
+        from qt_dicom_viewer.i18n.messages import Message, builtin
+        if (set(value) != {"$message", "args", "values"}
+                or not isinstance(value["$message"], str) or value["$message"] not in builtin()["messages"]):
+            raise ValueError("Invalid saved message")
+        args, named = descend(value["args"]), descend(value["values"])
+        if not isinstance(args, tuple) or not isinstance(named, dict):
+            raise ValueError("Invalid saved message arguments")
+        return Message(value["$message"], *args, **named)
+    if "$messageParts" in value:
+        from qt_dicom_viewer.i18n.messages import JoinedMessage
+        parts = descend(value["$messageParts"])
+        if set(value) != {"$messageParts"} or not isinstance(parts, list) or not all(isinstance(p, str) for p in parts):
+            raise ValueError("Invalid saved message parts")
+        return JoinedMessage(parts)
     if "$type" in value:
         cls = _types().get(value["$type"])
         if cls is None or not is_dataclass(cls) or set(value) != {"$type", "fields"}:
@@ -161,7 +183,9 @@ def _matches(value, hint):
             else len(value) == len(args) and all(_matches(v, t) for v, t in zip(value, args)))
     if hint is float:
         return type(value) in (float, int) and math.isfinite(value)
-    if hint in (int, bool, str, type(None)):
+    if hint is str:
+        return isinstance(value, str)
+    if hint in (int, bool, type(None)):
         return type(value) is hint
     return isinstance(value, hint)
 

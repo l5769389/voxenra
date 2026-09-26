@@ -14,20 +14,25 @@ ColumnLayout {
         settingsController: page.settingsController
         Layout.fillWidth: true
         title: qsTrId("appearance.theme")
-        RowLayout {
+        GridLayout {
             Layout.fillWidth: true
-            spacing: 12
+            columns: page.width >= 540 ? 3 : page.width >= 340 ? 2 : 1
+            columnSpacing: 12
+            rowSpacing: 12
             Repeater {
-                model: ["dark", "light"]
+                model: ["dark", "graphite", "light"]
                 delegate: Components.AppButton {
                     id: choice
                     required property string modelData
+                    readonly property var previewPalette: Theme.previewColors(modelData)
                     objectName: "themeChoice-" + modelData
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 136
                     Layout.maximumWidth: 220
                     Layout.preferredHeight: 92
                     checked: page.settingsController.values.appearance.theme === modelData
-                    Accessible.name: modelData === "dark" ? qsTrId("appearance.dark") : qsTrId("appearance.light")
+                    Accessible.name: modelData === "dark" ? qsTrId("appearance.dark")
+                        : modelData === "graphite" ? qsTrId("appearance.graphite") : qsTrId("appearance.light")
                     onClicked: page.settingsController.setValue("appearance", "theme", modelData)
                     contentItem: ColumnLayout {
                         spacing: 8
@@ -35,10 +40,10 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 36
                             radius: 4
-                            color: choice.modelData === "dark" ? "#171c22" : "#eef4f8"
-                            border.color: choice.modelData === "dark" ? "#566675" : "#839cad"
-                            Rectangle { x: 8; y: 8; width: 24; height: 20; radius: 2; color: choice.modelData === "dark" ? "#203b4c" : "#dfedf6" }
-                            Rectangle { x: 38; y: 8; width: parent.width - 46; height: 20; radius: 2; color: "#050709" }
+                            color: choice.previewPalette.panelBackground
+                            border.color: choice.previewPalette.borderStrong
+                            Rectangle { x: 8; y: 8; width: 24; height: 20; radius: 2; color: choice.previewPalette.selectionBackground }
+                            Rectangle { x: 38; y: 8; width: parent.width - 46; height: 20; radius: 2; color: choice.previewPalette.canvasBackground }
                         }
                         Text {
                             Layout.fillWidth: true

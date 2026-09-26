@@ -43,7 +43,7 @@ Rectangle {
     property bool restorePending: false
     property bool resetScrollPending: false
     color: Theme.panelBackground
-    border.color: Theme.borderDefault
+    border.color: Theme.panelBorder
     border.width: 1
     radius: 8
     clip: true
@@ -376,8 +376,9 @@ Rectangle {
                     }
                     Text {
                         visible: entry.isSeries
+                        objectName: "seriesCount-" + entry.modelData.seriesInstanceUid
                         text: entry.modelData.countLabel
-                        color: entry.selected ? Theme.primaryHover : Theme.textMuted
+                        color: entry.selected ? Theme.textSecondary : Theme.textMuted
                         font.pixelSize: 12
                     }
                 }

@@ -16,6 +16,15 @@ Item {
     signal returnToVolumeRequested()
     required property var viewportController
     required property bool hasTabs
+    Accessible.role: Accessible.Pane
+    Accessible.name: qsTrId("view.accessibleName").arg(viewportController?.viewportType ?? "2D")
+    Accessible.description: qsTrId("view.accessibleState")
+        .arg((viewportController?.sliceIndex ?? 0) + 1)
+        .arg(viewportController?.sliceCount ?? 0)
+        .arg(viewportController?.windowWidth ?? "—")
+        .arg(viewportController?.windowCenter ?? "—")
+        .arg(viewportController?.loadState ?? "")
+        + (viewportController?.errorMessage ? " · " + viewportController.errorMessage : "")
     Keys.onEscapePressed: event => {
         if (viewportRoot.viewportController && viewportRoot.viewportController.reconstructionController)
             viewportRoot.viewportController.reconstructionController.setRegistrationActive(false)

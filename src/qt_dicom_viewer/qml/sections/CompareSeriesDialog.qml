@@ -46,7 +46,7 @@ Components.AppDialog {
         Rectangle {
             Layout.preferredWidth: 56
             Layout.preferredHeight: 56
-            color: "#000000"
+            color: Theme.imageBlack
             radius: 4
             Image {
                 anchors.fill: parent

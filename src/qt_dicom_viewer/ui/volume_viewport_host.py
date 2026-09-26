@@ -123,8 +123,11 @@ class VolumeViewportHost(QWidget):
         # Mark an explicit initial size so QWidget.show() cannot replace the
         # container's geometry with a sizeHint when first attached.
         self.resize(640, 480)
-        self.setStyleSheet("QWidget { background: #02070e; color: #eaf3fb; }"
-                           "QPushButton { padding: 8px 20px; background: #17354a; border-radius: 4px; }")
+        self._apply_theme()
+        from qt_dicom_viewer.ui.controller import appearance_controller
+        appearance = appearance_controller._current() if appearance_controller._current else None
+        if appearance is not None:
+            appearance.changed.connect(self._apply_theme)
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.setInterval(16)
@@ -136,6 +139,7 @@ class VolumeViewportHost(QWidget):
         self.stack = QStackedLayout(self)
         self.stack.setContentsMargins(0, 0, 0, 0)
         self.status_page = QWidget(self)
+        self.status_page.setObjectName("volumeStatusPage")
         status_layout = QVBoxLayout(self.status_page)
         status_layout.addStretch()
         self.message = QLabel(_msg('text.0008'), self.status_page)
@@ -162,6 +166,22 @@ class VolumeViewportHost(QWidget):
         if hasattr(controller, "referenceChanged"):
             controller.referenceChanged.connect(self._reference_changed)
         self._update_cursor()
+
+    def _apply_theme(self):
+        from qt_dicom_viewer.ui.controller.appearance_controller import current_colors
+        colors = current_colors()
+        # Keep the native image surface dark; status chrome follows the app.
+        self.setStyleSheet(
+            "QWidget { background: %s; color: %s; }"
+            "QWidget#volumeStatusPage, QWidget#volumeStatusPage QLabel { background: %s; color: %s; }"
+            "QPushButton { padding: 8px 20px; background: %s; color: %s; border-radius: 4px; }"
+            "QPushButton:hover { background: %s; }"
+            "QPushButton:pressed { background: %s; }"
+            "QPushButton:disabled { background: %s; color: %s; }"
+            % tuple(colors[key] for key in (
+                "intensityBlack", "overlayText", "panelBackground", "textPrimary",
+                "controlBackground", "textPrimary", "controlHover", "controlPressed",
+                "controlDisabled", "textDisabled")))
 
     def _reference_changed(self):
         if not self._disposed:

@@ -24,9 +24,9 @@ ColumnLayout {
         clip: true
         radius: 5
         gradient: Gradient {
-            GradientStop { position: 0; color: "#35414b" }
-            GradientStop { position: 0.55; color: "#78818a" }
-            GradientStop { position: 1; color: "#111b23" }
+            GradientStop { position: 0; color: Theme.previewGradientTop }
+            GradientStop { position: 0.55; color: Theme.previewGradientMiddle }
+            GradientStop { position: 1; color: Theme.previewGradientBottom }
         }
         property real shapeX: 20
         property real shapeY: 16

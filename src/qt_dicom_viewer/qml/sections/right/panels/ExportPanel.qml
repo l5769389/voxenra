@@ -132,7 +132,12 @@ ColumnLayout {
             onClicked: root.report.exportReport("pdf", allTabs.checked, anonymous.checked, reportImages.checked)
         }
     }
-    Basic.ProgressBar { Layout.fillWidth: true; visible: root.report?.busy ?? false; indeterminate: true }
+    Basic.ProgressBar { Layout.fillWidth: true; visible: root.report?.busy ?? false; value: root.report?.progress ?? 0; indeterminate: value === 0 }
+    Components.AppButton {
+        text: qsTrId("text.0656")
+        visible: root.report?.busy ?? false
+        onClicked: root.report.cancel()
+    }
     Text {
         objectName: "measurementReportMessage"
         Layout.fillWidth: true

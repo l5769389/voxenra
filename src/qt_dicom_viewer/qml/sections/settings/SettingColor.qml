@@ -57,7 +57,7 @@ RowLayout {
                 GridLayout {
                     columns: 4; rowSpacing: 6; columnSpacing: 6
                     Repeater {
-                        model: ["#f8fafc", "#182334", "#ffd45c", "#66d0ff", "#ef4444", "#22c55e", "#3b82f6", "#a855f7"]
+                        model: Theme.overlaySwatches
                         delegate: Components.AppButton {
                             id: swatch
                             required property string modelData

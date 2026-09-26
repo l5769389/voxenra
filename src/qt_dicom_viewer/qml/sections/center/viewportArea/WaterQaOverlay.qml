@@ -65,7 +65,7 @@ Item {
                 x: Math.max(4, Math.min(overlay.width-width-4, roi.center.x-width/2))
                 y: Math.max(4, Math.min(overlay.height-height-4, roi.center.y+roi.screenRadius+4))
                 radius: 4
-                color: "#dd0d1722"
+                color: Theme.qaCardBackground
                 border.color: roi.modelData.color
                 border.width: 1
                 Text {

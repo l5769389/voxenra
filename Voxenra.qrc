@@ -124,9 +124,13 @@
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/WaterQaOverlay.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/VolumePresetPanel.qml</file>
         <file>src/qt_dicom_viewer/qml/theme/Theme.qml</file>
+        <file>src/qt_dicom_viewer/qml/theme/palettes.json</file>
+        <file>src/qt_dicom_viewer/qml/theme/PaletteData.js</file>
         <file>src/qt_dicom_viewer/qml/theme/I18n.qml</file>
         <file>src/qt_dicom_viewer/qml/theme/qmldir</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/SettingsPage.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/settings/UpdateSettingsPage.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/UpdateDialog.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/ExportSettingsPage.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/WorkspaceSettingsPage.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/AppearanceSettingsPage.qml</file>

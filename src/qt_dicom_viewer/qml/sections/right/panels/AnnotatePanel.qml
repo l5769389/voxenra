@@ -124,7 +124,7 @@ ColumnLayout {
         spacing: 2
 
         Repeater {
-            model: ["#ffd45c", "#66d0ff", "#7bd7a4", "#ef7777", "#f5f7fb", "#ff8a5b", "#c99cff"]
+            model: Theme.annotationSwatches
 
             delegate: Basic.Button {
                 id: colorButton

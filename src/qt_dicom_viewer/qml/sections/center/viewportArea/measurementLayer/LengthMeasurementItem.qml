@@ -23,7 +23,7 @@ Item {
     property var renderedPoints: mappedPoints
 
     readonly property color measurementColor:
-        measurement?.type === "arrow" ? (styleSettings.annotationColor ?? "#ffd166") : draftStyle
+        measurement?.type === "arrow" ? (styleSettings.annotationColor ?? Theme.annotationDefault) : draftStyle
             ? (styleSettings.editingColor ?? Theme.measurementSelected)
             : (styleSettings.completedColor ?? Theme.measurementPrimary)
 

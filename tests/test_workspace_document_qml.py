@@ -72,17 +72,12 @@ def test_export_help_long_result_link_and_measurement_instructions(sidebar_scene
     assert report.resultPath == str(path)
     assert len(tab.activeViewport._measure_controller._measurements) == 1
     tab.toolController.activateTool('measure')
-    wait_until(lambda: find(window, 'measurementInstructions').isVisible())
+    wait_until(lambda: find(window, 'measurementResultsToggle').isVisible())
     QTest.qWait(80)
-    rows = [find(window, 'measurementInstruction' + str(i)) for i in range(6)]
-    for first, second in zip(rows, rows[1:]):
-        assert first.mapToScene(QPointF(0, first.height())).y() < second.mapToScene(QPointF()).y()
-    for row in rows:
-        assert row.width() <= panel_width and row.height() > 0
-        label, detail = [item for item in row.childItems() if item.property('text') is not None]
-        assert label.property('contentWidth') <= label.width() + 1
-        assert label.x() + label.width() < detail.x()
-    assert window.grabWindow().save(str(tmp_path / 'measurement-instructions.png'))
+    listing = find(window, 'measurementResultsToggle')
+    assert listing.width() <= panel_width
+    assert len(tab.measurementResults.items) == 1
+    assert window.grabWindow().save(str(tmp_path / 'measurement-list.png'))
     assert not warnings, warnings
 
 

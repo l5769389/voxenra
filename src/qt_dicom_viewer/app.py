@@ -67,9 +67,24 @@ def main() -> None:
             logger.critical("Failed to load QML root component")
             return 1
 
-        return app.exec()
+        from qt_dicom_viewer.infrastructure.update_health import arm_startup_confirmation
+        arm_startup_confirmation(engine.rootObjects()[0])
+        engine.app_controller.updateController.start()
+        result = app.exec()
     finally:
         engine.app_controller.shutdown()
+    # Installation starts only after the regular workspace exit decision and
+    # worker shutdown; a cancelled close never reaches this handoff.
+    if result == 0:
+        try:
+            engine.app_controller.updateController.install_after_exit()
+        except OSError:
+            logger.exception("Could not launch update installer")
+            # No application files were touched. Reopen the current version
+            # quietly if the operating system could not start the helper.
+            from qt_dicom_viewer.infrastructure.update_installer import restart_current_application
+            restart_current_application()
+    return result
 
 
 def bind_controller() -> QQmlApplicationEngine:

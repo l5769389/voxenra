@@ -167,8 +167,22 @@ def _validate_tab(tab):
     from qt_dicom_viewer.model import MprFrame
     for state in tab["views"].values():
         if not isinstance(state, dict): raise ValueError(_msg('text.0222'))
+        source = state.get("independentSource")
+        if source is not None:
+            from qt_dicom_viewer.ui.measurement_source import restore_request
+            try:
+                if not isinstance(source, dict) or source.get("kind") != "mpr":
+                    raise ValueError("Invalid independent plane")
+                request = restore_request(source, "validate")
+                if (request.series_uid not in tab["series"] or not isinstance(request.mpr_frame, MprFrame)
+                        or source.get("navigation") is not None and not isinstance(source["navigation"], MprState)):
+                    raise ValueError("Invalid independent source")
+            except (KeyError, TypeError, ValueError):
+                raise ValueError(_msg('text.0222')) from None
         if state.get("sliceFrame") is not None and not isinstance(state["sliceFrame"], MprFrame):
             raise ValueError(_msg('text.0222'))
+        from qt_dicom_viewer.core.analysis_records import validate_analysis_records
+        validate_analysis_records(state.get("analyses", {}))
         image = state.get("image")
         if image is not None and (not isinstance(image, ViewportState) or image.zoom <= 0
                                   or image.slice_index is not None and image.slice_index < 0):
@@ -177,6 +191,15 @@ def _validate_tab(tab):
     if not isinstance(edits.get("views"), dict): raise ValueError(_msg('text.0224'))
     for state in edits["views"].values():
         if not isinstance(state, dict): raise ValueError(_msg('text.0224'))
+        presentation = state.get("presentation", {})
+        if (not isinstance(presentation, dict) or any(not isinstance(v, dict)
+                or not isinstance(v.get("name", ""), str) or len(v.get("name", "")) > 120
+                or type(v.get("hidden", False)) is not bool or type(v.get("locked", False)) is not bool
+                or type(v.get("ordinal", 1)) is not int for v in presentation.values())):
+            raise ValueError(_msg('text.0225'))
+        sources = state.get("sources", {})
+        if not isinstance(sources, dict) or any(not isinstance(v, dict) for v in sources.values()):
+            raise ValueError(_msg('text.0225'))
         for field, classes in (("measurements", (LengthMeasurement, AngleMeasurement, RoiMeasurement)),
                                ("annotations", (TextAnnotation,))):
             items = state.get(field, {})

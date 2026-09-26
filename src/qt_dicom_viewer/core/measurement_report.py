@@ -18,6 +18,8 @@ COLUMNS = (
     ("unit", _msg('text.0176')), ("threshold", _msg('text.0177')),
     ("origin", _msg('text.0178')), ("orientation", _msg('text.0179')), ("text", _msg('text.0180')),
     ("perimeter_mm", _msg("measurement.perimeter")),
+    ("name", _msg("results.rename")),
+    ("reference_status", _msg("report.referenceStatus")),
 )
 
 
@@ -98,17 +100,19 @@ def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=Non
     try:
         new_page()
         for row in rows:
-            metrics = [(localize(label, translations), cell(row.get(key), decimal_places=decimal_places if key in MEASUREMENT_COLUMNS else None)) for key, label in (*COLUMNS[9:22],COLUMNS[-1])
+            metrics = [(localize(label, translations), cell(row.get(key), decimal_places=decimal_places if key in MEASUREMENT_COLUMNS else None)) for key, label in (*COLUMNS[9:22], COLUMNS[-3])
                        if row.get(key) is not None and row.get(key) != ""]
             lines = ["  ·  ".join(f"{label}: {value}" for label, value in metrics[i:i+2])
                      for i in range(0, len(metrics), 2)]
+            if row.get("reference_status"):
+                lines.append(row["reference_status"])
             if row.get("text"):
                 lines.append(_msg('text.0187') + row["text"][:180])
             block = 96 + len(lines) * 34
             if y + block > height - 55:
                 new_page()
             painter.fillRect(QRectF(0, y, width, 40), QColor("#edf3f6"))
-            text(f"{row['id']}  {row['kind']}  ·  {row['patient']} / {row['series']}",
+            text(f"{row['id']}  {row.get('name') or row['kind']}  ·  {row['patient']} / {row['series']}",
                  12, y, width-24, 40, 10, True, single=True)
             location = f"{row['modality']} · {row['view']}"
             if row.get("slice"): location += _msg('text.0188', value1=row['slice'])

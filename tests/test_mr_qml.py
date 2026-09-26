@@ -235,8 +235,9 @@ def test_mr_initial_middle_slice_slider_matches_display_across_tabs(scene, tmp_p
                    if item.isVisible() and item.inherits('QQuickSlider')]
         assert len(sliders) == 1
         assert view.sliceIndex == 2
-        assert sliders[0].property('value') == view.sliceIndex
-        assert sliders[0].property('from') == view.sliceCount - 1
+        assert sliders[0].property('value') == view.sliceIndex + 1
+        assert sliders[0].property('from') == 1
+        assert sliders[0].property('to') == view.sliceCount
     assert not warnings, warnings
 
 
@@ -266,10 +267,10 @@ def test_slice_slider_tracks_late_range_without_index_change(scene, tmp_path):
     original = app.workspaceController.activeViewport
     slider_root.setProperty('viewportController', view)
     try:
-        assert slider.property('value') == 0
+        assert slider.property('value') == 1
         view.count = 32
         view.countChanged.emit()
-        assert slider.property('value') == 16
+        assert slider.property('value') == 17
     finally:
         slider_root.setProperty('viewportController', original)
     assert not warnings, warnings
@@ -296,4 +297,48 @@ def test_accessible_checkable_actions_update_mpr_layout_and_compare_state(scene,
     QAccessible.queryAccessibleInterface(checkbox).actionInterface().doAction(QAccessibleActionInterface.toggleAction())
     assert not checkbox.property('checked')
     assert not view.viewport_state.display_settings.show_scale_bar
+    assert not warnings, warnings
+
+
+def test_accessible_slice_number_and_keyboard_jump(scene, tmp_path):
+    from PySide6.QtCore import Qt, QPointF
+    from PySide6.QtGui import QAccessible, QAccessibleActionInterface
+    window, app, warnings = scene
+    series = write_mr_series(tmp_path / 'slice-jump')
+    app.panelController.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 4, 4, 0, [series]))
+    wait_until(lambda: app.workspaceController.activeViewport is not None
+               and app.workspaceController.activeViewport.loadState == 'ready')
+    view = app.workspaceController.activeViewport
+    slider = find(window, 'sliceControl')
+    accessible = QAccessible.queryAccessibleInterface(slider)
+    assert accessible.text(QAccessible.Name)
+    assert accessible.valueInterface().currentValue() == view.sliceIndex + 1
+    assert accessible.valueInterface().minimumValue() == 1
+    assert accessible.valueInterface().maximumValue() == view.sliceCount
+    jump = QAccessible.queryAccessibleInterface(find(window, 'sliceJumpButton'))
+    jump.actionInterface().doAction(QAccessibleActionInterface.pressAction())
+    field = find(window, 'sliceNumberInput')
+    type_text(window, field, '0')
+    assert not find(window, 'sliceJumpApply').isEnabled()
+    type_text(window, field, '4')
+    QTest.keyClick(window, Qt.Key_Return)
+    wait_until(lambda: view._frame_meta.slice_index == 3)
+    assert accessible.valueInterface().currentValue() == 4
+    accessible.actionInterface().doAction(QAccessibleActionInterface.decreaseAction())
+    wait_until(lambda: view._frame_meta.slice_index == 2)
+    assert accessible.valueInterface().currentValue() == 3
+    accessible.valueInterface().setCurrentValue(2)
+    wait_until(lambda: view._frame_meta.slice_index == 1)
+    slider.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_Up)
+    wait_until(lambda: view._frame_meta.slice_index == 0)
+    assert accessible.valueInterface().currentValue() == 1
+    # Visual top remains the first slice despite the normal accessible range.
+    a = slider.mapToScene(QPointF(slider.width()/2, 1))
+    b = slider.mapToScene(QPointF(slider.width()/2, slider.height()-1))
+    top, bottom = sorted((a, b), key=lambda point: point.y())
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, bottom.toPoint())
+    wait_until(lambda: view._frame_meta.slice_index == 3)
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, top.toPoint())
+    wait_until(lambda: view._frame_meta.slice_index == 0)
     assert not warnings, warnings

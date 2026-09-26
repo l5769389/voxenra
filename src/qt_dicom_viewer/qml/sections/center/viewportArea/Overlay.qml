@@ -49,9 +49,9 @@ Item {
     readonly property real topLeftTextHeight: (topLeft.visible ? topLeft.height : 0) + (hasViewSelector ? modeRow.height : 0)
     readonly property real bottomLeftTextHeight: bottomLeft.visible ? bottomLeft.height : 0
     readonly property real fontScale: multiViewport || width < 640 || height < 480 ? 0.85 : 1
-    readonly property color backgroundColor: viewportController?.canvasBackgroundColor ?? "#000000"
+    readonly property color backgroundColor: viewportController?.canvasBackgroundColor ?? Theme.imageBlack
     readonly property bool lightBackground: backgroundColor.r * 0.299 + backgroundColor.g * 0.587 + backgroundColor.b * 0.114 > 0.6
-    readonly property color textColor: options.colorMode === "custom" ? options.color : lightBackground ? "#182334" : Theme.overlayText
+    readonly property color textColor: options.colorMode === "custom" ? options.color : lightBackground ? Theme.overlayDarkText : Theme.overlayText
     visible: options.enabled !== false
 
     function value(key) {
@@ -160,7 +160,7 @@ Item {
                     horizontalAlignment: corner.horizontalAlignment
                     verticalAlignment: Text.AlignVCenter
                     style: Text.Outline
-                    styleColor: root.lightBackground ? "#99ffffff" : Theme.overlayOutline
+                    styleColor: root.lightBackground ? Theme.overlayLightOutline : Theme.overlayOutline
                     textFormat: Text.PlainText
                     wrapMode: Text.NoWrap
                     maximumLineCount: 1
@@ -188,7 +188,7 @@ Item {
             verticalAlignment: Text.AlignVCenter
             color: root.textColor
             style: Text.Outline
-            styleColor: root.lightBackground ? "#99ffffff" : Theme.overlayOutline
+            styleColor: root.lightBackground ? Theme.overlayLightOutline : Theme.overlayOutline
             elide: Text.ElideRight
             wrapMode: Text.Wrap
             maximumLineCount: 4
@@ -206,7 +206,7 @@ Item {
             verticalAlignment: Text.AlignVCenter
             color: root.textColor
             style: Text.Outline
-            styleColor: root.lightBackground ? "#99ffffff" : Theme.overlayOutline
+            styleColor: root.lightBackground ? Theme.overlayLightOutline : Theme.overlayOutline
             textFormat: Text.PlainText
             elide: Text.ElideRight
         }

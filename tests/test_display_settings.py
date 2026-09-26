@@ -167,6 +167,7 @@ def test_every_preference_survives_process_restart(tmp_path):
 
     expected = {
         'appearance': {'theme': 'light', 'language': 'en-US'},
+        'updates': {'enabled': False, 'dismissedVersion': '1.7.0'},
         'workspace': {'automaticRecovery': False, 'exitBehavior': 'save'},
         'layout': {'rightPanelCollapsed': True, 'rightPanelWidth': 310,
                    'settingsNavigationWidth': 210, 'manualNavigationWidth': 320, 'rememberedMprLayout': 'quad',

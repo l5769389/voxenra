@@ -352,7 +352,7 @@ Item {
                     width: sliceLabel.implicitWidth + 12
                     height: 23
                     radius: 5
-                    color: "#b0000000"
+                    color: Theme.imageBadgeBackground
 
                     Text {
                         id: sliceLabel

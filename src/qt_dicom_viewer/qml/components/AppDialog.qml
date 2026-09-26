@@ -16,7 +16,7 @@ Basic.Dialog {
     modal: true
     focus: true
     closePolicy: closeEnabled ? Basic.Popup.CloseOnEscape : Basic.Popup.NoAutoClose
-    Basic.Overlay.modal: Rectangle { color: "#99000000" }
+    Basic.Overlay.modal: Rectangle { color: Theme.modalScrim }
     background: Rectangle {
         color: Theme.panelBackgroundStrong
         border.color: Theme.borderStrong

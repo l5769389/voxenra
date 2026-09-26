@@ -23,6 +23,7 @@ METRICS = {"mean": _msg('text.0039'), "std": _msg('text.0040'), "minimum": _msg(
            "maximum": _msg('text.0042'), "area": _msg('text.0043'), "dimensions": _msg('text.0044'), "count": _msg('text.0045')}
 DEFAULTS = {
     "appearance": {"theme": "dark", "language": "zh-CN"},
+    "updates": {"enabled": True, "dismissedVersion": ""},
     "workspace": {"automaticRecovery": True, "exitBehavior": "ask"},
     "layout": {"rightPanelCollapsed": False, "rightPanelWidth": 250, "settingsNavigationWidth": 180, "manualNavigationWidth": 260,
                "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []},
@@ -52,8 +53,11 @@ def validate_value(section, key, value):
     if section not in DEFAULTS or key not in DEFAULTS[section]:
         raise ValueError(_msg('text.0046'))
     default = DEFAULTS[section][key]
-    if section == "appearance":
-        if key == "theme" and value not in ("dark", "light"):
+    if section == "updates" and key == "dismissedVersion":
+        if not isinstance(value, str) or (value and not re.fullmatch(r"\d+\.\d+\.\d+", value)):
+            raise ValueError(_msg("updates.invalidVersion"))
+    elif section == "appearance":
+        if key == "theme" and value not in ("dark", "graphite", "light"):
             raise ValueError(_msg('text.1166'))
         if key == "language" and (not isinstance(value, str) or not re.fullmatch(r"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*", value)):
             raise ValueError(_msg('text.1167'))

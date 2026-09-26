@@ -212,7 +212,9 @@ def test_freehand_history_workspace_and_csv(qt_app, tmp_path, kind, smooth):
         with csv_path.open(encoding="utf-8-sig") as stream:
             rows = list(csv.reader(stream))
         if kind == MeasurementKind.FREEHAND:
-            assert float(rows[-1][-1]) == pytest.approx(original.metrics.perimeter_mm, abs=0.01)
+            from qt_dicom_viewer.core.measurement_report import COLUMNS
+            column = next(i for i, (key, _) in enumerate(COLUMNS) if key == "perimeter_mm")
+            assert float(rows[-1][column]) == pytest.approx(original.metrics.perimeter_mm, abs=0.01)
         else:
             assert float(rows[-1][9]) == pytest.approx(original.length_mm, abs=0.01)
     finally:

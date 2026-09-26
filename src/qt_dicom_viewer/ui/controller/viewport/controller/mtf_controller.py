@@ -4,7 +4,10 @@ from qt_dicom_viewer.ui.controller.settings_controller import resolve_settings
 from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+import hashlib
+from qt_dicom_viewer import __version__
 import math
 
 import numpy as np
@@ -17,6 +20,8 @@ from qt_dicom_viewer.core.bead_mtf import (
 )
 from qt_dicom_viewer.core.ramp_fwhm import compute_ramp_fwhm, ramp_slice_thickness
 from qt_dicom_viewer.model.mtf import BeadMtfResult, RampFwhmResult
+from qt_dicom_viewer.model import ImagePoint
+from qt_dicom_viewer.model.measure import MeasureContext, MeasurementKind
 from .measure.measure_controller import MeasurementController
 
 
@@ -35,6 +40,11 @@ class _Analysis:
     request: MtfRequest
     result: BeadMtfResult | RampFwhmResult | None = None
     error: str = ""
+    preferences: dict = field(default_factory=dict)
+    timestamp: str = ""
+    fingerprint: str = ""
+    source: dict = field(default_factory=dict)
+    presented: BeadMtfResult | RampFwhmResult | None = None
 
 
 class _TaskSignals(QObject):
@@ -77,6 +87,8 @@ class MtfController(QObject):
     _i18n_statusText = Signal()
 
     stateChanged = Signal()
+    recordsChanged = Signal()
+    _i18n_provenance = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -91,6 +103,11 @@ class MtfController(QObject):
         self._pool = QThreadPool(self)
         self._pool.setMaxThreadCount(1)
         self._analyses: dict[str, _Analysis] = {}
+        self._records = {}
+        self._last_roi_snapshot = {}
+        self._restoring_records = False
+        self._restored = False
+        self._source_error = ""
         self._tasks: dict[MtfRequest, _MtfTask] = {}
         self._revision = 0
         self._measurement_method = self.TARGET_METHODS[0]
@@ -106,6 +123,62 @@ class MtfController(QObject):
         self._roi.measurementsChanged.connect(self._on_geometry_changed)
         self._roi.activeTransactionChanged.connect(self.stateChanged.emit)
         self._settings_controller.sectionChanged.connect(self._preferences_changed)
+
+    def _pixel_fingerprint(self):
+        if self._pixels is None:
+            return ""
+        return hashlib.blake2b(np.ascontiguousarray(self._pixels).view(np.uint8), digest_size=16).hexdigest()
+
+    @_TextProperty(str, notify=_i18n_provenance, notify_name="_i18n_provenance", source_notify="stateChanged")
+    def provenance(self):
+        analysis = self._current_analysis()
+        if analysis is None or not analysis.timestamp:
+            return ""
+        record = self._records.get(analysis.request.roi_id, {})
+        return _msg("analysis.provenance", value1=record.get("app", __version__),
+                    value2=record.get("algorithm", "1"), value3=analysis.timestamp)
+
+    def persistent_state(self):
+        return dict(version=1, roi=self._roi.persistent_state(), records=dict(self._records),
+                    method=self._measurement_method, analysis=self._analysis_method,
+                    direction=self._ramp_direction, showX=self._show_x, showY=self._show_y)
+
+    def restore_state(self, state):
+        if not state or state.get("version") != 1:
+            return
+        self._revision += 1
+        self._analyses.clear()
+        self._restoring_records = True
+        self._roi.restore_state(state.get("roi", {}))
+        self._last_roi_snapshot = self._roi.persistent_state()
+        self._restoring_records = False
+        self._records = dict(state.get("records", {}))
+        self._measurement_method = state.get("method", self._measurement_method)
+        self._analysis_method = state.get("analysis", self._analysis_method)
+        self._ramp_direction = state.get("direction", "x")
+        self._show_x, self._show_y = state.get("showX", True), state.get("showY", False)
+        self._restored = bool(self._records or self._roi.committed_measurements)
+        for mid, record in self._records.items():
+            current = next((m for m in self._roi.committed_measurements if m.measurement_id == mid), None)
+            if current != record["roi"]:
+                continue
+            req = MtfRequest(record["frame"], mid, self._revision, record["method"], record["analysis"], record["direction"])
+            self._analyses[mid] = _Analysis(req, record["result"], preferences=dict(record["preferences"]),
+                timestamp=record["timestamp"], fingerprint=record.get("fingerprint", ""),
+                source=record.get("source", {}), presented=record.get("presented"))
+        if self._frame is not None:
+            self.set_frame(self._roi.frame_key[0], self._frame, self._pixels)
+        self.stateChanged.emit()
+
+    @Slot()
+    def recalculate(self):
+        self._source_error = ""
+        self._roi.source_valid = True
+        visible = self._roi.visible_measurements
+        if self._frame is not None and visible and not self._roi.has_active_transaction:
+            self._schedule(visible[-1])
+            self.recordsChanged.emit()
+            self.stateChanged.emit()
 
     def _preferences_changed(self, section):
         if section in ("measurement", "services"):
@@ -160,6 +233,7 @@ class MtfController(QObject):
         if visible == self._show_x or (not visible and not self._show_y):
             return
         self._show_x = visible
+        self.recordsChanged.emit()
         self.stateChanged.emit()
 
     @Slot(bool)
@@ -168,19 +242,21 @@ class MtfController(QObject):
         if visible == self._show_y or (not visible and not self._show_x):
             return
         self._show_y = visible
+        self.recordsChanged.emit()
         self.stateChanged.emit()
 
     @Property(int, notify=stateChanged)
     def rampAngle(self):
-        return self._settings_controller.section("services")["rampThicknessAngle"]
+        analysis = self._current_analysis()
+        return (analysis.preferences if analysis and analysis.preferences else self._settings_controller.section("services"))["rampThicknessAngle"]
 
     @Slot(str)
     def setRampDirection(self, direction):
         if direction not in ("x", "y") or direction == self._ramp_direction:
             return
         self._ramp_direction = direction
+        self.recordsChanged.emit()
         if self._measurement_method == "ramp":
-            self._analyses.clear()
             visible = self._roi.visible_measurements
             if visible and self._frame is not None:
                 self._schedule(visible[-1])
@@ -194,9 +270,11 @@ class MtfController(QObject):
     def _presented_result(self):
         if self.status != "ready":
             return None
+        if self._current_analysis().presented is not None:
+            return self._current_analysis().presented
         result = self._current_analysis().result
         if (isinstance(result, BeadMtfResult)
-                and self._settings_controller.section("services")["mtfGaussianEquivalent"]):
+                and (self._current_analysis().preferences or self._settings_controller.section("services"))["mtfGaussianEquivalent"]):
             return gaussian_equivalent_from_mtf10(result)
         return result
 
@@ -207,6 +285,66 @@ class MtfController(QObject):
     def _display_frequency(self, value):
         # Cached analysis stays in lp/mm; convert only the presentation copy.
         return None if value is None else value * (10.0 if self.frequencyUnit == "lp/cm" else 1.0)
+
+    @Property('QVariantMap', notify=stateChanged)
+    def roiGeometry(self):
+        """Source-image coordinates, with physical dimensions in mm."""
+        if self._closed or self._frame is None or self._pixels is None or np.ndim(self._pixels) != 2:
+            return {}
+        spacing = self._frame.instance_meta.pixel_spacing
+        if not spacing or not all(v is not None and math.isfinite(v) and v > 0 for v in spacing):
+            return {}
+        rows, columns = self._pixels.shape
+        side = min(10., columns * spacing[1] / 2, rows * spacing[0] / 2)
+        geometry = dict(centerX=(columns-1)/2, centerY=(rows-1)/2,
+                        width=side, height=side, columns=columns, rows=rows)
+        visible = self._roi.visible_measurements
+        if visible:
+            a, b = visible[-1].points
+            geometry.update(centerX=(a.column+b.column)/2, centerY=(a.row+b.row)/2,
+                            width=abs(b.column-a.column)*spacing[1],
+                            height=abs(b.row-a.row)*spacing[0])
+        return geometry
+
+    @Slot(float, float, float, float, result=bool)
+    def applyRoi(self, center_x, center_y, width_mm, height_mm):
+        """Apply atomically; invalid input leaves the existing ROI/result intact."""
+        if not self.roiGeometry or self._roi.has_active_transaction:
+            return False
+        if (not all(math.isfinite(v) for v in (center_x, center_y, width_mm, height_mm))
+                or width_mm <= 0 or height_mm <= 0):
+            return False
+        if self._measurement_method != 'ramp':
+            height_mm = width_mm
+        row_spacing, column_spacing = self._frame.instance_meta.pixel_spacing
+        dx, dy = width_mm / column_spacing / 2, height_mm / row_spacing / 2
+        points = [ImagePoint(center_x-dx, center_y-dy), ImagePoint(center_x+dx, center_y+dy)]
+        try:
+            extract_rect_pixels(self._pixels, points,
+                                minimum_side=1 if self._measurement_method == 'ramp' else 8)
+        except (ValueError, TypeError):
+            return False
+        context = MeasureContext(
+            measurement_kind=MeasurementKind.RECT, series_uid=self._roi.frame_key[0],
+            sop_instance_uid=self._frame.instance_meta.sop_instance_uid or '',
+            slice_index=self._frame.slice_index, geometry=self._frame.geometry,
+            endpoint_tolerance=0, line_tolerance=0)
+        return self._roi.commit_service_rectangle(points, context)
+
+    @Property(str, notify=stateChanged)
+    def frameToken(self):
+        return repr(self._roi.frame_key) if self._frame is not None else ''
+
+    @Property('QVariantMap', notify=stateChanged)
+    def stateSnapshot(self):
+        """Ready means numerical completion, not GPU presentation."""
+        return dict(status=self.status,
+                    frameToken=self.frameToken,
+                    sliceNumber=self._frame.slice_index + 1 if self._frame else None,
+                    measurementMethod=self.measurementMethod,
+                    requestedMethod=self.analysisMethod, actualMethod=self.actualAnalysisMethod,
+                    frequencyUnit=self.frequencyUnit, roi=self.roiGeometry,
+                    result=self.currentResult, error=self.error, warnings=self.warnings)
 
     @Slot(str)
     def setMeasurementMethod(self, method):
@@ -228,8 +366,8 @@ class MtfController(QObject):
         if method not in {item["value"] for item in self.analysisMethods}:
             return
         self._analysis_method = method
-        # 同一测试体只改变分析方式时保留几何，并使用当前原始像素快照重算。
-        self._analyses.clear()
+        self.recordsChanged.emit()
+        # Recalculate only this ROI; other slices keep their recorded method/result.
         visible = self._roi.visible_measurements
         if visible and self._frame is not None:
             self._schedule(visible[-1])
@@ -239,15 +377,33 @@ class MtfController(QObject):
         if self._closed:
             return
         self._frame, self._pixels = frame, pixels
+        self._source_error = ""
+        self._roi.source_valid = True
         self._roi.set_frame(series_uid, frame)
         visible = self._roi.visible_measurements
-        if visible and self._current_analysis() is None:
+        if visible:
+            saved = self._analyses.get(visible[-1].measurement_id)
+            if saved:
+                self._measurement_method = saved.request.measurement_method
+                self._analysis_method = saved.request.analysis_method
+                self._ramp_direction = saved.request.ramp_direction
+            if saved and saved.fingerprint and saved.fingerprint != self._pixel_fingerprint():
+                self._source_error = _msg("analysis.sourceMismatch")
+                self._roi.source_valid = False
+                self._roi.measurementsChanged.emit()
+        if self._restored and not visible and any(
+                record["frame"][:3] == self._roi.frame_key[:3]
+                and record["frame"] != self._roi.frame_key for record in self._records.values()):
+            self._source_error = _msg("analysis.sourceMismatch")
+            self._roi.source_valid = False
+        if visible and self._current_analysis() is None and not self._restored:
             # 分析方式切换后，其他切片的 ROI 在再次显示时按当前方式惰性重算。
             self._schedule(visible[-1])
         self.stateChanged.emit()
 
     def set_current_slice(self, index):
         self._frame, self._pixels = None, None
+        self._source_error = ""
         self._roi.set_current_slice(index)
         self.stateChanged.emit()
 
@@ -265,6 +421,8 @@ class MtfController(QObject):
 
     @Property(str, notify=stateChanged)
     def status(self):
+        if self._source_error:
+            return "error"
         if self._roi.activeTransaction:
             return "editing"
         analysis = self._current_analysis()
@@ -362,6 +520,8 @@ class MtfController(QObject):
 
     @_TextProperty(str, notify=_i18n_error, notify_name='_i18n_error', source_notify='stateChanged')
     def error(self):
+        if self._source_error:
+            return self._source_error
         analysis = self._current_analysis()
         return analysis.error if self.status == "error" else ""
 
@@ -374,6 +534,12 @@ class MtfController(QObject):
     def _on_geometry_changed(self):
         retained = {m.measurement_id for m in self._roi.committed_measurements}
         self._analyses = {key: value for key, value in self._analyses.items() if key in retained}
+        self._records = {k:v for k,v in self._records.items() if k in retained}
+        current = self._roi.persistent_state()
+        if current != self._last_roi_snapshot:
+            self._last_roi_snapshot = current
+            if not self._restoring_records:
+                self.recordsChanged.emit()
         self.stateChanged.emit()
 
     @Slot(object)
@@ -385,6 +551,8 @@ class MtfController(QObject):
 
     def _schedule(self, measurement):
         """为已提交 ROI 创建带方法版本的后台请求。"""
+        self._source_error = ""
+        self._roi.source_valid = True
         self._revision += 1
         request = MtfRequest(
             self._roi.frame_key,
@@ -394,7 +562,12 @@ class MtfController(QObject):
             self._analysis_method,
             self._ramp_direction,
         )
-        analysis = _Analysis(request)
+        analysis = _Analysis(request, preferences=dict(self._settings_controller.section("services")),
+                             fingerprint=self._pixel_fingerprint(), source=dict(
+                                 sop=self._frame.instance_meta.sop_instance_uid,
+                                 frameIndex=self._frame.instance_meta.frame_index,
+                                 sliceIndex=self._frame.slice_index,
+                                 pixelSpacing=self._frame.instance_meta.pixel_spacing))
         self._analyses[measurement.measurement_id] = analysis
         try:
             snapshot = extract_rect_pixels(self._pixels, measurement.points,
@@ -429,12 +602,28 @@ class MtfController(QObject):
             return
         # 非当前切片允许保存仍然有效的结果，但属性始终只返回当前切片的缓存。
         analysis.result, analysis.error = result, error
+        if result is not None and not error:
+            analysis.timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            roi = next((m for m in self._roi.committed_measurements if m.measurement_id == request.roi_id), None)
+            analysis.presented = (gaussian_equivalent_from_mtf10(result)
+                if isinstance(result, BeadMtfResult) and analysis.preferences.get("mtfGaussianEquivalent") else result)
+            self._records[request.roi_id] = dict(frame=request.frame_key, roi=roi, source=analysis.source,
+                method=request.measurement_method, analysis=request.analysis_method,
+                direction=request.ramp_direction, result=result,
+                presented=analysis.presented, preferences=analysis.preferences,
+                timestamp=analysis.timestamp, fingerprint=analysis.fingerprint, algorithm="1", app=__version__)
+            self.recordsChanged.emit()
         self.stateChanged.emit()
 
     @Slot()
     def reset(self):
+        self._restored = False
+        self._source_error = ""
+        self._roi.source_valid = True
         self._analyses.clear()
+        self._records.clear()
         self._roi.clear_all()
+        self.recordsChanged.emit()
         self.stateChanged.emit()
 
     def shutdown(self):

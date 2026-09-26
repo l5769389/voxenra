@@ -142,17 +142,17 @@ ColumnLayout {
             {
                 plane: "axial",
                 label: qsTrId("plane.axial"),
-                color: "#ef4444"
+                color: Theme.axisAxial
             },
             {
                 plane: "coronal",
                 label: qsTrId("plane.coronal"),
-                color: "#39b54a"
+                color: Theme.axisCoronal
             },
             {
                 plane: "sagittal",
                 label: qsTrId("plane.sagittal"),
-                color: "#3b5bff"
+                color: Theme.axisSagittal
             }
         ]
 

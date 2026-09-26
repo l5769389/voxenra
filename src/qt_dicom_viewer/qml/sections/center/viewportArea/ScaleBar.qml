@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../../theme"
 
 Item {
     id: root
@@ -26,7 +27,7 @@ Item {
         anchors.bottom: parent.bottom
         width: root.barPixels
         height: 1
-        color: root.options.color ?? "#f8fafc"
+        color: root.options.color ?? Theme.scaleText
         Rectangle { width: 1; height: 7; anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; color: line.color }
         Rectangle { width: 1; height: 7; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; color: line.color }
     }
@@ -39,6 +40,6 @@ Item {
         color: line.color
         font.pixelSize: 11
         style: Text.Outline
-        styleColor: "#aa000000"
+        styleColor: Theme.scaleOutline
     }
 }

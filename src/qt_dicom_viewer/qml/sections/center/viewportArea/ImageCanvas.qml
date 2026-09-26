@@ -26,7 +26,7 @@ Rectangle {
         onPaint: {
             const ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = "#4fd9e8"
+            ctx.strokeStyle = Theme.crosshairPreview
             ctx.lineWidth = 1
             for (const line of lines) {
                 const a = imageCanvasRoot.mapDicomPixelToItem(referenceCanvas, line.x1, line.y1)
