@@ -6,7 +6,7 @@
 
 - 中英文 README 保留整体功能概览，补充分割精修、连通区域、NRRD/Slicer 交换、精修状态恢复及支持边界。
 - 官网与内置中英文手册同步说明；更新分割管理、关联导入、导出截图及绘制／擦除／撤销重做动画。截图使用当前 QML 和匿名展示信息；最终提交重新生成的四张 PNG 与仓库图片逐像素一致。
-- README 与图集的 188 个本地引用均存在；网站生成及结构回归通过。发布后统一更新实际附件直链。
+- README 与图集的 188 个本地引用均存在；网站生成及结构回归通过。发布后已统一更新实际附件直链。
 - 原生开发版的 MR 绘制、擦除、撤销重做、工作区重启及紧凑弹层操作已实测。打包后的可见界面复查受 Mac 锁屏阻碍；最终包的启动健康确认与升级成功不等同于可见界面验收。
 - 本地主页的浏览器预览被权限策略拒绝，未绕过限制。本次网页验证限于生成内容、资源及结构回归，未重新进行浏览器视觉验收。
 
@@ -46,3 +46,9 @@ Actions 构建已成功。Windows 原生标题栏／导入界面额外 16 项检
 - `Voxenra-1.8.0-macos-arm64.dmg`：95,044,630 bytes；SHA-256 `63db4f19308ec0e27d29e3eff0cffc77e47e60959d40fbf4ad1f01fac3e8e044`。
 - `Voxenra-1.8.0-windows-x64-setup.exe`：102,719,086 bytes；SHA-256 `5ddc3192eb8fd8b28a2d9941f71f5a313d923651dbc86378dcd7fa32d4998d8f`。
 - `Voxenra-1.8.0-windows-x64-portable.exe`：164,181,475 bytes；SHA-256 `c8a3f4a69936bb08b6191fea5c71c8f7e2245f362b99d82344d7990df87f9e16`。
+
+## 发布后核验
+
+- GitHub 最新正式 Release 为 `v1.8.0`，六个附件齐全。macOS 和 Windows 便携版公开下载链接返回 HTTP 200；Windows 安装版直链检查受本地网络超时影响，随后通过 GitHub 官方附件 API 实际下载全部 102,719,086 bytes，大小和 SHA-256 一致。
+- [官网部署 36342657512](https://github.com/l5769389/voxenra/actions/runs/36342657512) 成功。[中文首页](https://l5769389.github.io/voxenra/)和[英文首页](https://l5769389.github.io/voxenra/en-us/index.html)均返回 HTTP 200，包含 1.8.0 的三个下载链接和 NRRD 说明；线上分割动画与仓库文件逐字节一致。
+- 文档常规 Git 推送因网络超时未完成，最终通过 GitHub Git Data API 上传相同的 Git 对象，以非强制方式快进 `main`；本地与远端文档提交 SHA 一致。
