@@ -8,6 +8,7 @@ import html
 import json
 import re
 import shutil
+import struct
 from pathlib import Path
 from urllib.parse import quote
 
@@ -21,6 +22,10 @@ PRODUCT_SCREENSHOTS = {
     "feature-mr-reading.png": "07-mr-reading.png",
     "feature-fusion.png": "05-pet-ct-fusion.png",
     "feature-analysis.png": "02-mpr-segmentation.png",
+    "feature-measurements.png": "01-2d-measurement.png",
+    "feature-theme-graphite.png": "37-theme-graphite.png",
+    "feature-theme-dark.png": "25-theme-dark.png",
+    "feature-theme-light.png": "26-theme-light.png",
     "feature-pacs.png": "16-pacs-browser.png",
     "feature-zip-drop.png": "35-zip-drop.png",
     "feature-zip-drag.gif": "06-zip-drag.gif",
@@ -46,6 +51,20 @@ def product_image_asset(prefix: str, name: str) -> str:
     source = ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name]
     digest = hashlib.sha256(source.read_bytes()).hexdigest()[:12]
     return f"{prefix}assets/{name}?v={digest}"
+
+
+def product_image_size(name: str) -> str:
+    """Reserve screenshot space before lazy loading, keeping section anchors stable."""
+    path = ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name]
+    with path.open("rb") as source:
+        header = source.read(24)
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        width, height = struct.unpack(">II", header[16:24])
+    elif header[:6] in (b"GIF87a", b"GIF89a"):
+        width, height = struct.unpack("<HH", header[6:10])
+    else:
+        raise ValueError(f"Unsupported screenshot format: {path}")
+    return f'width="{width}" height="{height}"'
 
 
 def load_json(path: Path) -> object:
@@ -254,6 +273,10 @@ PRODUCT_COPY = {
         "releases": "发布记录", "github": "GitHub 仓库", "alt_hero": "Voxenra 中的 MR 多平面重建与 3D 视图",
         "alt_viewing": "Voxenra 中的 MR 原始切片视图", "alt_fusion": "Voxenra 中的 CT、PET 与融合视图",
         "alt_analysis": "Voxenra 中的 MPR 分割与统计面板",
+        "measurement_caption": "ROI 统计与测量结果列表",
+        "appearance_title": "多种外观主题",
+        "appearance_body": "支持深色、中性深灰与浅色主题，可按使用环境和个人偏好自由切换。",
+        "appearance_captions": ("深色", "中性深灰", "浅色"),
     },
     "en": {
         "lang": "en-US", "title": "Voxenra · DICOM imaging workspace",
@@ -286,6 +309,10 @@ PRODUCT_COPY = {
         "releases": "Releases", "github": "GitHub repository", "alt_hero": "MR multiplanar and 3D views in Voxenra",
         "alt_viewing": "MR original-slice view in Voxenra", "alt_fusion": "CT, PET, and fused views in Voxenra",
         "alt_analysis": "MPR segmentation and statistics panel in Voxenra",
+        "measurement_caption": "ROI statistics and measurement list",
+        "appearance_title": "A choice of themes",
+        "appearance_body": "Choose dark, neutral gray, or light to suit your environment and personal preference.",
+        "appearance_captions": ("Dark", "Neutral gray", "Light"),
     },
 }
 
@@ -306,15 +333,25 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.png")):
         title = escape(copy[key + "_title"])
         image_url = product_image_asset(prefix, image)
-        if key == "viewing":
-            feature_rows.append(f'''<section class="product-feature product-feature-viewing" id="viewing">
-<div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy["viewing_body"])}</p></div>
-<div class="feature-media-grid"><figure><img src="{image_url}" alt="{escape(copy["alt_viewing"])}" loading="lazy"><figcaption>{escape(copy["viewing_caption"])}</figcaption></figure>
-<figure><img src="{product_image_asset(prefix, 'feature-4d.gif')}" alt="{escape(copy["viewing_4d_caption"])}" loading="lazy"><figcaption>{escape(copy["viewing_4d_caption"])}</figcaption></figure></div></section>''')
+        if key in ("viewing", "analysis"):
+            media = (
+                (("feature-mr-reading.png", copy["viewing_caption"]),
+                 ("feature-4d.gif", copy["viewing_4d_caption"]))
+                if key == "viewing" else
+                (("feature-measurements.png", copy["measurement_caption"]),
+                 (image, copy["analysis_caption"]))
+            )
+            figures = []
+            for asset, caption in media:
+                url = product_image_asset(prefix, asset)
+                figures.append(f'<figure><a href="{url}" target="_blank" rel="noopener"><img src="{url}" {product_image_size(asset)} alt="{escape(caption)}" loading="lazy"></a><figcaption>{escape(caption)}</figcaption></figure>')
+            feature_rows.append(f'''<section class="product-feature product-feature-wide" id="{key}">
+<div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
+<div class="feature-media-grid">{"".join(figures)}</div></section>''')
             continue
         feature_rows.append(f'''<section class="product-feature" id="{key}">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
-<figure><img src="{image_url}" alt="{escape(copy["alt_" + key])}" loading="lazy"><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
+<figure><a href="{image_url}" target="_blank" rel="noopener"><img src="{image_url}" {product_image_size(image)} alt="{escape(copy["alt_" + key])}" loading="lazy"></a><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
     topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
     workflow_cards = []
     for (title, body), (caption, image) in zip(copy["workflow_cards"], copy["workflow_images"], strict=True):
@@ -325,18 +362,27 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
             f'<article class="workflow-card"><h3>{escape(title)}</h3><p>{escape(body)}</p>'
             f'<figure class="workflow-image"><a href="{full_image_url}" target="_blank" rel="noopener" '
             f'aria-label="{escape(full_image_label)}"><span class="workflow-image-frame">'
-            f'<img src="{image_url}" alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<img src="{image_url}" {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure></article>'
         )
     quality_images = []
     for caption, image in zip(copy["quality_captions"], ("feature-water-qa.png", "feature-mtf.png"), strict=True):
-        image_class = "quality-image quality-image-mtf" if image == "feature-mtf.png" else "quality-image"
         image_url = product_image_asset(prefix, image)
         full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
         quality_images.append(
-            f'<figure class="{image_class}"><a href="{image_url}" target="_blank" rel="noopener" '
+            f'<figure class="quality-image"><a href="{image_url}" target="_blank" rel="noopener" '
             f'aria-label="{escape(full_image_label)}"><span class="quality-image-frame">'
-            f'<img src="{image_url}" alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<img src="{image_url}" {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<figcaption>{escape(caption)}</figcaption></figure>'
+        )
+    theme_images = []
+    for caption, image in zip(copy["appearance_captions"], (
+        "feature-theme-dark.png", "feature-theme-graphite.png", "feature-theme-light.png",
+    ), strict=True):
+        image_url = product_image_asset(prefix, image)
+        theme_images.append(
+            f'<figure><a href="{image_url}" target="_blank" rel="noopener">'
+            f'<img src="{image_url}" {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure>'
         )
     return f'''<!doctype html><html lang="{copy["lang"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -345,11 +391,13 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <link rel="alternate" hreflang="zh-CN" href="{prefix}index.html"><link rel="alternate" hreflang="en-US" href="{prefix}en-us/index.html"></head>
 <body><a class="skip-link" href="#main">{'跳转到正文' if code == 'zh' else 'Skip to content'}</a>{header}
 <main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
-<figure class="hero-visual"><img src="{product_image_asset(prefix, 'hero-mpr.png')}" alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
+<figure class="hero-visual"><img src="{product_image_asset(prefix, 'hero-mpr.png')}" {product_image_size("hero-mpr.png")} alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
 <div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{"".join(workflow_cards)}</div></section>
 <div class="product-features product-container">{"".join(feature_rows)}</div>
-<section class="product-quality product-container" id="quality"><div class="product-feature-copy"><h2>{escape(copy["quality_title"])}</h2><p>{escape(copy["quality_body"])}</p></div><div class="feature-media-grid">{"".join(quality_images)}</div></section></div>
+<section class="product-quality product-container" id="quality"><div class="product-feature-copy"><h2>{escape(copy["quality_title"])}</h2><p>{escape(copy["quality_body"])}</p></div><div class="feature-media-grid">{"".join(quality_images)}</div></section>
+<section class="product-appearance product-container" id="appearance"><div class="product-feature-copy"><h2>{escape(copy["appearance_title"])}</h2><p>{escape(copy["appearance_body"])}</p></div>
+<div class="theme-media-grid">{"".join(theme_images)}</div></section></div>
 <section class="product-closing product-container" id="download"><h2>{escape(copy["closing_title"])}</h2><p>{escape(copy["closing_body"])}</p>
 <div class="download-platforms"><div class="download-platform"><img src="{prefix}assets/macos.svg" alt=""><h3>macOS</h3><p>Apple Silicon · {version}</p><div class="download-links"><a href="{mac_url}">{escape(copy["mac_download"])}</a></div></div>
 <div class="download-platform"><img src="{prefix}assets/windows.svg" alt=""><h3>Windows</h3><p>x64 · {version}</p><div class="download-links"><a href="{win_setup_url}">{escape(copy["win_setup"])}</a><a href="{win_portable_url}">{escape(copy["win_portable"])}</a></div></div></div>

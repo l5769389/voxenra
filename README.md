@@ -30,12 +30,8 @@
 
 <table>
 <tr>
-<td width="50%"><b>MR 阅片</b><br><a href="docs/screenshots/07-mr-reading.png"><img src="docs/screenshots/07-mr-reading.png" alt="MR 原始切片与显示控制" width="100%"></a></td>
-<td width="50%"><b>多序列 2D 对比</b><br><a href="docs/screenshots/08-enhanced-mr-compare.png"><img src="docs/screenshots/08-enhanced-mr-compare.png" alt="四组 MR 序列联动对比" width="100%"></a></td>
-</tr>
-<tr>
-<td><b>自定义多视口</b><br><a href="docs/screenshots/10-2d-layout.png"><img src="docs/screenshots/10-2d-layout.png" alt="2D 网格布局" width="100%"></a></td>
-<td><b>序列平铺与伪彩</b><br><a href="docs/screenshots/12-mr-montage.png"><img src="docs/screenshots/12-mr-montage.png" alt="切片平铺与色表选择" width="100%"></a></td>
+<td width="50%"><b>MR 阅片</b><br><a href="docs/screenshots/07-mr-reading.png"><img src="docs/screenshots/07-mr-reading.png" alt="MR 阅片" width="100%"></a></td>
+<td width="50%"><b>自定义多视口</b><br><a href="docs/screenshots/10-2d-layout.png"><img src="docs/screenshots/10-2d-layout.png" alt="自定义多视口" width="100%"></a></td>
 </tr>
 </table>
 
@@ -98,7 +94,7 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 <table>
 <tr>
 <td width="50%"><b>关联结果导入</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="右侧导入匹配影像的 SEG" width="100%"></a></td>
-<td width="50%"><b>结构化测量报告</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG 与 SR 结果导出" width="100%"></a></td>
+<td width="50%"><b>SEG / SR 导出</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG 与 SR 结果导出" width="100%"></a></td>
 </tr>
 <tr>
 <td><b>CT 水模 QA</b><br><a href="docs/screenshots/19-water-qa.png"><img src="docs/screenshots/19-water-qa.png" alt="CT 值、噪声与均匀性分析" width="100%"></a></td>
@@ -119,11 +115,17 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 </tr>
 <tr>
 <td><b>独立窗口</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="页签分离为独立窗口" width="100%"></a></td>
-<td><b>浅色主题</b><br><a href="docs/screenshots/26-theme-light.png"><img src="docs/screenshots/26-theme-light.png" alt="浅色主题下的 MPR 工作台" width="100%"></a></td>
+<td><b>工作区恢复</b><br><a href="docs/screenshots/36-workspace-full.png"><img src="docs/screenshots/36-workspace-full.png" alt="MR 阅片与工作区操作" width="100%"></a></td>
 </tr>
 </table>
 
+## 外观主题
+
+在 **设置 → 外观与语言** 中选择 **深色、中性深灰或浅色**。中性深灰采用石墨灰面板与低饱和青色强调，保持影像区域突出。主题即时生效并在重启后保留，影像窗宽窗位与色表独立设置。
+
 ![中性深灰主题下的 MR 阅片](docs/screenshots/37-theme-graphite.png)
+
+[深色主题](docs/screenshots/25-theme-dark.png) · [浅色主题](docs/screenshots/26-theme-light.png)
 
 [查看完整界面图集](docs/screenshots/README.md)
 

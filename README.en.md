@@ -30,12 +30,8 @@ Original slices and reconstructed planes are clearly separated. Adjust CT/MR win
 
 <table>
 <tr>
-<td width="50%"><b>MR viewing</b><br><a href="docs/screenshots/07-mr-reading.png"><img src="docs/screenshots/07-mr-reading.png" alt="MR original slices and display controls" width="100%"></a></td>
-<td width="50%"><b>Multi-series comparison</b><br><a href="docs/screenshots/08-enhanced-mr-compare.png"><img src="docs/screenshots/08-enhanced-mr-compare.png" alt="Linked comparison of four MR series" width="100%"></a></td>
-</tr>
-<tr>
-<td><b>Custom 2D layout</b><br><a href="docs/screenshots/10-2d-layout.png"><img src="docs/screenshots/10-2d-layout.png" alt="2D grid layout" width="100%"></a></td>
-<td><b>Montage and color maps</b><br><a href="docs/screenshots/12-mr-montage.png"><img src="docs/screenshots/12-mr-montage.png" alt="Slice montage and color map selection" width="100%"></a></td>
+<td width="50%"><b>MR viewing</b><br><a href="docs/screenshots/07-mr-reading.png"><img src="docs/screenshots/07-mr-reading.png" alt="MR viewing" width="100%"></a></td>
+<td width="50%"><b>Custom 2D layout</b><br><a href="docs/screenshots/10-2d-layout.png"><img src="docs/screenshots/10-2d-layout.png" alt="Custom 2D layout" width="100%"></a></td>
 </tr>
 </table>
 
@@ -98,7 +94,7 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 <table>
 <tr>
 <td width="50%"><b>Associated results import</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="Import SEG associated with the current image" width="100%"></a></td>
-<td width="50%"><b>Structured measurement report</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG and SR export controls" width="100%"></a></td>
+<td width="50%"><b>SEG / SR export</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG and SR export controls" width="100%"></a></td>
 </tr>
 <tr>
 <td><b>CT water phantom QA</b><br><a href="docs/screenshots/19-water-qa.png"><img src="docs/screenshots/19-water-qa.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
@@ -119,11 +115,17 @@ Workspaces preserve image references, layouts, measurements, analysis results, a
 </tr>
 <tr>
 <td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="Detach a tab into another window" width="100%"></a></td>
-<td><b>Light theme</b><br><a href="docs/screenshots/26-theme-light.png"><img src="docs/screenshots/26-theme-light.png" alt="MPR workspace in the light theme" width="100%"></a></td>
+<td><b>Workspace recovery</b><br><a href="docs/screenshots/36-workspace-full.png"><img src="docs/screenshots/36-workspace-full.png" alt="Workspace controls with an MR study open" width="100%"></a></td>
 </tr>
 </table>
 
+## Appearance
+
+Choose **dark, neutral gray, or light** in **Settings → Appearance & language**. Neutral gray combines graphite panels with restrained cyan accents. Theme changes apply immediately and persist after restart; image windowing and color maps remain independent.
+
 ![MR viewing in the neutral gray theme](docs/screenshots/37-theme-graphite.png)
+
+[Dark theme](docs/screenshots/25-theme-dark.png) · [Light theme](docs/screenshots/26-theme-light.png)
 
 [View the interface gallery](docs/screenshots/README.md)
 

@@ -43,11 +43,11 @@ a { color: inherit; }
 .product-feature figure { min-width: 0; margin: 0; }
 .product-feature figure img { display: block; width: 100%; height: auto; border: 1px solid #ccd9e4; border-radius: 7px; box-shadow: 0 11px 25px #0b2b5114; background: #101820; }
 .product-feature figcaption { margin-top: 12px; color: var(--body); font-size: 13px; }
-.product-feature-viewing, .product-feature-viewing:nth-child(even) { grid-template-columns: 1fr; gap: 38px; }
-.product-feature-viewing .product-feature-copy p { max-width: 870px; }
+.product-feature-wide, .product-feature-wide:nth-child(even) { grid-template-columns: 1fr; gap: 38px; }
+.product-feature-wide .product-feature-copy p { max-width: 870px; }
 .feature-media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(30px, 4vw, 64px); }
 .feature-media-grid figure { min-width: 0; margin: 0; }
-.feature-media-grid figure > img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border: 1px solid #ccd9e4; border-radius: 7px; box-shadow: 0 11px 25px #0b2b5114; background: #101820; }
+.feature-media-grid figure > a > img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: contain; border: 1px solid #ccd9e4; border-radius: 7px; box-shadow: 0 11px 25px #0b2b5114; background: #101820; }
 .feature-media-grid figcaption { margin-top: 12px; color: var(--body); font-size: 13px; }
 .product-quality { padding-top: clamp(76px, 7vw, 112px); padding-bottom: clamp(76px, 7vw, 112px); border-bottom: 1px solid var(--line); }
 .product-quality .product-feature-copy p { max-width: 860px; }
@@ -55,8 +55,15 @@ a { color: inherit; }
 .quality-image a { display: block; text-decoration: none; }
 .quality-image-frame { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid #ccd9e4; border-radius: 7px; box-shadow: 0 11px 25px #0b2b5114; background: #101820; }
 .quality-image a:hover .quality-image-frame, .quality-image a:focus-visible .quality-image-frame { border-color: var(--accent); }
-.quality-image-frame img { position: absolute; top: 0; left: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
-.quality-image-mtf img { width: 162%; max-width: none; height: 162%; transform: translate(-38%, -22%); }
+.quality-image-frame img { position: absolute; top: 0; left: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+.product-appearance { padding-top: clamp(76px, 7vw, 112px); padding-bottom: clamp(76px, 7vw, 112px); border-bottom: 1px solid var(--line); scroll-margin-top: calc(var(--site-header-height) + 12px); }
+.theme-media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 2.5vw, 40px); margin-top: 42px; }
+.product-appearance .product-feature-copy p { max-width: 870px; }
+.product-appearance figure { min-width: 0; margin: 0; }
+.product-appearance img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: contain; background: #1d252d; border: 1px solid #ccd9e4; border-radius: 7px; box-shadow: 0 11px 25px #0b2b5114; }
+.product-appearance figcaption { margin-top: 16px; color: var(--ink); font-size: 16px; font-weight: 600; }
+.feature-media-grid a { display: block; }
+.product-feature a:focus-visible, .product-appearance figure a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 7px; }
 
 .product-closing { text-align: center; padding-top: clamp(92px, 9vw, 150px); padding-bottom: clamp(96px, 10vw, 155px); scroll-margin-top: 20px; }
 .product-closing h2 { margin: 0 0 15px; font-size: clamp(38px, 4.2vw, 61px); line-height: 1.2; letter-spacing: -.04em; }
@@ -112,8 +119,8 @@ a { color: inherit; }
   .product-feature { padding: 64px 0; }
   .product-feature-copy h2 { font-size: 32px; }
   .product-feature-copy p { font-size: 16px; }
-  .product-feature-viewing { gap: 30px; }
-  .feature-media-grid { grid-template-columns: 1fr; gap: 32px; }
+  .product-feature-wide { gap: 30px; }
+  .feature-media-grid, .theme-media-grid { grid-template-columns: 1fr; gap: 32px; }
   .product-quality { padding-top: 66px; padding-bottom: 70px; }
   .product-quality .feature-media-grid { margin-top: 32px; }
   .product-closing { padding-top: 89px; padding-bottom: 96px; }

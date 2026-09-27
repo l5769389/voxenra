@@ -19,7 +19,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 <table>
 <tr>
 <td width="50%"><b>MR 阅片</b><br><a href="07-mr-reading.png"><img src="07-mr-reading.png" alt="MR 阅片" width="100%"></a></td>
-<td width="50%"><b>多序列 2D 对比</b><br><a href="08-enhanced-mr-compare.png"><img src="08-enhanced-mr-compare.png" alt="多序列 2D 对比" width="100%"></a></td>
+<td width="50%"><b>Enhanced MR 分组对比（模体）</b><br><a href="08-enhanced-mr-compare.png"><img src="08-enhanced-mr-compare.png" alt="Enhanced MR 分组对比（模体）" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>2D 多视口</b><br><a href="10-2d-layout.png"><img src="10-2d-layout.png" alt="2D 多视口" width="100%"></a></td>
@@ -67,7 +67,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 <td width="50%"><b>自由形状 ROI 转分割</b><br><a href="31-freehand-to-seg.png"><img src="31-freehand-to-seg.png" alt="自由形状 ROI 转分割" width="100%"></a></td>
 </tr>
 <tr>
-<td width="50%"><b>SEG 与 SR 报告</b><br><a href="32-structured-report.png"><img src="32-structured-report.png" alt="SEG 与 SR 报告" width="100%"></a></td>
+<td width="50%"><b>SEG 与 SR 导出</b><br><a href="32-structured-report.png"><img src="32-structured-report.png" alt="SEG 与 SR 导出" width="100%"></a></td>
 <td width="50%"><b>关联 SEG 导入</b><br><a href="33-associated-import.png"><img src="33-associated-import.png" alt="关联 SEG 导入" width="100%"></a></td>
 </tr>
 <tr>
@@ -110,6 +110,9 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ## 外观与预设
 
-- [中性深灰阅片](37-theme-graphite.png)
+在 **设置 → 外观与语言** 切换深色、中性深灰或浅色。下图为中性深灰主题的完整 MR 阅片界面，主题偏好会在重启后保留。
+
+![中性深灰主题下的 MR 阅片](37-theme-graphite.png)
+
 - [主题与语言设置](38-appearance-settings.png)
 - [本地 JSON 窗模板](39-window-presets.png)
