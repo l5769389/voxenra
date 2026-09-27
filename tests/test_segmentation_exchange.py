@@ -265,9 +265,11 @@ def test_brush_keeps_qml_layers_alive_during_paint_and_erase(scene, source, tmp_
     c.newSegment(); c.setBrushDiameter(8)
     cx, cy = (view._plane_geometry.columns-1)/2, (view._plane_geometry.rows-1)/2
     c.begin(view, cx, cy, .1); c.finish(view, cx, cy)
-    QTest.qWait(50)
     def layers():
         return [x for x in descendants(window.contentItem()) if x.objectName() == 'mprSegmentationMask']
+    # QML creates the three plane delegates asynchronously, even after the
+    # controller has finished loading. Start the stroke only once all are ready.
+    wait_until(lambda: len(layers()) == 3 and all(x.property('maskReady') for x in layers()))
     initial = {getCppPointer(x)[0] for x in layers()}
     assert initial
     for mode in ('paint', 'erase'):
