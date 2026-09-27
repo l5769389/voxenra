@@ -55,7 +55,7 @@ Item {
                     Accessible.name: entry.modelData.label
                     onClicked: root.controller.applyVolumePreset(entry.modelData.presetId)
                     Components.AppToolTip {
-                        visible: parent.hovered && !entry.modelData.available
+                        visible: (parent?.hovered ?? false) && !entry.modelData.available
                         text: qsTrId("text.1087")
                     }
                     contentItem: Text {

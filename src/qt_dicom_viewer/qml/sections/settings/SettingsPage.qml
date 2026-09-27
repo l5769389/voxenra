@@ -84,7 +84,7 @@ Rectangle {
                                 normalColor: "transparent"
                                 Accessible.name: qsTrId("updates.details")
                                 onClicked: appController.updateController.show()
-                                Components.AppToolTip { visible: parent.hovered; text: I18n.format(qsTrId("updates.newVersion"), {version: appController.updateController.latestVersion}) }
+                                Components.AppToolTip { visible: (parent?.hovered ?? false); text: I18n.format(qsTrId("updates.newVersion"), {version: appController.updateController.latestVersion}) }
                             }
                         }
                     }

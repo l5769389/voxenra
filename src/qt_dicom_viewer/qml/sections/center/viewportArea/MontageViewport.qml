@@ -137,7 +137,7 @@ Item {
                             Accessible.name: montageRoot.viewportController?.detailsExpanded ? qsTrId("text.0999") : qsTrId("text.1000")
                             onClicked: montageRoot.viewportController?.toggleDetails()
                             Components.AppToolTip {
-                                visible: parent.hovered
+                                visible: (parent?.hovered ?? false)
                                 delay: 500
                                 text: parent.Accessible.name
                             }

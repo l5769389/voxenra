@@ -77,7 +77,7 @@ Basic.Dialog {
                 pressedBorderWidth: 0
                 Accessible.name: qsTrId("text.0621")
                 AppToolTip {
-                    visible: parent.hovered
+                    visible: (parent?.hovered ?? false)
                     delay: 650
                     text: qsTrId("text.0621")
                 }

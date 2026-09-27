@@ -61,7 +61,7 @@ Canvas {
                 cornerRadius: 4
                 padding: 0
                 Components.AppToolTip {
-                    visible: parent.hovered
+                    visible: (parent?.hovered ?? false)
                     delay: 600
                     timeout: 2000
                     text: chart.showX ? qsTrId("text.1136") : qsTrId("text.1137")
@@ -90,7 +90,7 @@ Canvas {
                 cornerRadius: 4
                 padding: 0
                 Components.AppToolTip {
-                    visible: parent.hovered
+                    visible: (parent?.hovered ?? false)
                     delay: 600
                     timeout: 2000
                     text: chart.showY ? qsTrId("text.1138") : qsTrId("text.1139")

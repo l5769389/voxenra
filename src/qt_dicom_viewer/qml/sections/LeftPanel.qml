@@ -605,7 +605,7 @@ Rectangle {
         onTriggered: seriesContextMenu.triggerAction(actionCode)
 
         Components.AppToolTip {
-            visible: parent.hovered && !parent.actionEnabled
+            visible: (parent?.hovered ?? false) && !parent.actionEnabled
             delay: 350
             text: ["montage", "4d"].includes(parent.actionCode)
                 ? qsTrId("text.0695") : qsTrId("text.0697")

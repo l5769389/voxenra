@@ -58,7 +58,7 @@ Rectangle {
                 iconName: "workspace"
                 Accessible.name: qsTrId("tabs.showMain")
                 onClicked: centerPanel.windowManager.showMainWindow()
-                Components.AppToolTip { visible: parent.hovered; text: qsTrId("tabs.showMain") }
+                Components.AppToolTip { visible: (parent?.hovered ?? false); text: qsTrId("tabs.showMain") }
             }
         }
 

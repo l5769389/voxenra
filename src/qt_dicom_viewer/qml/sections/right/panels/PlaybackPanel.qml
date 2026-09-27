@@ -70,7 +70,7 @@ ColumnLayout {
                 }
 
                 Components.AppToolTip {
-                    visible: parent.hovered || parent.pressed
+                    visible: (parent?.hovered ?? false) || (parent?.pressed ?? false)
                     delay: 250
                     text: Math.round(parent.value) + " FPS"
                 }
@@ -211,7 +211,7 @@ ColumnLayout {
                 }
 
                 Components.AppToolTip {
-                    visible: parent.hovered || parent.pressed
+                    visible: (parent?.hovered ?? false) || (parent?.pressed ?? false)
                     delay: 250
                     text: "Phase " + Math.round(parent.value)
                 }

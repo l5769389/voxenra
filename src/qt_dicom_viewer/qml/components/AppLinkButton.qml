@@ -17,9 +17,9 @@ Basic.Button {
     Accessible.description: tooltip
     HoverHandler { cursorShape: Qt.PointingHandCursor }
     AppToolTip {
-        visible: parent.hovered && parent.tooltip !== ""
+        visible: (parent?.hovered ?? false) && parent.tooltip !== ""
         delay: 500
-        text: parent.tooltip
+        text: parent?.tooltip ?? ""
     }
     contentItem: Text {
         id: label

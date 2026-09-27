@@ -448,3 +448,16 @@ def test_opening_tabs_preserves_window_size_and_state(sidebar_scene, mode):
     assert window.visibility() == visibility
     assert window.geometry() == geometry
     assert not warnings, warnings
+
+
+def test_settings_update_tooltip_handles_detached_anchor(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    app.workspaceController.openSettings()
+    wait_until(lambda: window.findChild(QObject, "settingsUpdateBadge") is not None)
+    badge = window.findChild(QObject, "settingsUpdateBadge")
+    tooltip = next(child for child in badge.children() if child.inherits("QQuickToolTip"))
+    # Popup anchors can become null while a settings page is being detached.
+    assert tooltip.setProperty("parent", None)
+    QTest.qWait(50)
+    assert not tooltip.property("visible")
+    assert not warnings, warnings
