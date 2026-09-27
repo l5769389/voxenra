@@ -65,6 +65,7 @@ class EditHistoryController(QObject):
     # leave QML property caches referring to transient PySide metaobjects when
     # tabs/engines are destroyed and another history controller is exposed.
     @Slot()
+    @Slot(object)
     def schedule(self, *args):
         if not self._restoring:
             self._timer.start()

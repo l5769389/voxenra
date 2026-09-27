@@ -81,6 +81,10 @@ def test_opening_waits_for_all_required_frames(opening_scene, view_type, pet_onl
     else:
         record = pet if pet_only else ct
         workspace.createTab(record.series_instance_uid, record.patient_name, view_type)
+    history = workspace.activeTab.historyController
+    # PET snapshots carry an object while other edit notifications have no
+    # arguments. Both must use static slots before QML caches the controller.
+    assert history.metaObject().superClass().className() == "QObject"
     assert workspace.activeLoadState.loading
     wait_until(lambda: visible(window, "workspaceBusyIndicator"))
     # 3D native widgets are not constructed before its data has been decoded.
