@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, segmentation, and export.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v1.7.0/Voxenra-1.7.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v1.8.0/Voxenra-1.8.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v1.8.0/Voxenra-1.8.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v1.8.0/Voxenra-1.8.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 ## Features
 
