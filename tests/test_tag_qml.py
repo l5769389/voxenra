@@ -65,7 +65,7 @@ def settled_point(item, local_point=None):
 
     def settled():
         nonlocal previous, stable_since
-        if not item.isVisible() or not item.isEnabled() or item.width() <= 0 or item.height() <= 0:
+        if not item.isVisible() or item.width() <= 0 or item.height() <= 0:
             previous = None
             return False
         origin = item.mapToScene(QPointF())
