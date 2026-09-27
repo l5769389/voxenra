@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import time
 import pydicom
 from pydicom.dataset import Dataset
 from pydicom.sequence import Sequence
@@ -55,9 +56,33 @@ def find(window, name):
     return target()
 
 
+def settled_point(item, local_point=None):
+    # Async incubation can expose a visible control before Layout/anchors have
+    # placed it. Observe a stable scene rectangle before sending a real click;
+    # do not retry missed clicks or invoke the control's command directly.
+    previous = None
+    stable_since = 0.0
+
+    def settled():
+        nonlocal previous, stable_since
+        if not item.isVisible() or not item.isEnabled() or item.width() <= 0 or item.height() <= 0:
+            previous = None
+            return False
+        origin = item.mapToScene(QPointF())
+        geometry = (origin.x(), origin.y(), item.width(), item.height())
+        now = time.monotonic()
+        if geometry != previous:
+            previous, stable_since = geometry, now
+            return False
+        return now - stable_since >= 0.05
+
+    wait_until(settled)
+    point = local_point if local_point is not None else QPointF(item.width() / 2, item.height() / 2)
+    return item.mapToScene(point).toPoint()
+
+
 def click(window, item):
-    pos = item.mapToScene(QPointF(item.width() / 2, item.height() / 2)).toPoint()
-    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, pos)
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, settled_point(item))
     QTest.qWait(30)
 
 

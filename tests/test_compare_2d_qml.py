@@ -5,7 +5,7 @@ from PySide6.QtTest import QTest
 
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene, right_click
-from test_tag_qml import find, click, descendants
+from test_tag_qml import find, click, descendants, settled_point
 
 
 @pytest.mark.parametrize('theme, language', [('dark', 'zh-CN'), ('light', 'zh-CN'), ('dark', 'en-US'), ('light', 'en-US')])
@@ -51,7 +51,7 @@ def test_compare_picker_layout_shared_slider_and_tools(sidebar_scene, tmp_path, 
     assert len(visible_sliders) == 1
     # Dragging the QML shared control really navigates both decoded stacks.
     control = next(i for i in descendants(slider) if i.isVisible() and i.inherits('QQuickSlider'))
-    point = control.mapToScene(QPointF(control.width() / 2, 12)).toPoint()
+    point = settled_point(control, QPointF(control.width() / 2, 12))
     QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, point)
     wait_until(lambda: left._frame_meta.slice_index == 2 and right._frame_meta.slice_index == 2)
     click(window, canvases[1])
