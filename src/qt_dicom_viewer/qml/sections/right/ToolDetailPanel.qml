@@ -137,6 +137,7 @@ Rectangle {
         id: voiComponent
         Panels.MprVoiPanel {
             controller: detailPanel.tabController?.voiController ?? detailPanel.viewportController?.voiController ?? null
+            historyController: detailPanel.tabController?.historyController ?? null
             mode: detailPanel.activePanel
             onManualRequested: chapter => detailPanel.manualRequested(chapter)
         }

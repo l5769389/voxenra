@@ -237,6 +237,9 @@ class WorkspaceDocumentController(QObject):
                 if controller is not None:
                     for name in ("activeToolChanged", "activePanelChanged", "activeInteractionChanged", "activeServiceChanged"):
                         getattr(controller, name).connect(self.mark_dirty)
+            voi = getattr(tab, "_voi_controller", None)
+            if voi is not None:
+                voi.selectionChanged.connect(self.mark_dirty)
             history = getattr(tab, "_edit_history", None)
             if history is not None:
                 history.changed.connect(self.mark_dirty)

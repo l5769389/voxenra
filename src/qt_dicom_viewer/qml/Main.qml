@@ -121,13 +121,13 @@ ApplicationWindow {
     Shortcut {
         sequences: [StandardKey.Undo]
         context: Qt.WindowShortcut
-        enabled: !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory && window.editHistory.canUndo && !window.documentController?.busy
+        enabled: !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory?.canUndo && !window.documentController?.busy
         onActivated: window.editHistory.undo()
     }
     Shortcut {
         sequences: [StandardKey.Redo]
         context: Qt.WindowShortcut
-        enabled: !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory && window.editHistory.canRedo && !window.documentController?.busy
+        enabled: !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory?.canRedo && !window.documentController?.busy
         onActivated: window.editHistory.redo()
     }
     Sections.WorkspaceDialog {

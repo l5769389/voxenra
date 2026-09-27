@@ -20,8 +20,8 @@ A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fu
 | 2D viewing | Windowing, color maps, zoom, rotation, flipping, cine playback, montage, and linked multi-series comparison. |
 | Reconstruction and 3D | Three-plane and oblique MPR, thick-slab projection, volume rendering, presets and cropping, and multi-phase CT 4D. |
 | PET/CT fusion | Linked CT, PET, fused, and MIP views; manual rigid registration; blend controls; fused 3D. |
-| Measurement and segmentation | Length, angle, curve, rectangle, ellipse, and free-shape ROIs; threshold segmentation, VOI, segment management, and statistics. |
-| Analysis and reports | CT water phantom QA, point-source MTF, ramp FWHM and slice thickness; PNG, DICOM, CSV/PDF, SEG, and SR export. |
+| Measurement and segmentation | Length, angle, curve, rectangle, ellipse, and free-shape ROIs; threshold segmentation, paint/erase refinement, VOI, and segment statistics. |
+| Analysis and reports | CT water phantom QA, point-source MTF, ramp FWHM and slice thickness; PNG, DICOM, CSV/PDF, SEG, SR, and NRRD export. |
 | Workspace | Tabs, detached windows, layouts, save and restore, dark, neutral gray, and light themes, language packs, and an offline manual. |
 
 ## 2D viewing and comparison
@@ -76,8 +76,8 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 ## Measurement, segmentation, and reporting
 
 - **Measurements:** length, angle, curve, rectangle, ellipse, and free-shape ROIs, with area, perimeter, and intensity statistics; list navigation, renaming, visibility, locking, copy/paste, undo and redo.
-- **Segmentation:** MPR threshold segmentation, single-slice segment creation from free-shape ROIs, VOI analysis, and independently named, colored, and managed segments.
-- **Results:** export measurements as CSV/PDF or DICOM SR, with matching reference images in PDFs; export DICOM SEG and import SEG associated with the current image.
+- **Segmentation:** MPR thresholding, paint/erase refinement, keep/remove connected regions, single-slice segments from free-shape ROIs, VOI analysis, independent segment management, undo and redo.
+- **Results:** export measurements as CSV/PDF or DICOM SR, with matching reference images in PDFs; exchange segments through DICOM SEG or NRRD / Slicer, preserving overlap, names, and colors.
 
 **Free-shape measurement:** click to place control points and create a smooth closed contour.
 
@@ -87,14 +87,14 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 ![Curve measurement and control points](docs/screenshots/33-curve-measurement.gif)
 
-**Segmentation exchange**
+**Segmentation refinement:** paint and erase with millimeter or view-relative diameters, on the current slice or with a 3D spherical brush.
 
-![Convert an ROI to a segment, export it, and reimport the SEG](docs/screenshots/02-segmentation-exchange.gif)
+![MR segmentation painting, erasing, undo and redo](docs/screenshots/38-segmentation-refinement.gif)
 
 <table>
 <tr>
-<td width="50%"><b>Associated results import</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="Import SEG associated with the current image" width="100%"></a></td>
-<td width="50%"><b>SEG / SR export</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG and SR export controls" width="100%"></a></td>
+<td width="50%"><b>Associated results import</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="Import SEG / NRRD associated with the current image" width="100%"></a></td>
+<td width="50%"><b>Segmentation and report export</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG, SR and NRRD export controls" width="100%"></a></td>
 </tr>
 <tr>
 <td><b>CT water phantom QA</b><br><a href="docs/screenshots/19-water-qa.png"><img src="docs/screenshots/19-water-qa.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
@@ -104,9 +104,9 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 ## Data and workspaces
 
-Import source images on the left and associated SEG results on the right. Mix files, folders, and archives, drag in images, query PACS, inspect DICOM tags, and export PNG or source DICOM.
+Import source images on the left and associated SEG / NRRD segments on the right. Mix files, folders, and archives, drag in images, query PACS, inspect DICOM tags, and export PNG or source DICOM.
 
-Workspaces preserve image references, layouts, measurements, analysis results, and the selected tools, with automatic recovery. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual, feedback, and optional startup update checks.
+Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual, feedback, and optional startup update checks.
 
 <table>
 <tr>
@@ -133,7 +133,8 @@ Choose **dark, neutral gray, or light** in **Settings → Appearance & language*
 
 - Supports conventional and Enhanced CT/MR/PET and RLE, JPEG, JPEG-LS, and JPEG 2000 pixel decoding. MPR/3D require regular spatial sampling; PET quantification depends on image metadata.
 - Common RGB, YBR, and PALETTE COLOR DICOM support 2D viewing, montage, multi-frame playback, and PNG export. Physical measurements require valid pixel spacing; color MPR / 3D and HU analysis are unavailable.
-- NIfTI/NRRD, dynamic or gated PET, MR 4D, fMRI/DTI analysis, and SR/RTSTRUCT import are not currently supported.
+- NRRD supports current-phase volume export and segmentation import/export on the matching source grid. Standalone NRRD image viewing and automatic resampling are unavailable.
+- NIfTI, dynamic or gated PET, MR 4D, fMRI/DTI analysis, and SR/RTSTRUCT import are not currently supported.
 - SEG/SR keep source identity and image references; PNG/plain DICOM anonymization options do not apply to them.
 
 ## Documentation and running from source

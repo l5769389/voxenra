@@ -21,9 +21,9 @@ RGB、YBR 与 PALETTE COLOR 支持二维、平铺、缩放、旋转、标注和 
 ### 其他对象与尚未支持的格式
 
 - **其他 DICOM 模态**：可读取对象可查看 Tag；部分可解码的单帧灰度图像可走通用 2D 路径。CR、DX、US、XA 等尚未完成专项验证，不将其列为完整支持的阅片或重建类型。
-- **附属结果**：右侧「导入」支持与当前 MPR / 4D 原影像网格匹配的二值 SEG，含多个及重叠区域；CT、PET 和 MR 均可管理导入区域。支持 SEG 与 TID 1500 SR 导出，尚不支持 SR 导入、RTSTRUCT 交换或 Fractional / LABELMAP SEG。详见 [分割结果交换](mpr-segmentation-voi.md#seg-导入与管理)。
+- **附属结果**：右侧「导入」支持与当前 MPR / 4D 原影像网格匹配的二值 SEG、Slicer .seg.nrrd 和整数标签 NRRD，含多个及重叠区域；CT、PET 和 MR 均可管理导入区域。支持 SEG 与 TID 1500 SR 导出，尚不支持 SR 导入、RTSTRUCT 交换或 Fractional / LABELMAP SEG。详见 [分割结果交换](mpr-segmentation-voi.md#seg-导入与管理)。
 - **尚未开放的分析**：MR Mosaic、彩色 MR、波谱、MR 4D 播放、MR 融合、ADC／DTI／灌注／fMRI 分析。
-- **非 DICOM 输入**：NIfTI（`.nii` / `.nii.gz`）、NRRD、厂家原始 MR 数据，以及普通 PNG／JPEG 图片不是当前影像导入格式。PNG 是导出格式。
+- **非 DICOM 输入**：NIfTI（`.nii` / `.nii.gz`）、独立 NRRD 影像、厂家原始 MR 数据，以及普通 PNG／JPEG 图片不是当前影像导入格式。NRRD 分割可作为附属结果导入；当前 DICOM 体数据可导出 NRRD 供 Slicer 使用。PNG 是导出格式。
 
 ### 归档格式与像素编码
 

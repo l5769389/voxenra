@@ -22,6 +22,7 @@ class MprVoiController(QObject):
     _i18n_selected = Signal()
 
     changed = Signal()
+    selectionChanged = Signal()
     overlaysChanged = Signal()
     masksChanged = Signal()
     itemsChanged = Signal()
@@ -43,6 +44,11 @@ class MprVoiController(QObject):
         self._selected = ""
         self._enabled = True
         self._draft = None
+        self._edit_mode = "paint" if tools._modality == "MR" else "threshold"
+        self._brush_diameter = 5.0
+        self._brush_relative = False
+        self._brush_percent = 3.0
+        self._brush_sphere = False
         self._error = ""
         self._revision = 0
         self._running = False
@@ -60,6 +66,185 @@ class MprVoiController(QObject):
     def _preferences_changed(self, section):
         if section == "measurement":
             self.changed.emit()
+
+    @Property(str, notify=changed)
+    def editMode(self):
+        return self._edit_mode
+
+    @Property(float, notify=changed)
+    def brushDiameter(self):
+        return self._brush_diameter
+
+    @Property(bool, notify=changed)
+    def brushRelative(self):
+        return self._brush_relative
+
+    @Property(float, notify=changed)
+    def brushPercent(self):
+        return self._brush_percent
+
+    @Slot(bool)
+    def setBrushRelative(self, enabled):
+        self.cancel()
+        self._brush_relative = enabled
+        self.changed.emit()
+        self.selectionChanged.emit()
+
+    @Slot(float)
+    def setBrushPercent(self, value):
+        if np.isfinite(value) and 1 <= value <= 25:
+            self._brush_percent = value
+            self.changed.emit()
+            self.selectionChanged.emit()
+
+    def brush_diameter_for_view(self, viewport):
+        if not self._brush_relative:
+            return self._brush_diameter
+        scale, size = getattr(viewport, "_brush_view_metrics", (0., 0.))
+        if not np.isfinite([scale, size]).all() or min(scale, size) <= 0:
+            return None
+        return size * self._brush_percent / 100 / scale
+
+    @Property(bool, notify=changed)
+    def brushSphere(self):
+        return self._brush_sphere
+
+    @Slot(str)
+    def setEditMode(self, mode):
+        if mode == "threshold" and self.tools._modality == "MR":
+            return
+        if mode in ("threshold", "paint", "erase", "keep", "remove"):
+            self.cancel()
+            self._edit_mode = mode
+            self.changed.emit()
+            self.selectionChanged.emit()
+
+    @Slot(float)
+    def setBrushDiameter(self, value):
+        if np.isfinite(value) and .1 <= value <= 100:
+            self._brush_diameter = value
+            self.changed.emit()
+            self.selectionChanged.emit()
+
+    @Slot(bool)
+    def setBrushSphere(self, enabled):
+        self._brush_sphere = enabled
+        self.changed.emit()
+        self.selectionChanged.emit()
+
+    def persistent_selection(self):
+        """Workspace tool preferences, separate from undoable segmentation data."""
+        return dict(version=1, mode=self._edit_mode, selected=self._selected,
+                    diameter=self._brush_diameter, relative=self._brush_relative,
+                    percent=self._brush_percent, sphere=self._brush_sphere,
+                    enabled=self._enabled)
+
+    def restore_selection(self, state):
+        if not isinstance(state, dict) or state.get("version") != 1:
+            return
+        self.cancel()
+        mode = state.get("mode")
+        if mode in ("threshold", "paint", "erase", "keep", "remove"):
+            self._edit_mode = "paint" if mode == "threshold" and self.tools._modality == "MR" else mode
+        for key, attribute, low, high in (("diameter", "_brush_diameter", .1, 100),
+                                           ("percent", "_brush_percent", 1, 25)):
+            value = state.get(key)
+            if type(value) in (int, float) and np.isfinite(value) and low <= value <= high:
+                setattr(self, attribute, float(value))
+        for key, attribute in (("relative", "_brush_relative"), ("sphere", "_brush_sphere"),
+                               ("enabled", "_enabled")):
+            if type(state.get(key)) is bool:
+                setattr(self, attribute, state[key])
+        selected = state.get("selected")
+        if selected == "" or any(r["id"] == selected for r in self.current_records):
+            self._selected = selected
+        self._overlay_cache.clear()
+        self.changed.emit()
+
+    def _next_color(self):
+        # Include hidden/imported regions and other phases: hiding a segment
+        # must not make its color available to a new one.
+        used = {QColor(r["color"]).name().lower() for r in self.records}
+        palette = ("#ed55ed", "#43c6dc", "#ffbb55", "#87d980",
+                   "#ff7070", "#9292ff", "#e6dc65", "#5fe0b3")
+        for color in palette:
+            if color not in used:
+                return color
+        for index in range(len(used) + 1):
+            color = QColor.fromHsv((index * 137) % 360, 120 + (index // 360) % 136, 235).name()
+            if color not in used:
+                return color
+        return palette[0]
+
+    @Slot()
+    def newSegment(self):
+        self.cancel()
+        self._selected = ""
+        self._edit_mode = "paint"
+        self.changed.emit()
+        self.selectionChanged.emit()
+
+    def _begin_refine(self, viewport, column, row):
+        from qt_dicom_viewer.core.segmentation_refine import connected_component
+        volume, g = viewport._voi_volume, viewport._plane_geometry
+        record = self._record()
+        if record is not None and (record["kind"] != "segmentation" or record["series"] != volume.series_uid):
+            return
+        if record is not None and not record["visible"]:
+            self._error = _msg("seg.editHidden")
+            self.changed.emit()
+            return
+        result = self.evaluations.get(record["id"]) if record else None
+        if record and result is None:
+            return
+        if result is None and self._edit_mode != "paint":
+            self._error = _msg("seg.selectFirst")
+            self.changed.emit()
+            return
+        diameter = self.brush_diameter_for_view(viewport)
+        if self._edit_mode in ("paint", "erase") and diameter is None:
+            return  # No reliable view scale yet; never guess a physical size.
+        mask = result.mask.copy() if result else np.zeros((1, 1, 1), bool)
+        offset = result.offset.copy() if result else np.clip(np.floor(volume.geometry.patient_to_voxel[:3] @ [*self._patient_point(g, column, row), 1] + .5).astype(int), 0, np.array(volume.modality_pixels.shape)-1)
+        self._draft = dict(mode="brush", record=record, viewport=viewport, geometry=g,
+            volume=volume, mask=mask, offset=offset, region=None, last=None,
+            kind="segmentation", edit=self._edit_mode, changed=False,
+            diameter=diameter, sphere=self._brush_sphere,
+            color=record["color"] if record else self._next_color(),
+            id=record["id"] if record else str(uuid4()))
+        try:
+            if self._edit_mode in ("keep", "remove"):
+                point = self._patient_point(g, column, row)
+                seed = np.floor((volume.geometry.patient_to_voxel @ [*point, 1])[:3] + .5).astype(int) - offset
+                component = connected_component(mask, seed)
+                self._draft["mask"] = component if self._edit_mode == "keep" else mask & ~component
+                self._draft["changed"] = not np.array_equal(mask, self._draft["mask"])
+            else:
+                self.update(viewport, column, row)
+        except ValueError:
+            self.cancel()
+            self._error = _msg("seg.clickInside")
+            self.changed.emit()
+
+    @staticmethod
+    def _patient_point(g, column, row):
+        return (np.asarray(g.image_origin_patient) + column * g.column_spacing * np.asarray(g.column_direction_patient)
+                + row * g.row_spacing * np.asarray(g.row_direction_patient))
+
+    def _refined_record(self, d):
+        from qt_dicom_viewer.core.segmentation_masks import mask_record
+        original = d["record"]
+        record, result = mask_record(d["volume"], d["mask"], d["offset"],
+            name=original["name"] if original else f'{_msg("seg.segmentName")} {len(self.records)+1}',
+            color=d["color"], phase=self._phase, allow_empty=True)
+        if original:
+            # Preserve identity/source metadata, but replace geometry and pixels.
+            record = {**original, **record, "id": original["id"], "unit": original["unit"],
+                      "unitLabel": original["unitLabel"]}
+            result = evaluate_mask(d["volume"].in_unit(record["unit"]), record)
+        record["mask_origin"] = "manual"
+        record["id"] = d["id"]
+        return record, result
 
     def _activate(self):
         if self.tools.restoring_selection:
@@ -169,6 +354,8 @@ class MprVoiController(QObject):
 
     def edit_target(self, viewport, column, row, tolerance):
         """The same geometric hit test drives both hover and drag start."""
+        if self.tools.activePanel == "segmentation" and self._edit_mode != "threshold":
+            return None
         g = viewport._plane_geometry
         record = self._record()
         if (not self._enabled or g is None or not record or not record["visible"]
@@ -196,6 +383,14 @@ class MprVoiController(QObject):
         return dict(mode=mode, center=center, opposite=opposite) if mode else None
 
     def begin(self, viewport, column, row, tolerance):
+        if self.tools.activePanel == "segmentation" and self._edit_mode != "threshold":
+            if (self._phase_ready and self._enabled and viewport._plane_geometry is not None
+                    and viewport._voi_volume is not None
+                    and not getattr(viewport, "render_pending", False)
+                    and getattr(viewport, "_voi_phase", self.phaseIndex) == self.phaseIndex):
+                self.cancel()
+                self._begin_refine(viewport, column, row)
+            return
         if (viewport.viewport_config.series_meta.modality.upper() == "MR"
                 or not self._phase_ready or not self._enabled or viewport._plane_geometry is None or viewport._voi_volume is None
                 or getattr(viewport, "_voi_phase", self.phaseIndex) != self.phaseIndex):
@@ -216,6 +411,29 @@ class MprVoiController(QObject):
 
     def update(self, viewport, column, row):
         d = self._draft
+        if d and d["mode"] == "brush":
+            if d["viewport"] is not viewport or d["edit"] in ("keep", "remove"):
+                return
+            from qt_dicom_viewer.core.segmentation_refine import brush
+            g = d["geometry"]
+            if not (0 <= column < g.columns and 0 <= row < g.rows):
+                d["last"] = None
+                return
+            point = self._patient_point(g, column, row)
+            normal = None if d["sphere"] else np.cross(g.column_direction_patient, g.row_direction_patient)
+            try:
+                mask, offset = brush(d["mask"], d["offset"], d["volume"].geometry,
+                    d["volume"].modality_pixels.shape, point if d["last"] is None else d["last"], point,
+                    d["diameter"], erase=d["edit"] == "erase", normal=normal)
+                d["changed"] |= not (np.array_equal(mask, d["mask"]) and np.array_equal(offset, d["offset"]))
+                d.update(mask=mask, offset=offset, last=point)
+                self._mask_cache = {k: v for k, v in self._mask_cache.items() if k[1] != d["id"]}
+                self.masksChanged.emit()
+            except ValueError:
+                self.cancel()
+                self._error = _msg("seg.tooLarge")
+                self.changed.emit()
+            return
         if not d or d["viewport"] is not viewport or not np.isfinite([column, row]).all():
             return
         g = d["geometry"]
@@ -256,6 +474,28 @@ class MprVoiController(QObject):
         if not d or d["viewport"] is not viewport:
             return
         self._draft = None
+        if d["mode"] == "brush":
+            if d["record"] is None and not d["mask"].any():
+                self.masksChanged.emit()
+                return
+            if d["changed"]:
+                record, result = self._refined_record(d)
+                from qt_dicom_viewer.core.workspace_state import MAX_MASK_VOXELS
+                if sum(r["mask"].size for r in self.records if "mask" in r and r is not d["record"]) + record["mask"].size > MAX_MASK_VOXELS:
+                    self._error = _msg("seg.tooLarge")
+                    self.changed.emit()
+                    return
+                if d["record"] is not None:
+                    self.records = [record if r is d["record"] else r for r in self.records]
+                else:
+                    self.records.append(record)
+                self._selected = record["id"]
+                self.evaluations[record["id"]] = result
+                self.itemsChanged.emit()
+                self._schedule()
+            else:
+                self.masksChanged.emit()
+            return
         if d["region"] is None:
             return
         if d["record"]:
@@ -271,7 +511,7 @@ class MprVoiController(QObject):
             self.records.append(dict(id=key, region=d["region"], kind=kind, series=volume.series_uid, phase=self._phase,
                 depthAuto=True, normalSpacing=d["geometry"].navigation_spacing,
                 name=(_msg('text.0276') if kind == "segmentation" else "VOI") + f" {len(self.records)+1}",
-                color=("#ed55ed", "#43c6dc", "#ffbb55", "#87d980")[len(self.records) % 4], visible=True,
+                color=self._next_color(), visible=True,
                 unit=meta.unit_id, unitLabel=meta.unit or ("HU" if viewport.viewport_config.series_meta.modality.upper() == "CT" else _msg('text.0568')),
                 unitOptions=[dict(id=o.unit_id, label=o.unit) for o in meta.unit_options if o.available],
                 pet=pet, threshold=2.5 if meta.is_suv else 300. if not pet else 0., percent=False,
@@ -295,6 +535,7 @@ class MprVoiController(QObject):
         self.cancel()
         self._overlay_cache.clear()
         self.changed.emit()
+        self.selectionChanged.emit()
 
     @Slot(str)
     def select(self, key):
@@ -306,6 +547,7 @@ class MprVoiController(QObject):
             self.tools.activateTool(self._record()["kind"])
             self._overlay_cache.clear()
             self.changed.emit()
+            self.selectionChanged.emit()
 
     def add_masks(self, records, evaluations):
         existing = {(r.get("source_seg_uid"), r.get("source_segment_number"), r.get("phase"))
@@ -504,6 +746,8 @@ class MprVoiController(QObject):
         for r in self.current_records:
             if not r["visible"] or "mask" in r:
                 continue
+            if self._draft and self._draft["mode"] == "brush" and self._draft["record"] is r:
+                continue
             box = self._draft["region"] if self._draft and self._draft["record"] is r else r["region"]
             cache_key = (viewport.viewportId, r["id"])
             signature = (g, box, self._selected, r["color"])
@@ -519,7 +763,7 @@ class MprVoiController(QObject):
         if self._draft and self._draft["record"] is None and self._draft["region"]:
             polygon = plane_polygon(self._draft["region"], g)
             if polygon:
-                items.append(dict(id="draft", polygon=polygon, color="#ed55ed", source="", selected=True,
+                items.append(dict(id="draft", polygon=polygon, color=self._next_color(), source="", selected=True,
                                   handles=editing_handles(self._draft["region"], g), fill=True))
         # A view can navigate through many planes; retain only its latest geometry.
         self._overlay_cache = {k: v for k, v in self._overlay_cache.items() if k[0] != viewport.viewportId}
@@ -533,10 +777,22 @@ class MprVoiController(QObject):
                 or getattr(viewport, "_voi_phase", self.phaseIndex) != self.phaseIndex):
             return []
         items = []
-        for record in self.current_records:
+        records = self.current_records
+        preview = None
+        if self._draft and self._draft["mode"] == "brush":
+            from qt_dicom_viewer.core.mpr_voi import VoiEvaluation
+            d = self._draft
+            record = dict(id=d["id"], color=d["color"], visible=True, kind="segmentation")
+            preview = VoiEvaluation(d["mask"], d["offset"], d["volume"].geometry, {}, None, (0, 0))
+            records = [record if r is d["record"] else r for r in records]
+            if d["record"] is None:
+                records = [*records, record]
+        for record in records:
             result = self.evaluations.get(record["id"])
+            if preview is not None and record["id"] == self._draft["id"]:
+                result = preview
             if (not record["visible"] or record["kind"] != "segmentation" or result is None
-                    or (self._draft and self._draft["record"] is record)):
+                    or (self._draft and self._draft["mode"] != "brush" and self._draft["record"] is record)):
                 continue
             key = (viewport.viewportId, record["id"])
             cached = self._mask_cache.get(key)

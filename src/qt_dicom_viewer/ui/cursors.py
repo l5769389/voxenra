@@ -7,7 +7,7 @@ from PySide6.QtGui import QCursor, QImage, QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 
 
-CURSOR_KINDS = frozenset(('window', 'scroll', 'crosshair-move', 'crosshair-rotate', 'rotate-3d', 'voi', 'segmentation', 'volume-crop', 'resize', 'mtf', 'strokeColor', 'fillColor', 'pan', 'zoom', 'measure-line', 'measure-angle', 'measure-rect', 'measure-ellipse', 'measure-freehand', 'measure-curve', 'annotate-arrow', 'annotate-text', 'qa', 'rotate'))
+CURSOR_KINDS = frozenset(('window', 'scroll', 'crosshair-move', 'crosshair-rotate', 'rotate-3d', 'voi', 'segmentation', 'segmentation-paint', 'segmentation-erase', 'volume-crop', 'resize', 'mtf', 'strokeColor', 'fillColor', 'pan', 'zoom', 'measure-line', 'measure-angle', 'measure-rect', 'measure-ellipse', 'measure-freehand', 'measure-curve', 'annotate-arrow', 'annotate-text', 'qa', 'rotate'))
 
 
 @lru_cache(maxsize=128)

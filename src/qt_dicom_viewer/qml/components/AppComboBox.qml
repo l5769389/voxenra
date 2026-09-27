@@ -6,6 +6,7 @@ import "../theme"
 
 Basic.ComboBox {
     id: control
+    property real minimumPopupWidth: 0
     Layout.minimumWidth: 0
     implicitHeight: Theme.controlHeight
     leftPadding: 10
@@ -38,7 +39,7 @@ Basic.ComboBox {
         id: option
         required property int index
         required property var modelData
-        width: control.width - 8
+        width: control.popup.availableWidth
         implicitHeight: 34
         leftPadding: 10
         rightPadding: 30
@@ -67,7 +68,7 @@ Basic.ComboBox {
     }
     popup: Basic.Popup {
         y: control.height + 4
-        width: control.width
+        width: Math.max(control.width, control.minimumPopupWidth)
         implicitHeight: Math.min(contentItem.implicitHeight + 8, 320)
         padding: 4
         contentItem: ListView {

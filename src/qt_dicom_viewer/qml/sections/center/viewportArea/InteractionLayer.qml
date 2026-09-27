@@ -52,6 +52,8 @@ Item {
     property string measurementCursorKind: ""
     property string regionCursorKind: ""
     property string activeInteraction: ""
+    property real brushDiameterPixels: 0
+    property bool brushPreviewEnabled: false
     property bool registrationInteraction: false
     property bool locatorPressed: false
     property string dragCursorKind: ""
@@ -146,6 +148,22 @@ Item {
                 hoverHandler.point.position
             )
         }
+    }
+
+    Rectangle {
+        objectName: "segmentationBrushPreview"
+        visible: interactionLayer.brushPreviewEnabled && (hoverHandler.hovered || dragHandler.active)
+            && ["segmentation-paint", "segmentation-erase"].includes(interactionLayer.effectiveCursorKind)
+        width: interactionLayer.brushDiameterPixels
+        height: width
+        x: interactionLayer.cursorPosition.x - width / 2
+        y: interactionLayer.cursorPosition.y - height / 2
+        radius: width / 2
+        color: "transparent"
+        border.width: 1.5
+        border.color: interactionLayer.effectiveCursorKind === "segmentation-erase"
+            ? Theme.dangerColor : Theme.overlayText
+        z: 99
     }
 
     Item {

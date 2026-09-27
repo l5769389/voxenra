@@ -183,6 +183,13 @@ def _segment_description(result, number):
         )
         if not description.get("TrackingID"):
             description.TrackingID = record["id"]
+        if record.get("mask_origin") == "manual":
+            # Editing invalidates imported algorithm attribution, while tissue
+            # terminology and tracking identity still describe this segment.
+            description.SegmentAlgorithmType = "MANUAL"
+            for keyword in ("SegmentAlgorithmName", "SegmentationAlgorithmIdentificationSequence"):
+                if keyword in description:
+                    del description[keyword]
     return description
 
 

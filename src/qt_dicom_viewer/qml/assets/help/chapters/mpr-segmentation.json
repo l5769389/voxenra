@@ -2,7 +2,7 @@
   {
     "id": "segmentation",
     "category": "mpr-segmentation",
-    "title": "阈值分割与深度",
+    "title": "分割与精修",
     "sections": [
       {
         "title": "1. 画范围",
@@ -31,8 +31,23 @@
       },
       {
         "title": "导入与管理 SEG",
-        "body": "左侧导入原始 DICOM，打开对应 MPR / 4D 和时相，再选择右侧 **导入 → 导入 SEG 分割**。支持与原网格匹配的二值、多区域和重叠 SEG。成功后在 **分割管理** 中改名、换色、显隐或删除，支持撤销与工作区保存。导入掩膜几何固定，不用阈值或深度修改。MR 也可管理导入结果。",
+        "body": "左侧导入原始 DICOM，打开对应 MPR / 4D 和时相，再通过右侧导入分割。支持原网格匹配的二值、多区域和重叠 SEG。可改名、换色、显隐、精修或删除，支持撤销与工作区保存。",
         "messageId": "manual.segmentation.section5"
+      },
+      {
+        "title": "画笔与橡皮",
+        "body": "选择已有分割，或点击 **新建分割并绘制**；新区域优先使用尚未使用的颜色。画笔与橡皮使用不同光标，并显示作用范围。\n\n**毫米**：滑块 1–50 mm，精确输入 0.1–100 mm，默认 5 mm。**相对视图**：直径为视口较短边的 1%–25%，默认 3%；缩放时屏幕大小不变，实际毫米大小随之变化。\n\n选择 **当前切面 / 3D 球形** 后拖动，松开提交，Esc 取消；一笔对应一次撤销，其他分割不受影响。撤销、重做按钮标注本机快捷键。CT、MR、PET 的 MPR 均可使用；阈值结果首次精修后转为固定体素掩膜。",
+        "messageId": "manual.segmentation.section6"
+      },
+      {
+        "title": "连通区域",
+        "body": "选择 **保留点选连通区域 / 删除点选连通区域**，点击所选分割内部。按三维六邻域（共享面）识别连通区域，不按二维轮廓操作。结果支持撤销；橡皮清空分割后可以继续绘制，导出 DICOM SEG 前须补绘或删除空项。",
+        "messageId": "manual.segmentation.section7"
+      },
+      {
+        "title": "NRRD / Slicer 交换",
+        "body": "在原始 DICOM 的 MPR / 4D 中选择 **导出 → 导出 NRRD / Slicer**，输出当前时相体数据 source.nrrd 和分割 segmentation.seg.nrrd（含隐藏项和重叠区域）。在 Slicer 中分别加载，编辑并保存 .seg.nrrd；回到原 DICOM 的同一时相，通过右侧 **导入 → 导入分割 · SEG / NRRD** 导入。也支持三维整数标签 NRRD。文件须使用毫米单位及 LPS/RAS 坐标；不一致网格会拒绝导入，不自动重采样。NRRD 通常没有可靠的患者/序列身份信息，请确认参考影像和时相。",
+        "messageId": "manual.segmentation.section8"
       }
     ],
     "figure": "segmentation",
@@ -40,7 +55,7 @@
       "segmentation-ct.png",
       "segmentation-pt.png"
     ],
-    "summary": "在 MPR 中框定三维范围，再按阈值统计。",
+    "summary": "在 MPR 中创建、精修与交换分割，保留独立掩膜和重叠区域。",
     "related": [
       "quantification",
       "management"
@@ -114,7 +129,7 @@
       },
       {
         "title": "下次继续",
-        "body": "范围与实际分割掩膜可随 **工作区** 保存恢复；统计可导出测量报告。支持二值 SEG 导入导出及结构化 SR 导出；RTSTRUCT 和 SR 导入尚未实现。关闭未保存页签会丢失当前结果。",
+        "body": "范围与实际分割掩膜可随 **工作区** 保存恢复，同时恢复所选区域、画笔／橡皮模式、尺寸及作用范围；未提交的笔画不保存，播放保持暂停。统计可导出测量报告，分割可通过 SEG / NRRD 交换。支持结构化 SR 导出；RTSTRUCT 和 SR 导入尚未实现。关闭未保存页签会丢失当前结果。",
         "messageId": "manual.management.section2"
       }
     ],

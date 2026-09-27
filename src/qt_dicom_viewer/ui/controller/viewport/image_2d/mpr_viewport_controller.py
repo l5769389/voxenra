@@ -58,6 +58,12 @@ _CROSSHAIR_STYLES = {
 class MprViewportController(Image2DViewportController):
     _i18n_voiOverlays = Signal()
 
+    @Slot(float, float)
+    def setBrushViewMetrics(self, pixels_per_mm, shortest_side):
+        # QML supplies logical pixels for both dimensions, independent of DPR.
+        self._brush_view_metrics = (pixels_per_mm, shortest_side)
+
+
 
     voiChanged = Signal()
     voiMasksChanged = Signal()
@@ -376,6 +382,8 @@ class MprViewportController(Image2DViewportController):
             if self._voi_controller.enabled and point is not None:
                 target = self._voi_controller.edit_target(self, point.column, point.row, context.point_tolerance)
                 kind = ("pan" if target["mode"] == "move" else "resize") if target else self.activeInteraction.split(":")[1]
+                if self.activeInteraction == "mpr:segmentation" and self._voi_controller.editMode in ("paint", "erase"):
+                    kind = "segmentation-" + self._voi_controller.editMode
         if kind != self.regionCursorKind:
             self._region_cursor_kind = kind
             self.regionCursorKindChanged.emit()

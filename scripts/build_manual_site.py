@@ -21,7 +21,7 @@ PRODUCT_SCREENSHOTS = {
     "hero-mpr.png": "11-mpr-3d-layout.png",
     "feature-mr-reading.png": "07-mr-reading.png",
     "feature-fusion.png": "05-pet-ct-fusion.png",
-    "feature-analysis.png": "02-mpr-segmentation.png",
+    "feature-analysis.gif": "38-segmentation-refinement.gif",
     "feature-measurements.png": "01-2d-measurement.png",
     "feature-theme-graphite.png": "37-theme-graphite.png",
     "feature-theme-dark.png": "25-theme-dark.png",
@@ -262,9 +262,9 @@ PRODUCT_COPY = {
         "fusion_title": "PET/CT 联动融合",
         "fusion_body": "并排查看 CT、PET、融合与 MIP 视图，调整融合比例，并在需要时进行手动刚性配准。",
         "analysis_title": "测量、分割与结果交换",
-        "analysis_body": "在列表中管理和定位长度、角度、曲线与 ROI 测量，导出附对应参考图的 PDF；支持阈值分割、VOI 分析及 DICOM SEG 导入导出和 DICOM SR 导出。",
+        "analysis_body": "在列表中管理和定位长度、角度、曲线与 ROI 测量，导出附对应参考图的 PDF；支持阈值分割、画笔／橡皮精修、连通区域处理和 VOI 分析，通过 DICOM SEG 或 NRRD 与 Slicer 交换分割，并可导出 DICOM SR。",
         "viewing_caption": "MR 原始切片阅片", "viewing_4d_caption": "CT 多时相 4D 播放",
-        "fusion_caption": "PET/CT 联动融合", "analysis_caption": "MPR 分割与统计",
+        "fusion_caption": "PET/CT 联动融合", "analysis_caption": "画笔、橡皮与撤销重做",
         "quality_title": "CT 图像质量分析",
         "quality_body": "水模 QA、点源 MTF 和斜坡线 FWHM 各自独立分析；曲线、层厚与统计指标随工作区保存，重新打开后保留原值，可主动重新计算。",
         "quality_captions": ("水模 QA · CT 值与均匀性", "点源 MTF · 曲线与指标"),
@@ -290,7 +290,7 @@ PRODUCT_COPY = {
         "workflow_cards": (
             ("Local import", "Select files, folders, and archives together, or drag them into the window."),
             ("PACS query", "Connect to a DICOMweb PACS, find studies, and import selected series."),
-            ("Workspace", "Preserve layouts, measurements, analysis results, and the selected tools."),
+            ("Workspace", "Preserve layouts, measurements, segmentation masks, analysis results, and selected tools."),
         ),
         "workflow_images": (("Drag a ZIP archive to import", "feature-zip-drag.gif"), ("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace.png")),
         "viewing_title": "From 2D slices to 3D reconstruction",
@@ -298,9 +298,9 @@ PRODUCT_COPY = {
         "fusion_title": "Linked PET/CT fusion",
         "fusion_body": "See linked CT, PET, fused, and MIP views, adjust blending, and perform manual rigid registration when needed.",
         "analysis_title": "Measurement, segmentation, and DICOM results",
-        "analysis_body": "Manage and locate length, angle, curve, and ROI measurements in a list, then export PDF reports with matching reference images. Threshold segmentation, VOI analysis, DICOM SEG import/export, and DICOM SR export support result exchange.",
+        "analysis_body": "Manage and locate length, angle, curve, and ROI measurements in a list, then export PDF reports with matching reference images. Refine segments with paint, erase, and connected-region tools. Use thresholding and VOI analysis, exchange segments with Slicer through NRRD or DICOM SEG, and export DICOM SR.",
         "viewing_caption": "MR original-slice viewing", "viewing_4d_caption": "Multi-phase CT 4D playback",
-        "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "MPR segmentation and statistics",
+        "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "Paint, erase, undo and redo",
         "quality_title": "CT image-quality analysis",
         "quality_body": "Analyze water-phantom QA, point-source MTF, and ramp FWHM separately. Save curves, slice thickness, and metrics in the workspace. Restore recorded results and recalculate when needed.",
         "quality_captions": ("Water-phantom QA · CT values and uniformity", "Point-source MTF · curve and metrics"),
@@ -330,7 +330,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     win_portable_url = escape(download_base + quote(release["windows_portable"], safe=""))
     version = escape('v' + release["version"])
     feature_rows = []
-    for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.png")):
+    for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
         title = escape(copy[key + "_title"])
         image_url = product_image_asset(prefix, image)
         if key in ("viewing", "analysis"):

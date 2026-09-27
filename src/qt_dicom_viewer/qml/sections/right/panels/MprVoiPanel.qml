@@ -11,10 +11,144 @@ ColumnLayout {
     objectName: "mprVoiPanel"
     required property var controller
     required property string mode
+    property var historyController: null
     signal manualRequested(string chapter)
     readonly property var selected: controller?.selected ?? ({})
     readonly property bool hasSelection: !!selected.id
+    readonly property bool relativeBrush: controller?.brushRelative ?? false
     spacing: 8
+
+    GridLayout {
+        visible: panel.mode === "segmentation"
+        Layout.fillWidth: true
+        columns: 2
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
+            spacing: 6
+            Components.AppComboBox {
+                objectName: "segmentationEditMode"
+                minimumPopupWidth: 220
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 1
+                readonly property var keys: panel.controller?.canDraw === false ? ["paint", "erase", "keep", "remove"] : ["threshold", "paint", "erase", "keep", "remove"]
+                model: panel.controller?.canDraw === false
+                    ? [qsTrId("seg.paint"), qsTrId("seg.erase"), qsTrId("seg.keepIsland"), qsTrId("seg.removeIsland")]
+                    : [qsTrId("seg.thresholdTool"), qsTrId("seg.paint"), qsTrId("seg.erase"), qsTrId("seg.keepIsland"), qsTrId("seg.removeIsland")]
+                currentIndex: keys.indexOf(panel.controller?.editMode ?? "threshold")
+                onActivated: index => panel.controller.setEditMode(keys[index])
+            }
+            Components.AppComboBox {
+                objectName: "segmentationBrushScope"
+                minimumPopupWidth: 160
+                visible: ["paint", "erase"].includes(panel.controller?.editMode)
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 1
+                model: [qsTrId("seg.sliceBrush"), qsTrId("seg.sphereBrush")]
+                currentIndex: panel.controller?.brushSphere ? 1 : 0
+                onActivated: index => panel.controller.setBrushSphere(index === 1)
+            }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
+            visible: ["paint", "erase"].includes(panel.controller?.editMode)
+            Text {
+                Layout.fillWidth: true
+                text: panel.relativeBrush ? qsTrId("seg.brushDiameterPercent") : qsTrId("seg.brushDiameter")
+                color: Theme.textSecondary
+                font.pixelSize: 12
+            }
+            Components.AppComboBox {
+                objectName: "segmentationBrushUnits"
+                Layout.preferredWidth: 112
+                minimumPopupWidth: 160
+                model: [qsTrId("seg.brushMillimeters"), qsTrId("seg.brushRelative")]
+                currentIndex: panel.relativeBrush ? 1 : 0
+                onActivated: index => panel.controller.setBrushRelative(index === 1)
+            }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
+            spacing: 6
+            visible: ["paint", "erase"].includes(panel.controller?.editMode)
+            Components.AppSlider {
+                objectName: "segmentationBrushSlider"
+                Layout.fillWidth: true
+                from: 1
+                to: panel.relativeBrush ? 25 : 50
+                stepSize: panel.relativeBrush ? 1 : 0.5
+                value: Math.max(from, Math.min(to, panel.relativeBrush ? panel.controller.brushPercent : (panel.controller?.brushDiameter ?? 5)))
+                Accessible.name: panel.relativeBrush ? qsTrId("seg.brushDiameterPercent") : qsTrId("seg.brushDiameter")
+                Accessible.description: (panel.relativeBrush ? qsTrId("seg.brushRelativeHelp") : qsTrId("seg.brushRangeHelp"))
+                // Publish user movement only: clamping the slider must never
+                // overwrite a precise value entered outside its common range.
+                onMoved: panel.relativeBrush ? panel.controller.setBrushPercent(value) : panel.controller.setBrushDiameter(value)
+                Components.AppToolTip {
+                    visible: parent.hovered
+                    text: (panel.relativeBrush ? qsTrId("seg.brushRelativeHelp") : qsTrId("seg.brushRangeHelp"))
+                }
+            }
+            Components.AppNumberField {
+                objectName: "segmentationBrushDiameter"
+                Layout.minimumWidth: 60
+                Layout.maximumWidth: 60
+                Layout.preferredWidth: 60
+                compact: true
+                numberValue: panel.relativeBrush ? panel.controller.brushPercent : (panel.controller?.brushDiameter ?? 5)
+                minimum: panel.relativeBrush ? 1 : 0.1
+                maximum: panel.relativeBrush ? 25 : 100
+                decimals: 1
+                Accessible.name: panel.relativeBrush ? qsTrId("seg.brushDiameterPercent") : qsTrId("seg.brushDiameter")
+                onEdited: value => panel.relativeBrush ? panel.controller.setBrushPercent(value) : panel.controller.setBrushDiameter(value)
+            }
+        }
+        Components.AppButton {
+            objectName: "newPaintSegment"
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
+            compact: true
+            text: qsTrId("seg.newPaint")
+            onClicked: panel.controller.newSegment()
+        }
+        GridLayout {
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
+            columns: width >= undoButton.implicitWidth + redoButton.implicitWidth + columnSpacing ? 2 : 1
+            uniformCellWidths: true
+            Components.AppButton {
+                id: undoButton
+                objectName: "segmentationUndo"
+                Layout.fillWidth: true
+                compact: true
+                text: qsTrId("seg.undo") + " (" + (panel.historyController?.undoShortcutText ?? "Ctrl+Z") + ")"
+                enabled: panel.historyController?.canUndo ?? false
+                onClicked: panel.historyController.undo()
+            }
+            Components.AppButton {
+                id: redoButton
+                objectName: "segmentationRedo"
+                Layout.fillWidth: true
+                compact: true
+                text: qsTrId("seg.redo") + " (" + (panel.historyController?.redoShortcutText ?? "Ctrl+Shift+Z") + ")"
+                enabled: panel.historyController?.canRedo ?? false
+                onClicked: panel.historyController.redo()
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
+            text: ["keep", "remove"].includes(panel.controller?.editMode) ? qsTrId("seg.islandHelp")
+                : panel.controller?.editMode !== "threshold" ? qsTrId("seg.brushHelp") : ""
+            visible: text !== ""
+            wrapMode: Text.Wrap
+            color: Theme.textMuted
+            font.pixelSize: 11
+        }
+    }
 
     Text {
         objectName: "voiPhaseScope"
@@ -306,7 +440,7 @@ ColumnLayout {
                     Layout.preferredWidth: 96
                     compact: true
                     numberValue: panel.selected.diameter ?? 1
-                    minimum: 0.1
+                    minimum: panel.relativeBrush ? 1 : 0.1
                     maximum: panel.selected.depthMax ?? 1000
                     decimals: 2
                     onEdited: value => panel.controller.setDiameter(value)
@@ -348,7 +482,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     compact: true
                     numberValue: panel.selected.depth ?? 1
-                    minimum: 0.1
+                    minimum: panel.relativeBrush ? 1 : 0.1
                     maximum: panel.selected.depthMax ?? 1000
                     decimals: 2
                     onEdited: value => panel.controller.setDepth(value)

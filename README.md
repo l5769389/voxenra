@@ -20,8 +20,8 @@
 | 二维阅片 | 调窗、伪彩、缩放、旋转、翻转、切片播放；平铺、多视口与多序列联动对比。 |
 | 重建与三维 | 三平面 MPR、斜面重建、厚层投影；3D 体绘制、显示模板、裁剪；CT 多时相 4D。 |
 | PET/CT 融合 | CT、PET、融合与 MIP 联动；手动刚性配准、融合比例调整、融合 3D。 |
-| 测量与分割 | 长度、角度、曲线、矩形／椭圆／自由形状 ROI；阈值分割、VOI、区域管理与统计。 |
-| 分析与报告 | CT 水模 QA、点源 MTF、斜坡线 FWHM 与层厚；PNG、DICOM、CSV / PDF、SEG / SR 导出。 |
+| 测量与分割 | 长度、角度、曲线、矩形／椭圆／自由形状 ROI；阈值分割、画笔／橡皮精修、VOI 与区域统计。 |
+| 分析与报告 | CT 水模 QA、点源 MTF、斜坡线 FWHM 与层厚；PNG、DICOM、CSV / PDF、SEG / SR 与 NRRD 导出。 |
 | 工作区 | 多页签、独立窗口、灵活布局、保存恢复；深色／中性深灰／浅色主题、语言包与离线手册。 |
 
 ## 二维阅片与序列对比
@@ -76,8 +76,8 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 ## 测量、分割与报告
 
 - **测量**：长度、角度、曲线、矩形／椭圆／自由形状 ROI，提供面积、周长和强度统计；支持列表定位、重命名、显隐、锁定、复制粘贴与撤销重做。
-- **分割**：MPR 阈值分割、自由形状 ROI 转单层分割、VOI 分析；多个区域可独立命名、着色、显隐与统计。
-- **结果**：测量导出 CSV / PDF 或 DICOM SR，PDF 自动匹配测量所在平面的参考图；分割导出 DICOM SEG，并可导入匹配当前影像的 SEG。
+- **分割**：MPR 阈值分割、画笔／橡皮精修、连通区域保留或删除、自由形状 ROI 转单层分割；支持独立区域管理、VOI 分析和撤销重做。
+- **结果**：测量导出 CSV / PDF 或 DICOM SR，PDF 自动匹配测量所在平面的参考图；分割支持 DICOM SEG 和 NRRD / Slicer 往返交换，保留重叠区域、名称与颜色。
 
 **自由形状测量**：逐点点击添加控制点，生成平滑闭合轮廓并统计。
 
@@ -87,14 +87,14 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 ![曲线测量与控制点](docs/screenshots/33-curve-measurement.gif)
 
-**分割结果交换**
+**分割精修**：毫米或相对视图尺寸的画笔与橡皮，支持当前切面或 3D 球形范围。
 
-![ROI 转分割、导出与重新导入 SEG](docs/screenshots/02-segmentation-exchange.gif)
+![MR 分割绘制、擦除与撤销重做](docs/screenshots/38-segmentation-refinement.gif)
 
 <table>
 <tr>
-<td width="50%"><b>关联结果导入</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="右侧导入匹配影像的 SEG" width="100%"></a></td>
-<td width="50%"><b>SEG / SR 导出</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG 与 SR 结果导出" width="100%"></a></td>
+<td width="50%"><b>关联结果导入</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="右侧导入匹配影像的 SEG / NRRD" width="100%"></a></td>
+<td width="50%"><b>分割与报告导出</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG、SR 与 NRRD 导出" width="100%"></a></td>
 </tr>
 <tr>
 <td><b>CT 水模 QA</b><br><a href="docs/screenshots/19-water-qa.png"><img src="docs/screenshots/19-water-qa.png" alt="CT 值、噪声与均匀性分析" width="100%"></a></td>
@@ -104,9 +104,9 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 ## 数据管理与工作区
 
-左侧导入原始影像，右侧导入关联 SEG。支持文件／文件夹／压缩包混选和拖入、PACS 查询下载、DICOM 标签查看，以及 PNG 和源 DICOM 导出。
+左侧导入原始影像，右侧导入关联 SEG / NRRD 分割。支持文件／文件夹／压缩包混选和拖入、PACS 查询下载、DICOM 标签查看，以及 PNG 和源 DICOM 导出。
 
-多页签可拖出成为独立窗口；工作区保存影像引用、布局、测量与分析结果，并恢复之前选择的工具。支持自动恢复、深色／中性深灰／浅色主题、本地 JSON 语言包与窗模板、离线手册、反馈和可关闭的启动更新检查。
+多页签可拖出成为独立窗口；工作区保存影像引用、布局、测量、分割掩膜与分析结果，并恢复之前选择的工具和精修参数。支持自动恢复、深色／中性深灰／浅色主题、本地 JSON 语言包与窗模板、离线手册、反馈和可关闭的启动更新检查。
 
 <table>
 <tr>
@@ -133,7 +133,8 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 - 支持常规 CT / MR / PET、Enhanced CT / MR，以及 RLE、JPEG、JPEG-LS、JPEG 2000 像素解码。MPR / 3D 需要规则空间采样，PET 定量取决于影像元数据。
 - 常见 RGB、YBR 与 PALETTE COLOR DICOM 支持二维、平铺、多帧播放及 PNG 导出；物理尺寸测量需要有效像素间距，不开放彩色 MPR / 3D 或 HU 分析。
-- 暂不支持 NIfTI / NRRD、动态／门控 PET、MR 4D、fMRI / DTI 分析，以及 SR / RTSTRUCT 导入。
+- NRRD 支持当前时相体数据导出，以及匹配原始网格的分割导入导出；暂不提供独立 NRRD 影像浏览或自动重采样。
+- 暂不支持 NIfTI、动态／门控 PET、MR 4D、fMRI / DTI 分析，以及 SR / RTSTRUCT 导入。
 - SEG / SR 保留源身份与影像引用，不使用 PNG / 普通 DICOM 导出的匿名选项。
 
 ## 文档与运行

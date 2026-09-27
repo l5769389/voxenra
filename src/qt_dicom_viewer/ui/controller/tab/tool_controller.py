@@ -247,8 +247,7 @@ class ToolController(QObject):
 
             case ToolBehavior.INTERACTION_PANEL:
                 self._set_active_tool(definition.tool_type)
-                self._set_active_interaction(InteractionType.PAN if self._modality == "MR"
-                    and tool_type == ToolType.SEGMENTATION else definition.default_interaction)
+                self._set_active_interaction(definition.default_interaction)
                 self._set_active_panel(None if self._tab_type == TabType.THREE_D
                     and tool_type == ToolType.WINDOW and self._modality not in ("CT", "MR", "PETCT3D")
                     else definition.tool_type)
@@ -283,7 +282,7 @@ class ToolController(QObject):
             logger.warning("Unknown interaction type: %s", interaction_value)
             return
 
-        if (self._modality == "MR" or not self._supports_ct_analysis) and interaction.value in ("service:mtf", "service:fwhm", "service:qa", "mpr:segmentation", "mpr:voi"):
+        if (self._modality == "MR" or not self._supports_ct_analysis) and interaction.value in ("service:mtf", "service:fwhm", "service:qa", "mpr:voi"):
             return
         if self._modality == "PETCT3D" and interaction not in (
             InteractionType.PAN, InteractionType.ZOOM, InteractionType.VOLUME_ROTATE,
@@ -353,8 +352,6 @@ class ToolController(QObject):
                 interaction = InteractionType(state["interaction"])
         elif tool == ToolType.SERVICE and service:
             interaction = InteractionType(service)
-        elif tool == ToolType.SEGMENTATION and self._modality == "MR":
-            interaction = InteractionType.PAN
         panel = tool if definition.behavior != ToolBehavior.INTERACTION else None
         if state.get("panel") == "" or (self._tab_type == TabType.THREE_D
                 and tool == ToolType.WINDOW and self._modality not in ("CT", "MR", "PETCT3D")):

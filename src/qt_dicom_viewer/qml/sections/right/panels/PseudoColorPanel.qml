@@ -10,6 +10,8 @@ ColumnLayout {
     id: pseudoColorPanel
     objectName: "pseudoColorPanel"
     required property var viewportController
+    property string buttonPrefix: "colorMap-"
+    signal colorSelected()
     property string description: qsTrId("text.1068")
     spacing: 6
 
@@ -29,7 +31,7 @@ ColumnLayout {
         delegate: Components.AppButton {
             id: colorMapButton
             required property var modelData
-            objectName: "colorMap-" + modelData.colorMap
+            objectName: pseudoColorPanel.buttonPrefix + modelData.colorMap
             Layout.fillWidth: true
             implicitHeight: 36
             topPadding: 6
@@ -38,9 +40,10 @@ ColumnLayout {
             checked: pseudoColorPanel.viewportController
                 && pseudoColorPanel.viewportController.activeColorMap
                     === modelData.colorMap
-            onClicked: pseudoColorPanel.viewportController?.applyColorMap(
-                modelData.colorMap
-            )
+            onClicked: {
+                pseudoColorPanel.viewportController?.applyColorMap(modelData.colorMap)
+                pseudoColorPanel.colorSelected()
+            }
 
             contentItem: RowLayout {
                 spacing: 10

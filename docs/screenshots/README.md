@@ -6,7 +6,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 - [ZIP 压缩包拖拽导入](06-zip-drag.gif)
 - [自由形状 ROI 绘制与统计](01-freehand-measurement.gif)
-- [分割结果导出与导入](02-segmentation-exchange.gif)
+- [画笔、橡皮与撤销重做](38-segmentation-refinement.gif)
 - [4D 多时相播放](03-4d-playback.gif)
 - [CT 3D 模板与旋转](04-volume-presets.gif)
 - [PET/CT 切面与融合比例](05-pet-ct-fusion.gif)
@@ -67,10 +67,11 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 <td width="50%"><b>自由形状 ROI 转分割</b><br><a href="31-freehand-to-seg.png"><img src="31-freehand-to-seg.png" alt="自由形状 ROI 转分割" width="100%"></a></td>
 </tr>
 <tr>
-<td width="50%"><b>SEG 与 SR 导出</b><br><a href="32-structured-report.png"><img src="32-structured-report.png" alt="SEG 与 SR 导出" width="100%"></a></td>
-<td width="50%"><b>关联 SEG 导入</b><br><a href="33-associated-import.png"><img src="33-associated-import.png" alt="关联 SEG 导入" width="100%"></a></td>
+<td width="50%"><b>SEG / SR / NRRD 导出</b><br><a href="32-structured-report.png"><img src="32-structured-report.png" alt="SEG / SR / NRRD 导出" width="100%"></a></td>
+<td width="50%"><b>SEG / NRRD 导入</b><br><a href="33-associated-import.png"><img src="33-associated-import.png" alt="SEG / NRRD 导入" width="100%"></a></td>
 </tr>
 <tr>
+<td width="50%"><b>画笔与橡皮精修</b><br><a href="38-segmentation-refinement.png"><img src="38-segmentation-refinement.png" alt="画笔与橡皮精修" width="100%"></a></td>
 <td width="50%"><b>多个分割区域管理</b><br><a href="34-segment-management.png"><img src="34-segment-management.png" alt="多个分割区域管理" width="100%"></a></td>
 </tr>
 </table>

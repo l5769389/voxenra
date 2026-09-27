@@ -30,6 +30,7 @@ Item {
     property string tooltipText: label + (placeholder ? qsTrId("text.0710") : "")
     readonly property bool hovered: hover.hovered
     readonly property bool tooltipVisible: tooltip.visible
+    signal pressed()
     signal triggered()
 
     implicitWidth: 46
@@ -74,6 +75,7 @@ Item {
             : action.resetAction ? Theme.resetActionBorder : Theme.selectionBorder
         Accessible.name: action.label
         Accessible.description: action.tooltipText
+        onPressed: action.pressed()
         onClicked: { action.tooltipDismissed = true; action.triggered() }
 
         contentItem: Item {

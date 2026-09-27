@@ -258,7 +258,7 @@ class DicomResultsController(QObject):
             self._finish(error_message(error), True, "")
             return
         path, _ = QFileDialog.getOpenFileName(
-            None, _msg("seg.chooseFile"), "", "DICOM (*.dcm *.DCM);;All files (*)"
+            None, _msg("seg.chooseFile"), "", "Segmentation (*.dcm *.DCM *.nrrd *.nhdr);;All files (*)"
         )
         if path:
             self.import_from(path)
@@ -274,6 +274,12 @@ class DicomResultsController(QObject):
             return False
         from qt_dicom_viewer.core.segmentation_import import read_segmentation
 
+        if str(path).lower().endswith((".nrrd", ".nhdr")):
+            from qt_dicom_viewer.core.nrrd_exchange import read_segmentation as read_nrrd_segmentation
+            phase = voi._phase
+            return self._start_masks(voi, volume, phase,
+                lambda: read_nrrd_segmentation(path, volume, phase=phase, cancelled=self._cancel.is_set))
+
         phase = voi._phase
         return self._start_masks(
             voi,
@@ -283,6 +289,75 @@ class DicomResultsController(QObject):
                 path, volume, instances, phase=phase, cancelled=self._cancel.is_set
             ),
         )
+
+    @Slot()
+    def exportNrrd(self):
+        if self._busy or self._closed:
+            return
+        self._operation = "export"
+        try:
+            self._mask_target()
+        except ValueError as error:
+            self._finish(error_message(error), True, "")
+            return
+        path = QFileDialog.getExistingDirectory(None, _msg("results.chooseDirectory"))
+        if path:
+            self.export_nrrd_to(path)
+
+    def export_nrrd_to(self, path):
+        """Export the current phase's source plus all its segmentation masks."""
+        if self._busy or self._closed:
+            return False
+        self._operation = "export"
+        try:
+            _, voi, _, volume, _ = self._mask_target()
+            records = [dict(r) for r in voi.current_records if r["kind"] == "segmentation" and r["series"] == volume.series_uid]
+            evaluations = {r["id"]: replace(voi.evaluations[r["id"]], mask=voi.evaluations[r["id"]].mask.copy()) for r in records}
+            # Scalar pixels and evaluations are immutable during rendering;
+            # keep the volume reference alive until the worker completes.
+        except (KeyError, ValueError) as error:
+            self._finish(error_message(error), True, "")
+            return False
+        self._cancel.clear()
+        self._busy, self._error, self._message, self._result_path = True, False, _msg("results.writing"), ""
+        self.changed.emit()
+
+        def write():
+            from pathlib import Path
+            import shutil
+            import tempfile
+            from uuid import uuid4
+            from qt_dicom_viewer.core.nrrd_exchange import write_nrrd, write_segmentation
+            root = Path(path)
+            staging = Path(tempfile.mkdtemp(prefix=".nrrd-", dir=root))
+            try:
+                write_nrrd(staging / "source.nrrd", volume.modality_pixels,
+                    volume.geometry.voxel_to_patient,
+                    metadata={"Voxenra_SourceSeriesUID": volume.series_uid, "Voxenra_Unit": volume.pixel_value_meta.unit or "Source"},
+                    cancelled=self._cancel.is_set)
+                if records:
+                    write_segmentation(staging / "segmentation.seg.nrrd", volume, records, evaluations, cancelled=self._cancel.is_set)
+                if self._cancel.is_set():
+                    raise InterruptedError()
+                target = root / ("Voxenra-NRRD-" + uuid4().hex[:8])
+                staging.rename(target)
+                return str(target), 2 if records else 1
+            finally:
+                if staging.exists():
+                    shutil.rmtree(staging)
+
+        def done(future):
+            try:
+                target, count = future.result()
+                payload = (_msg("results.written", count=count), False, target)
+            except InterruptedError:
+                payload = (_msg("results.cancelled"), False, "")
+            except Exception as error:
+                payload = (_msg("results.failed", reason=error_message(error)), True, "")
+            if not self._closed:
+                self.completed.emit(*payload)
+        self._executor.submit(write).add_done_callback(done)
+        return True
 
     @Slot(result=bool)
     def convertSelectedRoi(self):

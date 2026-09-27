@@ -1,5 +1,6 @@
 """Bounded per-tab undo history of completed edits, never of render jobs."""
 from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer
+from PySide6.QtGui import QKeySequence
 
 from qt_dicom_viewer.core.workspace_state import dumps, loads
 from qt_dicom_viewer.ui.workspace_snapshot import editable_state, edit_signature, apply_edits
@@ -39,6 +40,14 @@ class EditHistoryController(QObject):
     def canUndo(self):
         return bool(self._undo)
 
+    @Property(str, constant=True)
+    def undoShortcutText(self):
+        return QKeySequence.keyBindings(QKeySequence.StandardKey.Undo)[0].toString(QKeySequence.SequenceFormat.NativeText)
+
+    @Property(str, constant=True)
+    def redoShortcutText(self):
+        return QKeySequence.keyBindings(QKeySequence.StandardKey.Redo)[0].toString(QKeySequence.SequenceFormat.NativeText)
+
     @Property(bool, notify=changed)
     def canRedo(self):
         return bool(self._redo)
@@ -52,10 +61,15 @@ class EditHistoryController(QObject):
         self._signature = edit_signature(state)
         self.changed.emit()
 
+    # Keep these receivers in the class metaobject. Dynamic per-instance slots
+    # leave QML property caches referring to transient PySide metaobjects when
+    # tabs/engines are destroyed and another history controller is exposed.
+    @Slot()
     def schedule(self, *args):
         if not self._restoring:
             self._timer.start()
 
+    @Slot()
     def capture(self):
         self._timer.stop()
         if self._restoring or getattr(self.tab, "_registration_dragging", False):

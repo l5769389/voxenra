@@ -30,8 +30,6 @@ def evaluate_mask(volume, record):
         tuple(slice(int(a), int(a + b)) for a, b in zip(offset, mask.shape))
     ]
     count = int(mask.sum())
-    if not count:
-        raise ValueError(_msg("results.emptySegment", name=record["name"]))
     values = pixels[mask & np.isfinite(pixels)].astype(np.float64)
     minimum, maximum = (
         (float(values.min()), float(values.max())) if values.size else (0.0, 0.0)
@@ -50,15 +48,16 @@ def evaluate_mask(volume, record):
     )
 
 
-def mask_record(volume, mask, offset, *, name, color="#ed55ed", phase=None, **metadata):
+def mask_record(volume, mask, offset, *, name, color="#ed55ed", phase=None, allow_empty=False, **metadata):
     """Crop and own the mask; all stored fields round-trip through workspace JSON."""
-    if mask.dtype != bool or mask.ndim != 3 or not mask.any():
+    if mask.dtype != bool or mask.ndim != 3 or (not mask.any() and not allow_empty):
         raise ValueError(_msg("results.emptySegment", name=name))
     active = [
         np.flatnonzero(mask.any(axis=tuple(j for j in range(3) if j != i)))
         for i in range(3)
     ]
-    lo, hi = np.array([a[0] for a in active]), np.array([a[-1] + 1 for a in active])
+    lo, hi = ((np.array([a[0] for a in active]), np.array([a[-1] + 1 for a in active]))
+              if mask.any() else (np.zeros(3, int), np.ones(3, int)))
     cropped = mask[tuple(slice(a, b) for a, b in zip(lo, hi))].copy()
     origin = np.asarray(offset, dtype=int) + lo
     g = volume.geometry

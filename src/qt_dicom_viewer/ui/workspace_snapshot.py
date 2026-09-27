@@ -82,8 +82,23 @@ def apply_edits(tab, state):
     if voi is not None:
         voi.cancel()
         voi.records = [dict(record) for record in state.get("voi", [])]
-        voi._selected = ""
-        voi.evaluations.clear()
+        if not any(r["id"] == voi._selected for r in voi.records):
+            voi._selected = next((r["id"] for r in voi.current_records if r["kind"] == voi.tools.activePanel), "")
+        # Fixed masks already contain their final voxels. Restore their display
+        # and metrics before notifying QML; clearing first would remove every
+        # mask layer for a background recomputation after each Undo / Redo.
+        from qt_dicom_viewer.core.segmentation_masks import evaluate_mask
+        restored_evaluations = {}
+        for record in voi.current_records:
+            volume = voi.sources.get(record["series"])
+            if "mask" in record and volume is not None:
+                try:
+                    restored_evaluations[record["id"]] = evaluate_mask(volume.in_unit(record["unit"]), record)
+                except ValueError:
+                    # A changed source must follow the normal validation path,
+                    # never display a historical mask on an incompatible grid.
+                    pass
+        voi.evaluations = restored_evaluations
         voi.itemsChanged.emit()
         voi._schedule()
     if "registration" in state and hasattr(tab, "matrix"):
@@ -114,6 +129,8 @@ def tab_snapshot(tab):
                   linkedWindow=tab._linked_mpr_window, phase=tab._current_phase_index,
                   fps=tab._fps, playbackMode=tab.playbackMode, tool=str(tab.toolController.activeTool),
                   toolSelection=tab.toolController.persistent_selection())
+    if getattr(tab, "_voi_controller", None) is not None:
+        record["segmentationTool"] = tab.voiController.persistent_selection()
     if tab.mprLayout is not None:
         record["mprLayout"] = tab.mprLayout.snapshot()
     if hasattr(tab, "twoDLayout"):
@@ -269,6 +286,8 @@ def apply_tab_snapshot(tab, record):
         tab.restore_sync(record.get("compareSync", {}))
         tab.setScrollMode(record.get("compareScrollMode", "relative"))
     tab.toolController.restore_selection(record.get("toolSelection"), record.get("tool"))
+    if getattr(tab, "_voi_controller", None) is not None:
+        tab.voiController.restore_selection(record.get("segmentationTool"))
     if tab.mprLayout is not None:
         tab.mprLayout.sync_state()
         if record.get("activeView") == view_key(tab.mprLayout.volumeViewport):

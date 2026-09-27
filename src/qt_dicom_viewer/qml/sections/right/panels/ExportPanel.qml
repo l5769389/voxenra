@@ -200,6 +200,20 @@ ColumnLayout {
         font.pixelSize: 12
         wrapMode: Text.Wrap
     }
+    Components.AppButton {
+        objectName: "exportNrrdExchange"
+        Layout.fillWidth: true
+        text: qsTrId("nrrd.export")
+        enabled: !!root.dicomResults && !root.dicomResults.busy
+        onClicked: root.dicomResults.exportNrrd()
+    }
+    Text {
+        Layout.fillWidth: true
+        text: qsTrId("nrrd.exportHelp")
+        color: Theme.textMuted
+        font.pixelSize: 11
+        wrapMode: Text.Wrap
+    }
     Basic.ProgressBar { Layout.fillWidth: true; visible: root.dicomResults?.busy ?? false; indeterminate: true }
     Text {
         objectName: "dicomResultsMessage"

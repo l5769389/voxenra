@@ -69,8 +69,9 @@ Rectangle {
             toolController: rightPanel.toolController
             viewportController: rightPanel.viewportController
             tabController: rightPanel.tabController
-            onPanelRequested: tool => {
-                if (compactPanel.opened && compactPanel.panelTool === tool) compactPanel.close()
+            panelPopup: compactPanel
+            onPanelRequested: (tool, closeOnly) => {
+                if (closeOnly || (compactPanel.visible && compactPanel.panelTool === tool)) compactPanel.close()
                 else { compactPanel.panelTool = tool; compactPanel.open() }
             }
         }
@@ -173,9 +174,10 @@ Rectangle {
         target: rightPanel.tabController?.playing !== undefined ? rightPanel.tabController : null
         function onPlayingChanged() { compactPanel.close() }
     }
-    Basic.Popup {
+    Components.ToolFlyout {
         id: compactPanel
         objectName: "compactVolumePanel"
+        parent: rightPanel
         property string panelTool: ""
         // A native popup remains above the native VTK viewport.
         popupType: Basic.Popup.Window
@@ -186,50 +188,27 @@ Rectangle {
         implicitWidth: 280
         width: implicitWidth
         implicitHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48,
-            compactDetails.implicitHeight + 56)
+            compactDetails.implicitHeight + chromeHeight)
         height: implicitHeight
-        padding: 8
-        margins: 8
-        focus: true
-        closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutside
-        background: Rectangle { color: Theme.elevatedBackground; radius: Theme.controlRadius }
-        contentItem: ColumnLayout {
-            spacing: 8
-            RowLayout {
-                Layout.fillWidth: true
-                Text {
-                    Layout.fillWidth: true
-                    text: rightPanel.toolController?.activeToolLabel ?? ""
-                    color: Theme.textPrimary
-                    font.pixelSize: 14
-                    font.bold: true
-                }
-                Components.ToolbarAction {
-                    width: 28; height: 28
-                    buttonObjectName: "compactVolumePanelClose"
-                    iconName: "close"
-                    label: qsTrId("text.0621")
-                    onTriggered: compactPanel.close()
-                }
+        title: rightPanel.toolController?.activeToolLabel ?? ""
+        closeButtonName: "compactVolumePanelClose"
+        Flickable {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            contentWidth: width
+            contentHeight: compactDetails.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            Right.ToolDetailPanel {
+                id: compactDetails
+                width: parent.width - 8
+                height: implicitHeight
+                activePanel: compactPanel.visible ? compactPanel.panelTool : ""
+                viewportController: rightPanel.viewportController
+                toolController: rightPanel.toolController
+                tabController: rightPanel.tabController
             }
-            Flickable {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                contentWidth: width
-                contentHeight: compactDetails.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
-                Right.ToolDetailPanel {
-                    id: compactDetails
-                    width: parent.width - 8
-                    height: implicitHeight
-                    activePanel: compactPanel.visible ? compactPanel.panelTool : ""
-                    viewportController: rightPanel.viewportController
-                    toolController: rightPanel.toolController
-                    tabController: rightPanel.tabController
-                }
-                Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
-            }
+            Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
         }
     }
 }

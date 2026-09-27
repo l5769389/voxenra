@@ -1,8 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
+import QtQuick.Layouts
 import QtQuick.Controls.Basic as Basic
 import "../../components" as Components
 import "../../theme"
+import "panels" as Panels
 Flickable {
     id: rail
     objectName: "compactToolRail"
@@ -10,7 +13,8 @@ Flickable {
     required property var viewportController
     property var tabController: null
     property string expandedTool: ""
-    signal panelRequested(string tool)
+    property var panelPopup: null
+    signal panelRequested(string tool, bool closeOnly)
     readonly property var directTools: ["window", "ct-window", "pet-window", "scroll", "pan", "zoom", "volume-rotate", "mpr-rotate-3d"]
     readonly property var groupedTools: ["rotate", "measure", "annotate", "pseudocolor", "volume-direction"]
     readonly property var panelTools: viewportController?.viewportType === "volume"
@@ -20,7 +24,10 @@ Flickable {
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
-    onToolControllerChanged: expandedTool = ""
+    onToolControllerChanged: { expandedTool = ""; palettePopup.close() }
+    onViewportControllerChanged: palettePopup.close()
+    onContentYChanged: palettePopup.close()
+    onExpandedToolChanged: if (expandedTool !== "pseudocolor") palettePopup.close()
     onVisibleChanged: if (!visible) expandedTool = ""
     Connections {
         target: rail.toolController ?? null
@@ -41,14 +48,23 @@ Flickable {
             action: c.colorMap, label: c.label, iconName: "pseudocolor", stops: c.stops}))
         return []
     }
-    function activateGroup(tool) {
+    function activateGroup(tool, anchor, closeOnly) {
         if (["play", "slice-play"].includes(tool)) {
             toolController.activateTool(tool)
             tabController?.togglePlaybackMode(tool === "slice-play" || !tabController.temporalPlayback ? "slice" : "phase")
         } else if (panelTools.includes(tool)) {
             expandedTool = ""
             toolController.activateTool(tool)
-            rail.panelRequested(tool)
+            rail.panelRequested(tool, closeOnly)
+        } else if (tool === "pseudocolor") {
+            if (closeOnly || palettePopup.visible) {
+                palettePopup.close()
+                return
+            }
+            toolController.activateTool(tool)
+            expandedTool = tool
+            palettePopup.anchorItem = anchor
+            palettePopup.open()
         } else if (groupedTools.includes(tool)) {
             const close = expandedTool === tool
             toolController.activateTool(tool)
@@ -65,6 +81,44 @@ Flickable {
         else if (tool === "annotate") viewportController.setAnnotationMode(action === "annotate:text")
         else toolController.selectInteraction(action)
     }
+    Components.ToolFlyout {
+        id: palettePopup
+        objectName: "compactPalettePopup"
+        property var anchorItem: null
+        parent: rail
+        popupType: Basic.Popup.Item
+        title: rail.toolController?.activeToolLabel ?? ""
+        closeButtonName: "compactPalettePopupClose"
+        width: 280
+        height: Math.min(palette.implicitHeight + chromeHeight,
+            (rail.Window.window?.height ?? 640) - 48, 560)
+        onAboutToShow: {
+            const position = anchorItem.mapToItem(rail, 0, 0)
+            const railPosition = rail.mapToItem(null, 0, 0)
+            x = -width - 8
+            y = Math.max(8 - railPosition.y,
+                Math.min(position.y, (rail.Window.window?.height ?? 640) - height - 8 - railPosition.y))
+            paletteScroll.contentY = 0
+        }
+        onClosed: if (rail.expandedTool === "pseudocolor") rail.expandedTool = ""
+        Flickable {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            id: paletteScroll
+            clip: true
+            contentWidth: width
+            contentHeight: palette.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            Basic.ScrollBar.vertical: Components.AppScrollBar {}
+            Panels.PseudoColorPanel {
+                id: palette
+                width: paletteScroll.width
+                viewportController: rail.viewportController
+                buttonPrefix: "compactAction-"
+                onColorSelected: palettePopup.close()
+            }
+        }
+    }
     Column {
         id: entries
         y: 4
@@ -77,6 +131,7 @@ Flickable {
             delegate: Column {
                 id: group
                 required property var modelData
+                property bool closePopupOnRelease: false
                 readonly property bool playback: ["play", "slice-play"].includes(modelData.toolType)
                 readonly property string playMode: modelData.toolType === "slice-play" || !rail.tabController?.temporalPlayback ? "slice" : "phase"
                 readonly property bool running: playback && !!rail.tabController?.playing && rail.tabController.playbackMode === playMode
@@ -84,6 +139,7 @@ Flickable {
                 spacing: 4
                 bottomPadding: secondary.visible ? 10 : 0
                 Components.ToolbarAction {
+                    id: primaryButton
                     width: 40; height: 38
                     x: (group.width - width) / 2
                     buttonObjectName: "compactTool-" + group.modelData.toolType
@@ -100,7 +156,17 @@ Flickable {
                     actionEnabled: !!rail.viewportController && group.modelData.enabled !== false
                         && (!rail.tabController?.playing || group.running)
                         && (!group.playback || group.running || (group.playMode === "phase" ? !!rail.tabController?.phasePlaybackAvailable : !!rail.tabController?.slicePlaybackAvailable))
-                    onTriggered: rail.activateGroup(group.modelData.toolType)
+                    onPressed: {
+                        const tool = group.modelData.toolType
+                        group.closePopupOnRelease = tool === "pseudocolor"
+                            ? palettePopup.wasOpenOnPress()
+                            : !!rail.panelPopup && rail.panelPopup.panelTool === tool
+                                && rail.panelPopup.wasOpenOnPress()
+                    }
+                    onTriggered: {
+                        rail.activateGroup(group.modelData.toolType, primaryButton, group.closePopupOnRelease)
+                        group.closePopupOnRelease = false
+                    }
                     Rectangle {
                         visible: rail.groupedTools.includes(group.modelData.toolType) || rail.panelTools.includes(group.modelData.toolType)
                         anchors.right: parent.right; anchors.bottom: parent.bottom
@@ -115,7 +181,7 @@ Flickable {
                     x: 2
                     width: group.width - 4
                     height: visible ? subbuttons.height + 12 : 0
-                    visible: rail.expandedTool === group.modelData.toolType
+                    visible: rail.expandedTool === group.modelData.toolType && group.modelData.toolType !== "pseudocolor"
                     radius: 5
                     color: Theme.secondarySoft
                     Column {

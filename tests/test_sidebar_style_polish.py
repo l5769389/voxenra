@@ -70,7 +70,14 @@ def test_compact_secondary_actions_change_real_view_and_switch_cleanly(sidebar_s
     assert view.viewport_state.rotation_degrees != initial
     reveal(window, rail, find(window,'compactTool-pseudocolor'))
     name = next(o['colorMap'] for o in view.colorMapOptions if o['colorMap'] != view.activeColorMap)
-    reveal(window, rail, find(window,'compactAction-'+name))
+    popup = window.findChild(QObject, 'compactPalettePopup')
+    assert popup is not None and popup.property('visible')
+    assert window.grabWindow().save(str(tmp_path/'compact-palette-open.png'))
+    anchor = find(window, 'compactTool-pseudocolor').mapToScene(QPointF())
+    assert rail.mapToScene(QPointF(popup.property('x') + popup.property('width'), 0)).x() <= anchor.x()
+    assert not next(x for x in descendants(window.contentItem()) if x.objectName() == 'compactGroup-pseudocolor').isVisible()
+    click(window, find(window,'compactAction-'+name))
+    assert not popup.property('visible')
     assert view.activeColorMap == name
     assert window.grabWindow().save(str(tmp_path/'compact-pseudocolor.png'))
     reveal(window, rail, find(window,'compactTool-annotate'))
@@ -79,6 +86,49 @@ def test_compact_secondary_actions_change_real_view_and_switch_cleanly(sidebar_s
     reveal(window, rail, find(window,'compactTool-pan'))
     assert view.activeInteraction == 'pan' and rail.property('expandedTool') == ''
     click(window, find(window,'toggleRightPanel'))
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('theme,locale', [('graphite', 'zh-CN'), ('light', 'en-US')])
+def test_compact_palette_is_bounded_and_escape_closes(sidebar_scene, theme, locale, tmp_path):
+    window, app, records, warnings = sidebar_scene
+    open_image(app, records[0])
+    app.settingsController.setValue('appearance', 'theme', theme)
+    app.languageController.selectLanguage(locale)
+    window.resize(1280, 720)
+    click(window, find(window, 'toggleRightPanel'))
+    rail = find(window, 'compactToolRail')
+    reveal(window, rail, find(window, 'compactTool-pseudocolor'))
+    popup = window.findChild(QObject, 'compactPalettePopup')
+    assert popup.property('visible')
+    position = rail.mapToScene(QPointF(popup.property('x'), popup.property('y')))
+    assert position.y() >= 0
+    assert position.y() + popup.property('height') <= window.height()
+    assert position.x() + popup.property('width') <= rail.mapToScene(QPointF()).x()
+    assert find(window, 'toolFlyoutHeader').height() == 24
+    assert window.grabWindow().save(str(tmp_path / 'palette-flyout.png'))
+    trigger = find(window, 'compactTool-pseudocolor')
+    # Press must not auto-dismiss before release fires the toggle handler.
+    point = trigger.mapToScene(QPointF(trigger.width()/2, trigger.height()/2)).toPoint()
+    for _ in range(3):
+        QTest.mousePress(window, Qt.LeftButton, pos=point)
+        QTest.qWait(25)
+        assert popup.property('visible')
+        QTest.mouseRelease(window, Qt.LeftButton, pos=point)
+        QTest.qWait(50)
+        assert not popup.property('visible')
+        click(window, trigger)
+        assert popup.property('visible')
+    click(window, find(window, 'compactPalettePopupClose'))
+    assert not popup.property('visible')
+    click(window, trigger)
+    QTest.mouseClick(window, Qt.LeftButton, pos=QPointF(600, 400).toPoint())
+    QTest.qWait(40)
+    assert not popup.property('visible')
+    click(window, trigger)
+    QTest.keyClick(window, Qt.Key_Escape)
+    QTest.qWait(30)
+    assert not popup.property('visible') and rail.property('expandedTool') == ''
     assert not warnings, warnings
 
 
@@ -258,4 +308,39 @@ def test_compact_reset_restores_all_view_state(sidebar_scene, tmp_path, theme):
     click(window, find(window, 'activeToolReset'))
     assert (view.viewport_state.pan_x, view.viewport_state.pan_y) == (0, 0)
     assert view.viewport_state.zoom == 1.5
+    assert not warnings, warnings
+
+
+def test_compact_layout_and_palette_switch_without_reopening(sidebar_scene, tmp_path):
+    from test_mpr_volume_tools_qml import item_window
+    window, app, records, warnings = sidebar_scene
+    open_image(app, records[0])
+    window.resize(1280, 720)
+    click(window, find(window, 'toggleRightPanel'))
+    layout = window.findChild(QObject, 'compactVolumePanel')
+    palette = window.findChild(QObject, 'compactPalettePopup')
+    trigger = find(window, 'compactTool-mpr-layout')
+    for _ in range(3):
+        click(window, trigger)
+        assert layout.property('visible')
+        click(window, trigger)
+        assert not layout.property('visible')
+    click(window, trigger)
+    header = next(i for i in descendants(layout.property('contentItem'))
+                  if i.objectName() == 'toolFlyoutHeader')
+    assert header.height() == 24
+    native = item_window(header)
+    assert native.grabWindow().save(str(tmp_path / 'layout-flyout.png'))
+    click(window, find(window, 'compactTool-pseudocolor'))
+    assert palette.property('visible') and not layout.property('visible')
+    click(window, trigger)
+    assert layout.property('visible') and not palette.property('visible')
+    # Outside dismissal must still allow the next deliberate click to open.
+    QTest.mouseClick(window, Qt.LeftButton, pos=QPointF(600, 400).toPoint())
+    QTest.qWait(50)
+    assert not layout.property('visible')
+    click(window, trigger)
+    assert layout.property('visible')
+    click(window, find(window, 'compactTool-pan'))
+    assert not layout.property('visible')
     assert not warnings, warnings

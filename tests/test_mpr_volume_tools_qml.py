@@ -253,3 +253,34 @@ def test_remember_layout_checkbox_works_in_compact_and_expanded_panel(scene):
     assert layout.layout == 'columns'
     assert layout._settings.section('layout')['rememberedMprLayout'] == 'columns'
     assert not warnings, warnings
+
+
+def test_compact_flyout_trigger_toggles_and_switches(scene, tmp_path):
+    view, tab, modality, warnings = scene
+    for tool in ('mpr-layout', 'viewport-settings', 'volume-preset'):
+        click(view, 'compactTool-' + tool)
+        assert popup(view).property('visible')
+        assert find(view, 'toolFlyoutHeader').height() == 24
+        assert item_window(find(view, 'compactVolumePanelClose')).grabWindow().save(
+            str(tmp_path / (tool + '.png')))
+        # Test press/release separately: dismissal on press used to cause reopen.
+        for _ in range(3):
+            trigger = find(view, 'compactTool-' + tool)
+            point = trigger.mapToScene(QPointF(trigger.width()/2, trigger.height()/2)).toPoint()
+            QTest.mousePress(view, Qt.LeftButton, pos=point)
+            # Native popup may already be dismissed; release must not reopen it.
+            QTest.qWait(120)
+            QTest.mouseRelease(view, Qt.LeftButton, pos=point)
+            QTest.qWait(50)
+            assert not popup(view).property('visible')
+            click(view, 'compactTool-' + tool)
+            assert popup(view).property('visible')
+        click(view, 'compactVolumePanelClose')
+    click(view, 'compactTool-mpr-layout')
+    click(view, 'compactTool-viewport-settings')
+    assert popup(view).property('visible')
+    assert popup(view).property('panelTool') == 'viewport-settings'
+    assert find(view, 'mprLinkRotation')
+    click(view, 'compactTool-pan')
+    assert not popup(view).property('visible')
+    assert not warnings, warnings

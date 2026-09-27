@@ -15,6 +15,7 @@ on:
       - "docs/screenshots/07-mr-reading.png"
       - "docs/screenshots/05-pet-ct-fusion.png"
       - "docs/screenshots/02-mpr-segmentation.png"
+      - "docs/screenshots/38-segmentation-refinement.gif"
       - "docs/screenshots/01-2d-measurement.png"
       - "docs/screenshots/37-theme-graphite.png"
       - "docs/screenshots/25-theme-dark.png"

@@ -285,11 +285,18 @@ Item {
 
     InteractionLayer {
         id: interactionLayer
+        brushDiameterPixels: viewportRoot.viewportController?.voiController?.brushRelative
+            ? Math.min(width, height) * (viewportRoot.viewportController.voiController.brushPercent / 100)
+            : (viewportRoot.viewportController?.voiController?.brushDiameter ?? 5) * imageCanvas.pixelsPerMillimeter
+        brushPreviewEnabled: viewportRoot.viewportController?.activeInteraction === "mpr:segmentation"
+            && !!viewportRoot.viewportController?.voiController?.enabled
+            && imageCanvas.mapToDicomPixel(interactionLayer, cursorPosition).valid
         anchors.fill: parent
         z: 20
         enabled: viewportRoot.viewportController !== null
         onPointerPressedAt: (position, buttons) => {
             const controller = viewportRoot.viewportController
+            controller?.setBrushViewMetrics?.(imageCanvas.pixelsPerMillimeter, Math.min(width, height))
             if (controller?.captureLocatorPress === undefined) return
             const hit = imageCanvas.mapToDicomPixel(interactionLayer, position)
             interactionLayer.locatorPressed = controller.captureLocatorPress(

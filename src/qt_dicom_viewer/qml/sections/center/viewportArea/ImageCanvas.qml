@@ -302,14 +302,18 @@ Rectangle {
                 }
 
                 Repeater {
-                    model: imageCanvasRoot.viewportController?.voiMasks ?? []
-                    delegate: Image {
-                        required property var modelData
+                    id: maskLayers
+                    readonly property var masks: imageCanvasRoot.viewportController?.voiMasks ?? []
+                    // The count is stable during a stroke. A QVariantList model
+                    // resets delegates on every preview update, briefly removing
+                    // their textures and making Paint/Erase visibly flicker.
+                    model: masks.length
+                    delegate: SegmentationMaskImage {
+                        required property int index
+                        readonly property var modelData: maskLayers.masks[index]
                         objectName: "mprSegmentationMask"
                         anchors.fill: parent
-                        source: modelData.source
-                        smooth: false
-                        cache: false
+                        source: modelData?.source ?? ""
                     }
                 }
 
