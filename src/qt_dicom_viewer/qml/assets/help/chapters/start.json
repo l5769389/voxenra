@@ -72,7 +72,7 @@
       },
       {
         "title": "文件格式与像素解码",
-        "body": "文件名不要求 **.dcm** 后缀。ZIP、RAR、7z、TAR 等仅为外层归档；其中仍需是受支持的 DICOM。软件内置未压缩、RLE、JPEG Baseline／Extended（仅 8 位）／Lossless、JPEG-LS 和 JPEG 2000 的解码组件，阅片、缩略图及 PNG 导出使用相同策略。缺少组件、未支持编码与解码失败分别提示。像素解码支持不等于支持所有多帧、彩色或视频对象。**NIfTI（.nii / .nii.gz）、NRRD 和厂家原始 MR 数据**不是当前输入格式。",
+        "body": "文件名不要求 **.dcm** 后缀。ZIP、RAR、7z、TAR 等仅为外层归档；其中仍需是受支持的 DICOM。软件内置未压缩、RLE、JPEG Baseline／Extended（仅 8 位）／Lossless、JPEG-LS 和 JPEG 2000 的解码组件，阅片、缩略图及 PNG 导出使用相同策略。缺少组件、未支持编码与解码失败分别提示。像素解码支持不等于支持所有多帧、彩色或视频对象。**NIfTI（.nii / .nii.gz）、独立 NRRD 影像和厂家原始 MR 数据**不是当前影像导入格式。NRRD 分割可在对应 DICOM 的 MPR / 4D 中通过右侧导入，当前时相体数据和分割可导出 NRRD 供 Slicer 使用。",
         "messageId": "manual.supported-images.section5"
       }
     ],

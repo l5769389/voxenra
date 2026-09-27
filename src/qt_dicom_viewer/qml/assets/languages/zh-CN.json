@@ -1780,7 +1780,7 @@
         "manual.supported-images.section4.title": "彩色影像与其他对象",
         "manual.supported-images.section4.body": "常见 **RGB、YBR 和 PALETTE COLOR** 图像支持二维、平铺、缩放、平移、旋转、标注及 PNG 导出；可逐帧解码的普通彩色多帧对象支持翻帧和播放。显示保留源颜色，不应用 CT 窗值、反白、伪彩或 HU／SUV／MTF 等标量分析。有有效 PixelSpacing 时可做物理尺寸测量；缺失标定时隐藏毫米标尺并关闭尺寸测量，超声区域专用标定尚未支持。彩色图像不进行 MPR／3D 重建；视频编码、大型病理切片和厂商专用对象未纳入本次支持。CR、DX、US、XA 等仍需按具体对象验证；可查看 Tag 不代表所有对象均可阅片。",
         "manual.supported-images.section5.title": "文件格式与像素解码",
-        "manual.supported-images.section5.body": "文件名不要求 **.dcm** 后缀。ZIP、RAR、7z、TAR 等仅为外层归档；其中仍需是受支持的 DICOM。软件内置未压缩、RLE、JPEG Baseline／Extended（仅 8 位）／Lossless、JPEG-LS 和 JPEG 2000 的解码组件，阅片、缩略图及 PNG 导出使用相同策略。缺少组件、未支持编码与解码失败分别提示。像素解码支持不等于支持所有多帧、彩色或视频对象。**NIfTI（.nii / .nii.gz）、NRRD 和厂家原始 MR 数据**不是当前输入格式。",
+        "manual.supported-images.section5.body": "文件名不要求 **.dcm** 后缀。ZIP、RAR、7z、TAR 等仅为外层归档；其中仍需是受支持的 DICOM。软件内置未压缩、RLE、JPEG Baseline／Extended（仅 8 位）／Lossless、JPEG-LS 和 JPEG 2000 的解码组件，阅片、缩略图及 PNG 导出使用相同策略。缺少组件、未支持编码与解码失败分别提示。像素解码支持不等于支持所有多帧、彩色或视频对象。**NIfTI（.nii / .nii.gz）、独立 NRRD 影像和厂家原始 MR 数据**不是当前影像导入格式。NRRD 分割可在对应 DICOM 的 MPR / 4D 中通过右侧导入，当前时相体数据和分割可导出 NRRD 供 Slicer 使用。",
         "mr.invalidFrames": "Enhanced MR 帧信息不完整或无效；可在 Tag 中查看源文件。",
         "compare.patientCoordinates": "按患者坐标联动",
         "compare.relativeProgress": "按相对进度联动",
