@@ -85,4 +85,3 @@ def test_workspace_cancel_prevents_installer_handoff(scene, tmp_path, monkeypatc
     updater.dismiss()
     assert updater._command is None
     assert not warnings, warnings
-
