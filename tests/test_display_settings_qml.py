@@ -19,12 +19,22 @@ def shot(window, name, directory):
     assert window.grabWindow().save(str(directory / (name + '.png')))
 
 
+def select_category(window, category):
+    item = find(window, 'settingsCategory-' + category)
+    scroll = find(window, 'settingsCategoryScroll').property('contentItem')
+    point = item.mapToItem(scroll, QPointF(0, 0))
+    maximum = max(0, scroll.property('contentHeight') - scroll.height())
+    scroll.setProperty('contentY', max(0, min(maximum, scroll.property('contentY') + point.y() - scroll.height() / 2)))
+    QTest.qWait(40)
+    click(window, item)
+
+
 @pytest.mark.parametrize('category', ['colormap', 'window', 'crosshair', 'corners', 'scale', 'measurement', 'roi', 'export'])
 def test_settings_pages_load_resize_and_reset(scene, category, tmp_path):
     window, app, warnings = scene
     app.workspaceController.openSettings()
     QTest.qWait(50)
-    click(window, find(window, 'settingsCategory-' + category))
+    select_category(window, category)
     QTest.qWait(70)
     shot(window, category, tmp_path)
     window.resize(1280, 720)
@@ -47,10 +57,10 @@ def test_real_settings_edits_and_reload(scene, tmp_path):
     type_text(window, find(window, 'setting-scale-color'), '#aabbcc')
     QTest.keyClick(window, Qt.Key_Tab)
     assert app.settingsController.values['scale'] == {'enabled': False, 'color': '#aabbcc', 'lengthMm': 100}
-    click(window, find(window, 'settingsCategory-roi'))
+    select_category(window, 'roi')
     click(window, find(window, 'setting-roi-mean'))
     assert not app.settingsController.values['roi']['mean']
-    click(window, find(window, 'settingsCategory-window'))
+    select_category(window, 'window')
     from test_settings_redesign import reveal_setting
     reveal_setting(window, find(window, 'windowTemplateName'))
     type_text(window, find(window, 'windowTemplateName'), 'My Lung')

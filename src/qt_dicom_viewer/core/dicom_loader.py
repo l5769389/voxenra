@@ -244,9 +244,26 @@ def _read_series_dataset(file_path: Path) -> FileDataset | None:
 
 
 class DicomLoader:
-    def __init__(self):
+    def __init__(self, *, maximum_cache_bytes: int = 64 * 1024 * 1024,
+                 maximum_cache_frames: int = 12):
         self._decoded = OrderedDict()
         self._headers = OrderedDict()
+        self._maximum_cache_bytes = max(0, int(maximum_cache_bytes))
+        self._maximum_cache_frames = max(1, int(maximum_cache_frames))
+
+    @property
+    def cache_bytes(self) -> int:
+        """Decoded pixel storage only; encoded Enhanced headers have a separate budget."""
+        return sum(pixels.nbytes for _, pixels in self._decoded.values())
+
+    def _trim_decoded_cache(self):
+        # Keep the current frame even if it exceeds the budget, so adjusting
+        # window/level on a large image does not repeatedly decode the file.
+        while len(self._decoded) > 1 and (
+            len(self._decoded) > self._maximum_cache_frames
+            or self.cache_bytes > self._maximum_cache_bytes
+        ):
+            self._decoded.popitem(last=False)
 
     def load_a_dicom(
         self,
@@ -305,8 +322,7 @@ class DicomLoader:
             validate_ct_dataset(dataset)
             validate_mr_dataset(dataset)
             self._decoded[key] = (dataset, pixels)
-            while len(self._decoded) > 12:
-                self._decoded.popitem(last=False)
+            self._trim_decoded_cache()
         self._decoded.move_to_end(key)
         return self._decoded[key]
 

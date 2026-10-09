@@ -23,6 +23,7 @@ from qt_dicom_viewer.model.tool_catalog import (
     TOOL_CATALOG,
     TOOL_DEFINITIONS,
 )
+from qt_dicom_viewer.model.toolbar_priorities import toolbar_groups
 from qt_dicom_viewer.preset import CT_WINDOW_PRESETS
 from qt_dicom_viewer.ui.controller.settings_controller import resolve_settings
 
@@ -486,6 +487,10 @@ class ToolController(QObject):
     @_TextProperty(list, notify=_i18n_tools, notify_name='_i18n_tools')
     def tools(self) -> list[dict]:
         return build_tool_items(self._tab_type, self._modality, self._supports_ct_analysis, self._is_color, self._color_calibrated)
+
+    @Property('QVariantMap', notify=_i18n_tools)
+    def toolbarGroups(self) -> dict:
+        return toolbar_groups(self._tab_type, self._modality, self._is_color, self.tools)
 
     @_TextProperty(list, notify=_i18n_rotateActions, notify_name='_i18n_rotateActions')
     def rotateActions(self) -> list[dict]:

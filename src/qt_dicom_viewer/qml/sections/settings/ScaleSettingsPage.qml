@@ -26,7 +26,7 @@ SettingsSplit {
             }
         }
         SettingColor { Layout.fillWidth: true; title: qsTrId("text.0839"); settingName: "scale-color"; value: root.values.color; onEdited: color => root.settingsController.setValue("scale", "color", color) }
-        Text { Layout.fillWidth: true; text: qsTrId("text.0840"); color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.Wrap }
+        Components.HelpButton { Layout.alignment: Qt.AlignRight; explanation: qsTrId("text.0840") }
     }
     preview: Component {
         ColumnLayout {

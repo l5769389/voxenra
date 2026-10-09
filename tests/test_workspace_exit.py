@@ -292,8 +292,13 @@ def test_workspace_exit_settings_qml(scene, size, tmp_path):
         QTest.qWait(20)
         assert preference(app) == expected
         description = find(window, 'workspaceExitDescription')
-        assert description.property('paintedWidth') <= description.width() + 1
-        assert description.property('paintedHeight') <= description.height() + 1
+        click(window, description)
+        body = find(window, 'workspaceExitDescriptionText')
+        assert body.property('text') == description.property('explanation')
+        assert ('已有工作区直接保存' if expected == 'save' else '不保存') in body.property('text')
+        assert body.property('paintedWidth') <= body.width() + 1
+        assert body.property('paintedHeight') <= body.height() + 1
+        QTest.keyClick(window, Qt.Key_Escape)
     assert window.grabWindow().save(str(tmp_path / 'exit-settings.png'))
     click(window, recovery)
     assert not app.workspaceDocumentController.automaticRecovery

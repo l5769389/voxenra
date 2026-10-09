@@ -15,14 +15,12 @@ ColumnLayout {
     property string description: qsTrId("text.1068")
     spacing: 6
 
-    Text {
-        Layout.fillWidth: true
-        text: pseudoColorPanel.description
-        color: Theme.textSubtle
-        font.pixelSize: 11
-        wrapMode: Text.Wrap
-        Layout.bottomMargin: 4
+    Components.PanelHeading {
+        objectName: "PseudoColorPanelHeading"
+        title: qsTrId("text.0309")
+        explanation: pseudoColorPanel.description
     }
+
 
     Repeater {
         model: pseudoColorPanel.viewportController

@@ -191,10 +191,12 @@ def test_export_hover_is_opaque_high_contrast_and_wraps_long_paths(sidebar_scene
     link = find(window, 'exportManualLink')
     wait_until(link.isVisible)
     QTest.qWait(80)
-    tip = next(child for child in link.children() if child.metaObject().className().startswith('AppToolTip'))
-    for name, text in [('manual', link.property('tooltip')),
+    tip = next(child for child in link.children() if child.metaObject().className().startswith('AppToolTip')
+               and child.property('text') == link.property('tooltipText'))
+    move_pointer(window, window.contentItem().mapToScene(QPointF(800, 30)).toPoint())
+    for name, text in [('manual', link.property('tooltipText')),
                        ('long-path', '在文件资源管理器中显示\n' + '/很长的导出路径 &' * 20 + '/结果.csv')]:
-        link.setProperty('tooltip', text)
+        link.setProperty('tooltipText', text)
         point = link.mapToScene(QPointF(link.width()/2, link.height()/2)).toPoint()
         move_pointer(window, point)
         assert link.property('hovered'), (name, geometry(link), window.width(), window.height())

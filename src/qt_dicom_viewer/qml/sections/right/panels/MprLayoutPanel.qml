@@ -10,7 +10,11 @@ ColumnLayout {
     required property var controller
     spacing: 10
 
-    Text { text: qsTrId("mpr.layout.title"); color: Theme.textPrimary; font.pixelSize: 14; font.bold: true }
+    Components.PanelHeading {
+        objectName: "MprLayoutPanelHeading"
+        title: qsTrId("mpr.layout.title")
+        explanation: qsTrId("mpr.layout.rememberHint")
+    }
     GridLayout {
         Layout.fillWidth: true
         columns: 2
@@ -55,13 +59,7 @@ ColumnLayout {
         checked: panel.controller?.rememberLayout ?? false
         onToggled: panel.controller?.setRememberLayout(checked)
     }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("mpr.layout.rememberHint")
-        color: Theme.textMuted
-        font.pixelSize: 11
-        wrapMode: Text.Wrap
-    }
+
     Text {
         Layout.fillWidth: true
         visible: text.length > 0
@@ -70,4 +68,5 @@ ColumnLayout {
         font.pixelSize: 11
         wrapMode: Text.Wrap
     }
+
 }

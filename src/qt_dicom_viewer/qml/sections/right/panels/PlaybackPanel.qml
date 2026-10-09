@@ -17,8 +17,13 @@ ColumnLayout {
 
     required property var tabController
 
-    implicitHeight: Theme.toolbarButtonHeight + 8 + spacing + (temporal ? phaseCard.implicitHeight : sliceHint.implicitHeight)
     spacing: 8
+
+    Components.PanelHeading {
+        objectName: "playbackHeading"
+        title: playbackPanel.temporal ? qsTrId("playback.fourD") : qsTrId("text.0313")
+        explanation: playbackPanel.temporal ? "" : playbackPanel.sliceMode ? qsTrId("playback.currentPhaseHint") : qsTrId("playback.sliceHint")
+    }
 
     Rectangle {
         Layout.fillWidth: true
@@ -135,15 +140,7 @@ ColumnLayout {
         }
     }
 
-    Text {
-        id: sliceHint
-        visible: !playbackPanel.temporal
-        Layout.fillWidth: true
-        text: playbackPanel.sliceMode ? qsTrId("playback.currentPhaseHint") : qsTrId("playback.sliceHint")
-        color: Theme.textSecondary
-        font.pixelSize: 12
-        wrapMode: Text.Wrap
-    }
+
 
     Rectangle {
         id: phaseCard
@@ -319,4 +316,5 @@ ColumnLayout {
             }
         }
     }
+
 }

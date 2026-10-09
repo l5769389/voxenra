@@ -80,14 +80,11 @@ ColumnLayout {
     )
 
 
-    Text {
-        objectName: "windowDescription"
+    Components.PanelHeading {
+        objectName: "windowLevelHeading"
         visible: windowPanel.description.length > 0
-        text: windowPanel.description
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        color: Theme.textMuted
-        font.pixelSize: 12
+        title: qsTrId("text.0285")
+        explanation: windowPanel.description
     }
 
     ColumnLayout {

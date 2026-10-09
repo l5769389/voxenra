@@ -14,6 +14,8 @@ Rectangle {
     readonly property string selectedCategory: settingsController.activeCategory
     readonly property var categories: [
         {key: "appearance", title: qsTrId("appearance.title"), shortTitle: qsTrId("appearance.navigation"), subtitle: qsTrId("appearance.keywords"), group: qsTrId("text.0814")},
+        {key: "input", title: qsTrId("input.title"), subtitle: qsTrId("input.shortcuts")},
+        {key: "privacy", title: qsTrId("privacy.title"), subtitle: qsTrId("privacy.hideIdentity")},
         {key: "workspace", title: qsTrId("text.0622"), subtitle: qsTrId("text.0813")},
         {key: "updates", title: qsTrId("updates.title"), subtitle: qsTrId("updates.enable")},
         {key: "sources", title: qsTrId("text.0815"), subtitle: qsTrId("text.0816"), group: qsTrId("text.0817")},
@@ -115,6 +117,7 @@ Rectangle {
                     placeholderText: qsTrId("text.0835")
                 }
                 Basic.ScrollView {
+                    objectName: "settingsCategoryScroll"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     contentWidth: availableWidth

@@ -23,7 +23,7 @@ class EditHistoryController(QObject):
             self.watch_view(view)
         voi = getattr(tab, "_voi_controller", None)
         if voi is not None:
-            voi.changed.connect(self.schedule)
+            voi.editsChanged.connect(self.schedule)
         if hasattr(tab, "snapshotCommitted"):
             tab.snapshotCommitted.connect(self.schedule)
 
@@ -79,9 +79,10 @@ class EditHistoryController(QObject):
         signature = edit_signature(state)
         if signature == self._signature:
             return
+        snapshot = dumps(state)
         self._undo.append(self._current)
         self._redo.clear()
-        self._current, self._signature = dumps(state), signature
+        self._current, self._signature = snapshot, signature
         while len(self._undo) > 100 or sum(map(len, self._undo)) > 64 * 1024**2:
             self._undo.pop(0)
         self.changed.emit()

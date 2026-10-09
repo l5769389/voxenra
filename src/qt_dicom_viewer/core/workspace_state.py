@@ -8,6 +8,7 @@ from __future__ import annotations
 from qt_dicom_viewer.i18n import message as _msg
 
 import base64
+from hashlib import sha256
 from dataclasses import fields, is_dataclass
 from enum import Enum
 from functools import lru_cache
@@ -51,11 +52,16 @@ def _types():
 
 
 def encode(value):
+    return _encode(value, fingerprint_masks=False)
+
+
+def _encode(value, *, fingerprint_masks):
+    descend = lambda child: _encode(child, fingerprint_masks=fingerprint_masks)
     from qt_dicom_viewer.i18n.messages import Message, JoinedMessage
     if isinstance(value, Message):
-        return {"$message": value.key, "args": encode(value.args), "values": encode(value.values)}
+        return {"$message": value.key, "args": descend(value.args), "values": descend(value.values)}
     if isinstance(value, JoinedMessage):
-        return {"$messageParts": encode(list(value.parts))}
+        return {"$messageParts": descend(list(value.parts))}
     if isinstance(value, Enum):
         if type(value).__name__ not in _types():
             raise ValueError(_msg('text.0112', value1=type(value).__name__))
@@ -70,18 +76,20 @@ def encode(value):
         if type(value).__name__ not in _types():
             raise ValueError(_msg('text.0112', value1=type(value).__name__))
         return {"$type": type(value).__name__, "fields": {
-            f.name: encode(getattr(value, f.name)) for f in fields(value)}}
+            f.name: descend(getattr(value, f.name)) for f in fields(value)}}
     if isinstance(value, tuple):
-        return {"$tuple": [encode(v) for v in value]}
+        return {"$tuple": [descend(v) for v in value]}
     if isinstance(value, list):
-        return [encode(v) for v in value]
+        return [descend(v) for v in value]
     if isinstance(value, dict):
         if any(not isinstance(k, str) or k.startswith("$") for k in value):
             raise ValueError(_msg('text.0113'))
-        return {k: encode(v) for k, v in value.items()}
+        return {k: descend(v) for k, v in value.items()}
     if isinstance(value, np.ndarray):
         if value.dtype == np.bool_ and value.size <= MAX_MASK_VOXELS:
-            packed = np.packbits(value.reshape(-1)).tobytes()
+            packed = np.packbits(value, axis=None)
+            if fingerprint_masks:
+                return {"$maskDigest": sha256(packed).hexdigest(), "shape": list(value.shape)}
             return {"$mask": base64.b64encode(zlib.compress(packed)).decode("ascii"),
                     "shape": list(value.shape)}
         if value.size <= 32 and np.issubdtype(value.dtype, np.number) and np.isfinite(value).all():
@@ -196,6 +204,21 @@ def dumps(value):
     if len(data) > MAX_DOCUMENT_BYTES:
         raise ValueError(_msg('text.0126'))
     return data
+
+
+def fingerprint(value):
+    """Content signature for change detection, never a restorable document.
+
+    Use the same type/field validation as the portable codec, but hash packed
+    masks without compression/base64. Always read their content: identity-based
+    memoization would miss in-place edits. Only actual snapshots pay the cost
+    of compression; the on-disk representation remains unchanged.
+    """
+    data = json.dumps(_encode(value, fingerprint_masks=True), ensure_ascii=False,
+                      allow_nan=False, separators=(",", ":")).encode("utf-8")
+    if len(data) > MAX_DOCUMENT_BYTES:
+        raise ValueError(_msg('text.0126'))
+    return sha256(data).digest()
 
 
 def loads(data):

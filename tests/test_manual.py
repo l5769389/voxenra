@@ -374,7 +374,7 @@ def test_manual_roundtrip_preserves_mpr_measurement_and_segmentation(sidebar_sce
     settle(tab.voiController)
     ranges = [r.copy() for r in tab.voiController.records]
     assert ranges
-    click(window, find(window, 'voiManualButton'))
+    click(window, find(window, 'segmentationManualButton'))
     assert ws.activeTabType == 'manual' and ws.manualController.chapterId == 'segmentation'
     ws.closeTab('workspace-manual')
     wait_until(lambda: active_layer() is not None)

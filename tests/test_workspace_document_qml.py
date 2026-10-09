@@ -56,7 +56,7 @@ def test_export_help_long_result_link_and_measurement_instructions(sidebar_scene
     wait_until(lambda: link.isVisible())
     QTest.qWait(80)
     panel_width = find(window, 'rightPanel').width()
-    assert panel_width == 220
+    assert panel_width == 240
     assert link.property('text') == str(path)
     assert link.property('contentItem').property('truncated')
     calls = []
@@ -64,6 +64,9 @@ def test_export_help_long_result_link_and_measurement_instructions(sidebar_scene
     click(window, link)
     assert calls == [str(path)]
     assert window.grabWindow().save(str(tmp_path / 'export-help-links.png'))
+    # Revealing a result may scroll the panel down; the manual entry is now in its header.
+    find(window, 'toolDetailFlickable').setProperty('contentY', 0)
+    QTest.qWait(80)
     click(window, find(window, 'exportManualLink'))
     wait_until(lambda: ws.activeTabType == 'manual')
     assert ws.manualController.chapterId == 'export'
@@ -119,7 +122,9 @@ def test_report_controls_and_single_view_layout_binding(sidebar_scene, tmp_path)
     wait_until(lambda: csv.isVisible() and pdf.isVisible())
     QTest.qWait(150)
     assert csv.width() > 50 and pdf.width() > 50
-    assert csv.mapToScene(QPointF(csv.width(), 0)).x() <= pdf.mapToScene(QPointF()).x()
+    assert csv.mapToScene(QPointF(0, csv.height())).y() <= pdf.mapToScene(QPointF()).y()
+    assert csv.width() == pdf.width()
+    assert csv.mapToScene(QPointF(csv.width(), 0)).x() <= window.width()
     assert find(window, 'viewportExportAnonymous').property('checked')
     assert window.grabWindow().save(str(tmp_path / 'workspace-export-panel.png'))
     assert not warnings, warnings

@@ -31,8 +31,7 @@ def brush(mask, offset, geometry, shape, start, end, diameter, *, erase=False, n
     lo, hi = np.minimum(low, offset), np.maximum(high, offset + mask.shape)
     if int(np.prod(hi - lo)) > MAX_MASK_VOXELS:
         raise ValueError("Segmentation exceeds the workspace size limit")
-    result = np.zeros(tuple(hi - lo), bool)
-    result[tuple(slice(a, a + b) for a, b in zip(offset - lo, mask.shape))] = mask
+    result = None  # Allocate only when a selected voxel actually changes.
     # Evaluate in small slabs to bound temporary patient-coordinate arrays.
     vector = end - start
     length2 = float(vector @ vector)
@@ -52,9 +51,18 @@ def brush(mask, offset, geometry, shape, start, end, diameter, *, erase=False, n
         else:
             depth = (points - end) @ normal
             selected = (distance2 - depth**2 <= radius**2 + 1e-10) & (depth >= -thickness / 2) & (depth < thickness / 2)
+        if result is None:
+            chosen = indices[selected].astype(int) - offset
+            inside = np.all((chosen >= 0) & (chosen < mask.shape), axis=1)
+            values = np.zeros(len(chosen), bool)
+            values[inside] = mask[tuple(chosen[inside].T)]
+            if not np.any(values != (not erase)):
+                continue
+            result = np.zeros(tuple(hi - lo), bool)
+            result[tuple(slice(a, a + b) for a, b in zip(offset - lo, mask.shape))] = mask
         target = result[z - lo[0], low[1] - lo[1]:high[1] - lo[1], low[2] - lo[2]:high[2] - lo[2]]
         target[selected.reshape(target.shape)] = not erase
-    return result, lo
+    return (mask, offset) if result is None else (result, lo)
 
 
 def connected_component(mask, seed):

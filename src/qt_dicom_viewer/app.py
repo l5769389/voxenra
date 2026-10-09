@@ -47,10 +47,12 @@ def configure_application_identity(app: QApplication) -> None:
 
 def main() -> None:
     configure_process_identity()
-    app = QApplication(sys.argv)
-    configure_application_identity(app)
     from qt_dicom_viewer.infrastructure.brand_settings import configure_storage_identity
     configure_storage_identity()
+    from qt_dicom_viewer.settings.interface_scale import apply_interface_scale
+    apply_interface_scale()
+    app = QApplication(sys.argv)
+    configure_application_identity(app)
 
     log_path = configure_logging(debug=True)
 

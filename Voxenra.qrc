@@ -98,6 +98,8 @@
         <file>src/qt_dicom_viewer/qml/sections/right/panels/MprVoiPanel.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/MprVoiOverlay.qml</file>
         <file>src/qt_dicom_viewer/qml/assets/help/segmentation-ct.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/segmentation-refinement.gif</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/segmentation-refinement.gif</file>
         <file>src/qt_dicom_viewer/qml/assets/help/segmentation-pt.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/voi-ct.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/voi-pt.png</file>
@@ -317,5 +319,10 @@
     <file>src/qt_dicom_viewer/qml/components/RecoveryLocationPopup.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/right/CompactToolRail.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/TwoDViewSelector.qml</file>
-  </qresource>
+      <file>src/qt_dicom_viewer/qml/components/ReadingShortcuts.qml</file>
+    <file>src/qt_dicom_viewer/qml/sections/settings/InputSettingsPage.qml</file>
+    <file>src/qt_dicom_viewer/qml/sections/settings/PrivacySettingsPage.qml</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/input-settings.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/en/input-settings.png</file>
+</qresource>
 </RCC>

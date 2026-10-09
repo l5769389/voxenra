@@ -188,7 +188,8 @@ def test_drag_reuses_static_masks_and_contours_without_refreshing_statistics(set
     old_result = controller.evaluations[controller.selectedId]
     mask_calls, polygons, details, list_changes = [], [], [], []
     actual_polygon = module.plane_polygon
-    monkeypatch.setattr(module, "plane_mask", lambda *args: mask_calls.append(args))
+    import qt_dicom_viewer.ui.segmentation_overlay_renderer as renderer
+    monkeypatch.setattr(renderer, "plane_mask", lambda *args: mask_calls.append(args))
     def polygon(region, g):
         polygons.append(region.shape)
         return actual_polygon(region, g)

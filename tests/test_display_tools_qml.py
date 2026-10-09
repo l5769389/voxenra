@@ -18,6 +18,8 @@ from test_viewport_transform import _controller, _render_result
 
 
 def _find(root, name, *, visible=True):
+    from toolbar_navigation import reveal_primary_tool
+    reveal_primary_tool(root, name)
     return next(
         item for item in _visual_children(root)
         if item.objectName() == name
@@ -183,7 +185,7 @@ def test_primary_toolbar_spacing_keeps_detail_space(display_panel, width, tmp_pa
     buttons = sorted((item for item in _visual_children(view.rootObject())
         if item.objectName().startswith("primaryTool-") and item.isVisible()),
         key=lambda item: (item.mapToScene(QPointF()).y(), item.mapToScene(QPointF()).x()))
-    assert buttons[-1].objectName() == "primaryTool-reset"
+    assert len(buttons) <= 7
     rows = {}
     for button in buttons:
         pos = button.mapToScene(QPointF())
@@ -192,7 +194,7 @@ def test_primary_toolbar_spacing_keeps_detail_space(display_panel, width, tmp_pa
         rows.setdefault(pos.y(), []).append(button)
     for row in rows.values():
         for left, right in zip(row, row[1:]):
-            assert right.mapToScene(QPointF()).x() - left.mapToScene(QPointF(left.width(), 0)).x() == pytest.approx(4)
+            assert right.mapToScene(QPointF()).x() - left.mapToScene(QPointF(left.width(), 0)).x() == pytest.approx(2)
     tops = sorted(rows)
     assert all(b - a == 40 for a, b in zip(tops, tops[1:]))
     detail = _find(view.rootObject(), "toolDetailFlickable")

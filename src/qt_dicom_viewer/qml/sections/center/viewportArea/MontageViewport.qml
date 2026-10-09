@@ -405,7 +405,7 @@ Item {
 
                     onActiveChanged: {
                         if (active) {
-                            tile.dragCursorKind = CursorPolicy.resolveDrag(tile.hoverCursorKind, centroid.pressedButtons, false)
+                            tile.dragCursorKind = CursorPolicy.resolveDrag(tile.hoverCursorKind, centroid.pressedButtons, false, montageRoot.viewportController?.settingsController?.values.input)
                             gridViewport.draggedTile = tile
                             lastPosition = centroid.position
                             montageRoot.viewportController?.beginInteraction(
@@ -478,7 +478,7 @@ Item {
                     )
                     montageGrid.contentY = Math.max(
                         0,
-                        Math.min(maximum, montageGrid.contentY - pixelStep)
+                        Math.min(maximum, montageGrid.contentY - pixelStep * (montageRoot.viewportController?.settingsController?.values.input.reverseWheel ? -1 : 1))
                     )
                     wheelEvent.accepted = true
                 }

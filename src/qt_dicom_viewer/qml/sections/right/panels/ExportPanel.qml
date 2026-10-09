@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic as Basic
 import "../../../components" as Components
 import "../../../theme"
+import "../components" as PanelComponents
 
 ColumnLayout {
     id: root
@@ -14,22 +15,51 @@ ColumnLayout {
     readonly property var dicomResults: exportController?.dicomResults ?? null
     signal manualRequested()
     spacing: 10
-    Text {
-        text: qsTrId("text.0315")
-        color: Theme.textPrimary
-        font.pixelSize: 13
-        font.weight: Font.DemiBold
+    component ExportOption: Components.AppCheckBox {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        implicitHeight: Math.max(Theme.controlHeight, contentItem.implicitHeight + topPadding + bottomPadding)
+        contentItem: Text {
+            text: parent.text
+            color: parent.enabled ? Theme.textSecondary : Theme.textDisabled
+            font.pixelSize: Theme.bodyFontSize
+            verticalAlignment: Text.AlignVCenter
+            leftPadding: 26
+            wrapMode: Text.Wrap
+        }
     }
-    Components.AppCheckBox {
+    RowLayout {
+        Layout.fillWidth: true
+        Text {
+            Layout.fillWidth: true
+            text: qsTrId("text.0315")
+            color: Theme.textPrimary
+            font.pixelSize: 13
+            font.weight: Font.DemiBold
+        }
+        PanelComponents.ToolActionButton {
+            objectName: "exportManualLink"
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            minimumButtonWidth: 28
+            iconName: "manual"
+            iconSize: 18
+            label: qsTrId("text.0651")
+            onClicked: root.manualRequested()
+        }
+    }
+    ExportOption {
         id: anonymous
         objectName: "viewportExportAnonymous"
         text: qsTrId("text.0141")
         checked: true
         enabled: !!root.exportController && !root.exportController.busy
     }
-    RowLayout {
+    GridLayout {
         Layout.fillWidth: true
-        spacing: 6
+        columns: root.width < 310 ? 1 : 2
+        columnSpacing: 6
+        rowSpacing: 6
         Components.AppButton {
             objectName: "exportPng"
             Layout.fillWidth: true
@@ -95,23 +125,25 @@ ColumnLayout {
         onClicked: root.exportController.cancel()
     }
     Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.borderDefault }
-    Text { text: qsTrId("text.1016"); color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold }
-    Components.AppCheckBox {
+    Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("text.1016"); color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold }
+    ExportOption {
         id: allTabs
         objectName: "reportAllTabs"
         text: qsTrId("text.1017")
         enabled: !root.report?.busy
     }
-    Components.AppCheckBox {
+    ExportOption {
         id: reportImages
         objectName: "reportIncludeImages"
         text: qsTrId("text.1018")
         checked: true
         enabled: !root.report?.busy
     }
-    RowLayout {
+    GridLayout {
         Layout.fillWidth: true
-        spacing: 6
+        columns: root.width < 310 ? 1 : 2
+        columnSpacing: 6
+        rowSpacing: 6
         Components.AppButton {
             objectName: "exportMeasurementCsv"
             text: qsTrId("text.1019")
@@ -157,24 +189,19 @@ ColumnLayout {
         onClicked: root.report.openResultLocation()
     }
     Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.borderDefault }
-    Components.AppLinkButton {
-        objectName: "exportManualLink"
-        Layout.fillWidth: true
-        text: qsTrId("text.0651")
-        tooltip: qsTrId("text.1021")
-        onClicked: root.manualRequested()
-    }
-    Text { text: qsTrId("results.title"); color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold }
+    Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("results.title"); color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold }
     Text {
         Layout.fillWidth: true
-        text: qsTrId("results.help")
+        text: qsTrId("results.identityNotice")
         color: Theme.textSecondary
         font.pixelSize: 12
         wrapMode: Text.Wrap
     }
-    RowLayout {
+    GridLayout {
         Layout.fillWidth: true
-        spacing: 6
+        columns: root.width < 310 ? 1 : 2
+        columnSpacing: 6
+        rowSpacing: 6
         Components.AppButton {
             objectName: "exportSegmentation"
             Layout.fillWidth: true
@@ -192,14 +219,7 @@ ColumnLayout {
             onClicked: root.dicomResults.exportResults("sr")
         }
     }
-    Text {
-        objectName: "srCompatibilityHint"
-        Layout.fillWidth: true
-        text: qsTrId("results.slicerHint")
-        color: Theme.textMuted
-        font.pixelSize: 12
-        wrapMode: Text.Wrap
-    }
+
     Components.AppButton {
         objectName: "exportNrrdExchange"
         Layout.fillWidth: true
@@ -207,13 +227,7 @@ ColumnLayout {
         enabled: !!root.dicomResults && !root.dicomResults.busy
         onClicked: root.dicomResults.exportNrrd()
     }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("nrrd.exportHelp")
-        color: Theme.textMuted
-        font.pixelSize: 11
-        wrapMode: Text.Wrap
-    }
+
     Basic.ProgressBar { Layout.fillWidth: true; visible: root.dicomResults?.busy ?? false; indeterminate: true }
     Text {
         objectName: "dicomResultsMessage"

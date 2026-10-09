@@ -1,0 +1,2476 @@
+{
+  "schema": 1,
+  "date": "2026-10-03",
+  "baseline": "6e6af6a plus pre-existing working-tree changes",
+  "source_sha256": {
+    "src/qt_dicom_viewer/core/dicom_loader.py": "cf3b7bc0b4299bcb96f3af9f2ef1b44595a64a359b5ebf8a9a8a55405e69f228",
+    "src/qt_dicom_viewer/core/volume_manager.py": "08631452524f13ef7c3255488a331f1c85dcf439cc3930d20e93073447bdfe1f",
+    "tests/test_volume_loading_memory.py": "d2cea3ab9c3a16fca637c521a7aea6c764cc4ef0a1de491da0e7463908b1a601",
+    "tests/manual/benchmark_volume_assembly.py": "37918ba0f40a052a99e846aa47de66748716a38b3f0d0f3685abe4bc4377bf14"
+  },
+  "before": {
+    "python": "3.13.14",
+    "numpy": "2.5.2",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "shape": [
+      128,
+      512,
+      512
+    ],
+    "repeats": 3,
+    "cases": {
+      "ct": {
+        "median_ms": 63.264749995141756,
+        "samples_ms": [
+          63.264749995141756,
+          64.00487499922747,
+          63.13162500009639
+        ],
+        "peak_allocated_mib": 256.25963973999023,
+        "retained_pixels_mib": 128.0,
+        "result": {
+          "pixels": "bdf53e02d68fbfdf80c7b69bcfc68887b4a42fb2ccd08d5c92e33dd6200f5920",
+          "source": null,
+          "geometry": {
+            "slice_count": 128,
+            "rows": 512,
+            "columns": 512,
+            "row_spacing": 0.7,
+            "column_spacing": 0.8,
+            "slice_spacing": 1.5,
+            "origin_patient": [
+              -32.0,
+              17.0,
+              0.0
+            ],
+            "slice_index_direction_patient": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "row_index_direction_patient": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "column_index_direction_patient": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "window": {
+            "center": 40.0,
+            "width": 400.0
+          },
+          "value_meta": {
+            "unit": "HU",
+            "suv_type": null,
+            "source_unit": "HU",
+            "quantification": "native",
+            "warning": null,
+            "unit_id": "native",
+            "scale_from_source": 1.0,
+            "unit_options": []
+          }
+        },
+        "input_sha256": "4cd676a2a5c156ae4b0ba83173443bb36f0e5773873eb495d06c1feecf362c8d"
+      },
+      "pet": {
+        "median_ms": 81.03241699427599,
+        "samples_ms": [
+          81.25579199986532,
+          80.60987499629846,
+          81.03241699427599
+        ],
+        "peak_allocated_mib": 512.4656677246094,
+        "retained_pixels_mib": 256.0,
+        "result": {
+          "pixels": "6cdff04f3fd6a6469875ba203eb8daf395a3e047dceff07469ac3d2cbf076307",
+          "source": "01979b1b50dc906bbe00f385fe21e01eb4577e6db8be7833e0e213b7c63180b8",
+          "geometry": {
+            "slice_count": 128,
+            "rows": 512,
+            "columns": 512,
+            "row_spacing": 0.7,
+            "column_spacing": 0.8,
+            "slice_spacing": 1.5,
+            "origin_patient": [
+              -32.0,
+              17.0,
+              0.0
+            ],
+            "slice_index_direction_patient": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "row_index_direction_patient": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "column_index_direction_patient": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "window": {
+            "center": 8.0,
+            "width": 16.0
+          },
+          "value_meta": {
+            "unit": "SUVbw",
+            "suv_type": "BW",
+            "source_unit": "BQML",
+            "quantification": "derived",
+            "warning": null,
+            "unit_id": "suvbw",
+            "scale_from_source": 0.002,
+            "unit_options": [
+              {
+                "unit_id": "source",
+                "label": "Source (BQML)",
+                "unit": "Bq/ml",
+                "scale_from_source": 1.0,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "kbqml",
+                "label": "kBq/ml",
+                "unit": "kBq/ml",
+                "scale_from_source": 0.001,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "suvbw",
+                "label": "g/ml (SUVbw)",
+                "unit": "SUVbw",
+                "scale_from_source": 0.002,
+                "available": true,
+                "warning": null
+              }
+            ]
+          }
+        },
+        "input_sha256": "bbee95825148bb92d8228e2753957e660d0300aa23b013cb8f98b0722b15bb17"
+      },
+      "pet-fallback": {
+        "median_ms": 82.2448750041076,
+        "samples_ms": [
+          82.2448750041076,
+          82.15466600086074,
+          84.83041600266006
+        ],
+        "peak_allocated_mib": 385.43620681762695,
+        "retained_pixels_mib": 256.0,
+        "result": {
+          "pixels": "01979b1b50dc906bbe00f385fe21e01eb4577e6db8be7833e0e213b7c63180b8",
+          "source": "01979b1b50dc906bbe00f385fe21e01eb4577e6db8be7833e0e213b7c63180b8",
+          "geometry": {
+            "slice_count": 128,
+            "rows": 512,
+            "columns": 512,
+            "row_spacing": 0.7,
+            "column_spacing": 0.8,
+            "slice_spacing": 1.5,
+            "origin_patient": [
+              -32.0,
+              17.0,
+              0.0
+            ],
+            "slice_index_direction_patient": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "row_index_direction_patient": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "column_index_direction_patient": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "window": {
+            "center": 4000.0,
+            "width": 8000.0
+          },
+          "value_meta": {
+            "unit": "Bq/ml",
+            "suv_type": null,
+            "source_unit": "BQML",
+            "quantification": "unavailable",
+            "warning": "Patient Weight 缺失或无效，无法计算 SUVbw",
+            "unit_id": "source",
+            "scale_from_source": 1.0,
+            "unit_options": [
+              {
+                "unit_id": "source",
+                "label": "Source (BQML)",
+                "unit": "Bq/ml",
+                "scale_from_source": 1.0,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "kbqml",
+                "label": "kBq/ml",
+                "unit": "kBq/ml",
+                "scale_from_source": 0.001,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "suvbw",
+                "label": "g/ml (SUVbw)",
+                "unit": "SUVbw",
+                "scale_from_source": 0.002,
+                "available": false,
+                "warning": "Patient Weight 缺失或无效，无法计算 SUVbw"
+              }
+            ]
+          }
+        },
+        "input_sha256": "57056e580edc870c96af360e794a6f0185da47207a308f3231a302fd26c0209e"
+      }
+    }
+  },
+  "after": {
+    "python": "3.13.14",
+    "numpy": "2.5.2",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "shape": [
+      128,
+      512,
+      512
+    ],
+    "repeats": 3,
+    "cases": {
+      "ct": {
+        "median_ms": 62.36354199791094,
+        "samples_ms": [
+          62.31270900025265,
+          62.70320800103946,
+          62.36354199791094
+        ],
+        "peak_allocated_mib": 133.1178379058838,
+        "retained_pixels_mib": 128.0,
+        "result": {
+          "pixels": "bdf53e02d68fbfdf80c7b69bcfc68887b4a42fb2ccd08d5c92e33dd6200f5920",
+          "source": null,
+          "geometry": {
+            "slice_count": 128,
+            "rows": 512,
+            "columns": 512,
+            "row_spacing": 0.7,
+            "column_spacing": 0.8,
+            "slice_spacing": 1.5,
+            "origin_patient": [
+              -32.0,
+              17.0,
+              0.0
+            ],
+            "slice_index_direction_patient": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "row_index_direction_patient": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "column_index_direction_patient": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "window": {
+            "center": 40.0,
+            "width": 400.0
+          },
+          "value_meta": {
+            "unit": "HU",
+            "suv_type": null,
+            "source_unit": "HU",
+            "quantification": "native",
+            "warning": null,
+            "unit_id": "native",
+            "scale_from_source": 1.0,
+            "unit_options": []
+          }
+        },
+        "input_sha256": "4cd676a2a5c156ae4b0ba83173443bb36f0e5773873eb495d06c1feecf362c8d"
+      },
+      "pet": {
+        "median_ms": 80.03820799785899,
+        "samples_ms": [
+          80.57116599957226,
+          80.03820799785899,
+          79.96154199645389
+        ],
+        "peak_allocated_mib": 262.2389965057373,
+        "retained_pixels_mib": 256.0,
+        "result": {
+          "pixels": "6cdff04f3fd6a6469875ba203eb8daf395a3e047dceff07469ac3d2cbf076307",
+          "source": "01979b1b50dc906bbe00f385fe21e01eb4577e6db8be7833e0e213b7c63180b8",
+          "geometry": {
+            "slice_count": 128,
+            "rows": 512,
+            "columns": 512,
+            "row_spacing": 0.7,
+            "column_spacing": 0.8,
+            "slice_spacing": 1.5,
+            "origin_patient": [
+              -32.0,
+              17.0,
+              0.0
+            ],
+            "slice_index_direction_patient": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "row_index_direction_patient": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "column_index_direction_patient": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "window": {
+            "center": 8.0,
+            "width": 16.0
+          },
+          "value_meta": {
+            "unit": "SUVbw",
+            "suv_type": "BW",
+            "source_unit": "BQML",
+            "quantification": "derived",
+            "warning": null,
+            "unit_id": "suvbw",
+            "scale_from_source": 0.002,
+            "unit_options": [
+              {
+                "unit_id": "source",
+                "label": "Source (BQML)",
+                "unit": "Bq/ml",
+                "scale_from_source": 1.0,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "kbqml",
+                "label": "kBq/ml",
+                "unit": "kBq/ml",
+                "scale_from_source": 0.001,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "suvbw",
+                "label": "g/ml (SUVbw)",
+                "unit": "SUVbw",
+                "scale_from_source": 0.002,
+                "available": true,
+                "warning": null
+              }
+            ]
+          }
+        },
+        "input_sha256": "bbee95825148bb92d8228e2753957e660d0300aa23b013cb8f98b0722b15bb17"
+      },
+      "pet-fallback": {
+        "median_ms": 78.7385420044302,
+        "samples_ms": [
+          78.41866699891398,
+          78.7385420044302,
+          79.27945799747249
+        ],
+        "peak_allocated_mib": 262.2383060455322,
+        "retained_pixels_mib": 128.0,
+        "result": {
+          "pixels": "01979b1b50dc906bbe00f385fe21e01eb4577e6db8be7833e0e213b7c63180b8",
+          "source": "01979b1b50dc906bbe00f385fe21e01eb4577e6db8be7833e0e213b7c63180b8",
+          "geometry": {
+            "slice_count": 128,
+            "rows": 512,
+            "columns": 512,
+            "row_spacing": 0.7,
+            "column_spacing": 0.8,
+            "slice_spacing": 1.5,
+            "origin_patient": [
+              -32.0,
+              17.0,
+              0.0
+            ],
+            "slice_index_direction_patient": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "row_index_direction_patient": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "column_index_direction_patient": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "window": {
+            "center": 4000.0,
+            "width": 8000.0
+          },
+          "value_meta": {
+            "unit": "Bq/ml",
+            "suv_type": null,
+            "source_unit": "BQML",
+            "quantification": "unavailable",
+            "warning": "Patient Weight 缺失或无效，无法计算 SUVbw",
+            "unit_id": "source",
+            "scale_from_source": 1.0,
+            "unit_options": [
+              {
+                "unit_id": "source",
+                "label": "Source (BQML)",
+                "unit": "Bq/ml",
+                "scale_from_source": 1.0,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "kbqml",
+                "label": "kBq/ml",
+                "unit": "kBq/ml",
+                "scale_from_source": 0.001,
+                "available": true,
+                "warning": null
+              },
+              {
+                "unit_id": "suvbw",
+                "label": "g/ml (SUVbw)",
+                "unit": "SUVbw",
+                "scale_from_source": 0.002,
+                "available": false,
+                "warning": "Patient Weight 缺失或无效，无法计算 SUVbw"
+              }
+            ]
+          }
+        },
+        "input_sha256": "57056e580edc870c96af360e794a6f0185da47207a308f3231a302fd26c0209e"
+      }
+    }
+  },
+  "exact_benchmark_result_match": true,
+  "baseline_regression": {
+    "expected_failures": 3,
+    "log": "build/volume-loading-refactor/baseline-regression.log"
+  },
+  "tests": {
+    "totals": {
+      "tests": 2436,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 50,
+      "passed": 2386
+    },
+    "files": [
+      {
+        "file": "tests/manual/test_display_mapping_samples.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/manual/test_enhanced_ct_samples.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        },
+        "run": "real-data"
+      },
+      {
+        "file": "tests/manual/test_enhanced_mr_samples.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 4
+        },
+        "run": "real-data"
+      },
+      {
+        "file": "tests/manual/test_mr_samples.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "real-data"
+      },
+      {
+        "file": "tests/manual/test_public_compressed_samples.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/manual/test_spatial_compressed.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "real-data"
+      },
+      {
+        "file": "tests/test_analysis_records.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_annotation_clipboard.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_anonymous_view_export.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_app_icon_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_app_updates.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_appearance_language.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_application_identity.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_bead_mtf.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 77,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_bulk_import.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_button_feedback.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_color_dicom.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_compact_series_rail.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_compare_2d.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_compare_2d_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_compare_mpr.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_conflicting_instance_uids.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_ct_perfusion.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_curve_measurement.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_dialog_layout_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_dialog_locations.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_dicom_overlay.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_dicom_results.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_dicom_results_controller.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_dicom_scanner.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_dicom_tags.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_display_completion.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_display_mapping.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_display_settings.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_display_settings_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_display_tools.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_display_tools_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_edit_state_fingerprint.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_enhanced_ct.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_enhanced_mr.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_export.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_export_location.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_export_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_failed_view_actions.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_feedback.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_feedback_attachments.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_feedback_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_four_d.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 45,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_four_d_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_four_d_tools.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_freehand_roi.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_geometry_2d.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_import_dialog_chrome.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_import_ui.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_installers.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_interface_review.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_linked_ct_window.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_live_windowing.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_live_windowing_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_loading_responsiveness.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_local_import.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 34,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_manual.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_manual_site.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_controller.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_finish_style.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_geometry.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_hit_test.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_precision.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 54,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_results.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_measurement_results_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mip_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_montage_controller.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_montage_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_montage_qml_runtime.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_montage_rendering.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mouse_bindings.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 60,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_layout.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 34,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_reslicer.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_rotation.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_rotation_operations.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_sampling_precision.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_state.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_voi.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_voi_controller.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_voi_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mpr_volume_tools_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mr.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mr_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mtf_controller.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 40,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_mtf_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 20,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_navigation_shortcuts.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_nrrd_exchange.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_p0_regressions.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_p0_regressions_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_packaging_qml_hook.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pacs.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 35,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "pacs-loopback"
+      },
+      {
+        "file": "tests/test_pacs_live.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 15
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pacs_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "pacs-loopback"
+      },
+      {
+        "file": "tests/test_patient_orientation.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pet_2d.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 36,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pet_fusion.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 26,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pet_locator_performance.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 20,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pet_navigation.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pet_render_transactions.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pet_volume.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pet_workspace_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_pixel_codecs.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 24,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_playback_combinations.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_ramp_fwhm.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 31,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_rar_import.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_remember_mpr_layout.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_resizable_view_layout.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_segmentation_display.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_segmentation_edit_history.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_segmentation_exchange.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_segmentation_import.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_segmentation_mask_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_segmentation_refine.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_segmentation_render_cache.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_series_export.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_series_sidebar.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_series_tools_polish.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_service_panel_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_settings_effects.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_settings_redesign.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 24,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_sidebar_style_polish.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_slice_playback.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_spatial_missing_calibration.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_spatial_numeric_audit.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 37,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_standalone_pet_volume.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_startup_loading.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_tab_windows.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_tag_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_theme_palette.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_theme_ui.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_tool_controller.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_tool_cursors.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 106,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_tooltip_edges.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_two_d_layout.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_two_d_selector.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_ui_polish.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_update_health.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_update_installer.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 4
+        },
+        "run": "updater-native"
+      },
+      {
+        "file": "tests/test_update_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_view_opening.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_viewport_controller_hierarchy.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_viewport_scope.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_viewport_selection_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_viewport_transform.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_volume_display.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 50,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_volume_edit.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 28,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_volume_gpu_failures.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_volume_loading_memory.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_volume_panel_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_volume_view.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 34,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_water_qa.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 26,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_water_qa_controller.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_water_qa_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_window_chrome.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 4
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_window_level_operation.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_window_preset_file.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_window_sizing.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_windows_packaging.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_workspace_dialog_layout.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_workspace_document_qml.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_workspace_exit.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_workspace_interactions.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "workspace-loopback"
+      },
+      {
+        "file": "tests/test_workspace_persistence.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_workspace_recovery_status.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_workspace_tool_selection.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      },
+      {
+        "file": "tests/test_worktree_integration.py",
+        "exit_code": 0,
+        "counts": {
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "run": "full"
+      }
+    ],
+    "initial_environment_failures": [
+      {
+        "file": "tests/test_pacs.py",
+        "exit_code": 1,
+        "counts": {
+          "tests": 35,
+          "failures": 0,
+          "errors": 22,
+          "skipped": 0
+        }
+      },
+      {
+        "file": "tests/test_pacs_qml.py",
+        "exit_code": 1,
+        "counts": {
+          "tests": 4,
+          "failures": 0,
+          "errors": 2,
+          "skipped": 0
+        }
+      },
+      {
+        "file": "tests/test_update_installer.py",
+        "exit_code": 1,
+        "counts": {
+          "tests": 11,
+          "failures": 5,
+          "errors": 0,
+          "skipped": 4
+        }
+      },
+      {
+        "file": "tests/test_workspace_interactions.py",
+        "exit_code": 1,
+        "counts": {
+          "tests": 15,
+          "failures": 0,
+          "errors": 3,
+          "skipped": 0
+        }
+      }
+    ]
+  },
+  "native_ui": {
+    "application": "Voxenra Spatial QA",
+    "restarted": true,
+    "before_started_at": "2026-10-02T16:38:02.046966+00:00",
+    "after_started_at": "2026-10-02T17:11:18.339206+00:00",
+    "fields_equal": {
+      "tab": true,
+      "load": true,
+      "slice": true,
+      "shape": true,
+      "pixels_sha256": true,
+      "playing": true,
+      "segmentation": true
+    },
+    "segments": [
+      {
+        "mask_sha256": "581b502adf34c986dfe94745fbf686b903e559a3b4898f61a86224b4bde9ac34",
+        "metrics": {
+          "count": 947,
+          "volume": 0.947000000000054,
+          "mean": 157.8595564941922,
+          "sd": 27.41804185243519,
+          "minimum": 60.0,
+          "maximum": 215.0,
+          "fraction": 100.0
+        }
+      },
+      {
+        "mask_sha256": "e6c79b51179f354c2d2c618f91d3638b34185f483d44d2a17ea96d4147e02731",
+        "metrics": {
+          "count": 1075,
+          "volume": 1.0750000000000615,
+          "mean": 160.0539534883721,
+          "sd": 25.769621031184375,
+          "minimum": 9.0,
+          "maximum": 217.0,
+          "fraction": 100.0
+        }
+      }
+    ],
+    "visible_check": "MR axial/coronal/sagittal images, two segmentation overlays and statistics panel"
+  },
+  "limits": [
+    "Warm filesystem CPU benchmark; not full application RSS or GPU timing.",
+    "No Windows native/GPU validation in this pass.",
+    "Real-data tests use existing independent references; Slicer was not rerun."
+  ]
+}

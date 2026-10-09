@@ -80,6 +80,8 @@ def test_import_history_persistence_and_reexport(exchange, external_seg, tmp_pat
     assert controller.isError and len(voi.records) == 2
     document = app.workspaceDocumentController
     workspace_file = tmp_path / "masks.voxworkspace"
+    voi.setDisplayMode("outline")
+    voi.setFillOpacity(67)
     assert document.save_to(workspace_file)
     wait_until(lambda: not document.busy)
     assert not document.isError, document.message
@@ -89,6 +91,7 @@ def test_import_history_persistence_and_reexport(exchange, external_seg, tmp_pat
     assert not document.isError, document.message
     restored = app.workspaceController.activeTab.voiController
     wait_until(lambda: len(restored.evaluations) == 2 and not restored.busy)
+    assert restored.displayMode == "outline" and restored.fillOpacity == 67
     assert restored.records[0]["name"] == "Renamed"
     assert restored.records[0]["color"] == "#ffbb55"
     assert not restored.records[0]["visible"]
@@ -272,6 +275,15 @@ def test_brush_keeps_qml_layers_alive_during_paint_and_erase(scene, source, tmp_
     wait_until(lambda: len(layers()) == 3 and all(x.property('maskReady') for x in layers()))
     initial = {getCppPointer(x)[0] for x in layers()}
     assert initial
+    # Display changes reuse all live delegates and decoded textures.
+    for display in ('outline', 'fill', 'fill-outline'):
+        c.setDisplayMode(display)
+        for opacity in (0, 30, 100):
+            c.setFillOpacity(opacity)
+            QTest.qWait(10)
+            assert {getCppPointer(x)[0] for x in layers()} == initial
+            assert all(x.property('maskReady') for x in layers())
+    c.setFillOpacity(30)
     for mode in ('paint', 'erase'):
         c.setEditMode(mode)
         c.begin(view, cx, cy, .1)
@@ -297,7 +309,7 @@ def test_brush_keeps_qml_layers_alive_during_paint_and_erase(scene, source, tmp_
     assert find(window, 'segmentationBrushDiameter').property('numberValue') == c.brushDiameter
     for name, shortcut in [('segmentationUndo', tab.historyController.undoShortcutText),
                            ('segmentationRedo', tab.historyController.redoShortcutText)]:
-        assert '(' + shortcut + ')' in find(window, name).property('text')
+        assert '(' + shortcut + ')' in find(window, name).property('tooltipText')
     tab.historyController.capture()
     observed = []
     c.masksChanged.connect(lambda: observed.append(len(c.masks(view))))
@@ -334,6 +346,20 @@ def test_brush_keeps_qml_layers_alive_during_paint_and_erase(scene, source, tmp_
         QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
     assert diameters[1] == pytest.approx(diameters[0] / 2)
     c.setBrushRelative(False)
+    click(window, find(window, 'segmentationDisplayToggle'))
+    combo = find(window, 'segmentationDisplayMode')
+    opacity_slider = find(window, 'segmentationFillOpacity')
+    assert combo.isVisible() and opacity_slider.isVisible()
+    # Keyboard operation of the real combo box selects outline-only.
+    combo.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_Up)
+    QTest.qWait(20)
+    assert c.displayMode == 'outline' and not opacity_slider.isEnabled()
+    QTest.keyClick(window, Qt.Key_Down)
+    QTest.qWait(20)
+    assert c.displayMode == 'fill-outline' and opacity_slider.isEnabled()
+    click(window, opacity_slider)
+    assert 40 <= c.fillOpacity <= 60
     for theme, locale in [('dark','zh-CN'), ('graphite','en-US'), ('light','en-US')]:
         app.settingsController.setValue('appearance', 'theme', theme)
         app.languageController.selectLanguage(locale)
@@ -341,15 +367,69 @@ def test_brush_keeps_qml_layers_alive_during_paint_and_erase(scene, source, tmp_
         window.resize(1280, 720)
         tab.toolController.activateTool('segmentation')
         QTest.qWait(50)
+        assert find(window, 'segmentationDisplayMode').property('currentIndex') == 2
+        assert c.displayMode == 'fill-outline'
+        assert find(window, 'segmentationEditMode').property('currentIndex') == 1
+        assert c.editMode == 'paint'
         field = find(window, 'segmentationBrushDiameter')
         assert field.width() > 30 and field.isVisible()
         slider = find(window, 'segmentationBrushSlider')
         scope = find(window, 'segmentationBrushScope')
         tool = find(window, 'segmentationEditMode')
+        # A real tool change updates both the visible caption and input context,
+        # without unexpectedly changing the footprint.
+        before_diameter = c.brushDiameter
+        for relative in (False, True):
+            c.setBrushRelative(relative)
+            tool.forceActiveFocus()
+            QTest.keyClick(window, Qt.Key_Down)
+            QTest.qWait(20)
+            assert c.editMode == 'erase'
+            label = find(window, 'segmentationBrushDiameterLabel').property('text')
+            assert ('橡皮' if locale == 'zh-CN' else 'Eraser') in label
+            assert ('%' if relative else 'mm') in label
+            assert field.property('numberValue') == (c.brushPercent if relative else before_diameter)
+            assert window.grabWindow().save(str(tmp_path / f'eraser-{locale}-{relative}.png'))
+            QTest.keyClick(window, Qt.Key_Up)
+            QTest.qWait(20)
+            assert c.editMode == 'paint' and c.brushDiameter == before_diameter
+            label = find(window, 'segmentationBrushDiameterLabel').property('text')
+            assert ('画笔' if locale == 'zh-CN' else 'Brush') in label
+        c.setBrushRelative(False)
+        QTest.qWait(20)
         assert field.width() <= 64 and slider.width() > field.width()
         assert abs(field.mapToScene(QPointF(0, field.height()/2)).y()
                    - slider.mapToScene(QPointF(0, slider.height()/2)).y()) < 1
-        assert abs(scope.mapToScene(QPointF()).y() - tool.mapToScene(QPointF()).y()) < 1
+        if locale == 'zh-CN':
+            assert abs(scope.mapToScene(QPointF()).y() - tool.mapToScene(QPointF()).y()) <= 3
+        else:
+            assert scope.mapToScene(QPointF()).y() >= tool.mapToScene(QPointF()).y() + tool.height()
+        manual = find(window, 'segmentationManualButton')
+        assert abs(manual.mapToScene(QPointF()).y() - scope.mapToScene(QPointF()).y()) <= 3
+        for widget in (tool, scope, find(window, 'segmentationBrushUnits')):
+            caption = widget.property('contentItem')
+            assert not caption.property('truncated')
+            assert caption.property('contentWidth') <= caption.width() + 1
+        for name in ('newPaintSegment', 'segmentationUndo', 'segmentationRedo', 'voiEnabled'):
+            button = find(window, name)
+            x = button.mapToScene(QPointF()).x()
+            assert 0 <= x and x + button.width() <= window.width()
+        if locale == 'zh-CN':
+            diameter_label = find(window, 'segmentationBrushDiameterLabel')
+            assert diameter_label.property('lineCount') == 1
+        app.settingsController.setValue('layout', 'rightPanelWidth', 330)
+        QTest.qWait(50)
+        assert abs(scope.mapToScene(QPointF()).y() - tool.mapToScene(QPointF()).y()) <= 3
+        app.settingsController.setValue('layout', 'rightPanelWidth', 240)
+        QTest.qWait(50)
+        assert find(window, 'segmentationUndo').property('iconName') == 'undo'
+        opacity_slider = find(window, 'segmentationFillOpacity')
+        assert opacity_slider.width() >= 40
+        left = opacity_slider.mapToScene(QPointF()).x()
+        assert 0 <= left < left + opacity_slider.width() <= window.width()
+        output = Path('build/segmentation-display/ui')
+        output.mkdir(parents=True, exist_ok=True)
+        assert window.grabWindow().save(str(output / f'{theme}-{locale}.png'))
 
     assert not warnings, warnings
 
@@ -373,9 +453,12 @@ def test_refinement_survives_fresh_process(exchange, tmp_path):
     c.setBrushPercent(8)
     c.setBrushRelative(True)
     c.setBrushSphere(True)
+    c.setDisplayMode('fill')
+    c.setFillOpacity(68)
     expected = dict(count=len(c.records), mode=c.editMode, selected=c.selectedId,
                     diameter=c.brushDiameter, relative=c.brushRelative,
-                    percent=c.brushPercent, sphere=c.brushSphere)
+                    percent=c.brushPercent, sphere=c.brushSphere,
+                    display_mode=c.displayMode, fill_opacity=c.fillOpacity)
     for i, record in enumerate(c.records):
         for key, field in [('mask', 'mask'), ('offset', 'mask_offset'), ('name', 'name'),
                            ('color', 'color'), ('visible', 'visible')]:
@@ -401,7 +484,8 @@ def test_refinement_tool_preferences_dirty_but_display_refresh_is_not(exchange, 
     QTest.qWait(150)
     for change in (lambda: c.setEditMode('erase'), lambda: c.setBrushDiameter(23),
                    lambda: c.setBrushRelative(True), lambda: c.setBrushPercent(9),
-                   lambda: c.setBrushSphere(True), lambda: c.setEnabled(False)):
+                   lambda: c.setBrushSphere(True), lambda: c.setEnabled(False),
+                   lambda: c.setDisplayMode('outline'), lambda: c.setFillOpacity(72)):
         assert manager.save_to(tmp_path / 'preferences.voxworkspace')
         wait_until(lambda: not manager.busy)
         assert not manager.dirty

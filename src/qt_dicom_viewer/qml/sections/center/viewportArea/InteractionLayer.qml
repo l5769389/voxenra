@@ -51,6 +51,7 @@ Item {
     property string crosshairHoverTarget: ""
     property string measurementCursorKind: ""
     property string regionCursorKind: ""
+    property var mousePreferences: null
     property string activeInteraction: ""
     property real brushDiameterPixels: 0
     property bool brushPreviewEnabled: false
@@ -79,7 +80,7 @@ Item {
         : registrationInteraction ? (crosshairHoverTarget === "center" ? "crosshair-move" : "pan")
         : CursorPolicy.resolve(activeInteraction, regionCursorKind, crosshairHoverTarget, measurementCursorKind)
     function dragCursorForButtons(buttons) {
-        return CursorPolicy.resolveDrag(hoverCursorKind, buttons, registrationInteraction)
+        return CursorPolicy.resolveDrag(hoverCursorKind, buttons, registrationInteraction, mousePreferences)
     }
     onActiveInteractionChanged: {
         dragCursorKind = ""

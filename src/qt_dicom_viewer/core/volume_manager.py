@@ -2,12 +2,11 @@ from __future__ import annotations
 from qt_dicom_viewer.i18n import message as _msg
 
 import logging
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from collections import OrderedDict
 from hashlib import sha256
 
 import numpy as np
-import pydicom
 
 from qt_dicom_viewer.core.dicom_loader import DicomLoader
 from qt_dicom_viewer.core.render_cancellation import check_render_cancelled
@@ -116,7 +115,7 @@ class VolumeManager:
     #     → Slope / Intercept 转换为模态值
     #     → 根据空间位置排序
     #     → 校验矩阵、间距和方向
-    #     → stack 为 (slice, row, column)
+    #     → 逐帧填充 (slice, row, column) 数组
     #     → 建立体素坐标到患者物理坐标的映射
     #     → 提取 Axial / Coronal / Sagittal
 
@@ -239,105 +238,10 @@ class VolumeManager:
                 "Invalid slice spacing"
             )
 
-        frames: list[np.ndarray] = []
-        source_frames: list[np.ndarray] = []
-        value_metas: list[PixelValueMeta] = []
-        source_meta = None
-        reference_dataset = None
-        loader = DicomLoader()
-        default_window: WindowLevel | None = None
-        pet_windows: list[WindowLevel] = []
-        pet_source_windows: list[WindowLevel] = []
-        representative_meta: InstanceDisplayMeta | None = None
-
-        for _, instance in positioned_instances:
-            check_render_cancelled()
-            dataset, modality_pixels = loader.read_frame(instance.path, instance.frame_index)
-
-            if modality_pixels.ndim != 2:
-                raise VolumeBuildError(
-                    f"Only single-frame 2D instances are currently "
-                    f"supported: path={instance.path}"
-                )
-
-            if modality_pixels.shape != (first.rows, first.columns):
-                raise VolumeBuildError(
-                    f"Inconsistent pixel matrix: path={instance.path} "
-                    f"shape={modality_pixels.shape}"
-                )
-
-            source_frames.append(modality_pixels)
-            display_pixels, value_meta, value_scale = loader.to_display_values(dataset, modality_pixels)
-            value_metas.append(value_meta)
-            if reference_dataset is None:
-                reference_dataset = dataset
-                if series.modality.upper() == "PT":
-                    _, source_meta, _ = loader.to_display_values(dataset, modality_pixels, preferred_unit="source")
-            if default_window is None:
-                default_window = loader.resolve_window(
-                    dataset=dataset,
-                    target_window=None,
-                    modality_pixels=display_pixels,
-                    pixel_value_meta=value_meta,
-                    value_scale=value_scale,
-                )
-                representative_meta = loader.extract_instance_meta(
-                    dataset
-                )
-
-            if series.modality.upper() == "PT":
-                pet_windows.append(loader.resolve_window(dataset, None, display_pixels,
-                                                          value_meta, value_scale))
-                if source_meta is not None:
-                    pet_source_windows.append(loader.resolve_window(dataset, None, modality_pixels,
-                                                                     source_meta, 1.0))
-
-            frames.append(display_pixels)
-
-        value_meta = value_metas[0]
-        if series.modality.upper() == "MR" and len({m.unit for m in value_metas}) != 1:
-            raise VolumeBuildError(_msg("mr.mixedUnits"))
-        if series.modality.upper() == "PT":
-            if len({m.source_unit for m in value_metas}) != 1:
-                raise VolumeBuildError(_msg('text.0152'))
-            if value_meta.source_unit == "BQML":
-                warning = next((m.warning for m in value_metas if m.quantification == "unavailable"), None)
-                if warning:
-                    options = tuple(replace(o, available=False, warning=warning)
-                                    if o.unit_id == "suvbw" else o
-                                    for o in source_meta.unit_options)
-                    source_meta = replace(source_meta, unit="Bq/ml", unit_id="source",
-                                          scale_from_source=1.0, suv_type=None,
-                                          quantification="unavailable", warning=warning,
-                                          unit_options=options)
-                    value_meta = source_meta
-                    frames = source_frames
-                    pet_windows = pet_source_windows
-                elif not np.allclose([m.scale_from_source for m in value_metas], value_meta.scale_from_source,
-                                     rtol=1e-6, atol=0):
-                    warning = _msg('text.0153')
-                    value_meta = replace(value_meta, warning=warning)
-                    source_meta = replace(source_meta, warning=warning)
-            elif len({(m.unit, m.suv_type) for m in value_metas}) != 1:
-                raise VolumeBuildError(_msg('text.0154'))
-            # A first slice with little uptake may carry a very narrow DICOM
-            # window. Choose a single range covering the per-slice presets in
-            # the final quantitative domain, then keep it fixed while browsing.
-            upper = max(window.center + window.width / 2 for window in pet_windows)
-            default_window = WindowLevel(upper / 2, upper)
-
-        # 体数据轴顺序：(slice, row, column)
-        check_render_cancelled()
-        volume_pixels = np.ascontiguousarray(
-            np.stack(frames, axis=0),
-            dtype=np.float32,
+        frames = _read_volume_frames(
+            tuple(instance for _, instance in positioned_instances), series.modality.upper()
         )
-
-        if series.modality.upper() == "MR":
-            # Source VOI values describe individual acquired frames, not a
-            # reconstructed plane. A peripheral slice can have a tiny range.
-            from qt_dicom_viewer.core.mr import automatic_mr_window
-            default_window = automatic_mr_window(volume_pixels)
+        volume_pixels = frames.pixels
 
         first_ordered_instance = positioned_instances[0][1]
         origin = first_ordered_instance.image_position_patient
@@ -345,11 +249,6 @@ class VolumeManager:
         if origin is None:
             raise VolumeBuildError(
                 "First ordered instance has no position"
-            )
-
-        if default_window is None or representative_meta is None:
-            raise VolumeBuildError(
-                "Could not determine the volume display metadata"
             )
 
         return DicomVolume(
@@ -373,14 +272,13 @@ class VolumeManager:
                 ),
             ),
             series_uid=series.series_instance_uid,
-            default_window=default_window,
-            representative_instance_meta=representative_meta,
-            suv_pixels=volume_pixels if value_meta.is_suv else None,
-            suv_value_meta=value_meta if value_meta.is_suv else None,
-            pixel_value_meta=value_meta,
-            source_pixels=(np.ascontiguousarray(np.stack(source_frames), dtype=np.float32)
-                           if value_meta.source_unit == "BQML" else None),
-            source_value_meta=source_meta,
+            default_window=frames.window,
+            representative_instance_meta=frames.representative_meta,
+            suv_pixels=volume_pixels if frames.value_meta.is_suv else None,
+            suv_value_meta=frames.value_meta if frames.value_meta.is_suv else None,
+            pixel_value_meta=frames.value_meta,
+            source_pixels=frames.source_pixels,
+            source_value_meta=frames.source_meta,
         )
 
     @staticmethod
@@ -465,11 +363,138 @@ class VolumeManager:
             )
 
 
+@dataclass(frozen=True)
+class _VolumeFrames:
+    pixels: np.ndarray
+    source_pixels: np.ndarray | None
+    value_meta: PixelValueMeta
+    source_meta: PixelValueMeta | None
+    window: WindowLevel
+    representative_meta: InstanceDisplayMeta
+
+
+def _read_volume_frames(instances: tuple[DicomInstanceMeta, ...], modality: str) -> _VolumeFrames:
+    """Decode validated, spatially ordered frames without retaining duplicate volumes."""
+    first = instances[0]
+    shape = (len(instances), first.rows, first.columns)
+    # Fill one destination per quantitative domain. Never retain a list of
+    # decoded slices and then allocate another complete volume with np.stack.
+    volume_pixels = np.empty(shape, dtype=np.float32)
+    source_pixels = None
+    value_metas: list[PixelValueMeta] = []
+    source_meta = None
+    # Sequential loading revisits no frames; retain only the current decode.
+    loader = DicomLoader(maximum_cache_frames=1)
+    default_window: WindowLevel | None = None
+    pet_windows: list[WindowLevel] = []
+    pet_source_windows: list[WindowLevel] = []
+    representative_meta: InstanceDisplayMeta | None = None
+
+    for index, instance in enumerate(instances):
+        check_render_cancelled()
+        dataset, modality_pixels = loader.read_frame(instance.path, instance.frame_index)
+
+        if modality_pixels.ndim != 2:
+            raise VolumeBuildError(
+                f"Only single-frame 2D instances are currently "
+                f"supported: path={instance.path}"
+            )
+
+        if modality_pixels.shape != (first.rows, first.columns):
+            raise VolumeBuildError(
+                f"Inconsistent pixel matrix: path={instance.path} "
+                f"shape={modality_pixels.shape}"
+            )
+
+        display_pixels, value_meta, value_scale = loader.to_display_values(dataset, modality_pixels)
+        value_metas.append(value_meta)
+        if index == 0:
+            if value_meta.source_unit == "BQML":
+                source_pixels = np.empty(shape, dtype=np.float32)
+            if modality == "PT":
+                _, source_meta, _ = loader.to_display_values(dataset, modality_pixels, preferred_unit="source")
+        if default_window is None:
+            default_window = loader.resolve_window(
+                dataset=dataset,
+                target_window=None,
+                modality_pixels=display_pixels,
+                pixel_value_meta=value_meta,
+                value_scale=value_scale,
+            )
+            representative_meta = loader.extract_instance_meta(
+                dataset
+            )
+
+        if modality == "PT":
+            pet_windows.append(loader.resolve_window(dataset, None, display_pixels,
+                                                      value_meta, value_scale))
+            if source_meta is not None:
+                pet_source_windows.append(loader.resolve_window(dataset, None, modality_pixels,
+                                                                 source_meta, 1.0))
+
+        volume_pixels[index] = display_pixels
+        if source_pixels is not None:
+            source_pixels[index] = modality_pixels
+
+    value_meta = value_metas[0]
+    if modality == "MR" and len({m.unit for m in value_metas}) != 1:
+        raise VolumeBuildError(_msg("mr.mixedUnits"))
+    if modality == "PT":
+        if len({m.source_unit for m in value_metas}) != 1:
+            raise VolumeBuildError(_msg('text.0152'))
+        if value_meta.source_unit == "BQML":
+            warning = next((m.warning for m in value_metas if m.quantification == "unavailable"), None)
+            if warning:
+                options = tuple(replace(o, available=False, warning=warning)
+                                if o.unit_id == "suvbw" else o
+                                for o in source_meta.unit_options)
+                source_meta = replace(source_meta, unit="Bq/ml", unit_id="source",
+                                      scale_from_source=1.0, suv_type=None,
+                                      quantification="unavailable", warning=warning,
+                                      unit_options=options)
+                value_meta = source_meta
+                # A missing factor in any slice invalidates SUV for the whole
+                # series. Share the completed source buffer, never mixed domains.
+                volume_pixels = source_pixels
+                pet_windows = pet_source_windows
+            elif not np.allclose([m.scale_from_source for m in value_metas], value_meta.scale_from_source,
+                                 rtol=1e-6, atol=0):
+                warning = _msg('text.0153')
+                value_meta = replace(value_meta, warning=warning)
+                source_meta = replace(source_meta, warning=warning)
+        elif len({(m.unit, m.suv_type) for m in value_metas}) != 1:
+            raise VolumeBuildError(_msg('text.0154'))
+        # A first slice with little uptake may carry a very narrow DICOM
+        # window. Choose a single range covering the per-slice presets in
+        # the final quantitative domain, then keep it fixed while browsing.
+        upper = max(window.center + window.width / 2 for window in pet_windows)
+        default_window = WindowLevel(upper / 2, upper)
+
+    # 体数据轴顺序：(slice, row, column)
+    check_render_cancelled()
+
+    if modality == "MR":
+        # Source VOI values describe individual acquired frames, not a
+        # reconstructed plane. A peripheral slice can have a tiny range.
+        from qt_dicom_viewer.core.mr import automatic_mr_window
+        default_window = automatic_mr_window(volume_pixels)
+
+    if default_window is None or representative_meta is None:
+        raise VolumeBuildError("Could not determine the volume display metadata")
+    return _VolumeFrames(volume_pixels, source_pixels, value_meta, source_meta,
+                         default_window, representative_meta)
+
+
 def series_fingerprint(series: DicomSeriesRecord) -> str:
     entries = []
+    source_stats = {}
     for item in series.instances:
         check_render_cancelled()
-        stat = item.path.stat()
+        # Enhanced frames share a file. Stat it once within this fingerprint,
+        # but read it again on the next call to detect replaced source files.
+        if item.path not in source_stats:
+            source_stats[item.path] = item.path.stat()
+        stat = source_stats[item.path]
         entries.append((item.sop_instance_uid, item.frame_index, item.image_position_patient,
                         item.image_orientation_patient, item.rows, item.columns,
                         item.pixel_spacing, item.frame_of_reference_uid,

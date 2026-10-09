@@ -16,57 +16,117 @@ ColumnLayout {
     readonly property var selected: controller?.selected ?? ({})
     readonly property bool hasSelection: !!selected.id
     readonly property bool relativeBrush: controller?.brushRelative ?? false
+    readonly property bool brushTool: ["paint", "erase"].includes(controller?.editMode)
+    readonly property bool erasing: controller?.editMode === "erase"
+    readonly property string diameterLabel: erasing
+        ? (relativeBrush ? qsTrId("seg.eraserDiameterPercent") : qsTrId("seg.eraserDiameter"))
+        : (relativeBrush ? qsTrId("seg.brushDiameterPercent") : qsTrId("seg.brushDiameter"))
+    readonly property string diameterHelp: relativeBrush ? qsTrId("seg.brushRelativeHelp") : qsTrId("seg.brushRangeHelp")
+    readonly property real diameterValue: relativeBrush ? (controller?.brushPercent ?? 3) : (controller?.brushDiameter ?? 5)
+    function setDiameter(value) {
+        if (!controller) return
+        if (relativeBrush) controller.setBrushPercent(value)
+        else controller.setBrushDiameter(value)
+    }
     spacing: 8
+
+    component EditorCombo: Components.AppComboBox {
+        id: combo
+        leftPadding: 8
+        rightPadding: 24
+        readonly property real singleLineWidth: Math.ceil(captionMetrics.advanceWidth) + leftPadding + rightPadding + 2
+        TextMetrics { id: captionMetrics; font: combo.font; text: combo.displayText }
+        implicitHeight: Math.max(Theme.controlHeight, caption.implicitHeight + 12)
+        contentItem: Text {
+            id: caption
+            text: combo.displayText
+            color: combo.enabled ? Theme.textPrimary : Theme.textDisabled
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.WordWrap
+            font: combo.font
+        }
+    }
 
     GridLayout {
         visible: panel.mode === "segmentation"
         Layout.fillWidth: true
         columns: 2
-        RowLayout {
+        GridLayout {
+            id: selectors
             Layout.fillWidth: true
             Layout.columnSpan: 2
-            spacing: 6
-            Components.AppComboBox {
+            // Keep short labels together; wrap only when the translated captions need it.
+            columns: !scope.visible || width >= editMode.singleLineWidth + scope.singleLineWidth + 28 + columnSpacing * 2 ? 3 : 2
+            columnSpacing: 6
+            rowSpacing: 6
+            EditorCombo {
+                id: editMode
                 objectName: "segmentationEditMode"
+                Layout.columnSpan: selectors.columns === 2 && scope.visible ? 2 : 1
                 minimumPopupWidth: 220
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                Layout.preferredWidth: 1
+                Layout.preferredWidth: singleLineWidth
                 readonly property var keys: panel.controller?.canDraw === false ? ["paint", "erase", "keep", "remove"] : ["threshold", "paint", "erase", "keep", "remove"]
                 model: panel.controller?.canDraw === false
                     ? [qsTrId("seg.paint"), qsTrId("seg.erase"), qsTrId("seg.keepIsland"), qsTrId("seg.removeIsland")]
                     : [qsTrId("seg.thresholdTool"), qsTrId("seg.paint"), qsTrId("seg.erase"), qsTrId("seg.keepIsland"), qsTrId("seg.removeIsland")]
                 currentIndex: keys.indexOf(panel.controller?.editMode ?? "threshold")
+                onModelChanged: Qt.callLater(function() {
+                    currentIndex = Qt.binding(() => keys.indexOf(panel.controller?.editMode ?? "threshold"))
+                })
                 onActivated: index => panel.controller.setEditMode(keys[index])
             }
-            Components.AppComboBox {
+            EditorCombo {
+                id: scope
                 objectName: "segmentationBrushScope"
                 minimumPopupWidth: 160
-                visible: ["paint", "erase"].includes(panel.controller?.editMode)
+                visible: panel.brushTool
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                Layout.preferredWidth: 1
+                Layout.preferredWidth: singleLineWidth
                 model: [qsTrId("seg.sliceBrush"), qsTrId("seg.sphereBrush")]
                 currentIndex: panel.controller?.brushSphere ? 1 : 0
+                onModelChanged: Qt.callLater(function() {
+                    currentIndex = Qt.binding(() => panel.controller?.brushSphere ? 1 : 0)
+                })
                 onActivated: index => panel.controller.setBrushSphere(index === 1)
+            }
+            Controls.ToolActionButton {
+                objectName: "segmentationManualButton"
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
+                minimumButtonWidth: 28
+                iconName: "manual"
+                iconSize: 18
+                label: qsTrId("text.0495")
+                onClicked: panel.manualRequested(panel.mode)
             }
         }
         RowLayout {
             Layout.fillWidth: true
             Layout.columnSpan: 2
-            visible: ["paint", "erase"].includes(panel.controller?.editMode)
+            visible: panel.brushTool
             Text {
+                objectName: "segmentationBrushDiameterLabel"
                 Layout.fillWidth: true
-                text: panel.relativeBrush ? qsTrId("seg.brushDiameterPercent") : qsTrId("seg.brushDiameter")
+                text: panel.diameterLabel
+                wrapMode: Text.WordWrap
+                Layout.minimumWidth: 0
                 color: Theme.textSecondary
                 font.pixelSize: 12
             }
-            Components.AppComboBox {
+            EditorCombo {
                 objectName: "segmentationBrushUnits"
-                Layout.preferredWidth: 112
+                Layout.minimumWidth: singleLineWidth
+                Layout.preferredWidth: singleLineWidth
+                Layout.maximumWidth: singleLineWidth
                 minimumPopupWidth: 160
                 model: [qsTrId("seg.brushMillimeters"), qsTrId("seg.brushRelative")]
                 currentIndex: panel.relativeBrush ? 1 : 0
+                onModelChanged: Qt.callLater(function() {
+                    currentIndex = Qt.binding(() => panel.relativeBrush ? 1 : 0)
+                })
                 onActivated: index => panel.controller.setBrushRelative(index === 1)
             }
         }
@@ -74,22 +134,22 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.columnSpan: 2
             spacing: 6
-            visible: ["paint", "erase"].includes(panel.controller?.editMode)
+            visible: panel.brushTool
             Components.AppSlider {
                 objectName: "segmentationBrushSlider"
                 Layout.fillWidth: true
                 from: 1
                 to: panel.relativeBrush ? 25 : 50
                 stepSize: panel.relativeBrush ? 1 : 0.5
-                value: Math.max(from, Math.min(to, panel.relativeBrush ? panel.controller.brushPercent : (panel.controller?.brushDiameter ?? 5)))
-                Accessible.name: panel.relativeBrush ? qsTrId("seg.brushDiameterPercent") : qsTrId("seg.brushDiameter")
-                Accessible.description: (panel.relativeBrush ? qsTrId("seg.brushRelativeHelp") : qsTrId("seg.brushRangeHelp"))
+                value: Math.max(from, Math.min(to, panel.diameterValue))
+                Accessible.name: panel.diameterLabel
+                Accessible.description: panel.diameterHelp
                 // Publish user movement only: clamping the slider must never
                 // overwrite a precise value entered outside its common range.
-                onMoved: panel.relativeBrush ? panel.controller.setBrushPercent(value) : panel.controller.setBrushDiameter(value)
+                onMoved: panel.setDiameter(value)
                 Components.AppToolTip {
                     visible: parent.hovered
-                    text: (panel.relativeBrush ? qsTrId("seg.brushRelativeHelp") : qsTrId("seg.brushRangeHelp"))
+                    text: panel.diameterHelp
                 }
             }
             Components.AppNumberField {
@@ -98,56 +158,20 @@ ColumnLayout {
                 Layout.maximumWidth: 60
                 Layout.preferredWidth: 60
                 compact: true
-                numberValue: panel.relativeBrush ? panel.controller.brushPercent : (panel.controller?.brushDiameter ?? 5)
+                numberValue: panel.diameterValue
                 minimum: panel.relativeBrush ? 1 : 0.1
                 maximum: panel.relativeBrush ? 25 : 100
                 decimals: 1
-                Accessible.name: panel.relativeBrush ? qsTrId("seg.brushDiameterPercent") : qsTrId("seg.brushDiameter")
-                onEdited: value => panel.relativeBrush ? panel.controller.setBrushPercent(value) : panel.controller.setBrushDiameter(value)
+                Accessible.name: panel.diameterLabel
+                onEdited: value => panel.setDiameter(value)
             }
         }
-        Components.AppButton {
-            objectName: "newPaintSegment"
-            Layout.fillWidth: true
-            Layout.columnSpan: 2
-            compact: true
-            text: qsTrId("seg.newPaint")
-            onClicked: panel.controller.newSegment()
-        }
-        GridLayout {
-            Layout.fillWidth: true
-            Layout.columnSpan: 2
-            columns: width >= undoButton.implicitWidth + redoButton.implicitWidth + columnSpacing ? 2 : 1
-            uniformCellWidths: true
-            Components.AppButton {
-                id: undoButton
-                objectName: "segmentationUndo"
-                Layout.fillWidth: true
-                compact: true
-                text: qsTrId("seg.undo") + " (" + (panel.historyController?.undoShortcutText ?? "Ctrl+Z") + ")"
-                enabled: panel.historyController?.canUndo ?? false
-                onClicked: panel.historyController.undo()
-            }
-            Components.AppButton {
-                id: redoButton
-                objectName: "segmentationRedo"
-                Layout.fillWidth: true
-                compact: true
-                text: qsTrId("seg.redo") + " (" + (panel.historyController?.redoShortcutText ?? "Ctrl+Shift+Z") + ")"
-                enabled: panel.historyController?.canRedo ?? false
-                onClicked: panel.historyController.redo()
-            }
-        }
-        Text {
-            Layout.fillWidth: true
-            Layout.columnSpan: 2
-            text: ["keep", "remove"].includes(panel.controller?.editMode) ? qsTrId("seg.islandHelp")
-                : panel.controller?.editMode !== "threshold" ? qsTrId("seg.brushHelp") : ""
-            visible: text !== ""
-            wrapMode: Text.Wrap
-            color: Theme.textMuted
-            font.pixelSize: 11
-        }
+    }
+
+    SegmentationDisplaySettings {
+        visible: panel.mode === "segmentation"
+        Layout.fillWidth: true
+        controller: panel.controller
     }
 
     Text {
@@ -164,18 +188,34 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             text: panel.mode === "segmentation" ? qsTrId("seg.manage") : qsTrId("text.1151")
+            Layout.minimumWidth: 0
+            wrapMode: Text.WordWrap
             color: Theme.textPrimary
             font.pixelSize: 14
             font.weight: Font.DemiBold
         }
         Controls.ToolActionButton {
             objectName: "voiManualButton"
+            visible: panel.mode !== "segmentation"
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             iconName: "manual"
             iconSize: 18
             label: qsTrId("text.0495")
             onClicked: panel.manualRequested(panel.mode)
+        }
+        Controls.ToolActionButton {
+            objectName: "newPaintSegment"
+            visible: panel.mode === "segmentation"
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            minimumButtonWidth: 28
+            iconName: "add"
+            iconSize: 18
+            label: qsTrId("seg.new")
+            Accessible.name: qsTrId("seg.new")
+            tooltipText: qsTrId("seg.new")
+            onClicked: panel.controller.newSegment()
         }
         Components.AppCheckBox {
             objectName: "voiEnabled"
@@ -184,10 +224,42 @@ ColumnLayout {
             onClicked: panel.controller?.setEnabled(checked)
         }
     }
-    Text {
-        text: I18n.format(qsTrId("voi.count"), {count: panel.controller?.items.length ?? 0})
-        color: Theme.textMuted
-        font.pixelSize: 11
+    RowLayout {
+        Layout.fillWidth: true
+        Text {
+            Layout.fillWidth: true
+            text: I18n.format(qsTrId("voi.count"), {count: panel.controller?.items.length ?? 0})
+            color: Theme.textMuted
+            font.pixelSize: 12
+        }
+        Controls.ToolActionButton {
+            objectName: "segmentationUndo"
+            visible: panel.mode === "segmentation"
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            minimumButtonWidth: 28
+            iconName: "undo"
+            iconSize: 18
+            label: qsTrId("seg.undo")
+            Accessible.name: qsTrId("seg.undo")
+            tooltipText: qsTrId("seg.undo") + " (" + (panel.historyController?.undoShortcutText ?? "Ctrl+Z") + ")"
+            enabled: panel.historyController?.canUndo ?? false
+            onClicked: panel.historyController.undo()
+        }
+        Controls.ToolActionButton {
+            objectName: "segmentationRedo"
+            visible: panel.mode === "segmentation"
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            minimumButtonWidth: 28
+            iconName: "redo"
+            iconSize: 18
+            label: qsTrId("seg.redo")
+            Accessible.name: qsTrId("seg.redo")
+            tooltipText: qsTrId("seg.redo") + " (" + (panel.historyController?.redoShortcutText ?? "Ctrl+Shift+Z") + ")"
+            enabled: panel.historyController?.canRedo ?? false
+            onClicked: panel.historyController.redo()
+        }
     }
     ListView {
         id: regionList
@@ -209,7 +281,8 @@ ColumnLayout {
                 objectName: "voiVisibility-" + entry.modelData.id
                 compact: true
                 minimumButtonWidth: 28
-                text: entry.modelData.visible ? "◉" : "○"
+                iconName: entry.modelData.visible ? "visible" : "hidden"
+                iconSize: 16
                 textColor: entry.modelData.color
                 Accessible.name: qsTrId("text.1153")
                 onClicked: panel.controller.toggleVisible(entry.modelData.id)
@@ -274,7 +347,8 @@ ColumnLayout {
                 objectName: "voiDelete-" + entry.modelData.id
                 compact: true
                 minimumButtonWidth: 28
-                text: "×"
+                iconName: "delete"
+                iconSize: 16
                 Accessible.name: qsTrId("text.1154")
                 onClicked: panel.controller.remove(entry.modelData.id)
             }
@@ -447,14 +521,7 @@ ColumnLayout {
                 }
                 Text { text: "mm"; color: Theme.textMuted; font.pixelSize: 11 }
             }
-            Text {
-                Layout.fillWidth: true
-                visible: panel.selected.fixedMask ?? false
-                text: qsTrId("seg.fixedMaskHelp")
-                color: Theme.textMuted
-                font.pixelSize: 11
-                wrapMode: Text.Wrap
-            }
+
             RowLayout {
                 visible: !panel.selected.fixedMask
                 objectName: "voiDepthModeRow"

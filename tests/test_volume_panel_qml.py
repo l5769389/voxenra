@@ -43,6 +43,8 @@ def panel(qt_app, loaded_tab, request):
 
 
 def find(view, name):
+    from toolbar_navigation import reveal_primary_tool
+    reveal_primary_tool(view.rootObject(), name)
     return next(item for item in _visual_children(view.rootObject())
                 if item.objectName() == name and item.isVisible())
 
@@ -102,8 +104,9 @@ def test_grouped_templates_and_window_controls(panel, tmp_path):
     assert view.grabWindow().save(str(tmp_path/"volume-presets-panel.png"))
     click(view, "primaryTool-window")
     assert tools.activePanel == "window" and tools.activeInteraction == "window"
-    labels = {item.property("text") for item in _visual_children(view.rootObject()) if item.isVisible()}
-    assert any("3D 调窗" in str(label) for label in labels)
+    help_buttons = [item for item in _visual_children(view.rootObject())
+                    if item.isVisible() and item.property("explanation")]
+    assert any("3D 调窗" in item.property("explanation") for item in help_buttons)
     assert not any(item.objectName().startswith("windowPreset-") and item.isVisible()
                    for item in _visual_children(view.rootObject()))
     assert not any(item.objectName() == "beginSaveWindowTemplate" and item.isVisible()

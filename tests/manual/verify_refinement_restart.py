@@ -48,6 +48,9 @@ try:
     assert c.brushRelative == bool(expected['relative'])
     assert c.brushPercent == float(expected['percent'])
     assert c.brushSphere == bool(expected['sphere'])
+    if 'display_mode' in expected:
+        assert c.displayMode == str(expected['display_mode'])
+        assert c.fillOpacity == int(expected['fill_opacity'])
     assert c._draft is None and not tab.playing
     assert not manager.dirty
     print(json.dumps(dict(masks_equal=True, metadata_equal=True, tool_state_equal=True,

@@ -76,7 +76,7 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 ## Measurement, segmentation, and reporting
 
 - **Measurements:** length, angle, curve, rectangle, ellipse, and free-shape ROIs, with area, perimeter, and intensity statistics; list navigation, renaming, visibility, locking, copy/paste, undo and redo.
-- **Segmentation:** MPR thresholding, paint/erase refinement, keep/remove connected regions, single-slice segments from free-shape ROIs, VOI analysis, independent segment management, undo and redo.
+- **Segmentation:** MPR thresholding, paint/erase refinement, keep/remove connected regions, single-slice segments from free-shape ROIs, outline/fill and opacity controls, VOI analysis, independent segment management, undo and redo.
 - **Results:** export measurements as CSV/PDF or DICOM SR, with matching reference images in PDFs; exchange segments through DICOM SEG or NRRD / Slicer, preserving overlap, names, and colors.
 
 **Free-shape measurement:** click to place control points and create a smooth closed contour.
@@ -119,13 +119,17 @@ Workspaces preserve image references, layouts, measurements, segmentation masks,
 </tr>
 </table>
 
-## Appearance
+## Appearance and controls
 
 Choose **dark, neutral gray, or light** in **Settings → Appearance & language**. Neutral gray combines graphite panels with restrained cyan accents. Theme changes apply immediately and persist after restart; image windowing and color maps remain independent.
 
 ![MR viewing in the neutral gray theme](docs/screenshots/37-theme-graphite.png)
 
 [Dark theme](docs/screenshots/25-theme-dark.png) · [Light theme](docs/screenshots/26-theme-light.png)
+
+Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Conflicting or reserved shortcuts are rejected. Privacy options control identity overlays in new views and let you clear recent workspace entries.
+
+![Mouse bindings and tool shortcuts](docs/screenshots/40-input-settings.png)
 
 [View the interface gallery](docs/screenshots/README.md)
 

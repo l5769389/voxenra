@@ -71,8 +71,8 @@ def test_sidebar_drags_and_collapse_cannot_take_reserved_image_space(sidebar_sce
     drag_width(window, 350)
     drag(window, 'rightPanelResizeHandle', -300)
     assert_reading_area(window)
-    assert find(window, 'sidebarContainer').width() == 350
-    assert find(window, 'rightPanel').width() == 238
+    assert find(window, 'sidebarContainer').width() == 348
+    assert find(window, 'rightPanel').width() == 240
     click(window, find(window, 'sidebarToggle'))
     click(window, find(window, 'toggleRightPanel'))
     assert_reading_area(window)

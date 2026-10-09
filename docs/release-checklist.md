@@ -17,6 +17,7 @@
 ## 3. 平台产物
 
 - **macOS：本地 Mac 打包**，使用 `bash scripts/build_macos.sh`。校验 `.app`、DMG、架构、版本、签名及启动和核心阅片流程；生成 SHA-256，将 DMG 与校验文件上传到对应 Release。
+- macOS 正式签名分发使用 `bash scripts/build_macos.sh --release`，提前配置 `MACOS_SIGN_IDENTITY` 和 `MACOS_NOTARY_PROFILE`（见[配置说明](macos-signing.md)）。核对应用及 DMG 公证状态均为 Accepted、票据验证和 Gatekeeper 检查通过；票据装订后再生成 SHA-256。缺少证书或公证失败不得当作正式签名包发布；历史版本的 ad-hoc 验证记录不代表新包通过。首次启用签名后，在另一台 Mac 上下载、断网安装并启动，抽查 QML、2D、3D、文件访问及更新替换。
 - **Windows：GitHub Actions 构建与发布**，使用 `.github/workflows/build-windows.yml` 的标签或 `release_tag` 流程。确认该运行检出的提交与标签一致、测试通过，再核对安装版、便携版及两份 SHA-256 附件。不要用本地 Mac 包代替 Windows 产物。
 - 使用 `docs/packaging.md` 的平台说明核对安装、启动和更新；无法在目标系统验证的项目要如实写在发布说明中。
 - 自动更新验收：在已安装的上一版中验证启动检查、更新内容、取消同一版本后不再弹窗及版本号更新标识；关闭自动检查并重启应不联网检查。测试下载中断、校验失败、工作区保存/取消退出。macOS 验证 DMG 替换和重新启动；Windows 安装版与单文件便携版分别验证更新、启动和失败恢复，用户设置及工作区不得丢失。

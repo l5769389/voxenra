@@ -12,11 +12,10 @@ ColumnLayout {
     property bool backgroundExpanded: false
     spacing: 12
 
-    Text {
-        text: qsTrId("mapping.title")
-        color: Theme.textPrimary
-        font.pixelSize: 14
-        font.weight: Font.DemiBold
+    Components.PanelHeading {
+        objectName: "ScalarMappingPanelHeading"
+        title: qsTrId("mapping.title")
+        explanation: panel.mapping.kind === "palette" ? qsTrId("mapping.paletteHint") : qsTrId("mapping.rangeHint")
     }
     RowLayout {
         Layout.fillWidth: true
@@ -38,13 +37,7 @@ ColumnLayout {
             onClicked: panel.viewportController.setDisplayMappingMode("custom")
         }
     }
-    Text {
-        Layout.fillWidth: true
-        text: panel.mapping.kind === "palette" ? qsTrId("mapping.paletteHint") : qsTrId("mapping.rangeHint")
-        color: Theme.textMuted
-        font.pixelSize: 12
-        wrapMode: Text.WordWrap
-    }
+
     Text {
         objectName: "mappingUnit"
         text: qsTrId("mapping.unit") + ": " + (panel.mapping.unit || "—")
@@ -131,4 +124,5 @@ ColumnLayout {
             }
         }
     }
+
 }

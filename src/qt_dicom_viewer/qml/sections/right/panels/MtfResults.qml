@@ -20,12 +20,41 @@ ColumnLayout {
     spacing: 14
     onVisibleChanged: { if (!visible && infoPopup) infoPopup.close() }
 
-    Components.AppButton {
-        objectName: "recalculateAnalysis"
+    RowLayout {
         Layout.fillWidth: true
-        text: qsTrId("analysis.recalculate")
-        enabled: !!panel.controller && panel.controller.status !== "calculating" && panel.controller.status !== "editing"
-        onClicked: panel.controller.recalculate()
+        spacing: 8
+        Components.AppButton {
+            objectName: "recalculateAnalysis"
+            Layout.fillWidth: true
+            text: qsTrId("analysis.recalculate")
+            enabled: !!panel.controller && panel.controller.status !== "calculating" && panel.controller.status !== "editing"
+            onClicked: panel.controller.recalculate()
+        }
+        Components.AppButton {
+            id: infoButton
+            objectName: "mtfInfoButton"
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            Layout.minimumWidth: 28
+            Layout.minimumHeight: 28
+            implicitWidth: 28
+            implicitHeight: 28
+            minimumButtonWidth: 28
+            leftPadding: 0
+            rightPadding: 0
+            topPadding: 0
+            bottomPadding: 0
+            iconName: "info"
+            iconSize: 18
+            normalColor: Theme.controlBackground
+            baseBorderWidth: 0
+            textColor: panel.qualityWarnings.length ? Theme.warningColor : Theme.textSecondary
+            Accessible.name: qsTrId("mtf.details")
+            Accessible.description: panel.qualityWarnings.join("\n")
+            cornerRadius: Theme.controlRadius
+            onClicked: infoPopup.visible ? infoPopup.close() : infoPopup.open()
+            Components.AppToolTip { text: qsTrId("mtf.details"); visible: infoButton.hovered }
+        }
     }
 
     function metric(value, missing) {
@@ -45,7 +74,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignVCenter
-        implicitHeight: 32
+        implicitHeight: Math.max(32, contentItem.implicitHeight + topPadding + bottomPadding)
         contentItem: Text {
             text: selector.label
             color: selector.selected ? Theme.textPrimary : Theme.textSecondary
@@ -66,6 +95,8 @@ ColumnLayout {
         Text {
             objectName: "mtfAnalysisMethodLabel"
             Layout.preferredWidth: 52
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
             Layout.fillHeight: true
             text: qsTrId("text.1142")
             color: Theme.textMuted
@@ -91,6 +122,8 @@ ColumnLayout {
         Text {
             objectName: "mtfAxesLabel"
             Layout.preferredWidth: 52
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
             Layout.fillHeight: true
             text: qsTrId("mtf.axes")
             color: Theme.textMuted
@@ -131,6 +164,8 @@ ColumnLayout {
         Text {
             objectName: "mtfMeasurementMethodLabel"
             Layout.preferredWidth: 52
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
             Layout.fillHeight: true
             text: qsTrId("text.1141")
             color: Theme.textMuted
@@ -164,6 +199,8 @@ ColumnLayout {
         spacing: 6
         Text {
             Layout.preferredWidth: 52
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
             text: qsTrId("ramp.direction")
             color: Theme.textMuted
             font.pixelSize: 11
@@ -214,6 +251,7 @@ ColumnLayout {
     }
     RowLayout {
         Layout.fillWidth: true
+        visible: panel.ready
         Text {
             objectName: "mtfActualMethod"
             Accessible.role: Accessible.StaticText
@@ -228,39 +266,16 @@ ColumnLayout {
             font.pixelSize: 11
             wrapMode: Text.Wrap
         }
-        Components.AppButton {
-            id: infoButton
-            objectName: "mtfInfoButton"
-            Layout.preferredWidth: 22
-            Layout.preferredHeight: 22
-            Layout.minimumWidth: 22
-            Layout.minimumHeight: 22
-            implicitWidth: 22
-            implicitHeight: 22
-            minimumButtonWidth: 22
-            leftPadding: 0
-            rightPadding: 0
-            topPadding: 0
-            bottomPadding: 0
-            iconName: "info"
-            iconSize: 16
-            normalColor: "transparent"
-            baseBorderWidth: 0
-            textColor: panel.qualityWarnings.length ? Theme.warningColor : Theme.textSecondary
-            Accessible.name: qsTrId("mtf.details")
-            Accessible.description: panel.qualityWarnings.join("\n")
-            cornerRadius: Theme.controlRadius
-            onClicked: infoPopup.open()
-            Components.AppToolTip { text: qsTrId("mtf.details"); visible: infoButton.hovered }
-        }
+
     }
     AnalysisInfoPopup {
         id: infoPopup
         anchorItem: infoButton
-        explanation: (panel.rampMode ? qsTrId("ramp.info")
+        explanation: [(panel.rampMode ? qsTrId("ramp.info")
             : panel.controller?.actualAnalysisMethod === "gaussian_equivalent" ? qsTrId("mtf.equivalentHint")
             : panel.controller?.actualAnalysisMethod === "tukey_fft" ? qsTrId("mtf.weightedHint")
-            : panel.controller?.analysisMethod === "gaussian" ? qsTrId("mtf.gaussianHint") : qsTrId("mtf.directHint")) + "\n\n" + (panel.controller?.provenance ?? "") + "\n" + qsTrId("analysis.savedHint")
+            : panel.controller?.analysisMethod === "gaussian" ? qsTrId("mtf.gaussianHint") : qsTrId("mtf.directHint")), panel.controller?.provenance ?? "", qsTrId("analysis.savedHint")]
+            .filter(part => part.trim().length > 0).join("\n\n")
         warnings: panel.qualityWarnings
     }
     Connections {

@@ -166,7 +166,10 @@ def test_every_preference_survives_process_restart(tmp_path):
     import sys
 
     expected = {
-        'appearance': {'theme': 'light', 'language': 'en-US'},
+        'appearance': {'theme': 'light', 'language': 'en-US', 'interfaceScale':115},
+        'input': {'reverseWheel':True, 'rightButton':'pan', 'middleButton':'zoom', 'windowSensitivity':1.5, 'zoomSensitivity':.5},
+        'shortcuts': {'bindings':dict(DEFAULTS['shortcuts']['bindings'], pan='Shift+P')},
+        'privacy': {'hideIdentity':True},
         'updates': {'enabled': False, 'dismissedVersion': '1.7.0'},
         'workspace': {'automaticRecovery': False, 'exitBehavior': 'save'},
         'layout': {'rightPanelCollapsed': True, 'rightPanelWidth': 310,

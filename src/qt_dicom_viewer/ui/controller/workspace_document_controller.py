@@ -31,6 +31,7 @@ class WorkspaceDocumentController(QObject):
     completed = Signal(object)
     progress = Signal(object)
     restored = Signal()
+    recentWorkspacesChanged = Signal()
 
     def __init__(self, app, *, settings_path=None):
         super().__init__(app)
@@ -56,6 +57,8 @@ class WorkspaceDocumentController(QObject):
         root = (Path(settings_path).parent if settings_path else
                 Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)))
         self._recovery_path = root / "workspace-recovery.voxworkspace"
+        from qt_dicom_viewer.infrastructure.recent_workspaces import RecentWorkspaces
+        self._recent = RecentWorkspaces(root / "recent-workspaces.json" if settings_path is not False else None)
         self._autosave_supported = settings_path is not False
         self._autosave_enabled = self._autosave_supported and self.app.settingsController.section("workspace")["automaticRecovery"]
         self._previous_recovery = self._autosave_supported and self._recovery_path.is_file()
@@ -96,6 +99,49 @@ class WorkspaceDocumentController(QObject):
 
     @Property(str, notify=changed)
     def path(self): return self._path
+
+    @Property('QVariantList', notify=recentWorkspacesChanged)
+    def recentWorkspaces(self): return self._recent.items
+
+    @Slot()
+    def refreshRecent(self):
+        self.recentWorkspacesChanged.emit()
+
+    @Slot(str, result=bool)
+    def removeRecent(self, path):
+        if self._recent.remove(path):
+            self.recentWorkspacesChanged.emit()
+            return True
+        return False
+
+    @Slot(result=bool)
+    def clearRecent(self):
+        try:
+            self._recent.clear()
+        except OSError:
+            self.app.settingsController._error(_msg('privacy.clearFailed'))
+            return False
+        self.recentWorkspacesChanged.emit()
+        return True
+
+    def _remember_recent(self, path):
+        self._recent.remember(path)
+        self.recentWorkspacesChanged.emit()
+
+    @Slot(str, result=bool)
+    def openRecent(self, path):
+        if self._busy or self.panel.scanning or self._closed:
+            return False
+        if not any(item['path'] == path for item in self._recent.items):
+            return False
+        if not Path(path).is_file():
+            self._message, self._error = _msg('home.workspaceMissing'), True
+            self.recentWorkspacesChanged.emit()
+            self.changed.emit()
+            return False
+        if self._confirm_replace(path):
+            return self.restore_from(path)
+        return False
 
     @_TextProperty(str, notify=_i18n_workspaceName, notify_name='_i18n_workspaceName', source_notify='changed')
     def workspaceName(self): return Path(self._path).stem if self._path else _msg('text.0401')
@@ -414,6 +460,7 @@ class WorkspaceDocumentController(QObject):
             if not payload["recovery"]:
                 self._message = _msg('text.0422')
                 self._path = payload["path"]
+                self._remember_recent(self._path)
                 if self._dirty:
                     self._close_after_save = False
                     self._remember_exit_after_save = False
@@ -588,6 +635,8 @@ class WorkspaceDocumentController(QObject):
             if active:
                 self.workspace.activateTabId(active)
             self._path = "" if error or Path(payload["path"]) == self._recovery_path else payload["path"]
+            if self._path:
+                self._remember_recent(self._path)
             if Path(payload["path"]) == self._recovery_path:
                 self._previous_recovery = False
                 self._owns_recovery = True

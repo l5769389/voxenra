@@ -9,7 +9,11 @@ ColumnLayout {
     objectName: "petRegistrationPanel"
     required property var controller
     spacing: 12
-    Text { text: qsTrId("text.1054"); color: Theme.textPrimary; font.pixelSize: 14; font.bold: true }
+    Components.PanelHeading {
+        objectName: "PetRegistrationPanelHeading"
+        title: qsTrId("text.1054")
+        explanation: qsTrId("text.1058")
+    }
     Text {
         Layout.fillWidth: true
         text: qsTrId("text.1055")
@@ -31,14 +35,7 @@ ColumnLayout {
             text: panel.controller.registrationActive ? qsTrId("text.1056") : qsTrId("text.1057")
             onClicked: panel.controller.setRegistrationActive(!panel.controller.registrationActive)
         }
-        Text {
-            Layout.fillWidth: true
-            visible: panel.controller.registrationActive
-            text: qsTrId("text.1058")
-            color: Theme.textMuted
-            font.pixelSize: 11
-            wrapMode: Text.Wrap
-        }
+
         GridLayout {
             Layout.fillWidth: true
             columns: 2
@@ -85,5 +82,6 @@ ColumnLayout {
             Components.AppButton { Layout.fillWidth: true; text: qsTrId("text.1066"); enabled: panel.controller.ready; onClicked: panel.controller.loadRegistration() }
             Components.AppButton { Layout.fillWidth: true; text: qsTrId("text.1067"); enabled: panel.controller.ready; onClicked: panel.controller.saveRegistration() }
         }
+
 
 }

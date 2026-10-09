@@ -386,6 +386,8 @@ def test_real_qml_layout_choices_bounds_and_state(loaded, monkeypatch, size):
         # Exercise the real toolbar entry rather than opening its panel directly.
         items = list(_visual_children(view.rootObject()))
         entry = next(i for i in items if i.objectName() == "primaryTool-mpr-layout")
+        from toolbar_navigation import reveal_primary_tool
+        reveal_primary_tool(view.rootObject(), "primaryTool-mpr-layout")
         assert entry.isVisible() and entry.isEnabled()
         assert entry.width() > 0 and entry.height() > 0
         point = entry.mapToScene(entry.boundingRect().center()).toPoint()
@@ -420,6 +422,7 @@ def test_real_qml_layout_choices_bounds_and_state(loaded, monkeypatch, size):
                          reference.mapToScene(reference.boundingRect().topLeft()).toPoint() + QPoint(20, 16))
         QTest.qWait(50)
         assert tab.activeViewport is tab.mprLayout.volumeViewport
+        reveal_primary_tool(view.rootObject(), "primaryTool-mpr-layout")
         buttons = {i.objectName(): i for i in _visual_children(view.rootObject()) if i.isVisible()}
         assert "primaryTool-volume-rotate" in buttons and "primaryTool-mpr-layout" in buttons
         assert "primaryTool-measure" not in buttons

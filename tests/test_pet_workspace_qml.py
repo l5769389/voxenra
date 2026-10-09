@@ -147,6 +147,8 @@ def test_real_pet_workspace(qt_app, paired_series, tmp_path, fusion):
             view.resize(1540, 1000)
             QTest.qWait(50)
         def click_named(name):
+            from toolbar_navigation import reveal_primary_tool
+            reveal_primary_tool(view.rootObject(), name)
             item = next(x for x in _visual_children(view.rootObject()) if x.objectName() == name and x.isVisible())
             QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier,
                             item.mapToScene(QPointF(item.width()/2, item.height()/2)).toPoint())
@@ -242,10 +244,7 @@ def test_real_pet_workspace(qt_app, paired_series, tmp_path, fusion):
             wait_until(lambda: np.allclose(tab._target_mpr_state.frame.center_patient, peak))
             np.testing.assert_allclose(tab._target_mpr_state.frame.center_patient, peak)
         if fusion:
-            registration_tool = next(x for x in _visual_children(view.rootObject()) if x.objectName() == "primaryTool-registration")
-            QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier,
-                            registration_tool.mapToScene(QPointF(registration_tool.width()/2, registration_tool.height()/2)).toPoint())
-            QTest.qWait(20)
+            click_named("primaryTool-registration")
             assert tab.registrationActive
             registration_items = list(_visual_children(view.rootObject()))
             assert any(x.objectName() == "petRegistrationPanel" and x.isVisible() for x in registration_items)

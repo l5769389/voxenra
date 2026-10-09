@@ -9,6 +9,7 @@ settings and recovery files are isolated. Native VTK screenshots include the
 actual child window. Each scene runs in a separate process for Qt/VTK cleanup.
 """
 import argparse
+import os
 from dataclasses import replace
 from pathlib import Path
 import subprocess
@@ -44,16 +45,16 @@ def scan(path, label):
     result = list(DicomFolderScanner().scan(path))[-1] if path.is_dir() else list(
         DicomFolderScanner().scan_files([path], folder=path.parent))[-1]
     # Only the presentation records change; files, geometry and pixel values do not.
-    return [replace(r, patient_name='MR Demo', patient_id='Anonymous',
-                    study_description='Public MR sample', study_date='', study_time='',
+    return [replace(r, patient_name=f'{r.modality} Demo', patient_id='Anonymous',
+                    study_description='Demo', study_date='', study_time='',
                     series_description=label or r.series_description) for r in result.series]
 
 
-def capture(samples, output, scene, ct_samples=None):
+def capture(samples, output, scene, ct_samples=None, mtf_samples=None):
     qt = QApplication.instance() or QApplication([])
     qt.setQuitOnLastWindowClosed(False)
     if scene == '28-mtf-analysis':
-        records = []
+        records = scan(mtf_samples, 'CT · MTF') if mtf_samples else []
     elif scene in ('01-2d-measurement', '02-mpr-segmentation', '04-volume-rendering', '03-4d-mpr'):
         assert ct_samples and ct_samples.is_dir(), 'Pass --ct-samples with a 4D CT folder'
         source = ct_samples if scene == '03-4d-mpr' else ct_samples / 'ph0'
@@ -82,7 +83,7 @@ def capture(samples, output, scene, ct_samples=None):
         records = scan(samples / 'Thin-3D-T1/DICOM', '3D T1 · 1 mm')
     with TemporaryDirectory(prefix='voxenra-readme-') as tmp:
         folder = Path(tmp)
-        if scene == '28-mtf-analysis':
+        if scene == '28-mtf-analysis' and not mtf_samples:
             from io import BytesIO
             import numpy as np
             import pydicom
@@ -103,10 +104,10 @@ def capture(samples, output, scene, ct_samples=None):
         app = AppController(provider, settings_path=folder / 'settings.json',
                             pacs_config_path=folder / 'pacs.json', pacs_import_root=folder / 'imports')
         app.workspaceDocumentController.setAutomaticRecovery(False)
-        app.languageController.selectLanguage('zh-CN')
+        app.languageController.selectLanguage(os.environ.get('VOXENRA_CAPTURE_LANGUAGE', 'zh-CN'))
         if scene == '26-theme-light':
             app.settingsController.setValue('appearance', 'theme', 'light')
-        app.settingsController.setValue('layout', 'rightPanelWidth', 258)
+        app.settingsController.setValue('layout', 'rightPanelWidth', 300)
         app.settingsController.setValue('corners', 'topLeft', ['viewPosition', 'seriesDescription', 'slice'])
         app.settingsController.setValue('corners', 'topRight', [])
         app.settingsController.setValue('corners', 'bottomRight', ['transform'])
@@ -120,7 +121,7 @@ def capture(samples, output, scene, ct_samples=None):
         assert engine.rootObjects(), warnings
         window = engine.rootObjects()[0]
         area = (QGuiApplication.screenAt(window.position()) or QGuiApplication.primaryScreen()).availableGeometry()
-        window.resize(min(1440, area.width() - 40), min(900, area.height() - 60))
+        window.resize(1440, 900)
         window.setPosition(area.x() + 20, area.y() + 20)
         if QGuiApplication.platformName() == "offscreen":
             window.resize(1440, 900)
@@ -195,8 +196,14 @@ def capture(samples, output, scene, ct_samples=None):
                 tab, view = ws.activeTab, ws.activeViewport
                 app.settingsController.setValue('layout', 'rightPanelWidth', 365)
                 tab.toolController.selectService('service:mtf')
-                view.beginInteraction(0, 0, 1, True, 20, 20, .1, .15)
-                view.endInteraction(50, 50, True, 108, 108)
+                if mtf_samples:
+                    view.setSliceIndex(10); ready()
+                    view.applyWindowPreset(40, 400)
+                    app.settingsController.setValue('services', 'mtfFrequencyUnit', 'lp/cm')
+                    assert view.mtfController.applyRoi(594, 604, 6.4, 6.4)
+                else:
+                    view.beginInteraction(0, 0, 1, True, 20, 20, .1, .15)
+                    view.endInteraction(50, 50, True, 108, 108)
                 wait(lambda: view.mtfController.status in ('ready', 'error'))
                 assert view.mtfController.status == 'ready', view.mtfController._current_analysis().error
                 assert view.mtfController.currentResult['x']['mtf50'] > 0
@@ -362,6 +369,9 @@ def capture(samples, output, scene, ct_samples=None):
             output.mkdir(parents=True, exist_ok=True)
             assert picture.save(str(output / f'{scene}.png'), 'PNG', 0)
             print(scene, picture.width(), picture.height(), flush=True)
+            if scene == '11-mpr-3d-layout':
+                from capture_release_features import capture_layout_animation
+                capture_layout_animation(app, window, output, pump, wait)
             if scene == '03-4d-mpr':
                 from PIL import Image
                 from PySide6.QtCore import QBuffer, QByteArray, QIODevice
@@ -409,12 +419,14 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--scene', choices=SCENES)
     parser.add_argument('--ct-samples', type=Path)
+    parser.add_argument('--mtf-samples', type=Path, help='Local spiral MTF series; slice 11, center (594,604)')
     args = parser.parse_args()
     if args.scene:
-        capture(args.samples.resolve(), args.output.resolve(), args.scene, args.ct_samples)
+        capture(args.samples.resolve(), args.output.resolve(), args.scene, args.ct_samples, args.mtf_samples)
     else:
         for name in SCENES:
             if name == '03-4d-mpr' and args.ct_samples is None: continue
             subprocess.run([sys.executable, __file__, '--samples', str(args.samples),
                             '--output', str(args.output), '--scene', name,
-                            *(['--ct-samples',str(args.ct_samples)] if args.ct_samples else [])], check=True)
+                            *(['--ct-samples',str(args.ct_samples)] if args.ct_samples else []),
+                            *(['--mtf-samples',str(args.mtf_samples)] if args.mtf_samples else [])], check=True)

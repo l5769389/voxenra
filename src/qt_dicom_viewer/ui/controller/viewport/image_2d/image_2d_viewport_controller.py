@@ -172,6 +172,7 @@ class Image2DViewportController(ViewportController):
         self._baseline_slice_index: int | None = None
         self._tool_controller = tool_controller
         self._settings_controller = tool_controller.settingsController
+        self._state = replace(self._state, display_settings=self._default_display_settings())
         self._measure_controller = MeasurementController(self)
         self._text_annotation_controller = TextAnnotationController(self)
         self._mtf_controller = None
@@ -205,6 +206,9 @@ class Image2DViewportController(ViewportController):
         self._clipboard_payload = None
         self._clipboard_pastes = 0
         self.transformChanged.connect(self._measure_controller.clearHover)
+
+    def _default_display_settings(self):
+        return ViewportDisplaySettings(hide_sensitive_info=self._settings_controller.section("privacy")["hideIdentity"])
 
     @Property(QObject, constant=True)
     def settingsController(self):
@@ -708,7 +712,7 @@ class Image2DViewportController(ViewportController):
         self._active_drag_operation = None
         self._active_drag_start_position = None
         self._annotation_drag_active = False
-        interaction = drag_interaction(self._tool_controller.active_interaction, buttons)
+        interaction = drag_interaction(self._tool_controller.active_interaction, buttons, self.settingsController.section("input"))
         if interaction == InteractionType.NONE:
             return
         if interaction == InteractionType.ANNOTATE_TEXT:
@@ -849,6 +853,11 @@ class Image2DViewportController(ViewportController):
             include_outside_image=True,
         )
 
+        preferences = self.settingsController.section("input")
+        factor = preferences["zoomSensitivity"] if operation is self._zoom_operation else (
+            preferences["windowSensitivity"] if isinstance(operation, WindowLevelOperation) else 1.0)
+        step_offset = QPointF(step_offset.x() * factor, step_offset.y() * factor)
+        total_offset = QPointF(total_offset.x() * factor, total_offset.y() * factor)
         event = DragUpdateEvent(
             start_position=start_position,
             current_position=current_position,
@@ -1002,7 +1011,7 @@ class Image2DViewportController(ViewportController):
     ) -> None:
         if self._state.slice_index is not None and self._state.slice_count is not None:
             slice_change = self._scroll_operation.handle_wheel(
-                angle_delta_y=angle_delta_y,
+                angle_delta_y=angle_delta_y * (-1 if self.settingsController.section("input")["reverseWheel"] else 1),
                 current_index=self._state.slice_index,
                 slice_count=self._state.slice_count,
             )
@@ -1356,7 +1365,7 @@ class Image2DViewportController(ViewportController):
             case ToolType.PSEUDOCOLOR:
                 self.applyColorMap("grayscale")
             case ToolType.VIEWPORT_SETTINGS:
-                settings = ViewportDisplaySettings()
+                settings = self._default_display_settings()
                 if state.display_settings == settings:
                     return
                 self._state = replace(state, display_settings=settings)
@@ -1400,7 +1409,7 @@ class Image2DViewportController(ViewportController):
         )
         display_style_changed = state.display_style != DisplayStyle()
         display_settings_changed = (
-            state.display_settings != ViewportDisplaySettings()
+            state.display_settings != self._default_display_settings()
         )
 
         self._state = replace(
@@ -1414,7 +1423,7 @@ class Image2DViewportController(ViewportController):
             horizontal_flip=False,
             vertical_flip=False,
             display_style=DisplayStyle(),
-            display_settings=ViewportDisplaySettings(),
+            display_settings=self._default_display_settings(),
         )
         self._measure_controller.clear_all()
         self._text_annotation_controller.clearAll()
@@ -1630,6 +1639,12 @@ class Image2DViewportController(ViewportController):
             kind = MeasurementKind.RECT
         # 翻页但新图尚未返回时，不把旧像素误当成新切片的统计数据。
         if frame is None or kind is None or frame.slice_index != self._state.slice_index:
+            return None
+        # A missing/invalid PixelSpacing may use a unit grid for display only.
+        # Never interpret that fallback as calibrated millimetres in measurements
+        # (including paste). Profile tools validate their original spacing and
+        # report pixel-only ROI metrics on failure; arrows remain annotations.
+        if not is_profile and kind != MeasurementKind.ARROW and not self.hasPhysicalSpacing:
             return None
         return MeasureContext(
             measurement_kind=kind, series_uid=self.viewport_config.series_uid,

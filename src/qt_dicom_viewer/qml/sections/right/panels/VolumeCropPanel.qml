@@ -20,12 +20,10 @@ Item {
         anchors.top: parent.top
         spacing: 12
 
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("text.1047")
-            wrapMode: Text.Wrap
-            color: Theme.textSecondary
-            font.pixelSize: 13
+        Components.PanelHeading {
+            objectName: "VolumeCropPanelHeading"
+            title: qsTrId("text.0305")
+            explanation: qsTrId("text.1047")
         }
 
         Repeater {
@@ -38,7 +36,7 @@ Item {
                 required property var modelData
                 objectName: "volumeCrop-" + modelData.mode
                 Layout.fillWidth: true
-                Layout.preferredHeight: 60
+                implicitHeight: Math.max(60, contentItem.implicitHeight + topPadding + bottomPadding)
                 enabled: !!root.controller && root.controller.loadState === "ready"
                     && !root.controller.editBusy
                 checked: !!root.controller && root.controller.cropMode === modelData.mode
@@ -48,6 +46,7 @@ Item {
                     spacing: 4
                     Text {
                         width: parent.width
+                        wrapMode: Text.Wrap
                         text: action.modelData.label
                         color: action.enabled ? Theme.textPrimary : Theme.textDisabled
                         font.pixelSize: 14
@@ -55,6 +54,7 @@ Item {
                     }
                     Text {
                         width: parent.width
+                        wrapMode: Text.Wrap
                         text: action.modelData.hint
                         color: action.enabled ? Theme.textSecondary : Theme.textDisabled
                         font.pixelSize: 11
@@ -76,4 +76,5 @@ Item {
             font.pixelSize: 12
         }
     }
+
 }

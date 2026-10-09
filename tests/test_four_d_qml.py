@@ -73,6 +73,8 @@ def four_d_panel(qt_app, request):
 
 
 def _find(view: QQuickView, name: str):
+    from toolbar_navigation import reveal_primary_tool
+    reveal_primary_tool(view.rootObject(), name)
     return next(
         item
         for item in _visual_children(view.rootObject())
@@ -191,6 +193,7 @@ def test_mpr_right_panel_offers_slice_playback_after_loading(qt_app) -> None:
     view.show()
     QTest.qWait(40)
     try:
+        _find(view, "primaryTool-play")
         assert any(
             item.objectName() == "primaryTool-play" and item.isVisible()
             for item in _visual_children(view.rootObject())

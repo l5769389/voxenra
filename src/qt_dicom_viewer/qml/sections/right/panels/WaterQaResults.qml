@@ -27,15 +27,23 @@ ColumnLayout {
         }
         Components.AppButton {
             id: provenanceButton
-            text: "ⓘ"
+            objectName: "qaInfoButton"
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            minimumButtonWidth: 28
+            compact: true
+            iconName: "info"
+            iconSize: 18
+            Accessible.name: qsTrId("mtf.details")
             Accessible.description: qsTrId("mtf.details")
-            onClicked: provenancePopup.open()
+            onClicked: provenancePopup.visible ? provenancePopup.close() : provenancePopup.open()
         }
     }
     AnalysisInfoPopup {
         id: provenancePopup
         anchorItem: provenanceButton
-        explanation: (panel.controller?.provenance ?? "") + "\n" + qsTrId("analysis.savedHint")
+        explanation: [qsTrId("qa.copyHelp"), panel.controller?.provenance ?? "", qsTrId("analysis.savedHint")]
+            .filter(part => part.trim().length > 0).join("\n\n")
         warnings: []
     }
 
@@ -311,12 +319,7 @@ ColumnLayout {
                 }
             }
         }
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("qa.copyHelp")
-            color: Theme.textMuted
-            font.pixelSize: 10
-            wrapMode: Text.Wrap
-        }
+
     }
+
 }

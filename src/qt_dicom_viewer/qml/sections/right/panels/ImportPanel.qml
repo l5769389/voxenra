@@ -12,20 +12,12 @@ ColumnLayout {
     property var regionController: null
     property var toolController: null
     spacing: 10
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("seg.importTitle")
-        color: Theme.textPrimary
-        font.pixelSize: 13
-        font.weight: Font.DemiBold
+    Components.PanelHeading {
+        objectName: "ImportPanelHeading"
+        title: qsTrId("seg.importTitle")
+        explanation: qsTrId("seg.importHelp")
     }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("seg.importHelp")
-        color: Theme.textSecondary
-        font.pixelSize: 12
-        wrapMode: Text.Wrap
-    }
+
     Components.AppButton {
         objectName: "importSegmentation"
         Layout.fillWidth: true
@@ -61,4 +53,5 @@ ColumnLayout {
         visible: (panel.regionController?.items.length ?? 0) > 0
         onClicked: panel.toolController.activateTool("segmentation")
     }
+
 }

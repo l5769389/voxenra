@@ -46,6 +46,8 @@ def descendants(item):
 
 
 def find(window, name):
+    from toolbar_navigation import reveal_primary_tool
+    reveal_primary_tool(window.contentItem(), name)
     # Workspace components now incubate asynchronously. Wait for a visible
     # target rather than assuming a fixed sleep has completed page creation.
     def target():

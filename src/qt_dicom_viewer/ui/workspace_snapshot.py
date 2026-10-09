@@ -40,7 +40,7 @@ def editable_state(tab):
 
 def edit_signature(state):
     """Recomputed ROI statistics are not user edits and must not add undo steps."""
-    from qt_dicom_viewer.core.workspace_state import dumps
+    from qt_dicom_viewer.core.workspace_state import fingerprint
     state = dict(state, views={k: dict(v) for k, v in state["views"].items()})
     for view in state["views"].values():
         if "measurements" in view:
@@ -51,7 +51,7 @@ def edit_signature(state):
     state["views"] = {key: view for key, view in state["views"].items()
                       if not set(view) <= {"measurements", "frames", "annotations", "labelPositions", "presentation", "sources"}
                       or any(view.values())}
-    return dumps(state)
+    return fingerprint(state)
 
 
 def apply_edits(tab, state):

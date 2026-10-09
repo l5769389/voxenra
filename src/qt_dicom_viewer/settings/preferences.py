@@ -1,4 +1,5 @@
 """Validated JSON schema for user preferences (no image or patient data)."""
+from qt_dicom_viewer.settings.shortcuts import DEFAULT_BINDINGS
 from qt_dicom_viewer.i18n import message as _msg
 from copy import deepcopy
 from math import isfinite
@@ -22,10 +23,14 @@ CORNERS = ("topLeft", "topRight", "bottomLeft", "bottomRight")
 METRICS = {"mean": _msg('text.0039'), "std": _msg('text.0040'), "minimum": _msg('text.0041'),
            "maximum": _msg('text.0042'), "area": _msg('text.0043'), "dimensions": _msg('text.0044'), "count": _msg('text.0045')}
 DEFAULTS = {
-    "appearance": {"theme": "dark", "language": "zh-CN"},
+    "appearance": {"theme": "dark", "language": "zh-CN", "interfaceScale": 100},
+    "input": {"reverseWheel": False, "rightButton": "zoom", "middleButton": "selected",
+              "windowSensitivity": 1.0, "zoomSensitivity": 1.0},
+    "shortcuts": {"bindings": dict(DEFAULT_BINDINGS)},
+    "privacy": {"hideIdentity": False},
     "updates": {"enabled": True, "dismissedVersion": ""},
     "workspace": {"automaticRecovery": True, "exitBehavior": "ask"},
-    "layout": {"rightPanelCollapsed": False, "rightPanelWidth": 250, "settingsNavigationWidth": 180, "manualNavigationWidth": 260,
+    "layout": {"rightPanelCollapsed": False, "rightPanelWidth": 300, "settingsNavigationWidth": 180, "manualNavigationWidth": 260,
                "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []},
     "export": {"directory": ""},
     "colormap": {"gray": "grayscale", "pet": "grayscale"},
@@ -53,10 +58,22 @@ def validate_value(section, key, value):
     if section not in DEFAULTS or key not in DEFAULTS[section]:
         raise ValueError(_msg('text.0046'))
     default = DEFAULTS[section][key]
-    if section == "updates" and key == "dismissedVersion":
+    if section == "shortcuts":
+        from qt_dicom_viewer.settings.shortcuts import validate_bindings
+        value = validate_bindings(value)
+    elif section == "input" and key in ("rightButton", "middleButton"):
+        if value not in ("selected", "window", "pan", "zoom", "none"):
+            raise ValueError(_msg('input.invalidMouse'))
+    elif section == "input" and key in ("windowSensitivity", "zoomSensitivity"):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value) or not .25 <= value <= 3:
+            raise ValueError(_msg('input.invalidSensitivity'))
+        value = round(float(value), 2)
+    elif section == "updates" and key == "dismissedVersion":
         if not isinstance(value, str) or (value and not re.fullmatch(r"\d+\.\d+\.\d+", value)):
             raise ValueError(_msg("updates.invalidVersion"))
     elif section == "appearance":
+        if key == "interfaceScale" and (type(value) is not int or value not in (100, 115, 130)):
+            raise ValueError(_msg('appearance.invalidScale'))
         if key == "theme" and value not in ("dark", "graphite", "light"):
             raise ValueError(_msg('text.1166'))
         if key == "language" and (not isinstance(value, str) or not re.fullmatch(r"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*", value)):
@@ -111,7 +128,10 @@ def validate_value(section, key, value):
         value = int(value)
     elif isinstance(default, (int, float)):
         limits = {"fontSize": (10, 20), "lineHeight": (1, 1.8), "lineWidth": (1, 6), "annotationSize": (8, 28),
-                  "cardTransparency": (0, 100), "rightPanelWidth": (220, 420), "settingsNavigationWidth": (156, 300), "manualNavigationWidth": (220, 400)}
+                  "cardTransparency": (0, 100), "rightPanelWidth": (240, 420), "settingsNavigationWidth": (156, 300), "manualNavigationWidth": (220, 400)}
+        # Preserve legacy narrow-panel preferences at the new usable minimum.
+        if key == "rightPanelWidth" and type(value) in (int, float) and 220 <= value < 240:
+            value = 240
         low, high = limits.get(key, (1, 6))
         if isinstance(value, bool) or not isinstance(value, (float, int)) or not isfinite(value) or not low <= value <= high:
             raise ValueError(_msg('text.0055', value1=low, value2=high))

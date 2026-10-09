@@ -1,0 +1,1365 @@
+{
+  "schema": 1,
+  "created": "2026-09-28T03:07:24.058623+00:00",
+  "baseline": "6e6af6a70cd2232cecdd2e35011563b363b71985",
+  "working_tree_sha256": {
+    "src/qt_dicom_viewer/qml/assets/help/chapters/measure.json": "3f95c5365eb44943257df1e2cbd25bbf422f43f39be78a8598ff6c3e9d802a27",
+    "src/qt_dicom_viewer/qml/assets/languages/en-US.json": "a4e4f7545546a3a6500093b8a0984962b795b53711bacada86b41f024af0cb4a",
+    "src/qt_dicom_viewer/qml/assets/languages/zh-CN.json": "cd705abaec7431a80cdae3f5cec6aa37735c04e2c1f73389e8d54e3511af71ee",
+    "src/qt_dicom_viewer/qml/sections/right/CompactToolRail.qml": "0391424aa24ef3e91d91ea30c0fd642f17b1681d02ce103143380132a58c0de6",
+    "src/qt_dicom_viewer/qml/sections/right/panels/MeasurePanel.qml": "acfea2a2efac9085a79c5a0a761569e7692dfe6ed6cedb414bbe23658233e714",
+    "src/qt_dicom_viewer/ui/controller/viewport/image_2d/image_2d_viewport_controller.py": "3efe9ddbac871729e53c8fefeb36425090720417688dda2a8923f27924bb8de9",
+    "tests/manual/collect_spatial_slicer.py": "ede56712a07f2e87298b634542dfd8f82f33958b90459ab3c921f451df6d952d",
+    "tests/manual/native_spatial_workspace.py": "611455fdde99fe7535e63d1b79b5c932766dd8c8a810b09ddb61708de73d3517",
+    "tests/manual/test_mr_samples.py": "f6023cd0609a303325c07d0373e07026b6b4ab52e5486c846eb2e297f2acc974",
+    "tests/manual/test_spatial_compressed.py": "a287601828a272bfafebf6d7b511b894d5fa95a1c7a28bdd96f417107117411b",
+    "tests/spatial_audit/__init__.py": "e4523b9cddd9cad424624ffd08284d6f3edbf002beb1465ed022a6bf205ca638",
+    "tests/spatial_audit/__main__.py": "c1780d0efd112374029999cca4c3b26cb291d987cbf7b0efdb876d3574a16a39",
+    "tests/spatial_audit/cases.py": "90d0610165e6634b2c12feb798dd1f450c853cb3a0d42c20fd36c0c8694d3dac",
+    "tests/spatial_audit/compare.py": "b5c75ffc14a8f7a1a85f4ecaddfa31f91c94b48f341f56c04ebd495234e1e9fb",
+    "tests/spatial_audit/pet_reference.py": "75d0cb8b42fd8b1203fc1f0d11db045e02e4126698ce6199517263842337407c",
+    "tests/spatial_audit/real.py": "7e1e32e836c293d578d3fe2c67003abc9f845dbdf57ff4c578df8e3e4180f9fe",
+    "tests/spatial_audit/report.py": "b2af3db23bacd37ac9cbb0eecf212d7a32fae1cf40abff617fdfe3de04b1e2e3",
+    "tests/spatial_audit/restart.py": "5fe41b11e57279fb43ab47984e7ca93737b530b0ef3ad236c16c74b441518abd",
+    "tests/spatial_audit/verify.py": "a1f50d75e077c284f7c4ae4a56484357468693754afb74429f410f2717752618",
+    "tests/test_spatial_missing_calibration.py": "6d1f194fb44700f09f510843008217534498a25cb92ebed5f3d7da5f431a631a",
+    "tests/test_spatial_numeric_audit.py": "75ab0ef8615348c2aaa645a8bd091aca0d212fbee11cfeab799db41c85071494"
+  },
+  "software": {
+    "Voxenra": "1.8.0",
+    "numpy": "2.5.2",
+    "pydicom": "3.0.2",
+    "PySide6": "6.11.1",
+    "vtk": "9.5.2"
+  },
+  "slicer": "5.12.4",
+  "tolerances": {
+    "geometry_mm": 0.001,
+    "intensity_atol": 0.0001,
+    "intensity_rtol": 1e-06,
+    "interpolation_atol": 0.0001,
+    "interpolation_rtol": 5e-06,
+    "statistics_rtol": 1e-05
+  },
+  "cases": [
+    {
+      "category": "synthetic",
+      "case": "ct-axial",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.667351138072263e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-classic-phases",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 暂不支持重复位置、不等距或存在层间偏移的切片",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 18,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-coronal",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 3.552713678800501e-15,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.966031312709674e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-flipped",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 3.552713678800501e-15,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.6731358881734195e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-isotropic",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 4.1267198639616254e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 0.0,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-oblique",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 7.105427357601002e-15,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.9931311625405215e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 7.105427357601002e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-padding",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.667351138072263e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-per-slice-scale",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 6.005314639878634e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-rle",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.667351138072263e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-sagittal",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 1.0658141036401503e-14,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.530443104362348e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-thick-gap",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.783818733107182e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "ct-unsigned",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 3.049405324873078e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "duplicate-file",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.667351138072263e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "enhanced-ct",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 5.667351138072263e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "enhanced-ct-phases",
+      "product_status": "pass",
+      "product_groups": 2,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 2,
+      "volume_limits": [],
+      "planes_checked": 18,
+      "mpr_max_error": 6.005314639878634e-05,
+      "source_frames_checked": 18,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "reason": "Different frame grouping or physical grid"
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "enhanced-ct-rle",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 6.005314639878634e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 1488.375,
+          "reason": "Slicer GDCM uses first-frame slope for all frames; Voxenra applies per-frame slope"
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-duplicate-position",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 暂不支持重复位置、不等距或存在层间偏移的切片",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-frame-of-reference",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "同一序列的 FrameOfReferenceUID 不一致",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-missing-position",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 缺少切片位置或方向信息",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-missing-spacing",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "DICOM PixelSpacing is missing",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-nan-spacing",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "DICOM PixelSpacing is missing",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-nonorthogonal",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 切片方向必须构成正交单位坐标轴",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-nonuniform",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 暂不支持重复位置、不等距或存在层间偏移的切片",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-orientation",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 暂不支持重复位置、不等距或存在层间偏移的切片",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-shear",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 暂不支持重复位置、不等距或存在层间偏移的切片",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-uniform-shear",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "3D 暂不支持重复位置、不等距或存在层间偏移的切片",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "invalid-zero-spacing",
+      "product_status": "expected_unsupported",
+      "product_groups": 1,
+      "slicer_status": "explicitly_unsupported",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "reason": "DICOM PixelSpacing is missing",
+      "volume_limits": [],
+      "planes_checked": 0,
+      "mpr_max_error": 0.0,
+      "source_frames_checked": 9,
+      "slicer_details": []
+    },
+    {
+      "category": "synthetic",
+      "case": "mr-mono1",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 3.5142122811748777e-06,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 850.75,
+          "reason": "GDCM complements MONOCHROME1 stored pixels before rescale; Voxenra only inverts display"
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "mr-oblique",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 7.105427357601002e-15,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 1.445306685354808e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 7.105427357601002e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "pet-bqml",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 1.6222921839226245e-08,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0,
+          "suv_slicer": "not_verified: scalar DICOM plugin provides source values only"
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "pet-gml",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 3.0297084549602005e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0,
+          "suv_slicer": "not_verified: scalar DICOM plugin provides source values only"
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "pet-midnight",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 1.3054557990166415e-08,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0,
+          "suv_slicer": "not_verified: scalar DICOM plugin provides source values only"
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "pet-no-dose",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 3.0297084549602005e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0,
+          "suv_slicer": "not_verified: scalar DICOM plugin provides source values only"
+        }
+      ]
+    },
+    {
+      "category": "synthetic",
+      "case": "pet-no-weight",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 1,
+      "volume_limits": [],
+      "planes_checked": 9,
+      "mpr_max_error": 3.0297084549602005e-05,
+      "source_frames_checked": 9,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 3.552713678800501e-15,
+          "geometry_scope": "volume",
+          "intensity_max_error": 0.0,
+          "suv_slicer": "not_verified: scalar DICOM plugin provides source values only"
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "canon-dti",
+      "product_status": "pass",
+      "product_groups": 13,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 5.7200000043167165e-06,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 520,
+      "stored_voxels_checked": 3328000,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "reason": "Different frame grouping or physical grid"
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "mr-hfdr",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 2.670286593797755e-05,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 35,
+      "stored_voxels_checked": 2293760,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 6.73181410171253e-07,
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "mr-hfs",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 2.670286593797755e-05,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 35,
+      "stored_voxels_checked": 2293760,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 6.73181410171253e-07,
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "mr-thin",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 1.4011902749189176e-11,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 192,
+      "stored_voxels_checked": 12582912,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 5.206945985491984e-14,
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "nema-ct",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 54,
+      "stored_voxels_checked": 14155776,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 1.4210854715202004e-14,
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "nema-perfusion",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "该派生 CT 支持逐帧浏览；HU 分析和体重建仅适用于 HU 灰度影像。"
+        }
+      ],
+      "source_frames_checked": 2,
+      "stored_voxels_checked": 524288,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "reason": "Different frame grouping or physical grid"
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "p113",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 99,
+      "stored_voxels_checked": 25952256,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 2.2737367544323206e-13,
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "petct-1",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 1.2789769243681803e-13,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 457,
+      "stored_voxels_checked": 59899904,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 7.105427357601002e-15,
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "petct-2",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 1.1368683772161603e-13,
+      "intensity_max_error": 0.12320000026375055,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 104,
+      "stored_voxels_checked": 1019200,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 1.1102230246251565e-15,
+          "intensity_max_error": 0.0,
+          "suv_slicer": "not_verified: scalar DICOM plugin provides source values only"
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "philips-fmap",
+      "product_status": "pass",
+      "product_groups": 2,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 2.722808588373482e-06,
+      "intensity_max_error": 0.00012144429319960182,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 64,
+      "stored_voxels_checked": 262144,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "reason": "Different frame grouping or physical grid"
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "philips-fmri",
+      "product_status": "pass",
+      "product_groups": 8,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 1.1262494581387728e-07,
+      "intensity_max_error": 0.00012198085505588097,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 256,
+      "stored_voxels_checked": 4194304,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "reason": "Different frame grouping or physical grid"
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "philips-t1",
+      "product_status": "pass",
+      "product_groups": 2,
+      "slicer_status": "definition_difference",
+      "geometry_max_error_mm": 2.7228086025843368e-06,
+      "intensity_max_error": 0.00012198088461445877,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 64,
+      "stored_voxels_checked": 4194304,
+      "slicer_details": [
+        {
+          "status": "definition_difference",
+          "reason": "Different frame grouping or physical grid"
+        }
+      ]
+    },
+    {
+      "category": "real",
+      "case": "siemens-enhanced",
+      "product_status": "pass",
+      "product_groups": 4,
+      "slicer_status": "blocked",
+      "geometry_max_error_mm": 9.520000000406981e-05,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [],
+      "source_frames_checked": 24,
+      "stored_voxels_checked": 98304,
+      "slicer_details": [
+        {
+          "status": "blocked",
+          "reason": "Slicer DICOM plugin could not load this object; details retained locally"
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "693_J2KR",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MPR requires at least two DICOM instances"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 262144,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 1.4210854715202004e-14,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "693_UNCR",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MPR requires at least two DICOM instances"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 262144,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 1.4210854715202004e-14,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "JPEG-LL",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "blocked",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MPR requires at least two DICOM instances"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 262144,
+      "slicer_details": [
+        {
+          "status": "blocked",
+          "reason": "Original DICOM has no patient plane geometry",
+          "stored_frame_values_equal": true
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "MR2_J2KR",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.00012160937512817327,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MR MPR 需要至少两张矩阵、方向、间距一致且位置不重复的规则切片。请使用 2D 或平铺浏览。"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 1048576,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 4.158420746636082e-09,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "MR2_UNCR",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.00012160937512817327,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MR MPR 需要至少两张矩阵、方向、间距一致且位置不重复的规则切片。请使用 2D 或平铺浏览。"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 1048576,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 4.158420746636082e-09,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "MR_small",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MR MPR 需要至少两张矩阵、方向、间距一致且位置不重复的规则切片。请使用 2D 或平铺浏览。"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 4096,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 2.842170943040401e-14,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "MR_small_RLE",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MR MPR 需要至少两张矩阵、方向、间距一致且位置不重复的规则切片。请使用 2D 或平铺浏览。"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 4096,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 2.842170943040401e-14,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "MR_small_jp2klossless",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MR MPR 需要至少两张矩阵、方向、间距一致且位置不重复的规则切片。请使用 2D 或平铺浏览。"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 4096,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 2.842170943040401e-14,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    },
+    {
+      "category": "codecs",
+      "case": "MR_small_jpeg_ls_lossless",
+      "product_status": "pass",
+      "product_groups": 1,
+      "slicer_status": "pass",
+      "geometry_max_error_mm": 0.0,
+      "intensity_max_error": 0.0,
+      "slicer_roundtrip_groups": 0,
+      "volume_limits": [
+        {
+          "group": 0,
+          "reason": "MR MPR 需要至少两张矩阵、方向、间距一致且位置不重复的规则切片。请使用 2D 或平铺浏览。"
+        }
+      ],
+      "source_frames_checked": 1,
+      "stored_voxels_checked": 4096,
+      "slicer_details": [
+        {
+          "status": "pass",
+          "geometry_max_error_mm": 2.842170943040401e-14,
+          "geometry_scope": "single_plane",
+          "intensity_max_error": 0.0
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "product": {
+      "pass": 44,
+      "expected_unsupported": 12
+    },
+    "slicer": {
+      "pass": 34,
+      "explicitly_unsupported": 12,
+      "definition_difference": 8,
+      "blocked": 2
+    }
+  },
+  "regression": {
+    "tests": 272,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 6
+  },
+  "full_regression": {
+    "totals": {
+      "tests": 2407,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 71
+    },
+    "files_run": 167,
+    "files_expected": 167,
+    "initial_totals": {
+      "tests": 2407,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 71
+    },
+    "initial_unsuccessful": [
+      "tests/test_mtf_controller.py"
+    ],
+    "final_affected_files": [
+      "tests/test_mtf_controller.py",
+      "tests/test_ramp_fwhm.py",
+      "tests/test_mtf_qml.py",
+      "tests/test_spatial_missing_calibration.py",
+      "tests/test_annotation_clipboard.py",
+      "tests/test_measurement_controller.py",
+      "tests/test_measurement_qml.py",
+      "tests/test_measurement_results.py",
+      "tests/test_measurement_results_qml.py",
+      "tests/test_spatial_numeric_audit.py"
+    ],
+    "unsuccessful": [],
+    "skipped_files": [
+      "tests/manual/test_display_mapping_samples.py",
+      "tests/manual/test_enhanced_ct_samples.py",
+      "tests/manual/test_enhanced_mr_samples.py",
+      "tests/manual/test_mr_samples.py",
+      "tests/manual/test_public_compressed_samples.py",
+      "tests/manual/test_spatial_compressed.py",
+      "tests/test_compare_2d_qml.py",
+      "tests/test_feedback_attachments.py",
+      "tests/test_import_dialog_chrome.py",
+      "tests/test_loading_responsiveness.py",
+      "tests/test_local_import.py",
+      "tests/test_mouse_bindings.py",
+      "tests/test_mpr_layout.py",
+      "tests/test_mpr_volume_tools_qml.py",
+      "tests/test_pacs_live.py",
+      "tests/test_resizable_view_layout.py",
+      "tests/test_sidebar_style_polish.py",
+      "tests/test_tab_windows.py",
+      "tests/test_update_installer.py",
+      "tests/test_window_chrome.py",
+      "tests/test_workspace_dialog_layout.py"
+    ],
+    "complete": true
+  },
+  "fixed_findings": [
+    {
+      "id": "uncalibrated-measurement",
+      "status": "fixed",
+      "reason": "Missing or invalid grayscale PixelSpacing allowed the display fallback grid to become physical measurement calibration",
+      "tests": "tests/test_spatial_missing_calibration.py",
+      "before": "3 failed",
+      "after": "4 passed"
+    }
+  ],
+  "native_ui": {
+    "status": "partial",
+    "reason": "Application access works; CUA coordinate click/drag fails with windowNotFoundAtPosition. AX controls and file dialogs work.",
+    "checks": [
+      {
+        "case": "ct-oblique",
+        "status": "pass",
+        "scope": "Voxenra native workspace open, 90-degree rotation, horizontal flip, slice 5 to 8 then locate measurement back to 5; native save, quit, restart and reopen.",
+        "expected_length_mm": 7.507329751649384,
+        "displayed_length_mm": 7.51,
+        "source_frame_equal": true,
+        "restored_pixel_hash_equal": true,
+        "restored_display_state": true,
+        "playing": false
+      },
+      {
+        "case": "ct-oblique",
+        "status": "pass",
+        "scope": "Voxenra native cursor after rotated workspace restore",
+        "ijk": [
+          12,
+          9,
+          4
+        ],
+        "value": -952.5,
+        "truth_value": -952.5
+      },
+      {
+        "case": "ct-oblique",
+        "status": "pass",
+        "scope": "Slicer native volume information and Data Probe",
+        "direction_max_error": 1.1102230246251565e-16,
+        "ijk": [
+          13,
+          6,
+          4
+        ],
+        "value": -961.5,
+        "truth_value": -961.5
+      },
+      {
+        "case": "invalid-nonuniform",
+        "status": "pass",
+        "scope": "Native folder import, 2D tab available, MPR error tab displays nonuniform/duplicate/drift limitation, Close tab only, volume tools disabled"
+      }
+    ],
+    "limitations": [
+      "Known length annotation was generated headlessly; native mouse drawing not validated",
+      "Voxenra and Slicer probes are different points, each checked against truth; not a paired same-coordinate navigation verdict",
+      "Paired real CT/HFDR MR/Enhanced/PET native coverage incomplete",
+      "Native zoom/measurement dragging and Slicer line placement unverified"
+    ]
+  },
+  "exclusions": [
+    "No claim of clinical validation",
+    "No Slicer SUV calculation comparison",
+    "No direct Slicer arbitrary-plane/slab pixel comparison",
+    "Native paired GUI coverage incomplete; coordinate interactions blocked by computer-use window lookup",
+    "Same-series classic CT interleaved phases are not split; 3D is rejected",
+    "No new format support, resampling, MTF/FWHM formula change, workspace schema change, or release"
+  ]
+}

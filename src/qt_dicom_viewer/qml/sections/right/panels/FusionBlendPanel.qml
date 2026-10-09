@@ -9,14 +9,12 @@ ColumnLayout {
     objectName: "fusionBlendPanel"
     required property var controller
     spacing: 12
-    Text { text: qsTrId("text.0283"); color: Theme.textPrimary; font.pixelSize: 14; font.bold: true }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("text.1134")
-        color: Theme.textMuted
-        font.pixelSize: 12
-        wrapMode: Text.Wrap
+    Components.PanelHeading {
+        objectName: "FusionBlendPanelHeading"
+        title: qsTrId("text.0283")
+        explanation: qsTrId("text.1134")
     }
+
     RowLayout {
         Layout.fillWidth: true
         Text { Layout.fillWidth: true; text: qsTrId("text.1135"); color: Theme.textPrimary }
@@ -44,12 +42,19 @@ ColumnLayout {
     }
     RowLayout {
         Layout.fillWidth: true
+        spacing: 2
         Repeater {
             model: [0, 25, 50, 75, 100]
             delegate: Components.AppButton {
                 required property int modelData
                 objectName: "fusionOpacity-" + modelData
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 1
+                minimumButtonWidth: 0
+                leftPadding: 3
+                rightPadding: 3
+                fontPixelSize: 12
                 text: modelData + "%"
                 compact: true
                 checkable: true
@@ -58,4 +63,5 @@ ColumnLayout {
             }
         }
     }
+
 }

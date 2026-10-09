@@ -10,6 +10,7 @@ Item {
     required property string label
     required property string iconName
     required property string buttonObjectName
+    property bool showLabel: false
     property string shortLabel: label
     property bool actionEnabled: true
     property bool placeholder: false
@@ -27,7 +28,13 @@ Item {
     property string tooltipPlacement: "above"
     property bool tooltipDismissed: false
     onHoveredChanged: if (!hovered) tooltipDismissed = false
-    property string tooltipText: label + (placeholder ? qsTrId("text.0710") : "")
+    readonly property var shortcutOwner: typeof appController !== "undefined" ? appController.shortcutController ?? null : null
+    readonly property string shortcutHint: {
+        const bindings = shortcutOwner?.bindings ?? []
+        const match = bindings.find(item => qsTrId(item.labelId) === label)
+        return match?.display ?? ""
+    }
+    property string tooltipText: label + (shortcutHint ? " (" + shortcutHint + ")" : "") + (placeholder ? qsTrId("text.0710") : "")
     readonly property bool hovered: hover.hovered
     readonly property bool tooltipVisible: tooltip.visible
     signal pressed()
@@ -121,7 +128,7 @@ Item {
 
                 Text {
                     objectName: "toolbarLabel"
-                    visible: false
+                    visible: action.showLabel
                     width: parent.width
                     text: action.shortLabel
                     horizontalAlignment: Text.AlignHCenter

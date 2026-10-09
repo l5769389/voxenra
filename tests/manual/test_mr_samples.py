@@ -208,11 +208,16 @@ def test_unsupported_local_import_has_reason_and_tag(scene,sample_root,folder):
     app.panelController.selectSeries(uid)
     QTest.qWait(80)
     for view in ('2d','montage','mpr','3d','4d'):
-        assert not find(window,'openView-'+view).isEnabled()
+        assert find(window,'openView-'+view).isEnabled() == (view != '4d')
         assert app.panelController.seriesViewError(uid,view)
     ws=app.workspaceController
     ws.createTab(uid,'Unsupported MR','2d')
-    assert ws.activeTabType != '2d'
+    wait_until(lambda: ws.activeLoadState and ws.activeLoadState.status=='error')
+    assert ws.activeTabType == '2d'
+    assert 'Mosaic' in ws.activeLoadState.errorMessage
+    assert not app.exportController.canExportPng
+    assert find(window,'cancelWorkspaceLoad').isVisible()
+    assert not any(i.objectName()=='retryWorkspaceLoad' for i in descendants(window.contentItem()))
     click(window,find(window,'openView-tag'))
     wait_until(lambda: ws.activeTabType=='tag')
     assert not warnings,warnings

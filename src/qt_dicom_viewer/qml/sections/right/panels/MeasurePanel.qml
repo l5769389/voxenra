@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../../components" as Components
 import QtQuick.Layouts
 import "../components" as Components
 import "../../../theme"
@@ -19,18 +20,46 @@ ColumnLayout {
 
     signal manualRequested()
 
-    Components.ToolActionButton {
-        objectName: "measurementManualButton"
-        Layout.alignment: Qt.AlignRight
-        Layout.preferredWidth: 28
-        Layout.preferredHeight: 28
-        iconName: "manual"
-        iconSize: 18
-        label: qsTrId("text.1031")
-        onClicked: measurePanel.manualRequested()
+    RowLayout {
+        Layout.fillWidth: true
+        Text {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
+            text: qsTrId("text.0292")
+            color: Theme.textPrimary
+            font.pixelSize: 14
+        }
+        Components.ToolActionButton {
+            objectName: "measurementManualButton"
+            Layout.alignment: Qt.AlignRight
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            iconName: "manual"
+            iconSize: 18
+            label: qsTrId("text.1031")
+            onClicked: measurePanel.manualRequested()
+        }
+        Widgets.HelpButton {
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            explanation: qsTrId("seg.roiHelp")
+        }
     }
 
     signal actionTriggered(string action)
+
+    Text {
+        objectName: "measurementCalibrationWarning"
+        Layout.fillWidth: true
+        visible: !!measurePanel.viewportController
+            && measurePanel.viewportController.loadState === "ready"
+            && !measurePanel.viewportController.hasPhysicalSpacing
+        text: qsTrId("measurement.noCalibration")
+        color: Theme.textSecondary
+        font.pixelSize: 12
+        wrapMode: Text.Wrap
+    }
 
     GridLayout {
         Layout.fillWidth: true
@@ -46,6 +75,7 @@ ColumnLayout {
                 required property var modelData
                 readonly property bool btnChecked: measureButton.modelData.action === (measurePanel.toolController?.activeInteraction ?? "")
 
+                enabled: measurePanel.viewportController?.hasPhysicalSpacing ?? false
                 checked: measureButton.btnChecked
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
@@ -72,14 +102,7 @@ ColumnLayout {
             && !!measurePanel.dicomResults && !measurePanel.dicomResults.busy
         onClicked: measurePanel.dicomResults.convertSelectedRoi()
     }
-    Text {
-        Layout.fillWidth: true
-        visible: measurePanel.maskConversionAvailable
-        text: qsTrId("seg.roiHelp")
-        font.pixelSize: 11
-        color: Theme.textMuted
-        wrapMode: Text.Wrap
-    }
+
     Text {
         objectName: "roiConversionMessage"
         Layout.fillWidth: true

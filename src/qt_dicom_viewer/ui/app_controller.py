@@ -34,6 +34,8 @@ class AppController(QObject):
         if settings_path is None and pacs_config_path is not None:
             settings_path = Path(pacs_config_path).with_name("display-settings.json")
         self._settings_controller = SettingsController(self, path=settings_path)
+        from qt_dicom_viewer.ui.controller.shortcut_controller import ShortcutController
+        self._shortcut_controller = ShortcutController(self._settings_controller, self)
         from qt_dicom_viewer.settings.dialog_locations import DialogLocations
         self._dialog_locations = DialogLocations(
             self._settings_controller._path.with_name("dialog-locations.json")
@@ -138,6 +140,10 @@ class AppController(QObject):
         return self._update_controller
 
     @Property(QObject, constant=True)
+    def shortcutController(self):
+        return self._shortcut_controller
+
+    @Property(QObject, constant=True)
     def settingsController(self):
         return self._settings_controller
 
@@ -159,6 +165,7 @@ class AppController(QObject):
 
     @Slot()
     def shutdown(self) -> None:
+        self._shortcut_controller.cancelRecording()
         self._feedback_controller.shutdown()
         self._update_controller.shutdown()
         self._dialog_locations.deactivate()

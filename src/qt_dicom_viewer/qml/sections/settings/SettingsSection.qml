@@ -28,6 +28,11 @@ Rectangle {
             Layout.fillWidth: true; Layout.preferredHeight: 28
             normalColor: "transparent"; compact: true
             Accessible.name: I18n.format(qsTrId("settings.expand"), {name: root.title, action: root.collapsed ? qsTrId("common.expand") : qsTrId("common.collapse")})
+            Accessible.description: root.description
+            Components.AppToolTip {
+                visible: (parent.hovered || parent.visualFocus) && root.description !== ""
+                text: root.description
+            }
             onClicked: {
                 if (root.settingsController) {
                     const groups = root.settingsController.values.layout.settingsCollapsedGroups.filter(key => key !== root.sectionKey)
@@ -42,11 +47,6 @@ Rectangle {
                 Text { Layout.fillWidth: true; text: root.title; color: Theme.textPrimary; font.pixelSize: 14; font.weight: Font.DemiBold }
                 Components.AppIcon { iconName: "chevron-down"; iconSize: 14; rotation: root.collapsed ? -90 : 0 }
             }
-        }
-        Text {
-            Layout.fillWidth: true
-            visible: !root.collapsed && root.description !== ""
-            text: root.description; color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.Wrap
         }
         ColumnLayout {
             id: body

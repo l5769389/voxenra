@@ -117,3 +117,11 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 - [主题与语言设置](38-appearance-settings.png)
 - [本地 JSON 窗模板](39-window-presets.png)
+
+## 2.0.0 设置与开始页面
+
+- [鼠标与工具快捷键](40-input-settings.png)
+- [隐私设置](41-privacy-settings.png)
+- [空白工作区入口](42-workspace-home.png)
+
+本次重新采集工作区、导出、外观、窗模板、MTF 和分割精修截图；导入与精修动画同步更新。

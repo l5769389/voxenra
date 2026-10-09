@@ -11,7 +11,13 @@ Components.AppButton {
     property bool placeholder: false
     property bool textOnly: false
     readonly property color foregroundColor: !enabled ? Theme.iconDisabled : down ? Theme.iconActive : hovered ? (checked ? Theme.primaryHover : Theme.iconHover) : checked ? Theme.iconActive : Theme.iconDefault
-    property string tooltipText: label + (placeholder ? qsTrId("text.0710") : "")
+    readonly property var shortcutOwner: typeof appController !== "undefined" ? appController.shortcutController ?? null : null
+    readonly property string shortcutHint: {
+        const bindings = shortcutOwner?.bindings ?? []
+        const match = bindings.find(item => qsTrId(item.labelId) === label)
+        return match?.display ?? ""
+    }
+    property string tooltipText: label + (shortcutHint ? " (" + shortcutHint + ")" : "") + (placeholder ? qsTrId("text.0710") : "")
     iconSize: 24
     implicitHeight: Theme.toolbarButtonHeight
     minimumButtonWidth: 44

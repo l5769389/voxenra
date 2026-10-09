@@ -20,11 +20,17 @@ ColumnLayout {
     readonly property var compareWorkspace: viewportController?.workspaceTab?.syncOperations !== undefined
         ? viewportController.workspaceTab : null
 
+    Components.PanelHeading {
+        objectName: "ViewportSettingsPanelHeading"
+        title: qsTrId("text.0311")
+        explanation: (settingsPanel.mprLayout ? qsTrId("mpr.reference.hint") + "\n\n" : "") + (settingsPanel.scene?.settingsScope === "tab" ? qsTrId("viewport.scope.tabHint") : qsTrId("viewport.scope.currentHint"))
+    }
+
     ColumnLayout {
         Layout.fillWidth: true
         visible: !!settingsPanel.mprLayout
         spacing: 8
-        Text { text: qsTrId("mpr.reference.title"); color: Theme.textPrimary; font.pixelSize: 14; font.bold: true }
+        Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("mpr.reference.title"); color: Theme.textPrimary; font.pixelSize: 14; font.bold: true }
         Components.AppComboBox {
             objectName: "mprReferenceMode"
             Layout.fillWidth: true
@@ -41,13 +47,7 @@ ColumnLayout {
             checked: settingsPanel.mprLayout?.linkRotation ?? true
             onToggled: settingsPanel.mprLayout.setLinkRotation(checked)
         }
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("mpr.reference.hint")
-            color: Theme.textMuted
-            font.pixelSize: 11
-            wrapMode: Text.Wrap
-        }
+
     }
     Rectangle {
         visible: !!settingsPanel.mprLayout && !settingsPanel.isVolume
@@ -58,7 +58,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: settingsPanel.compareWorkspace !== null
         spacing: 6
-        Text { text: qsTrId("compare.syncTitle"); color: Theme.textPrimary; font.bold: true }
+        Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("compare.syncTitle"); color: Theme.textPrimary; font.bold: true }
         Text {
             Layout.fillWidth: true
             text: qsTrId("compare.independentMeasurements")
@@ -106,16 +106,28 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: settingsPanel.petWorkspace !== null
         spacing: 8
-        Text { text: qsTrId("text.1102"); color: Theme.textPrimary; font.bold: true }
-        Text { text: qsTrId("text.1103"); color: Theme.textMuted; font.pixelSize: 12 }
+        Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("text.1102"); color: Theme.textPrimary; font.bold: true }
+        Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("text.1103"); color: Theme.textMuted; font.pixelSize: 12 }
         RowLayout {
             Layout.fillWidth: true
             Repeater {
                 model: [{label:qsTrId("text.1104"), compact:true}, {label:qsTrId("text.1105"), compact:false}]
                 delegate: Components.AppButton {
+                    id: locatorButton
                     required property var modelData
+                    implicitHeight: Math.max(32, contentItem.implicitHeight + topPadding + bottomPadding)
+                    contentItem: Text {
+                        text: locatorButton.text
+                        font.pixelSize: 13
+                        color: locatorButton.textColor
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                     objectName: "petLocator-" + (modelData.compact ? "compact" : "lines")
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
                     text: modelData.label
                     compact: true; checkable: true; autoExclusive: true; baseBorderWidth: 1
                     checked: settingsPanel.petWorkspace?.compactCrosshair === modelData.compact
@@ -123,7 +135,7 @@ ColumnLayout {
                 }
             }
         }
-        Text { text: qsTrId("text.0826"); color: Theme.textMuted; font.pixelSize: 12 }
+        Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("text.0826"); color: Theme.textMuted; font.pixelSize: 12 }
         RowLayout {
             Layout.fillWidth: true
             Repeater {
@@ -132,6 +144,8 @@ ColumnLayout {
                     required property var modelData
                     objectName: "petInfo-" + (modelData.compact ? "compact" : "detail")
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
                     text: modelData.label
                     compact: true; checkable: true; autoExclusive: true; baseBorderWidth: 1
                     checked: settingsPanel.petWorkspace?.compactOverlay === modelData.compact
@@ -139,7 +153,7 @@ ColumnLayout {
                 }
             }
         }
-        Text { text: qsTrId("text.1108"); color: Theme.textMuted; font.pixelSize: 11 }
+        Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("text.1108"); color: Theme.textMuted; font.pixelSize: 11 }
         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.dividerColor }
     }
 
@@ -147,7 +161,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: !!settingsPanel.scene
         spacing: 6
-        Text { text: qsTrId("viewport.scope.title"); color: Theme.textPrimary; font.bold: true }
+        Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: qsTrId("viewport.scope.title"); color: Theme.textPrimary; font.bold: true }
         RowLayout {
             Layout.fillWidth: true
             spacing: 6
@@ -167,13 +181,7 @@ ColumnLayout {
                 }
             }
         }
-        Text {
-            Layout.fillWidth: true
-            Layout.minimumHeight: 44
-            text: settingsPanel.scene?.settingsScope === "tab"
-                ? qsTrId("viewport.scope.tabHint") : qsTrId("viewport.scope.currentHint")
-            color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.Wrap
-        }
+
         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.dividerColor }
     }
     readonly property var settings: [
@@ -223,7 +231,15 @@ ColumnLayout {
                 id: settingCheckBox
                 objectName: "viewportSetting-" + settingRow.modelData.code
                 Layout.fillWidth: true
-                implicitHeight: 36
+                implicitHeight: Math.max(36, contentItem.implicitHeight + topPadding + bottomPadding)
+                contentItem: Text {
+                    text: settingCheckBox.text
+                    color: settingCheckBox.enabled ? Theme.textSecondary : Theme.textDisabled
+                    font.pixelSize: Theme.bodyFontSize
+                    leftPadding: settingCheckBox.indicator.width + settingCheckBox.spacing
+                    verticalAlignment: Text.AlignVCenter
+                    wrapMode: Text.WordWrap
+                }
                 text: settingRow.modelData.label
                 tristate: settingsPanel.scene?.settingsScope === "tab"
                 checkState: settingsPanel.scene
@@ -239,4 +255,5 @@ ColumnLayout {
     }
 
     Item { Layout.fillHeight: true }
+
 }

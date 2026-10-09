@@ -41,6 +41,7 @@ from qt_dicom_viewer.model import (
     TwoDViewType,
     ViewportConfig,
     ViewportState,
+    ViewportDisplaySettings,
     ViewportTransformAction,
     WindowLevel,
     WindowLevelChange,
@@ -196,6 +197,7 @@ class MontageViewportController(ViewportController):
         self._slice_model = MontageSliceModel(slice_count, self)
         self._slice_model.dataChanged.connect(self.exportReadinessChanged)
         self._tool_controller = tool_controller
+        self._state = replace(self._state, display_settings=ViewportDisplaySettings(hide_sensitive_info=self.settingsController.section("privacy")["hideIdentity"]))
         self._set_default_color_map()
         self.settingsController.sectionChanged.connect(self._preferences_changed)
         self._column_count = 4
@@ -298,12 +300,13 @@ class MontageViewportController(ViewportController):
     def seriesDescription(self) -> str:
         return self.viewport_config.series_meta.series_description
 
-    @_TextProperty(str, notify=_i18n_patientName, notify_name='_i18n_patientName')
+    @_TextProperty(str, notify=_i18n_patientName, notify_name='_i18n_patientName', source_notify='transformChanged')
     def patientName(self) -> str:
-        return self.viewport_config.series_meta.patient_name or "—"
+        return "—" if self._state.display_settings.hide_sensitive_info else self.viewport_config.series_meta.patient_name or "—"
 
-    @_TextProperty(str, notify=_i18n_patientSummary, notify_name='_i18n_patientSummary')
+    @_TextProperty(str, notify=_i18n_patientSummary, notify_name='_i18n_patientSummary', source_notify='transformChanged')
     def patientSummary(self) -> str:
+        if self._state.display_settings.hide_sensitive_info: return "—"
         meta = self.viewport_config.series_meta
         values = [meta.patient_id.strip()]
         sex = {
@@ -704,7 +707,7 @@ class MontageViewportController(ViewportController):
         self._interaction_height = max(float(viewport_height), 1.0)
         context = None
 
-        match drag_interaction(self._tool_controller.active_interaction, buttons):
+        match drag_interaction(self._tool_controller.active_interaction, buttons, self.settingsController.section("input")):
             case InteractionType.WINDOW if self._state.window is not None:
                 mapping_window = self.mapping_drag_window(self._state.window)
                 if mapping_window is None:
@@ -757,6 +760,11 @@ class MontageViewportController(ViewportController):
             Point(current_point.x(), current_point.y()),
             None,
         )
+        preferences = self.settingsController.section("input")
+        factor = preferences["zoomSensitivity"] if operation is self._zoom_operation else (
+            preferences["windowSensitivity"] if isinstance(operation, WindowLevelOperation) else 1.0)
+        step_offset = QPointF(step_offset.x() * factor, step_offset.y() * factor)
+        total_offset = QPointF(total_offset.x() * factor, total_offset.y() * factor)
         result = operation.update(
             DragUpdateEvent(
                 start_position=start,

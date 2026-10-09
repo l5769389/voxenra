@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-03",
+  "baseline_head": "6e6af6a",
+  "baseline_includes_preexisting_uncommitted_changes": true,
+  "before": {
+    "python": "3.13.14",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "mask_shape": [
+      128,
+      256,
+      256
+    ],
+    "mask_voxels": 8388608,
+    "repeats": 9,
+    "history_signature": {
+      "median_ms": 111.6582920003566,
+      "max_ms": 183.59487500129035
+    },
+    "history_unchanged": {
+      "median_ms": 81.3111659954302,
+      "max_ms": 105.15404200123157
+    },
+    "display_setting": {
+      "median_ms": 114.72962499829009,
+      "max_ms": 144.96362499630777
+    },
+    "preview_repeated": {
+      "median_ms": 11.027583997929469,
+      "max_ms": 11.593999995966442
+    },
+    "plane_512": {
+      "median_ms": 5.932083004154265,
+      "max_ms": 6.790416002331767,
+      "peak_temporary_mib": 14.064872741699219
+    },
+    "plane_1024": {
+      "median_ms": 15.014834003522992,
+      "max_ms": 18.065917000058107,
+      "peak_temporary_mib": 56.06487274169922
+    },
+    "plane_2048": {
+      "median_ms": 56.6699589980999,
+      "max_ms": 64.14454100013245,
+      "peak_temporary_mib": 224.06487274169922
+    }
+  },
+  "after": {
+    "python": "3.13.14",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "mask_shape": [
+      128,
+      256,
+      256
+    ],
+    "mask_voxels": 8388608,
+    "repeats": 9,
+    "history_signature": {
+      "median_ms": 0.5613339963019826,
+      "max_ms": 0.6272089958656579
+    },
+    "history_unchanged": {
+      "median_ms": 0.5273750066407956,
+      "max_ms": 0.7813749980414286
+    },
+    "display_setting": {
+      "median_ms": 0.014499993994832039,
+      "max_ms": 0.017416998161934316
+    },
+    "preview_repeated": {
+      "median_ms": 0.002916996891144663,
+      "max_ms": 0.028541995561681688
+    },
+    "plane_512": {
+      "median_ms": 2.371415997913573,
+      "max_ms": 2.7793330009444617,
+      "peak_temporary_mib": 4.829963684082031
+    },
+    "plane_1024": {
+      "median_ms": 5.998500004352536,
+      "max_ms": 6.224208998901304,
+      "peak_temporary_mib": 5.593391418457031
+    },
+    "plane_2048": {
+      "median_ms": 19.354625001142267,
+      "max_ms": 20.22904199839104,
+      "peak_temporary_mib": 8.620613098144531
+    }
+  },
+  "sources": {
+    "src/qt_dicom_viewer/core/mpr_voi.py": "7ba8fe2c69974dff843bd5152ddbcc94f12df06292ede262d4826396a42212ff",
+    "src/qt_dicom_viewer/core/workspace_state.py": "fa920439aa726f78f0d51bc4e336402353e8c54c547ef54fbe3ef9c1dae7830e",
+    "src/qt_dicom_viewer/ui/workspace_snapshot.py": "8716f0ffbcedc49c33b7ec8e86608351a62e58df11dc25af5a8b196cd353c421",
+    "src/qt_dicom_viewer/ui/controller/edit_history_controller.py": "f76e1fc2e80e73f21005d9ad052830bbeb3bee8273f8220314ddc4e174bdd417",
+    "src/qt_dicom_viewer/ui/controller/tab/mpr_voi_controller.py": "5e0f6706a1eab8a4a6296721d2f5d2484624d71cb58efe8595d8e2e040455b5a",
+    "src/qt_dicom_viewer/ui/segmentation_overlay_renderer.py": "2189a612b9a50e2bfdb702cc638962348f1e0ae2f900e94fc92fd732e98ba524"
+  },
+  "tests": {
+    "files": 171,
+    "tests": 2425,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 71,
+    "passed": 2354
+  },
+  "native_ui": {
+    "dataset": "existing MR refinement workspace copy",
+    "checks": [
+      "workspace restore",
+      "outline/fill-outline",
+      "visibility undo",
+      "save mask/offset/affine equality"
+    ],
+    "segment_counts": [
+      947,
+      1075
+    ],
+    "native_continuous_brush_tested": false
+  },
+  "limitations": [
+    "Synthetic CPU benchmark, not native frame rate or Windows measurements.",
+    "Initial PACS/installer failures were sandbox port/hdiutil restrictions; permission-scoped reruns passed.",
+    "One offscreen PACS navigation test timed out on first permitted run; the isolated file rerun passed."
+  ],
+  "evidence_root": "build/refactor-performance"
+}

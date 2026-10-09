@@ -21,8 +21,11 @@ function resolve(interaction, region, crosshair, measurement) {
 }
 
 // Specific registration bindings precede the default right-button zoom.
-function resolveDrag(hover, buttons, registration) {
+function resolveDrag(hover, buttons, registration, preferences) {
     if (buttons & 1) return hover
-    if (buttons & 2) return registration ? "rotate-3d" : "zoom"
+    if ((buttons & 2) && registration) return "rotate-3d"
+    const binding = buttons & 2 ? (preferences?.rightButton ?? "zoom")
+        : buttons & 4 ? (preferences?.middleButton ?? "selected") : "selected"
+    if (binding !== "selected") return binding === "none" ? "" : binding
     return hover
 }

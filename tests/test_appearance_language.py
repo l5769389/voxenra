@@ -186,7 +186,7 @@ def test_preferences_restart_defaults_and_widget_translations(qt_app, tmp_path):
     path=tmp_path/'settings.json'
     path.write_text('{"layout":{"rightPanelWidth":300}}')
     settings=SettingsController(path=path)
-    assert settings.section('appearance') == {'theme':'dark','language':'zh-CN'}
+    assert settings.section('appearance') == {'theme':'dark','language':'zh-CN','interfaceScale':100}
     appearance=AppearanceController(settings); language=LanguageController(settings, root=tmp_path/'languages')
     dialog=LocalImportDialog(str(tmp_path))
     try:
@@ -195,7 +195,7 @@ def test_preferences_restart_defaults_and_widget_translations(qt_app, tmp_path):
         assert dialog.windowTitle() == 'Open images' and dialog.cancel_button.text() == 'Cancel'
         assert LIGHT['panelBackground'] in dialog.styleSheet()
         restarted=SettingsController(path=path)
-        assert restarted.section('appearance') == {'theme':'light','language':'en-US'}
+        assert restarted.section('appearance') == {'theme':'light','language':'en-US','interfaceScale':100}
         settings.resetSection('appearance')
         assert language.locale == 'zh-CN' and appearance.theme == 'dark'
         assert dialog.cancel_button.text() == '取消'

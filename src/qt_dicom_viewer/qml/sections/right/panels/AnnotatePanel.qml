@@ -40,16 +40,13 @@ ColumnLayout {
             checked: annotatePanel.viewportController.activeInteraction === "annotate:text"
             onClicked: annotatePanel.viewportController.setAnnotationMode(true)
         }
-    }
-
-    Text {
-        Layout.fillWidth: true
-        text: (annotatePanel.textMode ? qsTrId("text.1114") : qsTrId("text.1115"))
-            + "\n" + I18n.format(qsTrId("annotation.copyHint"), {keys: Qt.platform.os === "osx" ? "⌘+C / ⌘+V" : "Ctrl+C / Ctrl+V"})
-            + (Qt.platform.os === "osx" ? qsTrId("text.1117") : qsTrId("text.1118"))
-        color: Theme.textSubtle
-        font.pixelSize: 11
-        wrapMode: Text.Wrap
+        Components.HelpButton {
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            explanation: (annotatePanel.textMode ? qsTrId("text.1114") : qsTrId("text.1115"))
+                + "\n\n" + I18n.format(qsTrId("annotation.copyHint"), {keys: Qt.platform.os === "osx" ? "⌘+C / ⌘+V" : "Ctrl+C / Ctrl+V"})
+                + (Qt.platform.os === "osx" ? qsTrId("text.1117") : qsTrId("text.1118"))
+        }
     }
 
     Text {
@@ -260,4 +257,5 @@ ColumnLayout {
     }
 
     Item { Layout.fillHeight: true }
+
 }

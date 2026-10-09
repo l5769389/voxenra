@@ -201,15 +201,27 @@ def editing_handles(region, geometry):
 
 
 def plane_mask(evaluation, geometry):
-    """Nearest native mask voxel on the displayed slice, never threshold RGB/MIP."""
-    rows, cols = np.indices((geometry.rows, geometry.columns), dtype=np.float32)
+    """Nearest native mask voxel, with bounded coordinate temporaries.
+
+    Row blocks retain the same arithmetic and half-voxel boundary rule as the
+    full grid. A large output plane need not allocate several full 3D index
+    arrays merely to display a binary overlay.
+    """
     inverse = evaluation.geometry.patient_to_voxel
     origin = inverse[:3, :3] @ geometry.image_origin_patient + inverse[:3, 3]
     u = inverse[:3, :3] @ np.asarray(geometry.column_direction_patient) * geometry.column_spacing
     v = inverse[:3, :3] @ np.asarray(geometry.row_direction_patient) * geometry.row_spacing
-    index = np.floor(origin[:, None, None] + u[:, None, None] * cols
-                     + v[:, None, None] * rows + .5).astype(int) - evaluation.offset[:, None, None]
-    inside = np.all((index >= 0) & (index < np.asarray(evaluation.mask.shape)[:, None, None]), axis=0)
-    result = np.zeros(rows.shape, dtype=bool)
-    result[inside] = evaluation.mask[tuple(index[:, inside])]
+    cols = np.arange(geometry.columns, dtype=np.float32)[None, :]
+    base = origin[:, None, None] + u[:, None, None] * cols
+    shape = np.asarray(evaluation.mask.shape)[:, None, None]
+    offset = evaluation.offset[:, None, None]
+    result = np.zeros((geometry.rows, geometry.columns), dtype=bool)
+    block_rows = max(1, 65536 // max(1, geometry.columns))
+    for first in range(0, geometry.rows, block_rows):
+        stop = min(first + block_rows, geometry.rows)
+        rows = np.arange(first, stop, dtype=np.float32)[:, None]
+        index = np.floor(base + v[:, None, None] * rows + .5).astype(int) - offset
+        inside = np.all((index >= 0) & (index < shape), axis=0)
+        block = result[first:stop]
+        block[inside] = evaluation.mask[tuple(index[:, inside])]
     return result

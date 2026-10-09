@@ -285,6 +285,7 @@ Item {
 
     InteractionLayer {
         id: interactionLayer
+        mousePreferences: viewportRoot.viewportController?.settingsController?.values.input ?? null
         brushDiameterPixels: viewportRoot.viewportController?.voiController?.brushRelative
             ? Math.min(width, height) * (viewportRoot.viewportController.voiController.brushPercent / 100)
             : (viewportRoot.viewportController?.voiController?.brushDiameter ?? 5) * imageCanvas.pixelsPerMillimeter

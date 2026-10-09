@@ -205,7 +205,7 @@ def test_real_mpr_draw_edit_threshold_depth_and_voi(qt_app, paired_series, tmp_p
         for tool in ("voi", "segmentation"):
             tab.toolController.activateTool(tool)
             QTest.qWait(40)
-            help_button = next(x for x in _visual_children(view.rootObject()) if x.objectName() == "voiManualButton")
+            help_button = next(x for x in _visual_children(view.rootObject()) if x.objectName() == ("segmentationManualButton" if tool == "segmentation" else "voiManualButton"))
             _click(view, help_button)
             assert view.rootObject().property("lastManualChapter") == tool
             assert controller.records == records_before

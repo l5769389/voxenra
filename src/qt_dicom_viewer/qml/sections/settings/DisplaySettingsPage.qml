@@ -42,12 +42,14 @@ Item {
             Loader {
                 id: content
                 width: Math.min(scroll.availableWidth, ["window", "services"].includes(page.category) ? 760 : 1000)
-                sourceComponent: ({colormap: colorsPage, window: windowsPage, crosshair: crosshairPage,
+                sourceComponent: ({input: inputPage, privacy: privacyPage, colormap: colorsPage, window: windowsPage, crosshair: crosshairPage,
                     corners: cornersPage, scale: scalePage, measurement: measurementPage, roi: roiPage,
                     export: exportPage, workspace: workspacePage, appearance: appearancePage, services: servicesPage, updates: updatesPage})[page.category]
             }
         }
     }
+    Component { id: inputPage; InputSettingsPage { settingsController: page.settingsController } }
+    Component { id: privacyPage; PrivacySettingsPage { settingsController: page.settingsController } }
     Component { id: colorsPage; ColorMapsPage { settingsController: page.settingsController } }
     Component { id: windowsPage; WindowTemplatesPage { settingsController: page.settingsController } }
     Component { id: crosshairPage; CrosshairSettingsPage { settingsController: page.settingsController } }

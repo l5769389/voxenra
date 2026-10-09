@@ -8,7 +8,11 @@ ColumnLayout {
     id: panel
     required property var controller
     spacing: 10
-    Text { text: qsTrId("compare.mpr.layout"); color: Theme.textPrimary; font.bold: true }
+    Components.PanelHeading {
+        objectName: "CompareMprPanelHeading"
+        title: qsTrId("compare.mpr.layout")
+        explanation: qsTrId("compare.mpr.layoutHint") + "\n\n" + qsTrId("compare.mpr.linkHint") + "\n\n" + qsTrId("compare.mpr.displaySyncHint")
+    }
     GridLayout {
         Layout.fillWidth: true
         columns: 2
@@ -32,11 +36,7 @@ ColumnLayout {
             }
         }
     }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("compare.mpr.layoutHint")
-        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.Wrap
-    }
+
     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.dividerColor }
     Text { text: qsTrId("compare.mpr.linking"); color: Theme.textPrimary; font.bold: true }
     Components.AppCheckBox {
@@ -55,11 +55,7 @@ ColumnLayout {
         enabled: panel.controller?.ready ?? false
         onClicked: panel.controller.setLink("rotation", checked)
     }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("compare.mpr.linkHint")
-        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.Wrap
-    }
+
     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.dividerColor }
     Text { text: qsTrId("compare.mpr.displaySync"); color: Theme.textPrimary; font.bold: true }
     Components.AppCheckBox {
@@ -78,11 +74,7 @@ ColumnLayout {
         enabled: panel.controller?.ready ?? false
         onClicked: panel.controller.setLink("zoom", checked)
     }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("compare.mpr.displaySyncHint")
-        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.Wrap
-    }
+
     Text {
         Layout.fillWidth: true
         visible: panel.controller?.zoomLimitReached ?? false
@@ -97,4 +89,5 @@ ColumnLayout {
         enabled: panel.controller?.ready ?? false
         onClicked: panel.controller.resetActiveOrientation()
     }
+
 }

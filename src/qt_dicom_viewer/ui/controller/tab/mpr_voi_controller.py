@@ -7,13 +7,14 @@ from dataclasses import replace
 from uuid import uuid4
 
 import numpy as np
-from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer, QBuffer, QIODevice
-from PySide6.QtGui import QImage, QColor
+from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer
+from PySide6.QtGui import QColor
 
 from qt_dicom_viewer.core.segmentation_masks import evaluate_mask
 from qt_dicom_viewer.core.measurement_format import format_measurement
 from qt_dicom_viewer.core.mpr_voi import (automatic_depth, box_from_drag, circle_from_drag,
-                                         editing_handles, evaluate_voi, plane_mask, plane_polygon)
+                                         editing_handles, evaluate_voi, plane_polygon)
+from qt_dicom_viewer.ui.segmentation_overlay_renderer import SegmentationOverlayRenderer
 
 
 class MprVoiController(QObject):
@@ -22,6 +23,7 @@ class MprVoiController(QObject):
     _i18n_selected = Signal()
 
     changed = Signal()
+    editsChanged = Signal()  # Committed data only, not display/selection/results.
     selectionChanged = Signal()
     overlaysChanged = Signal()
     masksChanged = Signal()
@@ -38,7 +40,7 @@ class MprVoiController(QObject):
         self.evaluations = {}
         self._overlay_cache = {}
         self._contour_cache = {}
-        self._mask_cache = {}
+        self._mask_renderer = SegmentationOverlayRenderer()
         self.changed.connect(self.overlaysChanged.emit)
         self.changed.connect(self.masksChanged.emit)
         self._selected = ""
@@ -49,6 +51,8 @@ class MprVoiController(QObject):
         self._brush_relative = False
         self._brush_percent = 3.0
         self._brush_sphere = False
+        self._display_mode = "fill-outline"
+        self._fill_opacity = 30
         self._error = ""
         self._revision = 0
         self._running = False
@@ -58,6 +62,10 @@ class MprVoiController(QObject):
         self._timer.setSingleShot(True)
         self._timer.setInterval(100)
         self._timer.timeout.connect(self._launch)
+        self._preview_timer = QTimer(self)
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.setInterval(16)
+        self._preview_timer.timeout.connect(self.masksChanged.emit)
         self.completed.connect(self._accept)
         tools.activeInteractionChanged.connect(self.cancel)
         tools.activeInteractionChanged.connect(self._activate)
@@ -132,17 +140,46 @@ class MprVoiController(QObject):
         self.changed.emit()
         self.selectionChanged.emit()
 
+    @Property(str, notify=changed)
+    def displayMode(self):
+        return self._display_mode
+
+    @Property(int, notify=changed)
+    def fillOpacity(self):
+        return self._fill_opacity
+
+    @Slot(str)
+    def setDisplayMode(self, mode):
+        if mode in ("fill", "outline", "fill-outline") and mode != self._display_mode:
+            self._display_mode = mode
+            self.changed.emit()
+            self.selectionChanged.emit()
+
+    @Slot(int)
+    def setFillOpacity(self, value):
+        if 0 <= value <= 100 and value != self._fill_opacity:
+            self._fill_opacity = value
+            self.changed.emit()
+            self.selectionChanged.emit()
+
     def persistent_selection(self):
         """Workspace tool preferences, separate from undoable segmentation data."""
         return dict(version=1, mode=self._edit_mode, selected=self._selected,
                     diameter=self._brush_diameter, relative=self._brush_relative,
                     percent=self._brush_percent, sphere=self._brush_sphere,
-                    enabled=self._enabled)
+                    enabled=self._enabled, displayMode=self._display_mode,
+                    fillOpacity=self._fill_opacity)
 
     def restore_selection(self, state):
         if not isinstance(state, dict) or state.get("version") != 1:
             return
         self.cancel()
+        display_mode = state.get("displayMode")
+        if display_mode in ("fill", "outline", "fill-outline"):
+            self._display_mode = display_mode
+        opacity = state.get("fillOpacity")
+        if type(opacity) in (int, float) and np.isfinite(opacity) and 0 <= opacity <= 100:
+            self._fill_opacity = round(opacity)
         mode = state.get("mode")
         if mode in ("threshold", "paint", "erase", "keep", "remove"):
             self._edit_mode = "paint" if mode == "threshold" and self.tools._modality == "MR" else mode
@@ -179,9 +216,29 @@ class MprVoiController(QObject):
     @Slot()
     def newSegment(self):
         self.cancel()
-        self._selected = ""
+        if not self._phase_ready or self._closed:
+            return
+        viewport = getattr(self.parent(), "activeViewport", None)
+        if viewport is not None and (getattr(viewport, "render_pending", False)
+                or getattr(viewport, "_voi_phase", self.phaseIndex) != self.phaseIndex):
+            return
+        volume = getattr(viewport, "_voi_volume", None)
+        # A single-source workspace is unambiguous even while the 3D view is active.
+        if volume is None and len(self.sources) == 1:
+            volume = next(iter(self.sources.values()))
+        if volume is None or volume.series_uid not in self.sources:
+            return
+        from qt_dicom_viewer.core.segmentation_masks import mask_record
+        record, result = mask_record(volume, np.zeros((1, 1, 1), bool), (0, 0, 0),
+            name=f'{_msg("seg.segmentName")} {len(self.records)+1}',
+            color=self._next_color(), phase=self._phase, allow_empty=True, mask_origin="manual")
+        self.records.append(record)
+        self.evaluations[record["id"]] = result
+        self._selected = record["id"]
+        self._enabled = True
         self._edit_mode = "paint"
-        self.changed.emit()
+        self.itemsChanged.emit()
+        self._commit()
         self.selectionChanged.emit()
 
     def _begin_refine(self, viewport, column, row):
@@ -205,7 +262,9 @@ class MprVoiController(QObject):
         if self._edit_mode in ("paint", "erase") and diameter is None:
             return  # No reliable view scale yet; never guess a physical size.
         mask = result.mask.copy() if result else np.zeros((1, 1, 1), bool)
-        offset = result.offset.copy() if result else np.clip(np.floor(volume.geometry.patient_to_voxel[:3] @ [*self._patient_point(g, column, row), 1] + .5).astype(int), 0, np.array(volume.modality_pixels.shape)-1)
+        empty = result is None or not result.metrics.get("count")
+        mask = np.zeros((1, 1, 1), bool) if empty else mask
+        offset = result.offset.copy() if not empty else np.clip(np.floor(volume.geometry.patient_to_voxel[:3] @ [*self._patient_point(g, column, row), 1] + .5).astype(int), 0, np.array(volume.modality_pixels.shape)-1)
         self._draft = dict(mode="brush", record=record, viewport=viewport, geometry=g,
             volume=volume, mask=mask, offset=offset, region=None, last=None,
             kind="segmentation", edit=self._edit_mode, changed=False,
@@ -287,7 +346,7 @@ class MprVoiController(QObject):
         self._phase, self._phase_ready = phase, ready
         # Invalidate in-flight statistics and masks before accepting new pixels.
         self.evaluations.clear()
-        self._mask_cache.clear()
+        self._mask_renderer.clear()
         self._contour_cache.clear()
         self._selected = next((r["id"] for r in self.current_records if r["kind"] == self.tools.activePanel), "")
         self.itemsChanged.emit()
@@ -425,10 +484,11 @@ class MprVoiController(QObject):
                 mask, offset = brush(d["mask"], d["offset"], d["volume"].geometry,
                     d["volume"].modality_pixels.shape, point if d["last"] is None else d["last"], point,
                     d["diameter"], erase=d["edit"] == "erase", normal=normal)
-                d["changed"] |= not (np.array_equal(mask, d["mask"]) and np.array_equal(offset, d["offset"]))
+                changed = mask is not d["mask"]
+                d["changed"] |= changed
                 d.update(mask=mask, offset=offset, last=point)
-                self._mask_cache = {k: v for k, v in self._mask_cache.items() if k[1] != d["id"]}
-                self.masksChanged.emit()
+                if changed and not self._preview_timer.isActive():
+                    self._preview_timer.start()
             except ValueError:
                 self.cancel()
                 self._error = _msg("seg.tooLarge")
@@ -473,8 +533,10 @@ class MprVoiController(QObject):
         d = self._draft
         if not d or d["viewport"] is not viewport:
             return
+        self._preview_timer.stop()
         self._draft = None
         if d["mode"] == "brush":
+            self._mask_renderer.discard(d["id"])
             if d["record"] is None and not d["mask"].any():
                 self.masksChanged.emit()
                 return
@@ -492,7 +554,7 @@ class MprVoiController(QObject):
                 self._selected = record["id"]
                 self.evaluations[record["id"]] = result
                 self.itemsChanged.emit()
-                self._schedule()
+                self._commit()
             else:
                 self.masksChanged.emit()
             return
@@ -520,11 +582,14 @@ class MprVoiController(QObject):
                     volume.geometry.row_spacing, volume.geometry.column_spacing])))))
             self._selected = key
             self.itemsChanged.emit()
-        self._schedule()
+        self._commit()
 
     @Slot()
     def cancel(self):
+        self._preview_timer.stop()
         if self._draft:
+            if self._draft["mode"] == "brush":
+                self._mask_renderer.discard(self._draft["id"])
             self._draft = None
             self._overlay_cache.clear()
             self.changed.emit()
@@ -561,7 +626,7 @@ class MprVoiController(QObject):
         self._selected = records[0]["id"]
         self._enabled = True
         self.itemsChanged.emit()
-        self._schedule()
+        self._commit()
 
     @Slot(str, str)
     def setColor(self, key, color):
@@ -573,6 +638,7 @@ class MprVoiController(QObject):
                 self._overlay_cache.clear()
                 self.itemsChanged.emit()
                 self.changed.emit()
+                self.editsChanged.emit()
                 return
 
     @Slot(str)
@@ -581,6 +647,7 @@ class MprVoiController(QObject):
             self._record()["name"] = name[:120]
             self.itemsChanged.emit()
             self.changed.emit()
+            self.editsChanged.emit()
 
     @Slot(str, str)
     def renameItem(self, key, name):
@@ -589,6 +656,7 @@ class MprVoiController(QObject):
                 record["name"] = name.strip()[:120] or record["name"]
                 self.itemsChanged.emit()
                 self.changed.emit()
+                self.editsChanged.emit()
                 return
 
     @Slot(float)
@@ -656,6 +724,7 @@ class MprVoiController(QObject):
         self.itemsChanged.emit()
         self._overlay_cache.clear()
         self.changed.emit()
+        self.editsChanged.emit()
 
     @Slot(str)
     def remove(self, key):
@@ -667,7 +736,7 @@ class MprVoiController(QObject):
         self.evaluations.pop(key, None)
         if self._selected == key:
             self._selected = self.current_records[-1]["id"] if self.current_records else ""
-        self._schedule()
+        self._commit()
 
     @Slot(str)
     def clear(self, kind):
@@ -676,6 +745,10 @@ class MprVoiController(QObject):
 
     def _invalidate_selected(self):
         self.evaluations.pop(self._selected, None)
+        self._commit()
+
+    def _commit(self):
+        self.editsChanged.emit()
         self._schedule()
 
     def _schedule(self):
@@ -684,7 +757,7 @@ class MprVoiController(QObject):
         self._overlay_cache.clear()
         ids = {r["id"] for r in self.records}
         self._contour_cache = {k: v for k, v in self._contour_cache.items() if k[1] in ids}
-        self._mask_cache = {k: v for k, v in self._mask_cache.items() if k[1] in self.evaluations}
+        self._mask_renderer.retain(self.evaluations)
         self.changed.emit()
         if not self._closed:
             self._timer.start()
@@ -794,23 +867,14 @@ class MprVoiController(QObject):
             if (not record["visible"] or record["kind"] != "segmentation" or result is None
                     or (self._draft and self._draft["mode"] != "brush" and self._draft["record"] is record)):
                 continue
-            key = (viewport.viewportId, record["id"])
-            cached = self._mask_cache.get(key)
-            if cached is None or cached[0] != g or cached[1] is not result or cached[2] != record["color"]:
-                mask = plane_mask(result, g)
-                rgba = np.zeros((*mask.shape, 4), dtype=np.uint8)
-                color = QColor(record["color"])
-                rgba[mask] = (color.red(), color.green(), color.blue(), 95)
-                qimage = QImage(rgba.data, g.columns, g.rows, rgba.strides[0], QImage.Format_RGBA8888)
-                buffer = QBuffer()
-                buffer.open(QIODevice.WriteOnly)
-                qimage.save(buffer, "PNG")
-                source = "data:image/png;base64," + bytes(buffer.data().toBase64()).decode("ascii")
-                self._mask_cache[key] = (g, result, record["color"], source)
-            items.append(dict(id=record["id"], source=self._mask_cache[key][3]))
+            source = self._mask_renderer.source(viewport.viewportId, record["id"], result, g,
+                                                record["color"], self._display_mode, self._fill_opacity)
+            items.append(dict(id=record["id"], source=source))
         return items
 
     def dispose(self):
         self._closed = True
         self._timer.stop()
+        self._preview_timer.stop()
         self._executor.shutdown(wait=True, cancel_futures=True)
+        self._mask_renderer.clear()

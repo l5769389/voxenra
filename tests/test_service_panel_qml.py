@@ -45,6 +45,8 @@ def service_panel(qt_app, request):
 
 
 def _find(view, name):
+    from toolbar_navigation import reveal_primary_tool
+    reveal_primary_tool(view.rootObject(), name)
     return next(item for item in _visual_children(view.rootObject())
                 if item.objectName() == name and item.isVisible())
 
@@ -100,7 +102,8 @@ def test_service_menu_has_no_title_or_explanation_and_only_selects_entries(servi
 
     _click(view, primary_service)
     assert controller.activePanel == "service"
-    assert tinted_service_icon.parentItem().property("iconColor").name() == "#7bd8ff"
+    # Selecting a secondary tool collapses More, so the hidden icon is no longer hovered.
+    assert tinted_service_icon.parentItem().property("iconColor").name() == "#66d0ff"
     QTest.mouseMove(view, QPointF(2, view.height() - 2).toPoint())
     QTest.qWait(30)
     assert tinted_service_icon.parentItem().property("iconColor").name() == "#66d0ff"

@@ -7,7 +7,11 @@ ColumnLayout {
     id: root
     required property var controller
     spacing: 10
-    Text { text: qsTrId("layout.title"); color: Theme.textPrimary; font.bold: true; font.pixelSize: 14 }
+    Components.PanelHeading {
+        objectName: "TwoDLayoutPanelHeading"
+        title: qsTrId("layout.title")
+        explanation: qsTrId("layout.dragHint")
+    }
     GridLayout {
         Layout.fillWidth: true
         columns: 4
@@ -80,10 +84,6 @@ ColumnLayout {
             onClicked: root.controller.setCustomLayout(customGrid.rows, customGrid.columns)
         }
     }
-    Text {
-        Layout.fillWidth: true
-        text: customGrid.rows ? customGrid.rows + " × " + customGrid.columns : qsTrId("layout.dragHint")
-        color: Theme.textSecondary; font.pixelSize: 12; wrapMode: Text.Wrap
-        Layout.minimumHeight: 38
-    }
+
+
 }

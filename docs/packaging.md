@@ -46,13 +46,16 @@ DMG 使用 Finder 原生安装窗口，固定排列应用、Applications 链接�
 
 ```bash
 bash scripts/build_macos.sh \
+  --release \
   --sign-identity 'Developer ID Application: YOUR NAME (TEAMID)' \
   --notary-profile 'your-saved-notarytool-profile'
 ```
 
 也可使用 `MACOS_SIGN_IDENTITY` / `MACOS_NOTARY_PROFILE` 环境变量。
+`--release` 必须同时提供有效 Developer ID 和公证配置，缺失或失败时停止，不退回测试签名。只检查配置时使用 `--check-signing`，具体步骤见[签名与公证配置](macos-signing.md)。
 公证配置需提前通过 Apple 的 `notarytool` 保存到钥匙串；不要将证书密码或 Apple 凭据提交到仓库。
-只有显式提供公证配置时才会提交文件到 Apple。公证成功后装订并验证票据。
+提供公证配置后，先公证并装订 `.app`，再生成、签名、公证和装订 DMG；两者分别通过 Gatekeeper 检查后才替换最终安装包。失败保留原有 DMG；旧产物不能算本次构建成功。仅检查配置不会上传应用。
+诊断文件保存在 `build/macos/notarization/<版本>-<架构>/`。SHA-256 必须在公证票据装订完成后生成。
 未签名或未公证包可能触发 Gatekeeper；不要全局关闭系统安全检查。
 
 ## Windows

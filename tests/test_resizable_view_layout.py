@@ -38,18 +38,18 @@ def test_right_and_settings_widths_clamp_persist_and_restore(scene, paired_serie
     window, app, warnings = scene
     load_pet(scene, paired_series, tmp_path, "2d")
     right = find(window, "rightPanel")
-    assert right.width() == 250
+    assert right.width() == 300
     drag(window, "rightPanelResizeHandle", -200)
     assert right.width() == 420
     window.resize(1000, 600)
     QTest.qWait(60)
-    assert 220 <= right.width() < 420
+    assert 240 <= right.width() < 420
     assert app.settingsController.values["layout"]["rightPanelWidth"] == 420
     window.resize(1440, 900)
     QTest.qWait(60)
     assert right.width() == 420
     drag(window, "rightPanelResizeHandle", 300)
-    assert right.width() == 220
+    assert right.width() == 240
     app.workspaceController.openSettings()
     wait_until(lambda: any(i.objectName() == "settingsNavigation" for i in descendants(window.contentItem())))
     navigation = find(window, "settingsNavigation")
@@ -61,7 +61,7 @@ def test_right_and_settings_widths_clamp_persist_and_restore(scene, paired_serie
     QTest.qWait(100)
     assert find(window, "settingsNavigation").width() == 300
     restored = SettingsController(path=tmp_path / "display-settings.json")
-    assert restored.values["layout"] == {"rightPanelCollapsed": False, "rightPanelWidth": 220, "settingsNavigationWidth": 300, "manualNavigationWidth": 260,
+    assert restored.values["layout"] == {"rightPanelCollapsed": False, "rightPanelWidth": 240, "settingsNavigationWidth": 300, "manualNavigationWidth": 260,
                                          "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []}
     drag(window, "settingsNavigationResizeHandle", -250)
     assert find(window, "settingsNavigation").width() == 156

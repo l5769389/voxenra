@@ -101,7 +101,7 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
             assert f'feature-theme-{theme}.png?v=' in source
         assert 'id="appearance"' in source
         assert ('中性深灰' if page.parent == tmp_path else 'Neutral gray') in source
-        assert ("多种外观主题" if page.parent == tmp_path else "A choice of themes") in source
+        assert ("适合你的外观与操作习惯" if page.parent == tmp_path else "Appearance and controls") in source
         assert ("从二维切片到三维重建" if page.parent == tmp_path else "From 2D slices to 3D reconstruction") in source
         assert ("DICOM SR" if page.parent == tmp_path else "DICOM SR") in source
         assert 'id="workflow"' in source

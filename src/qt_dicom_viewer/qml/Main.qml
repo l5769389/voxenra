@@ -19,6 +19,18 @@ ApplicationWindow {
     readonly property var documentController: appController.workspaceDocumentController ?? null
     readonly property var editHistory: workspaceController.activeTab?.historyController ?? null
     readonly property bool editingText: !!activeFocusItem && activeFocusItem.selectByMouse !== undefined
+    readonly property var shortcuts: appController.shortcutController ?? null
+    // All popup contents (including non-modal menus) own their keyboard input.
+    readonly property bool shortcutPopupOpen: Overlay.overlay.children.some(item => item.visible)
+    readonly property bool shortcutRecording: (shortcuts?.recordingAction ?? "").length > 0
+    readonly property bool standardShortcutsAllowed: active && !shortcutPopupOpen && !shortcutRecording
+    Components.ReadingShortcuts {
+        controller: window.shortcuts
+        toolController: window.toolController
+        tabController: window.workspaceController.activeTab
+        allowed: window.standardShortcutsAllowed && !window.editingText && !!window.viewportController
+            && !window.documentController?.busy && window.activeFocusItem?.checkable === undefined
+    }
     readonly property bool hasTabs: workspaceController.tabs.length > 0
     readonly property var viewportController:
         workspaceController.activeViewport
@@ -32,9 +44,9 @@ ApplicationWindow {
     readonly property real minimumReadingHeight: Math.min(520, Math.max(1, availableWindowHeight - topPadding - 20 - centerView.tabStripHeight))
     readonly property bool rightCollapsedByUser: appController.settingsController?.values.layout.rightPanelCollapsed ?? false
     readonly property bool compactSidebarRequired: !detached && width < minimumReadingWidth + 200
-        + (rightCollapsedByUser ? 44 + 36 : 220 + 52)
+        + (rightCollapsedByUser ? 44 + 36 : 240 + 52)
     readonly property bool compactToolsRequired: width < minimumReadingWidth
-        + (detached ? 0 : seriesSidebar.compact ? 52 : 200) + 220 + (detached ? 44 : 52)
+        + (detached ? 0 : seriesSidebar.compact ? 52 : 200) + 240 + (detached ? 44 : 52)
     width: detached ? 1120 : 1440
     height: detached ? 840 : 900
     minimumWidth: Math.min(detached ? 960 : 1280, availableWindowWidth)
@@ -50,7 +62,9 @@ ApplicationWindow {
         else showFullScreen()
     }
     Shortcut {
-        sequence: Qt.platform.os === "osx" ? "Ctrl+Meta+F" : "F11"
+        enabled: window.standardShortcutsAllowed
+        context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("fullscreen") ?? ""
         onActivated: window.toggleFullScreen()
     }
     Component.onCompleted: {
@@ -71,63 +85,66 @@ ApplicationWindow {
         if (active) window.windowManager?.focusWindow(window.workspaceController.windowId)
     }
     Shortcut {
-        sequences: [StandardKey.Close]
+        sequence: window.shortcuts?.fixedSequence("close") ?? ""
         context: Qt.WindowShortcut
-        enabled: window.hasTabs && !window.documentController?.busy
+        enabled: window.standardShortcutsAllowed && window.hasTabs && !window.documentController?.busy
         onActivated: window.workspaceController.closeTab(window.workspaceController.activeTabId)
     }
     Shortcut {
-        sequence: Qt.platform.os === "osx" ? "Meta+Tab" : "Ctrl+Tab"
+        sequence: window.shortcuts?.fixedSequence("nextTab") ?? ""
         context: Qt.WindowShortcut
-        enabled: window.hasTabs && !!window.windowManager
+        enabled: window.standardShortcutsAllowed && window.hasTabs && !!window.windowManager
         onActivated: window.workspaceController.cycleTab(1)
     }
     Shortcut {
-        sequence: Qt.platform.os === "osx" ? "Meta+Shift+Tab" : "Ctrl+Shift+Tab"
+        sequence: window.shortcuts?.fixedSequence("previousTab") ?? ""
         context: Qt.WindowShortcut
-        enabled: window.hasTabs && !!window.windowManager
+        enabled: window.standardShortcutsAllowed && window.hasTabs && !!window.windowManager
         onActivated: window.workspaceController.cycleTab(-1)
     }
     Shortcut {
         sequence: "Escape"
         context: Qt.WindowShortcut
-        enabled: window.windowManager?.dragging ?? false
+        enabled: window.active && !window.shortcutRecording && (window.windowManager?.dragging ?? false)
         onActivated: window.windowManager.cancelDrag()
     }
     Shortcut {
-        sequences: [StandardKey.Save]
-        enabled: !!window.documentController && !window.documentController.busy
+        context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("save") ?? ""
+        enabled: window.standardShortcutsAllowed && !!window.documentController && !window.documentController.busy
         onActivated: window.documentController.save()
     }
     Shortcut {
-        sequences: [StandardKey.SaveAs]
-        enabled: !!window.documentController && !window.documentController.busy
+        context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("saveAs") ?? ""
+        enabled: window.standardShortcutsAllowed && !!window.documentController && !window.documentController.busy
         onActivated: window.documentController.saveAs()
     }
     Shortcut {
-        sequence: "Ctrl+Shift+O"
-        enabled: !!window.documentController && !window.documentController.busy
+        context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("openWorkspace") ?? ""
+        enabled: window.standardShortcutsAllowed && !!window.documentController && !window.documentController.busy
         onActivated: window.documentController.open()
     }
     Shortcut {
         objectName: "compareShortcut"
         // Qt maps Ctrl to Command on macOS, and Control on Windows/Linux.
-        sequence: "Ctrl+D"
+        sequence: window.shortcuts?.fixedSequence("compare") ?? ""
         context: Qt.WindowShortcut
-        enabled: !window.editingText && !workspaceDocumentDialog.visible
+        enabled: window.standardShortcutsAllowed && !window.editingText && !workspaceDocumentDialog.visible
             && !window.documentController?.busy && !window.panelController.scanning
         onActivated: window.panelController.compareController.requestFromViewport(window.viewportController)
     }
     Shortcut {
-        sequences: [StandardKey.Undo]
+        sequence: window.shortcuts?.fixedSequence("undo") ?? ""
         context: Qt.WindowShortcut
-        enabled: !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory?.canUndo && !window.documentController?.busy
+        enabled: window.standardShortcutsAllowed && !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory?.canUndo && !window.documentController?.busy
         onActivated: window.editHistory.undo()
     }
     Shortcut {
         sequences: [StandardKey.Redo]
         context: Qt.WindowShortcut
-        enabled: !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory?.canRedo && !window.documentController?.busy
+        enabled: window.standardShortcutsAllowed && !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory?.canRedo && !window.documentController?.busy
         onActivated: window.editHistory.redo()
     }
     Sections.WorkspaceDialog {
@@ -198,8 +215,9 @@ ApplicationWindow {
         height: visible ? implicitHeight : 0
     }
     Shortcut {
-        sequences: [StandardKey.Open]
-        enabled: window.pacsController?.localEnabled !== false && !window.panelController.scanning && !window.documentController?.restoring
+        context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("open") ?? ""
+        enabled: window.standardShortcutsAllowed && window.pacsController?.localEnabled !== false && !window.panelController.scanning && !window.documentController?.restoring
         onActivated: {
             window.windowManager?.showMainWindow()
             window.panelController.openImportDialog()
@@ -219,7 +237,7 @@ ApplicationWindow {
             visible: !window.detached
             compactRequired: window.compactSidebarRequired
             availableExpandedWidth: workspaceRow.width + 20 - workspaceRow.horizontalOverhead
-                - window.minimumReadingWidth - (rightPanel.visible ? (rightPanel.collapsed ? 44 : 220) : 0)
+                - window.minimumReadingWidth - (rightPanel.visible ? (rightPanel.collapsed ? 44 : 240) : 0)
             Layout.minimumWidth: implicitWidth
             Layout.preferredWidth: implicitWidth
             Layout.maximumWidth: implicitWidth
@@ -247,6 +265,7 @@ ApplicationWindow {
             workspaceController: window.workspaceController
             panelController: window.panelController
             pacsController: window.pacsController
+            documentController: window.documentController
             settingsController: appController.settingsController ?? null
             currentTabAllViewports: window.currentTabAllViewports
             viewportController: window.viewportController
@@ -258,7 +277,7 @@ ApplicationWindow {
             Layout.preferredWidth: 8
             Layout.fillHeight: true
             currentWidth: rightPanel.width
-            minimumWidth: 220
+            minimumWidth: 240
             maximumWidth: rightPanel.widthLimit
             direction: -1
             onWidthDragged: value => rightPanel.dragWidth = value
@@ -270,11 +289,11 @@ ApplicationWindow {
         Sections.RightPanel {
             id: rightPanel
             property real dragWidth: -1
-            readonly property real widthLimit: Math.max(220, Math.min(420,
+            readonly property real widthLimit: Math.max(240, Math.min(420,
                 workspaceRow.width + 20 - workspaceRow.horizontalOverhead
                 - (window.detached ? 0 : seriesSidebar.width) - window.minimumReadingWidth))
             readonly property real desiredWidth: dragWidth >= 0 ? dragWidth
-                : (appController.settingsController?.values.layout.rightPanelWidth ?? 250)
+                : (appController.settingsController?.values.layout.rightPanelWidth ?? 300)
             collapsed: window.rightCollapsedByUser || window.compactToolsRequired
             expansionAllowed: !window.compactToolsRequired
             onCollapseRequested: appController.settingsController?.setValue("layout", "rightPanelCollapsed", !collapsed)

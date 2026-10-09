@@ -10,6 +10,22 @@ ColumnLayout {
     readonly property var language: appController.languageController
     spacing: 12
     SettingsSection {
+        sectionKey: "appearance-size"
+        settingsController: page.settingsController
+        Layout.fillWidth: true
+        title: qsTrId("appearance.interfaceSize")
+        Components.AppComboBox {
+            objectName: "interfaceSize"
+            Layout.fillWidth: true
+            Layout.maximumWidth: 320
+            readonly property var sizes: [100, 115, 130]
+            model: [qsTrId("appearance.sizeStandard"), qsTrId("appearance.sizeLarge"), qsTrId("appearance.sizeLargest")]
+            currentIndex: sizes.indexOf(page.settingsController.values.appearance.interfaceScale)
+            onActivated: page.settingsController.setValue("appearance", "interfaceScale", sizes[currentIndex])
+        }
+        Text { Layout.fillWidth: true; wrapMode: Text.Wrap; text: qsTrId("appearance.scaleRestart"); color: Theme.textSecondary; font.pixelSize: 12 }
+    }
+    SettingsSection {
         sectionKey: "appearance-theme"
         settingsController: page.settingsController
         Layout.fillWidth: true
@@ -80,7 +96,7 @@ ColumnLayout {
             Components.AppButton { objectName: "openLanguageDirectory"; baseBorderWidth: 1; compact: true; text: qsTrId("appearance.openPacks"); onClicked: page.language.openDirectory() }
             Components.AppButton { objectName: "reloadLanguagePacks"; baseBorderWidth: 1; compact: true; text: qsTrId("appearance.reloadPacks"); onClicked: page.language.reload() }
         }
-        Text { Layout.fillWidth: true; text: qsTrId("appearance.packsHint"); color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.Wrap }
+        Components.HelpButton { Layout.alignment: Qt.AlignRight; explanation: qsTrId("appearance.packsHint") }
         Text { objectName: "languagePackStatus"; Layout.fillWidth: true; Layout.minimumHeight: 36; text: page.language.message; color: Theme.textSecondary; font.pixelSize: 12; wrapMode: Text.Wrap }
     }
 }

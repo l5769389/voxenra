@@ -9,8 +9,10 @@ import plistlib
 import subprocess
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from packaging_utils import APP_NAME, BUNDLE_ID, PROJECT_ROOT, app_version, prepare_assets
+from macos_signing import preflight, notarize_app, notarize_dmg
 
 
 def pyinstaller_command(root: Path, assets: Path, *, identity: str | None = None) -> list[str]:
@@ -36,23 +38,35 @@ def dmg_command(root: Path, assets: Path, application: Path, output: Path) -> li
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app-only", action="store_true", help="仅构建 .app，不生成 DMG。")
+    parser.add_argument("--release", action="store_true", help="正式分发模式：必须具备 Developer ID 和公证配置，不允许退回测试签名。")
+    parser.add_argument("--check-signing", action="store_true", help="仅检查证书和公证认证，不构建或上传应用。")
     parser.add_argument("--sign-identity", default=os.getenv("MACOS_SIGN_IDENTITY"),
                         help="钥匙串中的 Developer ID Application 身份；缺省为 ad-hoc 测试签名。")
     parser.add_argument("--notary-profile", default=os.getenv("MACOS_NOTARY_PROFILE"),
-                        help="已保存的 notarytool 钥匙串配置名；提供时提交 DMG 公证并装订票据。")
+                        help="已保存的 notarytool 钥匙串配置名；提供时公证应用和 DMG 并装订票据。")
     args = parser.parse_args(argv)
     if sys.platform != "darwin" or platform.machine() not in {"arm64", "x86_64"}:
         print("请在 Apple Silicon 或 Intel Mac 上运行对应架构的 Python。", file=sys.stderr)
         return 1
-    if sys.version_info[:2] != (3, 13):
+    if sys.version_info[:2] != (3, 13) and not args.check_signing:
         print("请通过 bash scripts/build_macos.sh 使用 Python 3.13 构建。", file=sys.stderr)
         return 1
-    if args.notary_profile and (not args.sign_identity or args.sign_identity == "-" or args.app_only):
-        parser.error("公证需要 Developer ID 签名且不能同时使用 --app-only。")
+    if (args.release or args.check_signing) and (not args.sign_identity or args.sign_identity == "-" or not args.notary_profile):
+        parser.error("正式签名检查需要 --sign-identity 和 --notary-profile。")
+    if args.release and args.app_only:
+        parser.error("正式分发需要生成 DMG，不能同时使用 --app-only。")
+    if args.notary_profile and (not args.sign_identity or args.sign_identity == "-"):
+        parser.error("公证需要 Developer ID 签名。")
     try:
+        if args.sign_identity and args.sign_identity != "-":
+            args.sign_identity = preflight(args.sign_identity, args.notary_profile)
+        if args.check_signing:
+            print("Developer ID 身份和 Apple 公证认证检查通过；尚未构建、签名或上传应用。")
+            return 0
         assets = prepare_assets(PROJECT_ROOT)
         subprocess.run(pyinstaller_command(PROJECT_ROOT, assets, identity=args.sign_identity),
-                       cwd=PROJECT_ROOT, check=True)
+                       cwd=PROJECT_ROOT, check=True,
+                       env={**os.environ, "PYINSTALLER_STRICT_BUNDLE_CODESIGN_ERROR": "1"})
         application = PROJECT_ROOT / "dist/macos" / f"{APP_NAME}.app"
         if not (application / "Contents/MacOS" / APP_NAME).is_file():
             raise FileNotFoundError(f"没有生成预期应用：{application}")
@@ -70,24 +84,29 @@ def main(argv: list[str] | None = None) -> int:
             plistlib.dump(metadata, stream)
         signing = ["codesign", "--force", "--sign", args.sign_identity or "-"]
         if args.sign_identity and args.sign_identity != "-":
-            signing += ["--options", "runtime", "--timestamp"]
+            signing += ["--options", "runtime", "--timestamp", "--preserve-metadata=entitlements"]
         subprocess.run(signing + [str(application)], check=True)
         subprocess.run(["codesign", "--verify", "--deep", "--strict", str(application)], check=True)
         print(f"应用：{application}")
+        logs = PROJECT_ROOT / "build/macos/notarization" / f"{app_version(PROJECT_ROOT)}-{platform.machine()}"
+        if args.notary_profile:
+            notarize_app(application, args.notary_profile, logs)
         if args.app_only:
             return 0
         output = PROJECT_ROOT / "dist/installers" / f"{APP_NAME}-{app_version(PROJECT_ROOT)}-macos-{platform.machine()}.dmg"
         output.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(dmg_command(PROJECT_ROOT, assets, application, output), cwd=PROJECT_ROOT, check=True)
-        if not output.is_file():
-            raise FileNotFoundError(f"没有生成预期 DMG：{output}")
-        subprocess.run(["hdiutil", "verify", str(output)], check=True)
-        if args.sign_identity and args.sign_identity != "-":
-            subprocess.run(["codesign", "--force", "--sign", args.sign_identity, "--timestamp", str(output)], check=True)
-        if args.notary_profile:
-            subprocess.run(["xcrun", "notarytool", "submit", str(output), "--keychain-profile", args.notary_profile, "--wait"], check=True)
-            subprocess.run(["xcrun", "stapler", "staple", str(output)], check=True)
-            subprocess.run(["xcrun", "stapler", "validate", str(output)], check=True)
+        # A rejected or interrupted notarization must not replace a distributable artifact.
+        with TemporaryDirectory(prefix=".macos-build-", dir=output.parent) as temporary:
+            staged = Path(temporary) / output.name
+            subprocess.run(dmg_command(PROJECT_ROOT, assets, application, staged), cwd=PROJECT_ROOT, check=True)
+            if not staged.is_file():
+                raise FileNotFoundError(f"没有生成预期 DMG：{staged}")
+            subprocess.run(["hdiutil", "verify", str(staged)], check=True)
+            if args.notary_profile:
+                notarize_dmg(staged, args.sign_identity, args.notary_profile, logs)
+            elif args.sign_identity and args.sign_identity != "-":
+                subprocess.run(["codesign", "--force", "--sign", args.sign_identity, "--timestamp", str(staged)], check=True)
+            staged.replace(output)
         print(f"安装包：{output}")
         return 0
     except (OSError, ValueError, subprocess.CalledProcessError) as error:

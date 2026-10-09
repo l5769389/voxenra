@@ -12,6 +12,7 @@ Rectangle {
     required property var workspaceController
     required property var panelController
     property var pacsController: null
+    property var documentController: null
     property var settingsController: null
     required property var viewportController
     required property var currentTabAllViewports
@@ -212,6 +213,7 @@ Rectangle {
         anchors.fill: parent
         anchors.topMargin: centerPanel.windowManager?.dragging ? 46 : 0
         visible: !centerPanel.hasTabs
+        documentController: centerPanel.documentController
         panelController: centerPanel.panelController
         pacsController: centerPanel.pacsController
         workspaceController: centerPanel.workspaceController

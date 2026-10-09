@@ -41,7 +41,8 @@ with TemporaryDirectory(prefix='voxenra-refinement-capture-') as temp:
     app = AppController(provider, settings_path=Path(temp)/'settings.json',
                         pacs_config_path=Path(temp)/'pacs.json', pacs_import_root=Path(temp)/'imports')
     app.workspaceDocumentController.setAutomaticRecovery(False)
-    app.languageController.selectLanguage('zh-CN')
+    english = '--english' in sys.argv
+    app.languageController.selectLanguage('en-US' if english else 'zh-CN')
     for group,key,value in [('appearance','theme','graphite'),('layout','rightPanelWidth',310),
                            ('layout','rightPanelCollapsed',False),
                            ('corners','topLeft',['viewPosition','seriesDescription','slice']),
@@ -66,7 +67,8 @@ with TemporaryDirectory(prefix='voxenra-refinement-capture-') as temp:
         app.panelController.update_series_session(snapshot); app.panelController._update_series_record(snapshot)
         record=max(records,key=lambda r:len(r.instances))
         app.panelController.selectSeries(record.series_instance_uid)
-        app.workspaceController.createTab(record.series_instance_uid,'MR · 分割精修','mpr')
+        app.workspaceController.createTab(record.series_instance_uid,
+                                         'MR · Refinement' if english else 'MR · 分割精修','mpr')
         tab=app.workspaceController.activeTab
         wait_until(lambda: bool(tab.voiController.sources) and all(v._plane_geometry for v in tab.viewports_by_id.values()),timeout=30000)
         tab.mprLayout.setLayout('left')
@@ -74,18 +76,19 @@ with TemporaryDirectory(prefix='voxenra-refinement-capture-') as temp:
         tab.activateViewport(view.viewportId); tab.toolController.activateTool('segmentation')
         c=tab.voiController; g=view._plane_geometry
         cx,cy=g.columns*.5,g.rows*.48
-        c.newSegment(); c.setBrushDiameter(18); c.setBrushSphere(True)
+        c.newSegment(); c.rename('Region 1' if english else '区域 1')
+        c.setBrushDiameter(18); c.setBrushSphere(True)
         shot()
         c.begin(view,cx-12,cy,.1)
         for dx,dy in [(-8,-2),(-4,-4),(0,-4),(4,-2),(8,0)]:
             c.update(view,cx+dx,cy+dy); shot()
-        c.finish(view,cx+8,cy); c.rename('区域 1'); tab.historyController.capture(); shot()
+        c.finish(view,cx+8,cy); c.rename('Region 1' if english else '区域 1'); tab.historyController.capture(); shot()
         c.setEditMode('erase'); c.setBrushDiameter(8)
         c.begin(view,cx,cy,.1); c.update(view,cx+3,cy+3); shot()
         c.finish(view,cx+3,cy+3); tab.historyController.capture(); shot()
         tab.historyController.undo(); shot(); tab.historyController.redo(); shot()
         c.newSegment(); c.setBrushDiameter(12)
-        c.begin(view,cx+18,cy+8,.1); c.finish(view,cx+18,cy+14); c.rename('区域 2')
+        c.begin(view,cx+18,cy+8,.1); c.finish(view,cx+18,cy+14); c.rename('Region 2' if english else '区域 2')
         wait_until(lambda:not c.busy)
         assert len(c.records)==2 and len({r['color'] for r in c.records})==2
         shot('38-segmentation-refinement'); shot('34-segment-management')

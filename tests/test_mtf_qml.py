@@ -348,7 +348,7 @@ def test_quality_notes_only_appear_in_dismissible_info_popup(workspace, tmp_path
     QTest.qWait(40)
     if view.width() < 900:
         flick = _find(view, 'toolDetailFlickable')
-        flick.setProperty('contentY', max(0, flick.property('contentHeight') - flick.height()))
+        flick.setProperty('contentY', 0)
         QTest.qWait(40)
     assert not any(item.objectName().startswith('mtfInfoWarning-') and item.isVisible()
                    for item in _visual_children(view.contentItem()))
@@ -414,9 +414,9 @@ def test_ramp_metrics_profile_and_explicit_angle_recalculation(workspace, tmp_pa
     _click(view, _find(view, 'rampDetailsToggle'))
     assert c.actualAnalysisMethod == 'half_height'
     info = _find(view, 'mtfInfoButton')
-    assert info.width() == info.height() == 22
+    assert info.width() == info.height() == 28
     assert info.property('iconName') == 'info'
-    assert info.property('iconSize') == 16
+    assert info.property('iconSize') == 18
     assert info.property('leftPadding') == info.property('rightPadding') == 0
     assert info.property('baseBorderWidth') == 0
     _click(view, _find(view, 'serviceEntry-mtf'))
@@ -580,10 +580,10 @@ def test_info_button_theme_colors_and_accessible_popup(qt_app):
     QTest.qWait(80)
     try:
         info = _find(view, 'mtfInfoButton')
-        assert info.width() == info.height() == 22
-        assert info.property('iconName') == 'info' and info.property('iconSize') == 16
+        assert info.width() == info.height() == 28
+        assert info.property('iconName') == 'info' and info.property('iconSize') == 18
         assert info.property('baseBorderWidth') == 0
-        assert info.property('normalColor').alpha() == 0
+        assert info.property('normalColor') == QColor(DARK['controlBackground'])
         assert info.property('cornerRadius') == 6
         assert info.isEnabled()
 
@@ -819,4 +819,20 @@ def test_numeric_fwhm_editor_and_accessible_thickness(workspace):
     metrics = QAccessible.queryAccessibleInterface(_find(view, 'rampMetrics'))
     assert 'FWHM' in metrics.text(QAccessible.Name)
     assert '23' in metrics.text(QAccessible.Name)
+    assert not warnings, warnings
+
+
+def test_analysis_info_stays_with_recalculate_before_results(workspace):
+    view, controller, pixels, warnings = workspace
+    _click(view, _find(view, "primaryTool-service"))
+    for service in ("mtf", "fwhm"):
+        _click(view, _find(view, "serviceEntry-" + service))
+        info = _find(view, "mtfInfoButton")
+        recalculate = _find(view, "recalculateAnalysis")
+        assert abs(info.mapToScene(QPointF(0, info.height()/2)).y()
+                   - recalculate.mapToScene(QPointF(0, recalculate.height()/2)).y()) <= 1
+        assert info.width() >= 28
+        _click(view, info)
+        from PySide6.QtCore import Qt
+        QTest.keyClick(view, Qt.Key_Escape)
     assert not warnings, warnings

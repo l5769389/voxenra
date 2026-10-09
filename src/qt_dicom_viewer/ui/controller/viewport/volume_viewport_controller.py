@@ -460,7 +460,7 @@ class VolumeViewportController(ViewportController):
 
     def begin_drag(self, point, size, buttons=Qt.MouseButton.LeftButton.value):
         if not self._disposed and self._load_state == "ready":
-            interaction = drag_interaction(self._tools.active_interaction, buttons)
+            interaction = drag_interaction(self._tools.active_interaction, buttons, self._tools.settingsController.section("input"))
             if interaction == InteractionType.VOLUME_CROP:
                 if self.editBusy:
                     return
@@ -487,6 +487,9 @@ class VolumeViewportController(ViewportController):
         start, size, initial, display, tool = self._drag
         dx, dy = point[0]-start[0], point[1]-start[1]
         height = max(1, size[1])
+        preferences = self._tools.settingsController.section("input")
+        factor = preferences["windowSensitivity"] if tool == InteractionType.WINDOW else preferences["zoomSensitivity"] if tool == InteractionType.ZOOM else 1
+        dx, dy = dx * factor, dy * factor
         if tool == InteractionType.WINDOW:
             if display.window is not None:
                 if self._window_scalar_range is None and self.volume is not None and not self.isMrViewport:
@@ -527,7 +530,7 @@ class VolumeViewportController(ViewportController):
         if self._disposed or self._load_state != "ready":
             return
         exponent = pixel_delta/200 if pixel_delta else angle_delta/600
-        self._set_state(zoom_by(self.state, exponent))
+        self._set_state(zoom_by(self.state, exponent * self._tools.settingsController.section("input")["zoomSensitivity"]))
 
     def _set_state(self, state):
         if state != self.state:

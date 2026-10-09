@@ -14,12 +14,12 @@ ColumnLayout {
         colorMapOptions: [], petPalette: "hotIron"
     })
     spacing: 12
-    Text { text: qsTrId("text.0578"); color: Theme.textPrimary; font.pixelSize: 14; font.bold: true }
-    Text {
-        Layout.fillWidth: true
-        text: qsTrId("text.1126")
-        color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.Wrap
+    Components.PanelHeading {
+        objectName: "PetVolumePanelHeading"
+        title: qsTrId("text.0578")
+        explanation: qsTrId("text.1126")
     }
+
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.display.volumeMode !== "pet"
@@ -77,4 +77,5 @@ ColumnLayout {
             onActivated: panel.controller.setPetPalette(model[currentIndex].colorMap)
         }
     }
+
 }

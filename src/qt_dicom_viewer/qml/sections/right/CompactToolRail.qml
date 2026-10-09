@@ -197,7 +197,8 @@ Flickable {
                                 required property var modelData
                                 width: 32; height: 32
                                 buttonObjectName: "compactAction-" + modelData.action
-                                label: modelData.label
+                                label: group.modelData.toolType === "measure" && !rail.viewportController?.hasPhysicalSpacing
+                                    ? qsTrId("measurement.noCalibration") : modelData.label
                                 iconName: modelData.iconName
                                 iconSize: 19
                                 directionFace: modelData.face ?? ""
@@ -205,6 +206,7 @@ Flickable {
                                 tooltipPlacement: "left"
                                 actionEnabled: !!rail.viewportController && !rail.tabController?.playing
                                     && (group.modelData.toolType !== "volume-direction" || rail.viewportController.loadState === "ready")
+                                    && (group.modelData.toolType !== "measure" || !!rail.viewportController.hasPhysicalSpacing)
                                 checked: group.modelData.toolType === "volume-direction"
                                     ? rail.viewportController?.currentFace === modelData.action
                                     : group.modelData.toolType === "pseudocolor"

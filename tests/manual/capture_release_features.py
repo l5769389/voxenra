@@ -19,6 +19,7 @@ def capture_feature(app, window, uid, scene, output, folder, pump, wait, ready):
     app.settingsController.setValue('layout', 'rightPanelWidth', 300)
 
     def shot(name=None, native=False, duration=650):
+        QTest.mouseMove(window, QPointF(700, 14).toPoint())
         pump(160)
         screen = QGuiApplication.screenAt(window.position()) or QGuiApplication.primaryScreen()
         picture = screen.grabWindow(window.winId()) if native else window.grabWindow()
@@ -57,7 +58,7 @@ def capture_feature(app, window, uid, scene, output, folder, pump, wait, ready):
         return item
 
     if scene == '04-volume-rendering':
-        ws.createTab(uid, 'CT · 3D 模板', '3d')
+        ws.createTab(uid, 'CT · 3D', '3d')
         ready()
         view = ws.activeViewport
         wait(lambda: view._host is not None and view._host.backend._initialized)

@@ -39,9 +39,13 @@ Rectangle {
         anchors.rightMargin: 42
         spacing: 8
         visible: !root.collapsed && root.voiActions
-        Components.AppButton {
+        Controls.ToolActionButton {
             objectName: "voiClearKind"
+            iconName: "clear"
+            iconSize: 22
+            label: text
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
             Layout.preferredHeight: 32
             compact: true
             baseBorderWidth: 1
@@ -51,9 +55,13 @@ Rectangle {
             enabled: !root.playbackActive && (root.voiController?.items ?? []).some(item => item.kind === root.panel)
             onClicked: root.voiController.clear(root.panel)
         }
-        Components.AppButton {
+        Controls.ToolActionButton {
             objectName: "voiClearAll"
+            iconName: "delete"
+            iconSize: 22
+            label: text
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
             Layout.preferredHeight: 32
             compact: true
             baseBorderWidth: 1

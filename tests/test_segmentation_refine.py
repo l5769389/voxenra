@@ -54,7 +54,7 @@ def test_face_connected_island_excludes_corner_touching_component():
 
 def test_refine_preview_cancel_commit_and_empty_then_repaint(setup_voi):
     c,v,t=setup_voi
-    c.newSegment()
+    c.setEditMode("paint")
     c.begin(v,4,4,.1)
     c.update(v,6,4)
     assert not c.records
@@ -160,3 +160,74 @@ def test_refinement_selection_legacy_and_invalid_fields_are_safe(setup_voi):
     assert c._draft
     c.restore_selection(before)
     assert c._draft is None and c.persistent_selection() == before
+
+
+def test_noop_brush_reuses_mask_without_modifying_input():
+    v = _volume(np.zeros((9, 20, 20)))
+    mask = np.ones((9, 20, 20), bool)
+    point = (v.geometry.voxel_to_patient @ [4, 10, 10, 1])[:3]
+    result, offset = brush(mask, (0, 0, 0), v.geometry, mask.shape, point, point, 3)
+    assert result is mask
+    np.testing.assert_array_equal(offset, [0, 0, 0])
+    erased, _ = brush(mask, (0, 0, 0), v.geometry, mask.shape, point, point, 3, erase=True)
+    assert erased.sum() < mask.sum() and mask.all()
+
+
+def test_new_segment_is_selected_empty_record_and_tool_switch_does_not_create(setup_voi):
+    c, v, _ = setup_voi
+    changes = []
+    c.editsChanged.connect(lambda: changes.append(True))
+    c.newSegment()
+    first = c.selectedId
+    assert first and len(c.items) == 1
+    assert c.evaluations[first].metrics['count'] == 0
+    c.setEditMode('erase'); c.setEditMode('paint')
+    assert c.selectedId == first and len(c.items) == 1
+    c.newSegment()
+    assert len(c.items) == 2 and c.selectedId != first
+    assert c.records[0]['color'] != c.records[1]['color']
+    assert len(changes) == 2
+
+
+def test_noop_stroke_does_not_emit_preview_or_commit(setup_voi):
+    c, v, _ = setup_voi
+    c.setEditMode('paint')
+    c.begin(v, 4, 4, .1); c.finish(v, 4, 4)
+    signals = []
+    c.masksChanged.connect(lambda: signals.append(True))
+    c.begin(v, 4, 4, .1)
+    signals.clear()
+    for _ in range(5):
+        c.update(v, 4, 4)
+    assert not signals
+    c.cancel()
+
+
+def test_coalesced_preview_keeps_final_point_and_cancels_pending_refresh(setup_voi):
+    from PySide6.QtTest import QTest
+    c, v, _ = setup_voi
+    c.setEditMode('paint'); c.setBrushDiameter(1)
+    seen = []
+    c.masksChanged.connect(lambda: seen.append(True))
+    c.begin(v, 2, 4, .1)
+    for x in (3, 4, 5, 6):
+        c.update(v, x, 4)
+    QTest.qWait(25)
+    assert len(seen) <= 2  # Several pointer samples share one preview refresh.
+    c.finish(v, 7, 4)
+    result = c.evaluations[c.selectedId]
+    # One continuous six-voxel line, including the mouse-release endpoint.
+    assert result.metrics['count'] == 6
+    committed = result.mask.copy()
+    c.setEditMode('erase'); c.begin(v, 4, 4, .1)
+    c.cancel()
+    seen.clear(); QTest.qWait(25)
+    assert not seen
+    np.testing.assert_array_equal(c.evaluations[c.selectedId].mask, committed)
+
+
+def test_new_segment_during_unready_phase_does_not_attach_to_old_source(setup_voi):
+    c, _, _ = setup_voi
+    c.set_phase(1, ready=False)
+    c.newSegment()
+    assert not c.records

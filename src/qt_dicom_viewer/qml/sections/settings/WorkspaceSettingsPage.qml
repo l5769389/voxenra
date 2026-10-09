@@ -30,18 +30,14 @@ ColumnLayout {
             Accessible.name: qsTrId("text.0871")
             onActivated: page.settingsController.setValue("workspace", "exitBehavior", currentValue)
         }
-        Text {
+        Components.HelpButton {
             objectName: "workspaceExitDescription"
-            Layout.fillWidth: true
-            Layout.minimumHeight: 54
-            text: ({
+            Layout.alignment: Qt.AlignRight
+            explanation: ({
                 ask: qsTrId("text.0872"),
                 save: qsTrId("text.0873"),
                 discard: qsTrId("text.0874")
             })[page.settingsController.values.workspace.exitBehavior]
-            color: page.settingsController.values.workspace.exitBehavior === "discard" ? Theme.warningColor : Theme.textMuted
-            font.pixelSize: 12
-            wrapMode: Text.Wrap
         }
     }
     SettingsSection {

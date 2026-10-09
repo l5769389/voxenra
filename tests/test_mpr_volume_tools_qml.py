@@ -64,6 +64,8 @@ def popup(view):
 
 
 def find(view, name):
+    from toolbar_navigation import reveal_primary_tool
+    reveal_primary_tool(view.rootObject(), name)
     roots = [view.rootObject(), popup(view).property('contentItem')]
     return next(item for root in roots for item in _visual_children(root)
                 if item.objectName() == name and item.isVisible())
