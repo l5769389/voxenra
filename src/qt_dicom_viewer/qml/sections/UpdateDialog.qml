@@ -9,11 +9,12 @@ Components.AppDialog {
     id: dialog
     objectName: "applicationUpdateDialog"
     required property var controller
-    width: Math.min(560, parent ? parent.width - 32 : 560)
+    width: Math.min(600, parent ? parent.width - 32 : 600)
     height: Math.min(controller.hasUpdate ? 520 : 260, parent ? parent.height - 48 : 520)
     title: controller.hasUpdate ? I18n.format(qsTrId("updates.newVersion"), {version: controller.latestVersion}) : qsTrId("updates.title")
     subtitle: I18n.format(qsTrId("app.version"), {version: controller.currentVersion})
     onRejected: controller.dismiss()
+    onOpened: notesScroll.contentItem.contentY = 0
     contentItem: ColumnLayout {
         spacing: 12
         Text {
@@ -54,6 +55,8 @@ Components.AppDialog {
             color: Theme.textPrimary
         }
         Basic.ScrollView {
+            id: notesScroll
+            objectName: "applicationReleaseNotesScroll"
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: dialog.controller.hasUpdate
@@ -61,19 +64,24 @@ Components.AppDialog {
             contentWidth: availableWidth
             Basic.ScrollBar.horizontal.policy: Basic.ScrollBar.AlwaysOff
             Basic.ScrollBar.vertical: Components.AppScrollBar {}
-            Basic.TextArea {
+            Text {
                 objectName: "applicationReleaseNotes"
-                width: parent.width
+                width: notesScroll.availableWidth - 16
                 text: dialog.controller.releaseNotes || qsTrId("updates.noNotes")
                 // Release text is data; no HTML, embedded resources or executable links.
                 textFormat: Text.PlainText
-                readOnly: true
-                selectByMouse: true
-                wrapMode: TextEdit.Wrap
+                wrapMode: Text.Wrap
                 color: Theme.textSecondary
                 font.pixelSize: 13
-                background: Rectangle { color: "transparent" }
+                lineHeight: 1.3
+                onTextChanged: notesScroll.contentItem.contentY = 0
             }
+        }
+        Components.AppLinkButton {
+            objectName: "applicationReleaseNotesLink"
+            visible: dialog.controller.hasUpdate
+            text: qsTrId("updates.fullNotes")
+            onClicked: dialog.controller.openReleaseNotes()
         }
         Item { Layout.fillHeight: true; visible: !dialog.controller.hasUpdate }
         Text {

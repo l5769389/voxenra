@@ -2094,7 +2094,7 @@
         "updates.unsupported": "Automatic installation is unavailable for this platform or package type. Get the appropriate version from the downloads page.",
         "updates.invalidVersion": "Invalid update version format.",
         "manual.settings.updates.title": "Software updates",
-        "manual.settings.updates.body": "Enable or disable startup checks in **Settings → Software updates**; checks are on by default. When a stable release is available, review its release notes and select **Download and update**. The app downloads and verifies the package, follows your workspace save preference, then exits, installs, and restarts. Cancelling suppresses reminders for that version; the badge beside the version number lets you continue later. You can also **Check for updates** manually. Automatic installation supports macOS arm64 applications and Windows x64 installers and single-file portable builds. Source and folder-portable builds use the downloads page. Check failures are silent; failed installation restores the previous version.",
+        "manual.settings.updates.body": "Enable or disable startup checks in **Settings → Software updates**; checks are on by default. When a stable release is available, review its release notes and select **Download and update**. The app downloads and verifies the package, follows your workspace save preference, then exits, installs, and restarts. Cancelling suppresses reminders for that version; the badge beside the version number lets you continue later. You can also **Check for updates** manually. Automatic installation supports macOS arm64 applications and Windows x64 installers and single-file portable builds. Source and folder-portable builds use the downloads page. Check failures are silent; failed installation restores the previous version.\n\nThe summary follows the selected Chinese or English interface language. Choose Full release notes to view all changes for that version. A replacement package with the same version number does not trigger an upgrade notification; download and install it manually from the release page.",
         "results.list": "Measurements",
         "results.empty": "No measurements",
         "results.rename": "Name",
@@ -2303,6 +2303,7 @@
         "manual.settings.privacy.title": "Privacy",
         "manual.settings.privacy.body": "In **Settings → Privacy**, choose whether new views hide patient identity. Existing workspaces restore their saved display state. This controls identity overlays and montage details; it does not hide the patient sidebar, modify DICOM, or remove text burned into pixels. Export anonymization is configured separately.\n\n**Clear recent workspace history** removes history entries only. Workspace files, images, and currently open content remain available.",
         "input.leftButton": "Left-button drag",
-        "manual.settings.caption": "Mouse bindings and shortcuts: left drag follows the selected tool; right and middle drag are configurable."
+        "manual.settings.caption": "Mouse bindings and shortcuts: left drag follows the selected tool; right and middle drag are configurable.",
+        "updates.fullNotes": "Full release notes"
     }
 }

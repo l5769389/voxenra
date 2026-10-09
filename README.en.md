@@ -131,6 +131,8 @@ Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Se
 
 ![Mouse bindings and tool shortcuts](docs/screenshots/40-input-settings.png)
 
+Update prompts show a concise summary in the selected interface language, with access to full release notes. [Update dialog](docs/screenshots/en/43-update-summary.png)
+
 [View the interface gallery](docs/screenshots/README.md)
 
 ## Supported formats and limits

@@ -125,3 +125,5 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 - [空白工作区入口](42-workspace-home.png)
 
 本次重新采集工作区、导出、外观、窗模板、MTF 和分割精修截图；导入与精修动画同步更新。
+
+- [更新摘要（中文）](43-update-summary.png) · [Update summary (English)](en/43-update-summary.png)

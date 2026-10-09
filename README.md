@@ -131,6 +131,8 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 ![鼠标操作与工具快捷键设置](docs/screenshots/40-input-settings.png)
 
+更新提示按界面语言显示简短摘要，可查看完整发布说明。[更新弹窗](docs/screenshots/43-update-summary.png)
+
 [查看完整界面图集](docs/screenshots/README.md)
 
 ## 支持范围

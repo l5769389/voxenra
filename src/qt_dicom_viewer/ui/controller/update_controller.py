@@ -14,6 +14,7 @@ from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkRe
 
 from qt_dicom_viewer import __version__
 from qt_dicom_viewer.core.app_updates import RELEASE_API, RELEASE_PAGE, detect_installation, parse_release, parse_checksum, trusted_download_url
+from qt_dicom_viewer.core.release_notes import summarize_release_notes
 from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.qt import translated_property
 from qt_dicom_viewer.infrastructure.update_installer import prepare_installer, launch_installer
@@ -26,6 +27,7 @@ class UpdateController(QObject):
     showDialog = Signal()
     exitRequested = Signal()
     _i18n_message = Signal()
+    _i18n_releaseNotes = Signal()
 
     def __init__(self, settings, parent=None, *, installation=None, network=None, cache=None, version=__version__):
         super().__init__(parent)
@@ -82,8 +84,9 @@ class UpdateController(QObject):
     @Property(str, notify=changed)
     def latestVersion(self): return self._release.version if self._release else ""
 
-    @Property(str, notify=changed)
-    def releaseNotes(self): return self._release.notes if self._release else ""
+    @translated_property(str, notify=_i18n_releaseNotes, notify_name="_i18n_releaseNotes", source_notify="changed")
+    def releaseNotes(self):
+        return summarize_release_notes(self._release.notes, self._settings.section("appearance")["language"]) if self._release else ""
 
     @Property(float, notify=changed)
     def progress(self): return self._progress
@@ -173,7 +176,7 @@ class UpdateController(QObject):
         if not valid or self._redirects > 5:
             self._abort("updates.invalidDownload")
         elif self._reply:
-            self._reply.redirectAllowed()
+            self._reply.redirectAllowed.emit()
 
     @Slot()
     def _timeout(self): self._abort("updates.networkError")
@@ -353,6 +356,12 @@ class UpdateController(QObject):
 
     @Slot()
     def openDownloads(self): QDesktopServices.openUrl(QUrl(RELEASE_PAGE))
+
+    @Slot()
+    def openReleaseNotes(self):
+        if self._release:
+            # Use the validated version, not a URL or link from remote prose.
+            QDesktopServices.openUrl(QUrl(RELEASE_PAGE.removesuffix("latest") + "tag/v" + self._release.version))
 
     @Slot()
     def openLog(self):

@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import pytest
 from PySide6.QtCore import QObject, Signal, QUrl
@@ -45,13 +46,15 @@ class Reply(QObject):
         self.aborted = False
 
     def setReadBufferSize(self, size): pass
+    def _allow_redirect(self): self.allowed = True
+    @property
+    def redirectAllowed(self): return SimpleNamespace(emit=self._allow_redirect)
     def bytesAvailable(self): return len(self.buffer)
     def read(self, size):
         result, self.buffer = self.buffer[:size], self.buffer[size:]
         return result
     def attribute(self, key): return self.code
     def error(self): return self.failure
-    def redirectAllowed(self): self.allowed = True
     def abort(self):
         self.aborted = True
         self.failure = QNetworkReply.OperationCanceledError
@@ -116,6 +119,78 @@ def test_numeric_versions_and_pre_releases():
     assert parse_release(data, '1.8.0', 'macos') is None
     for key in ['draft', 'prerelease']:
         assert parse_release(dict(data, **{key: True}), '1.6.0', 'macos') is None
+
+
+def test_redirect_uses_native_qt_signal(updater):
+    """QNetworkReply.redirectAllowed is a signal, not a callable method."""
+    controller, _, _ = updater
+
+    class NativeReply(QNetworkReply):
+        def abort(self): pass
+
+    reply = NativeReply(controller)
+    allowed = []
+    reply.redirectAllowed.connect(lambda: allowed.append(True))
+    controller._phase = 'checksum'
+    controller._redirects = 0
+    controller._reply = reply
+    try:
+        controller._redirect(QUrl('https://release-assets.githubusercontent.com/asset'))
+        assert allowed == [True]
+    finally:
+        controller._reply = None
+
+
+def test_real_qt_reply_resumes_download_after_verified_redirect(updater, monkeypatch):
+    """Exercise Qt's redirect handshake, rather than a fake reply callback."""
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+    from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
+    from test_dicom_tags import wait_until
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args): pass
+        def do_GET(self):
+            if self.path == '/redirect':
+                self.send_response(302)
+                self.send_header('Location', '/checksum')
+                self.send_header('Content-Length', '0')
+                self.end_headers()
+            else:
+                self.send_response(200)
+                self.send_header('Content-Length', str(len(DIGEST)))
+                self.end_headers()
+                self.wfile.write(DIGEST.encode())
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    controller, _, _ = updater
+    base = f'http://127.0.0.1:{server.server_port}'
+    monkeypatch.setattr('qt_dicom_viewer.ui.controller.update_controller.trusted_download_url',
+                        lambda url, redirect=False: redirect and url == base + '/checksum')
+    manager = QNetworkAccessManager(controller)
+    request = QNetworkRequest(QUrl(base + '/redirect'))
+    request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.UserVerifiedRedirectPolicy)
+    request.setTransferTimeout(3000)
+    reply = manager.get(request)
+    controller._phase, controller._redirects, controller._reply = 'checksum', 0, reply
+    reply.redirected.connect(controller._redirect)
+    finished = []
+    reply.finished.connect(lambda: finished.append(True))
+    try:
+        wait_until(lambda: finished, timeout=5000)
+        assert reply.error() == QNetworkReply.NoError
+        assert controller._redirects == 1
+        assert bytes(reply.readAll()) == DIGEST.encode()
+    finally:
+        controller._reply = None
+        reply.abort()
+        reply.deleteLater()
+        manager.deleteLater()
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
 
 
 @pytest.mark.parametrize('kind', ['macos', 'windows_installer', 'windows_portable'])
