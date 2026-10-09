@@ -1,6 +1,6 @@
 [project]
 name = "qt-dicom-viewer"
-version = "2.0.1"
+version = "2.0.2"
 description = "Voxenra — DICOM viewing, MPR, PET/CT fusion and volume rendering."
 readme = "README.md"
 authors = [
