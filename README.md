@@ -115,7 +115,7 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 </tr>
 <tr>
 <td><b>独立窗口</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="页签分离为独立窗口" width="100%"></a></td>
-<td><b>工作区恢复</b><br><a href="docs/screenshots/36-workspace-full.png"><img src="docs/screenshots/36-workspace-full.png" alt="MR 阅片与工作区操作" width="100%"></a></td>
+<td><b>工作区恢复</b><br><a href="docs/screenshots/36-workspace-overview.png"><img src="docs/screenshots/36-workspace-overview.png" alt="MR 阅片与工作区操作" width="100%"></a></td>
 </tr>
 </table>
 

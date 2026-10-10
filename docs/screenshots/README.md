@@ -85,7 +85,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>本地导入</b><br><a href="15-mixed-import.png"><img src="15-mixed-import.png" alt="本地导入" width="100%"></a></td>
-<td width="50%"><b>工作区全景</b><br><a href="36-workspace-full.png"><img src="36-workspace-full.png" alt="工作区全景" width="100%"></a></td>
+<td width="50%"><b>工作区全景</b><br><a href="36-workspace-overview.png"><img src="36-workspace-overview.png" alt="工作区全景" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>PACS 导入</b><br><a href="23-pacs-import.png"><img src="23-pacs-import.png" alt="PACS 导入" width="100%"></a></td>

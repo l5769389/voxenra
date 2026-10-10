@@ -115,7 +115,7 @@ Workspaces preserve image references, layouts, measurements, segmentation masks,
 </tr>
 <tr>
 <td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="Detach a tab into another window" width="100%"></a></td>
-<td><b>Workspace recovery</b><br><a href="docs/screenshots/36-workspace-full.png"><img src="docs/screenshots/36-workspace-full.png" alt="Workspace controls with an MR study open" width="100%"></a></td>
+<td><b>Workspace recovery</b><br><a href="docs/screenshots/36-workspace-overview.png"><img src="docs/screenshots/36-workspace-overview.png" alt="Workspace controls with an MR study open" width="100%"></a></td>
 </tr>
 </table>
 

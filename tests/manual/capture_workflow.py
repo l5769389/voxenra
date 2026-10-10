@@ -14,7 +14,7 @@ import zipfile
 import pydicom
 from PIL import Image
 from PySide6.QtCore import QBuffer, QIODevice, QMimeData, QObject, QPoint, QPointF, Qt, QUrl
-from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QGuiApplication
+from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
@@ -73,11 +73,8 @@ with TemporaryDirectory(prefix='Voxenra-Demo-', dir='/tmp') as temporary:
         assert predicate(); pump()
     def shot(name=None, target=None):
         pump(); target=target or window
-        if name == '36-workspace-full':
-            screen=QGuiApplication.screenAt(window.position()) or QGuiApplication.primaryScreen()
-            picture=screen.grabWindow(0,window.x(),window.y(),window.width(),window.height())
-        else:
-            picture=target.grabWindow() if hasattr(target,'grabWindow') else target.grab()
+        # Capture owned Qt content only; desktop rectangles can include other apps.
+        picture=target.grabWindow() if hasattr(target,'grabWindow') else target.grab()
         assert not picture.isNull()
         if name: assert picture.save(str(output/(name+'.png')))
         buffer=QBuffer(); buffer.open(QIODevice.WriteOnly); picture.save(buffer,'PNG')
@@ -104,11 +101,19 @@ with TemporaryDirectory(prefix='Voxenra-Demo-', dir='/tmp') as temporary:
         wait(lambda:view.loadState=='ready'); view.autoWindow(); shot('37-theme-graphite')
         frames[0].save(output/'06-zip-drag.gif',save_all=True,append_images=frames[1:],duration=[750,650,650,650,2000],loop=0,disposal=2)
         ws.activeTab.toolController.activateTool('export'); shot('18-export')
-        click(window,find(window,'sidebarWorkspace')); pump()
         dialog=window.findChild(QObject,'workspaceDocumentDialog')
+        # Render the real dialog inside its parent for a single-window capture.
+        # This is fixture-only; the product keeps its native popup window.
+        assert dialog.setProperty('popupType', 0)  # QQuickPopup.Item
+        click(window,find(window,'sidebarWorkspace')); pump()
         wait(lambda:dialog.property('visible'))
-        shot('36-workspace-full'); shot('17-workspace',dialog.findChild(QObject,'workspaceDocumentMessage').window())
-        dialog.findChild(QObject,'workspaceDocumentMessage').window().close(); pump()
+        shot('36-workspace-overview')
+        dialog.close(); pump()
+        assert dialog.setProperty('popupType', 1)  # QQuickPopup.Window
+        click(window,find(window,'sidebarWorkspace')); pump()
+        wait(lambda:dialog.property('visible'))
+        shot('17-workspace',dialog.findChild(QObject,'workspaceDocumentMessage').window())
+        dialog.close(); pump()
         ws.openSettings()
         for category,name in [('appearance','38-appearance-settings'),('window','39-window-presets'),('input','40-input-settings'),('privacy','41-privacy-settings')]:
             app.settingsController.selectCategory(category); shot(name)
