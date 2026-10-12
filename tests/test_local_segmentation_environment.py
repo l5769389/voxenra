@@ -37,7 +37,11 @@ def test_windows_conda_registry_and_no_unrelated_python_fallback(tmp_path):
 
 def test_mac_discovery_preserves_venv_symlink(tmp_path):
     python = installed(tmp_path/'Applications/TotalSegmentator-Local/venv')
-    python.unlink(); python.symlink_to('/usr/bin/python3')
+    # Use an existing, isolated target on every host, including Windows CI.
+    # A macOS system path would make the link dangling on other platforms.
+    target = tmp_path/'system-python'
+    target.touch()
+    python.unlink(); python.symlink_to(target)
     # Do not resolve the symlink: that would escape the virtual environment.
     assert module().discover_python(home=tmp_path, platform='darwin', environ={}, path_python=None) == str(python)
 
