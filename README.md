@@ -8,9 +8,9 @@
 
 [产品主页](https://l5769389.github.io/voxenra/) · [在线操作手册](https://l5769389.github.io/voxenra/zh/)
 
-面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合、测量分割与结果导出于一体。
+面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.0.1/Voxenra-2.0.1-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.0.1/Voxenra-2.0.1-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.0.1/Voxenra-2.0.1-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
 
 ## 功能概览
 
@@ -21,8 +21,23 @@
 | 重建与三维 | 三平面 MPR、斜面重建、厚层投影；3D 体绘制、显示模板、裁剪；CT 多时相 4D。 |
 | PET/CT 融合 | CT、PET、融合与 MIP 联动；手动刚性配准、融合比例调整、融合 3D。 |
 | 测量与分割 | 长度、角度、曲线、矩形／椭圆／自由形状 ROI；阈值分割、画笔／橡皮精修、VOI 与区域统计。 |
+| 本地 AI 自动分割 | 接入 TotalSegmentator，CT 多器官快速分割；器官搜索与选择、结果叠加、画笔精修、撤销和工作区保存。 |
 | 分析与报告 | CT 水模 QA、点源 MTF、斜坡线 FWHM 与层厚；PNG、DICOM、CSV / PDF、SEG / SR 与 NRRD 导出。 |
 | 工作区 | 多页签、独立窗口、灵活布局、保存恢复；深色／中性深灰／浅色主题、语言包与离线手册。 |
+
+## 本地 AI 自动分割 · TotalSegmentator
+
+从 CT 阅片到器官分割，在同一工作区中完成：
+
+- **按需选择器官**：在 CT 的 MPR / 4D 中搜索、勾选模型支持的结构，默认肝脏、脾脏和双肾。
+- **本机推理**：连接已有 TotalSegmentator 环境，计算当前时相的完整 CT；支持按环境选择 CUDA、Apple MPS 或 CPU。
+- **结果继续编辑**：三平面叠加查看，画笔／橡皮精修、显隐、撤销；随工作区保存，或导出 SEG / NRRD。
+
+[![Voxenra 本地 AI 自动分割：器官选择、TotalSegmentator 计算与结果查看](docs/screenshots/39-ai-segmentation.gif)](docs/screenshots/39-ai-segmentation.png)
+
+真实操作演示，推理等待已压缩，不代表实际计算耗时。需另行安装 TotalSegmentator 和 CT 快速模型；在 **设置 → AI** 检测环境。自动结果可核查和精修。
+
+[配置与使用教程](https://l5769389.github.io/voxenra/zh/segmentation.html) · [TotalSegmentator 项目](https://github.com/wasserth/TotalSegmentator)
 
 ## 二维阅片与序列对比
 

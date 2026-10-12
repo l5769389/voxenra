@@ -8,9 +8,9 @@
 
 [Product website](https://l5769389.github.io/voxenra/en-us/) · [Online manual](https://l5769389.github.io/voxenra/en/)
 
-A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, segmentation, and export.
+A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.0.1/Voxenra-2.0.1-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.0.1/Voxenra-2.0.1-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.0.1/Voxenra-2.0.1-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 ## Features
 
@@ -21,8 +21,23 @@ A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fu
 | Reconstruction and 3D | Three-plane and oblique MPR, thick-slab projection, volume rendering, presets and cropping, and multi-phase CT 4D. |
 | PET/CT fusion | Linked CT, PET, fused, and MIP views; manual rigid registration; blend controls; fused 3D. |
 | Measurement and segmentation | Length, angle, curve, rectangle, ellipse, and free-shape ROIs; threshold segmentation, paint/erase refinement, VOI, and segment statistics. |
+| Local AI segmentation | TotalSegmentator integration for fast CT multi-organ segmentation: search and select structures, review overlays, refine masks, undo, and save workspaces. |
 | Analysis and reports | CT water phantom QA, point-source MTF, ramp FWHM and slice thickness; PNG, DICOM, CSV/PDF, SEG, SR, and NRRD export. |
 | Workspace | Tabs, detached windows, layouts, save and restore, dark, neutral gray, and light themes, language packs, and an offline manual. |
+
+## Local AI segmentation · TotalSegmentator
+
+Go from CT viewing to editable organ segmentation in the same workspace:
+
+- **Choose structures**: Search and select supported organs in CT MPR / 4D, with liver, spleen, and both kidneys selected by default.
+- **Run locally**: Connect an existing TotalSegmentator environment and process the full CT volume of the current phase using available CUDA, Apple MPS, or CPU devices.
+- **Keep editing**: Review overlays in three planes, refine with paint/erase, toggle visibility, undo, and save a workspace or export SEG / NRRD.
+
+[![Voxenra local AI segmentation: organ selection, TotalSegmentator inference, and result review](docs/screenshots/39-ai-segmentation.gif)](docs/screenshots/39-ai-segmentation.png)
+
+Recorded in the real application (Chinese UI); inference waiting is shortened and does not indicate runtime. Install TotalSegmentator and its CT fast model separately, then check the environment in **Settings → AI**. Review and refine automatic results.
+
+[Setup and workflow guide](https://l5769389.github.io/voxenra/en/segmentation.html) · [TotalSegmentator project](https://github.com/wasserth/TotalSegmentator)
 
 ## 2D viewing and comparison
 

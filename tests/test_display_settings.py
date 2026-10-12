@@ -15,6 +15,24 @@ from qt_dicom_viewer.model import MprPlane
 from test_viewport_transform import _controller, _render_result
 
 
+def test_ai_and_service_defaults_are_independent(tmp_path):
+    settings = SettingsController(path=tmp_path / 'settings.json')
+    settings.selectCategory('ai')
+    assert settings.activeCategory == 'ai'
+    settings.setValue('services', 'segmentationPython', '/custom/python')
+    settings.setValue('services', 'segmentationDevice', 'cpu')
+    settings.setValue('services', 'mtfFrequencyUnit', 'lp/cm')
+    assert settings.resetSection('services')
+    assert settings.values['services']['segmentationPython'] == '/custom/python'
+    assert settings.values['services']['segmentationDevice'] == 'cpu'
+    settings.setValue('services', 'mtfFrequencyUnit', 'lp/cm')
+    assert settings.resetSection('ai')
+    restored = SettingsController(path=settings._path)
+    assert restored.values['services']['segmentationPython'] == ''
+    assert restored.values['services']['segmentationDevice'] == 'auto'
+    assert restored.values['services']['mtfFrequencyUnit'] == 'lp/cm'
+
+
 def test_settings_persist_validate_and_restore_one_section(tmp_path):
     path = tmp_path / 'display.json'
     settings = SettingsController(path=path)
@@ -189,7 +207,9 @@ def test_every_preference_survives_process_restart(tmp_path):
                         'editingDash': False, 'completedDash': True, 'fontSize': 18,
                         'linkLabelToShape': True, 'cardTransparency': 60, 'decimalPlaces': 3,
                         'annotationColor': '#234567', 'annotationSize': 20},
-        'services': {'mtfFrequencyUnit': 'lp/cm', 'mtfGaussianEquivalent': False, 'rampThicknessAngle': 45},
+        'services': {'mtfFrequencyUnit': 'lp/cm', 'mtfGaussianEquivalent': False, 'rampThicknessAngle': 45,
+                     'segmentationPython': '/tmp/有 空格/python', 'segmentationWeights': '/tmp/models',
+                     'segmentationDevice': 'cpu', 'segmentationOrgans': ['liver']},
         'roi': {key: False for key in DEFAULTS['roi']},
     }
     assert expected.keys() == DEFAULTS.keys()
@@ -248,7 +268,7 @@ def test_service_settings_migrate_legacy_values_and_reset_independently(tmp_path
                                                     'measurement-cards']}}
     path.write_text(json.dumps(legacy))
     settings = SettingsController(path=path)
-    calculations = {'mtfGaussianEquivalent': False, 'mtfFrequencyUnit': 'lp/cm', 'rampThicknessAngle': 45}
+    calculations = dict(DEFAULTS['services'], mtfGaussianEquivalent=False, mtfFrequencyUnit='lp/cm', rampThicknessAngle=45)
     assert settings.section('services') == calculations
     assert not set(calculations).intersection(settings.section('measurement'))
     assert settings.section('layout')['settingsCollapsedGroups'] == [
@@ -272,8 +292,8 @@ def test_new_service_settings_take_precedence_without_mutating_input():
                             'rampThicknessAngle': 45},
            'services': {'mtfGaussianEquivalent': True, 'mtfFrequencyUnit': 'lp/mm'}}
     original = deepcopy(raw)
-    assert normalize_settings(raw)['services'] == {
-        'mtfGaussianEquivalent': True, 'mtfFrequencyUnit': 'lp/mm', 'rampThicknessAngle': 45}
+    assert normalize_settings(raw)['services'] == dict(DEFAULTS['services'],
+        mtfGaussianEquivalent=True, mtfFrequencyUnit='lp/mm', rampThicknessAngle=45)
     assert raw == original
     raw['services']['mtfFrequencyUnit'] = 'invalid'
     assert normalize_settings(raw)['services']['mtfFrequencyUnit'] == 'lp/mm'

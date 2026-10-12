@@ -12,3 +12,7 @@ for source in sorted(root.rglob("*")):
     if "__pycache__" in relative.parts or source.name.startswith("."):
         continue
     datas.append((str(source), str(Path("qt_dicom_viewer/qml") / relative.parent)))
+
+# Executed by the separately configured Python, not imported into the bundle.
+bridge = root.parent / "infrastructure/totalsegmentator_bridge.py"
+datas.append((str(bridge), "qt_dicom_viewer/infrastructure"))

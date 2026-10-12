@@ -22,6 +22,8 @@ PRODUCT_SCREENSHOTS = {
     "feature-mr-reading.png": "07-mr-reading.png",
     "feature-fusion.png": "05-pet-ct-fusion.png",
     "feature-analysis.gif": "38-segmentation-refinement.gif",
+    "feature-ai-segmentation.gif": "39-ai-segmentation.gif",
+    "feature-ai-segmentation.png": "39-ai-segmentation.png",
     "feature-measurements.png": "01-2d-measurement.png",
     "feature-theme-graphite.png": "37-theme-graphite.png",
     "feature-theme-dark.png": "25-theme-dark.png",
@@ -244,11 +246,14 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 PRODUCT_COPY = {
     "zh": {
         "lang": "zh-CN", "title": "Voxenra · DICOM 医学影像工作台",
-        "description": "跨平台 DICOM 影像工作台：本地与 PACS 导入、工作区保存、CT/MR/PET 阅片、MPR 与 3D、融合、测量分割、CT 图像质量分析和导出。",
+        "description": "跨平台 DICOM 影像工作台：CT/MR/PET 阅片、MPR 与 3D、融合、测量分割和导出。支持基于 TotalSegmentator 的本地 AI 自动分割。",
         "features": "功能", "manual": "操作手册", "language": "English",
         "heading": "让医学影像工作更连贯", "intro": "导入 CT、MR 与 PET 影像，在同一工作区中完成阅片、重建、融合与分析。",
         "download": "下载应用", "explore": "阅读操作手册",
-        "topics": (("导入与工作区", "workflow"), ("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量与导出", "analysis"), ("图像质量分析", "quality")),
+        "ai_highlight": "本地 AI 自动分割 · TotalSegmentator",
+        "ai_caption": "真实操作：器官选择、计算与结果查看。推理等待已压缩。",
+        "ai_scope": "需另行安装 TotalSegmentator 与 CT 快速模型；自动结果可核查和精修。",
+        "topics": (("导入与工作区", "workflow"), ("AI 自动分割", "ai"), ("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量与导出", "analysis"), ("图像质量分析", "quality")),
         "workflow_title": "导入与工作区",
         "workflow_intro": "从获取影像到恢复工作状态，常用流程都在同一工作台中完成。",
         "workflow_cards": (
@@ -262,6 +267,9 @@ PRODUCT_COPY = {
         "fusion_title": "PET/CT 联动融合",
         "fusion_body": "并排查看 CT、PET、融合与 MIP 视图，调整融合比例，并在需要时进行手动刚性配准。",
         "analysis_title": "测量、分割与结果交换",
+        "ai_title": "本地 AI 自动分割 · TotalSegmentator",
+        "ai_body": "连接独立安装的 TotalSegmentator，在 CT 的 MPR / 4D 中选择器官，快速分割当前时相。结果可继续精修、撤销并随工作区保存；环境与模型在设置中的 AI 页面配置。",
+        "ai_link": "配置与使用教程",
         "analysis_body": "在列表中管理和定位长度、角度、曲线与 ROI 测量，导出附对应参考图的 PDF；支持阈值分割、画笔／橡皮精修、连通区域处理、轮廓与不透明度调节及 VOI 分析，通过 DICOM SEG 或 NRRD 与 Slicer 交换分割，并可导出 DICOM SR。",
         "viewing_caption": "MR 原始切片阅片", "viewing_4d_caption": "CT 多时相 4D 播放",
         "fusion_caption": "PET/CT 联动融合", "analysis_caption": "画笔、橡皮与撤销重做",
@@ -280,11 +288,14 @@ PRODUCT_COPY = {
     },
     "en": {
         "lang": "en-US", "title": "Voxenra · DICOM imaging workspace",
-        "description": "A cross-platform DICOM workspace for local and PACS import, CT/MR/PET viewing, MPR and 3D, fusion, measurement, segmentation, CT image-quality analysis, and export.",
+        "description": "A cross-platform DICOM workspace for CT/MR/PET, MPR, 3D, fusion, segmentation and export. Supports local AI auto-segmentation with TotalSegmentator.",
         "features": "Features", "manual": "Manual", "language": "简体中文",
         "heading": "A connected workspace for medical imaging", "intro": "Import CT, MR, and PET studies, then view, reconstruct, fuse, and analyze them in one workspace.",
         "download": "Download", "explore": "Read the manual",
-        "topics": (("Import & workspace", "workflow"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis"), ("Image-quality analysis", "quality")),
+        "ai_highlight": "Local AI segmentation · TotalSegmentator",
+        "ai_caption": "Recorded workflow (Chinese UI): select organs, run, and review. Inference waiting is shortened.",
+        "ai_scope": "Requires a separate TotalSegmentator environment and CT fast model. Review and refine automatic results.",
+        "topics": (("Import & workspace", "workflow"), ("AI segmentation", "ai"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis"), ("Image-quality analysis", "quality")),
         "workflow_title": "Import and workspace",
         "workflow_intro": "Bring images in, then pick up your work where you left off.",
         "workflow_cards": (
@@ -298,6 +309,9 @@ PRODUCT_COPY = {
         "fusion_title": "Linked PET/CT fusion",
         "fusion_body": "See linked CT, PET, fused, and MIP views, adjust blending, and perform manual rigid registration when needed.",
         "analysis_title": "Measurement, segmentation, and DICOM results",
+        "ai_title": "Local AI segmentation · TotalSegmentator",
+        "ai_body": "Connect a separately installed TotalSegmentator environment, select organs in CT MPR / 4D, and segment the current phase in fast mode. Refine, undo, and save results in a workspace. Configure the environment and models under Settings → AI.",
+        "ai_link": "Setup and workflow guide",
         "analysis_body": "Manage and locate length, angle, curve, and ROI measurements in a list, then export PDF reports with matching reference images. Refine segments with paint, erase, and connected-region tools; adjust outlines and fill opacity. Use thresholding and VOI analysis, exchange segments with Slicer through NRRD or DICOM SEG, and export DICOM SR.",
         "viewing_caption": "MR original-slice viewing", "viewing_4d_caption": "Multi-phase CT 4D playback",
         "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "Paint, erase, undo and redo",
@@ -329,7 +343,12 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     win_setup_url = escape(download_base + quote(release["windows_installer"], safe=""))
     win_portable_url = escape(download_base + quote(release["windows_portable"], safe=""))
     version = escape('v' + release["version"])
-    feature_rows = []
+    ai_image = product_image_asset(prefix, "feature-ai-segmentation.gif")
+    ai_still = product_image_asset(prefix, "feature-ai-segmentation.png")
+    feature_rows = [f'''<section class="product-feature product-feature-wide" id="ai">
+<div class="product-feature-copy"><h2>{escape(copy["ai_title"])}</h2><p>{escape(copy["ai_body"])}</p></div>
+<figure><a href="{ai_image}" target="_blank" rel="noopener"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{ai_still}"><img src="{ai_image}" {product_image_size("feature-ai-segmentation.gif")} alt="{escape(copy["ai_caption"])}" loading="lazy"></picture></a><figcaption>{escape(copy["ai_caption"])}</figcaption></figure>
+<div class="ai-details"><p>{escape(copy["ai_scope"])}</p><a href="{prefix}{code}/segmentation.html">{escape(copy["ai_link"])}</a></div></section>''']
     for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
         title = escape(copy[key + "_title"])
         image_url = product_image_asset(prefix, image)
@@ -390,7 +409,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <link rel="icon" href="{prefix}assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset(prefix, 'site-shell.css')}"><link rel="stylesheet" href="{site_asset(prefix, 'product.css')}">
 <link rel="alternate" hreflang="zh-CN" href="{prefix}index.html"><link rel="alternate" hreflang="en-US" href="{prefix}en-us/index.html"></head>
 <body><a class="skip-link" href="#main">{'跳转到正文' if code == 'zh' else 'Skip to content'}</a>{header}
-<main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
+<main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><a class="ai-highlight" href="#ai">{escape(copy["ai_highlight"])}</a><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
 <figure class="hero-visual"><img src="{product_image_asset(prefix, 'hero-mpr.png')}" {product_image_size("hero-mpr.png")} alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
 <div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{"".join(workflow_cards)}</div></section>

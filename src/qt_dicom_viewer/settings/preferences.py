@@ -49,7 +49,8 @@ DEFAULTS = {
                     "decimalPlaces": DEFAULT_DECIMAL_PLACES,
                     "annotationColor": "#ffd166", "annotationSize": 14},
     "services": {"mtfFrequencyUnit": "lp/mm", "mtfGaussianEquivalent": True,
-                 "rampThicknessAngle": 23},
+                 "rampThicknessAngle": 23, "segmentationPython": "", "segmentationWeights": "",
+                 "segmentationDevice": "auto", "segmentationOrgans": ["liver", "spleen", "kidney_left", "kidney_right"]},
     "roi": {key: True for key in METRICS},
 }
 
@@ -119,6 +120,16 @@ def validate_value(section, key, value):
         if isinstance(value, bool) or not isinstance(value, (int, float)) or value not in (0, 1, 2, 3):
             raise ValueError(_msg('measurement.invalidPrecision'))
         value = int(value)
+    elif section == "services" and key in ("segmentationPython", "segmentationWeights"):
+        if not isinstance(value, str) or len(value) > 4096 or "\0" in value:
+            raise ValueError(_msg('autoSeg.missingPython'))
+    elif section == "services" and key == "segmentationDevice":
+        if value not in ("auto", "gpu", "mps", "cpu"):
+            raise ValueError(_msg('autoSeg.unsupportedEnvironment'))
+    elif section == "services" and key == "segmentationOrgans":
+        if not isinstance(value, list) or len(value) > 256 or any(not isinstance(v, str) or not re.fullmatch(r"[a-zA-Z0-9_]{1,100}", v) for v in value):
+            raise ValueError(_msg('autoSeg.selection'))
+        value = list(dict.fromkeys(value))
     elif section == "services" and key == "mtfFrequencyUnit":
         if value not in ("lp/mm", "lp/cm"):
             raise ValueError(_msg('mtf.invalidUnit'))

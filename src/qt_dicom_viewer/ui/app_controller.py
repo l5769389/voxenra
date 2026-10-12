@@ -56,6 +56,10 @@ class AppController(QObject):
         self._pacs_controller.imported.connect(self._panel_controller.acceptPacsImport)
         self._volume_manager = VolumeManager()
         self.render_service = RenderService(self._series_catalog, self._volume_manager, self)
+        from qt_dicom_viewer.ui.controller.local_segmentation_controller import LocalSegmentationController
+        self._local_segmentation_controller = LocalSegmentationController(
+            self._settings_controller, self._series_catalog, self,
+            cache=(False if settings_path is False else Path(settings_path).parent / "local-segmentation" if settings_path else None))
         self._signal_connect()
         from qt_dicom_viewer.ui.file_drop_filter import NativeFileDropFilter
         self._file_drop_filter = NativeFileDropFilter(self)
@@ -132,6 +136,10 @@ class AppController(QObject):
         return self._language_controller
 
     @Property(QObject, constant=True)
+    def localSegmentationController(self):
+        return self._local_segmentation_controller
+
+    @Property(QObject, constant=True)
     def feedbackController(self):
         return self._feedback_controller
 
@@ -165,6 +173,7 @@ class AppController(QObject):
 
     @Slot()
     def shutdown(self) -> None:
+        self._local_segmentation_controller.shutdown()
         self._shortcut_controller.cancelRecording()
         self._feedback_controller.shutdown()
         self._update_controller.shutdown()

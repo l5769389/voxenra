@@ -77,7 +77,7 @@ class SettingsController(QObject):
 
     @Slot(str)
     def selectCategory(self, category):
-        if category in ("sources", *DEFAULTS) and category != self._active_category:
+        if category in ("sources", "ai", *DEFAULTS) and category != self._active_category:
             self._active_category = category
             self.categoryChanged.emit()
 
@@ -236,6 +236,15 @@ class SettingsController(QObject):
 
     @Slot(str, result=bool)
     def resetSection(self, section):
+        if section in ("ai", "services"):
+            # Keep the persisted keys compatible with existing installations;
+            # the two independent settings pages reset only their own options.
+            ai_keys = {"segmentationPython", "segmentationWeights", "segmentationDevice", "segmentationOrgans"}
+            candidate = deepcopy(self._data)
+            for key, value in DEFAULTS["services"].items():
+                if (key in ai_keys) == (section == "ai"):
+                    candidate["services"][key] = deepcopy(value)
+            return self._commit("services", candidate)
         if section == "window":
             return self._save_window_entries(preset_file.from_legacy(DEFAULTS["window"]))
         if section not in DEFAULTS:

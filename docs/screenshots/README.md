@@ -4,6 +4,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ## 操作动画
 
+- [本地 AI 自动分割：器官选择、计算与精修](39-ai-segmentation.gif)（真实操作，推理等待已压缩）
 - [ZIP 压缩包拖拽导入](06-zip-drag.gif)
 - [自由形状 ROI 绘制与统计](01-freehand-measurement.gif)
 - [画笔、橡皮与撤销重做](38-segmentation-refinement.gif)
@@ -52,6 +53,12 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </table>
 
 ## 测量、分割与分析
+
+### 本地 AI 自动分割 · TotalSegmentator
+
+支持连接独立安装的 TotalSegmentator 环境，对 CT 当前时相进行快速分割，再使用现有工具精修和保存。
+
+[![四器官自动分割结果与 MPR 叠加](39-ai-segmentation.png)](39-ai-segmentation.gif)
 
 <table>
 <tr>

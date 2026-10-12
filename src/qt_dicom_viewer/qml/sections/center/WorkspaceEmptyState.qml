@@ -21,6 +21,16 @@ Item {
     readonly property bool documentBusy: documentController?.busy ?? false
     onVisibleChanged: { if (visible) documentController?.refreshRecent() }
 
+    component SecondaryAction: Components.AppButton {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 36
+        iconSize: 17
+        textColor: Theme.textSecondary
+        normalColor: "transparent"
+        baseBorderWidth: 1
+        baseBorderColor: Theme.borderDefault
+    }
+
     Flickable {
         id: scroller
         objectName: "homeScroll"
@@ -98,37 +108,41 @@ Item {
                 onClicked: emptyState.panelController.openImportDialog()
             }
             GridLayout {
+                id: secondaryActions
+                objectName: "homeSecondaryActions"
                 Layout.alignment: Qt.AlignHCenter
-                Layout.maximumWidth: content.width
-                columns: content.width < 360 ? 2 : 3
+                Layout.topMargin: 8
+                readonly property real rowWidth: quickStart.implicitWidth
+                    + (openWorkspace.visible ? openWorkspace.implicitWidth + columnSpacing : 0)
+                    + (openPacs.visible ? openPacs.implicitWidth + columnSpacing : 0)
+                Layout.preferredWidth: Math.min(content.width, rowWidth)
+                columns: content.width >= rowWidth ? 3 : 1
                 columnSpacing: 8
-                rowSpacing: 2
-                Components.AppButton {
+                rowSpacing: 8
+                SecondaryAction {
+                    id: quickStart
                     objectName: "homeQuickStart"
                     enabled: !emptyState.documentBusy
                     text: qsTrId("home.quickStart")
                     iconName: "manual"
-                    compact: true
-                    normalColor: "transparent"
                     onClicked: emptyState.workspaceController?.openManual("quick-start")
                 }
-                Components.AppButton {
+                SecondaryAction {
+                    id: openWorkspace
                     objectName: "homeOpenWorkspace"
                     visible: !!emptyState.documentController
                     enabled: !emptyState.documentBusy && !emptyState.scanning
                     text: qsTrId("home.openWorkspace")
-                    compact: true
-                    normalColor: "transparent"
+                    iconName: "workspace"
                     onClicked: emptyState.documentController.open()
                 }
-                Components.AppButton {
+                SecondaryAction {
+                    id: openPacs
                     objectName: "homeOpenPacs"
                     visible: emptyState.pacsController?.pacsEnabled ?? false
                     enabled: !emptyState.documentBusy
-                    text: qsTrId("text.0927")
+                    text: qsTrId("home.importPacs")
                     iconName: "nav-pacs"
-                    compact: true
-                    normalColor: "transparent"
                     onClicked: emptyState.workspaceController.openPacs()
                 }
             }

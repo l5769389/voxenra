@@ -12,6 +12,8 @@ ColumnLayout {
     required property var controller
     required property string mode
     property var historyController: null
+    property var tabController: null
+    property var automaticController: typeof appController !== "undefined" ? (appController.localSegmentationController ?? null) : null
     signal manualRequested(string chapter)
     readonly property var selected: controller?.selected ?? ({})
     readonly property bool hasSelection: !!selected.id
@@ -45,6 +47,35 @@ ColumnLayout {
             wrapMode: Text.WordWrap
             font: combo.font
         }
+    }
+
+    RowLayout {
+        visible: panel.mode === "segmentation" && !!panel.automaticController
+        Layout.fillWidth: true
+        Controls.ToolActionButton {
+            objectName: "automaticSegmentationButton"
+            iconName: "auto-segmentation"
+            tooltipText: qsTrId("autoSeg.title")
+            label: qsTrId("autoSeg.title")
+            onClicked: {
+                panel.automaticController.prepare(panel.tabController)
+                automaticDialog.open()
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            visible: panel.automaticController?.busy ?? false
+            text: panel.automaticController?.message ?? ""
+            color: Theme.textSecondary
+            font.pixelSize: 12
+            wrapMode: Text.Wrap
+        }
+    }
+    AutomaticSegmentationDialog {
+        id: automaticDialog
+        controller: panel.automaticController
+        settingsController: panel.automaticController ? appController.settingsController : null
     }
 
     GridLayout {

@@ -136,6 +136,7 @@ Rectangle {
     Component {
         id: voiComponent
         Panels.MprVoiPanel {
+            tabController: detailPanel.tabController
             controller: detailPanel.tabController?.voiController ?? detailPanel.viewportController?.voiController ?? null
             historyController: detailPanel.tabController?.historyController ?? null
             mode: detailPanel.activePanel

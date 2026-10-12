@@ -53,6 +53,21 @@
         "title": "NRRD / Slicer 交换",
         "body": "在原始 DICOM 的 MPR / 4D 中选择 **导出 → 导出 NRRD / Slicer**，输出当前时相体数据 source.nrrd 和分割 segmentation.seg.nrrd（含隐藏项和重叠区域）。在 Slicer 中分别加载，编辑并保存 .seg.nrrd；回到原 DICOM 的同一时相，通过右侧 **导入 → 导入分割 · SEG / NRRD** 导入。也支持三维整数标签 NRRD。文件须使用毫米单位及 LPS/RAS 坐标；不一致网格会拒绝导入，不自动重采样。NRRD 通常没有可靠的患者/序列身份信息，请确认参考影像和时相。",
         "messageId": "manual.segmentation.section8"
+      },
+      {
+        "title": "本地自动分割：环境",
+        "body": "在 **设置 → AI → 本地自动分割** 点击 **检测环境**。软件查找专用 TotalSegmentator-Local、常见 Conda 环境及 PATH 中已安装 TotalSegmentator 的解释器；未找到时打开 **高级配置**，手动选择 Python 解释器和模型目录。Windows 选择环境中的 python.exe（venv 通常在 Scripts 中，Conda 通常在环境根目录）；macOS 选择 bin/python。手动配置优先保留，**恢复自动发现** 可清除路径覆盖并重新检测。路径仅在悬停提示中显示。\n\n模型目录应包含 Dataset297_TotalSegmentator_total_3mm_1559subj，也可选择该模型、训练器或 fold_0 目录，软件会识别其上级目录。检测检查依赖、调用接口、设备、模型文件及 JSON 配置；不会运行分割，不保证显存充足或权重文件无损，不安装依赖或下载模型。**自动** 依次选择 CUDA、Apple MPS、CPU。保存的设备若不可用会明确标注，需改选，不会静默替换。\n\n已实测组合为 TotalSegmentator 2.18.0、macOS / MPS。其他版本或平台即使接口检查通过，也显示尚未实测；接口或 CT 快速模型变化时拒绝使用。升级环境后请重新检测，并用样例复核分割和空间位置。Windows 环境发现有自动化覆盖，尚未完成 Windows 实机验收。",
+        "messageId": "manual.segmentation.auto0"
+      },
+      {
+        "title": "本地自动分割：运行",
+        "body": "在 CT 的 **MPR / 4D → 分割** 面板顶部点击 **自动分割** 图标。确认序列和当前时相，搜索并勾选器官，然后开始。默认肝脏、脾脏、双肾；保留上次选择。输入为当前时相完整原始 HU 体数据，不受窗值、显示裁剪和旋转影响。仅支持可靠标定的规则正交 CT 网格；不支持 MR、普通 2D、非 HU 派生图、剪切及不规则体数据。\n\n部位列表在检测环境时从所选 TotalSegmentator 的 total 模型标签表读取，表示模型支持的结构，不表示本次影像已经检出这些器官。Voxenra 提供中英文名称，未收录的名称显示英文。升级环境后重新检测可刷新列表；不能通过输入名称添加模型不支持的结构。",
+        "messageId": "manual.segmentation.auto1"
+      },
+      {
+        "title": "本地自动分割：结果与取消",
+        "body": "运行时可继续浏览；切换时相或正在编辑时，结果暂存，返回目标时相并结束编辑后导入。关闭目标或替换数据会丢弃结果。可取消，失败和取消均不导入半成品；详细原因与日志位于 **详情**。不会因 GPU 失败自动改用 CPU。\n\n全部校验通过后，结果一次性追加；重复运行不会覆盖原分割，整批支持撤销重做。未检出的器官跳过提示。可继续改名、换色、显隐、调整轮廓/透明度和画笔精修，保存工作区或导出 SEG / NRRD。工作区恢复无需 TotalSegmentator，也不会重新计算。自动结果需由使用者核查和精修。",
+        "messageId": "manual.segmentation.auto2"
       }
     ],
     "figure": "segmentation",

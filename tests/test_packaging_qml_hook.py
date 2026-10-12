@@ -46,7 +46,9 @@ def test_qml_runtime_keeps_plugin_and_resources_but_omits_development_files(monk
 def test_runtime_resources_keep_svg_brand_and_all_qml():
     hook = runpy.run_path(str(ROOT / "packaging/hooks/hook-qt_dicom_viewer.py"))
     entries = {Path(source).relative_to(ROOT / "src/qt_dicom_viewer/qml").as_posix(): destination
-               for source, destination in hook["datas"]}
+               for source, destination in hook["datas"] if Path(source).is_relative_to(ROOT / "src/qt_dicom_viewer/qml")}
+    assert any(Path(source).name == 'totalsegmentator_bridge.py' and destination == 'qt_dicom_viewer/infrastructure'
+               for source, destination in hook['datas'])
     assert "assets/brand/voxenra-mark.png" in entries
     assert not any(name.startswith("assets/icons/") and name.endswith(".png") for name in entries)
     assert "assets/icons/README.md" in entries

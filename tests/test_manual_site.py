@@ -89,6 +89,12 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert "feature-workspace.png" not in source
         assert source.count('class="workflow-card"') == 3
         assert "feature-4d.gif" in source
+        assert 'id="ai"' in source and 'href="#ai"' in source
+        assert "TotalSegmentator" in source
+        assert "feature-ai-segmentation.gif?v=" in source
+        assert "尚不包含" not in source
+        assert "In development" not in source
+        assert ("需另行安装 TotalSegmentator" if page.parent == tmp_path else "Requires a separate TotalSegmentator") in source
         assert "feature-water-qa.png" in source
         assert "feature-mtf.png" in source
         assert 'feature-mtf.png?v=' in source
