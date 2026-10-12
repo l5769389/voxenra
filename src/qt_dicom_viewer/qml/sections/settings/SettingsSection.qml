@@ -30,7 +30,7 @@ Rectangle {
             Accessible.name: I18n.format(qsTrId("settings.expand"), {name: root.title, action: root.collapsed ? qsTrId("common.expand") : qsTrId("common.collapse")})
             Accessible.description: root.description
             Components.AppToolTip {
-                visible: (parent.hovered || parent.visualFocus) && root.description !== ""
+                visible: parent !== null && (parent.hovered || parent.visualFocus) && root.description !== ""
                 text: root.description
             }
             onClicked: {
