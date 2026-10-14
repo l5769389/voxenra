@@ -114,6 +114,19 @@ jobs:
           VOXENRA_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_import_dialog_chrome.py tests/test_import_ui.py --junitxml=build/test-results/windows-native-import.xml --basetemp=build/test-results/windows-native-import
 
+      - name: Verify native Chinese PDF report
+        env:
+          QT_QPA_PLATFORM: windows
+          VOXENRA_NATIVE_QA: "1"
+        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_measurement_report_pdf.py --junitxml=build/test-results/windows-native-pdf.xml
+
+      - name: Verify report and close-dialog regressions
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_QUICK_BACKEND: software
+          PYTHONUNBUFFERED: "1"
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_measurement_report_phases.py tests/test_tab_close_protection.py --output build/test-results/report-close-regressions
+
       - name: Stress asynchronous QML transitions
         env:
           QT_QPA_PLATFORM: offscreen

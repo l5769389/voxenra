@@ -1,9 +1,9 @@
 """Tab close decisions preserve live edits and recovery until explicitly accepted."""
 import pytest
-from PySide6.QtCore import QTimer, QPointF, Qt
+from PySide6.QtCore import QCoreApplication, QEvent, QTimer, QPointF, Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QDialogButtonBox, QMessageBox
 
 from qt_dicom_viewer.core.workspace_document import read_document
 from test_dicom_tags import qt_app, wait_until
@@ -224,6 +224,43 @@ def test_close_dialog_follows_theme_language_and_owner(sidebar_scene, monkeypatc
     monkeypatch.setattr(QMessageBox, 'exec', inspect)
     app.workspaceController.closeTab(tab.tab_config.tab_id)
     assert checked and app.workspaceController.activeTab is tab
+
+
+@pytest.mark.parametrize('initial_locale', ['en-US', 'zh-CN'])
+@pytest.mark.parametrize('queued', [False, True])
+def test_close_dialog_labels_survive_late_button_box_language_change(qt_app, initial_locale, queued):
+    from qt_dicom_viewer.ui.controller.language_controller import LanguageController
+    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from qt_dicom_viewer.ui.dialogs.tab_close_dialog import TabCloseDialog
+
+    settings = SettingsController(path=False)
+    settings.setValue('appearance', 'language', initial_locale)
+    language = LanguageController(settings, root=False)
+    box = TabCloseDialog()
+    box.show()
+    try:
+        other_locale = 'zh-CN' if initial_locale == 'en-US' else 'en-US'
+        for locale in (initial_locale, other_locale):
+            language.selectLanguage(locale)
+            QTest.qWait(40)
+            expected = ('Close and remove edits', 'Cancel') if locale == 'en-US' else ('关闭并移除编辑结果', '取消')
+            assert box.isVisible()
+            assert (box.button(QMessageBox.Close).text(), box.button(QMessageBox.Cancel).text()) == expected
+
+            # Qt can translate the child after the dialog's own language event
+            # and timer have finished, independently of the app's widget sweep.
+            button_box = box.findChild(QDialogButtonBox)
+            event = QEvent(QEvent.LanguageChange)
+            if queued:
+                QCoreApplication.postEvent(button_box, event)
+            else:
+                QCoreApplication.sendEvent(button_box, event)
+            QTest.qWait(40)
+            assert (box.button(QMessageBox.Close).text(), box.button(QMessageBox.Cancel).text()) == expected
+    finally:
+        box.close()
+        box.deleteLater()
+        language.shutdown()
 
 
 @pytest.mark.parametrize('kind,completed', [

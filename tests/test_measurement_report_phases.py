@@ -6,7 +6,9 @@ import pytest
 from PySide6.QtPdf import QPdfDocument
 
 from qt_dicom_viewer.core.measurement_report import COLUMNS
+from qt_dicom_viewer.ui.controller.language_controller import LanguageController
 from qt_dicom_viewer.ui.controller.measurement_report_controller import MeasurementReportController
+from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, wait_until
 from test_four_d_tools import temporal, draw
 
@@ -17,8 +19,22 @@ def read_csv(path):
     return [dict(zip((key for key, _ in COLUMNS), row)) for row in values[1:]]
 
 
+@pytest.fixture
+def english_report_language(qt_app):
+    # This checks phase/data ownership independently of the offscreen platform's
+    # CJK font inventory. Native Chinese PDF coverage lives in test_measurement_report_pdf.
+    settings = SettingsController(path=False)
+    settings.setValue('appearance', 'language', 'en-US')
+    language = LanguageController(settings, root=False)
+    try:
+        yield language
+    finally:
+        language.shutdown()
+
+
 @pytest.mark.parametrize('format', ['csv', 'pdf'])
-def test_report_exports_regions_from_each_phase_without_changing_view(temporal, tmp_path, format):
+def test_report_exports_regions_from_each_phase_without_changing_view(
+        temporal, tmp_path, format, english_report_language):
     tab, requests, (_, workspace) = temporal
     first = draw(tab, 'segmentation')
     tab.setPhaseIndex(1)
@@ -42,10 +58,9 @@ def test_report_exports_regions_from_each_phase_without_changing_view(temporal, 
             document = QPdfDocument()
             assert document.load(str(target)) == QPdfDocument.Error.None_
             text = '\n'.join(document.getAllText(i).text() for i in range(document.pageCount()))
-            assert '10.00' in text and '20.00' in text
-            assert 'M001' in text and 'M002' in text
-            for phase in (1, 2):
-                assert f'Phase {phase}' in text or f'时相 {phase}' in text
+            first_text, second_text = text.split('M001', 1)[1].split('M002', 1)
+            assert 'Phase 1' in first_text and '10.00' in first_text
+            assert 'Phase 2' in second_text and '20.00' in second_text
             document.close()
         assert tab.currentPhaseIndex == controller.phaseIndex == 1
         assert set(controller.evaluations) == {second}

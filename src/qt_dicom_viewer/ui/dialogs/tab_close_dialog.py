@@ -1,5 +1,6 @@
 """Explicit, theme-aware confirmation before tab editing work is removed."""
-from PySide6.QtCore import QEvent, QTimer, Qt
+from PySide6.QtCore import QEvent, Qt
+from PySide6.QtWidgets import QDialogButtonBox
 
 from qt_dicom_viewer.i18n import localize, message as _msg
 from qt_dicom_viewer.i18n.widgets import QMessageBox
@@ -15,9 +16,8 @@ class TabCloseDialog(QMessageBox):
         self.setTextFormat(Qt.PlainText)
         self.setDefaultButton(QMessageBox.Cancel)
         self.setEscapeButton(QMessageBox.Cancel)
-        self._button_text_timer = QTimer(self)
-        self._button_text_timer.setSingleShot(True)
-        self._button_text_timer.timeout.connect(self._translate_buttons)
+        self._button_box = self.findChild(QDialogButtonBox)
+        self._button_box.installEventFilter(self)
         self._appearance = appearance
         if appearance is not None:
             appearance.changed.connect(self._apply_theme)
@@ -26,11 +26,13 @@ class TabCloseDialog(QMessageBox):
             self.winId()
             self.windowHandle().setTransientParent(owner)
 
-    def changeEvent(self, event):
-        super().changeEvent(event)
-        if event.type() == QEvent.LanguageChange and hasattr(self, '_button_text_timer'):
-            # QDialogButtonBox also resets standard labels in a queued event.
-            self._button_text_timer.start(0)
+    def eventFilter(self, watched, event):
+        if watched is self._button_box and event.type() == QEvent.LanguageChange:
+            # These labels belong to the app. The child can receive this event
+            # after the dialog, so prevent Qt from restoring system labels.
+            self._translate_buttons()
+            return True
+        return super().eventFilter(watched, event)
 
     def _translate_buttons(self):
         super()._translate_buttons()
