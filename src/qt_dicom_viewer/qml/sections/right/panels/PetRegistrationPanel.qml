@@ -9,6 +9,25 @@ ColumnLayout {
     objectName: "petRegistrationPanel"
     required property var controller
     spacing: 12
+    readonly property string parameterContext: JSON.stringify([controller?.registrationParameters ?? [],
+        controller?.registrationActive ?? false, controller?.ready ?? false])
+    onParameterContextChanged: discardDraft()
+    function discardDraft() {
+        for (let i = 0; i < parameters.count; ++i) parameters.itemAt(i)?.input.sync()
+    }
+    function applyDraft() {
+        if (!panel.controller?.ready || !panel.controller.registrationActive) return
+        const values = Array(6)
+        for (let i = 0; i < parameters.count; ++i) {
+            const row = parameters.itemAt(i), input = row.input
+            if (!input.acceptableInput || !input.text.trim() || !Number.isFinite(Number(input.text))) return
+            values[row.modelData.parameter] = Number(input.text)
+        }
+        panel.controller.setRegistrationParameters(values)
+        discardDraft()
+    }
+    onControllerChanged: discardDraft()
+    onVisibleChanged: if (!visible) discardDraft()
     Components.PanelHeading {
         objectName: "PetRegistrationPanelHeading"
         title: qsTrId("text.1054")
@@ -41,6 +60,7 @@ ColumnLayout {
             columns: 2
             enabled: panel.controller.ready && panel.controller.registrationActive
             Repeater {
+                id: parameters
                 model: [
                     {label: qsTrId("text.1059"), parameter: 0}, {label: qsTrId("text.1060"), parameter: 3},
                     {label: qsTrId("text.1061"), parameter: 1}, {label: qsTrId("text.1062"), parameter: 4},
@@ -49,9 +69,13 @@ ColumnLayout {
                 delegate: ColumnLayout {
                     id: parameterRow
                     required property var modelData
+                    readonly property alias input: parameterInput
                     Layout.fillWidth: true
                     Text { text: parameterRow.modelData.label; color: Theme.textMuted; font.pixelSize: 11 }
                     Components.AppNumberField {
+                        id: parameterInput
+                        editContext: [panel.controller, panel.controller?.registrationActive ?? false]
+                        commitOnFinish: false
                         objectName: "registrationParameter-" + parameterRow.modelData.parameter
                         Layout.fillWidth: true
                         color: Theme.textPrimary
@@ -59,18 +83,23 @@ ColumnLayout {
                         minimum: -10000
                         maximum: 10000
                         decimals: 2
-                        onEdited: value => panel.controller.setRegistrationParameter(parameterRow.modelData.parameter, value)
-                        Keys.onEscapePressed: {
-                            sync()
-                            panel.controller.setRegistrationActive(false)
-                        }
-                        onEditingFinished: {
-                            sync()
-                            panel.controller.finishRegistrationPreview()
-                        }
+                        onAccepted: panel.applyDraft()
+                        Keys.onEscapePressed: panel.discardDraft()
                     }
                 }
             }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: qsTrId("numeric.applyHint")
+            color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.Wrap
+        }
+        Components.AppButton {
+            objectName: "applyRegistrationParameters"
+            Layout.fillWidth: true
+            text: qsTrId("text.1090")
+            enabled: panel.controller?.ready === true && panel.controller.registrationActive
+            onClicked: panel.applyDraft()
         }
         RowLayout {
             Layout.fillWidth: true

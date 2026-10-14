@@ -239,14 +239,15 @@ def test_native_volume_sidebar_drag_and_png(scene, paired_series, tmp_path, kind
         assert before.bits().tobytes() != cropped.bits().tobytes()
         mask, state = view.visible_mask, view.state
         view.setPetUnit("kbqml")
-        wait_until(lambda: workspace.activeLoadState.status == "ready")
-        wait_until(lambda: view._host.isVisible())
+        assert not app.exportController.canExportPng
+        wait_until(lambda: view.loadState == "ready" and view._host.frame_ready
+                   and view._host.surface_ready())
         assert view.visible_mask is mask and view.state == state
         assert view.snapshot_image().save(str(tmp_path / "pet-cropped-unit.png"))
         assert view._host.backend.mapper.GetMaskInput() is not None
         view.reset_all_view_state()
-        wait_until(lambda: workspace.activeLoadState.status == "ready")
-        wait_until(lambda: view._host.isVisible())
+        wait_until(lambda: view.loadState == "ready" and view._host.frame_ready
+                   and view._host.surface_ready())
         assert not view.hasCrop and view.petUnitId == "suvbw"
     assert view.snapshot_image().save(str(tmp_path / (kind + "-3d.png")))
     assert window.grabWindow().save(str(tmp_path / (kind + "-sidebar.png")))

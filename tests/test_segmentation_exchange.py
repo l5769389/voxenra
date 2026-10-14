@@ -400,10 +400,9 @@ def test_brush_keeps_qml_layers_alive_during_paint_and_erase(scene, source, tmp_
         assert field.width() <= 64 and slider.width() > field.width()
         assert abs(field.mapToScene(QPointF(0, field.height()/2)).y()
                    - slider.mapToScene(QPointF(0, slider.height()/2)).y()) < 1
-        if locale == 'zh-CN':
-            assert abs(scope.mapToScene(QPointF()).y() - tool.mapToScene(QPointF()).y()) <= 3
-        else:
-            assert scope.mapToScene(QPointF()).y() >= tool.mapToScene(QPointF()).y() + tool.height()
+        # The automatic-segmentation and manual actions share the scope row;
+        # all translations wrap below the mode selector at this narrow width.
+        assert scope.mapToScene(QPointF()).y() >= tool.mapToScene(QPointF()).y() + tool.height()
         manual = find(window, 'segmentationManualButton')
         assert abs(manual.mapToScene(QPointF()).y() - scope.mapToScene(QPointF()).y()) <= 3
         for widget in (tool, scope, find(window, 'segmentationBrushUnits')):
@@ -417,7 +416,8 @@ def test_brush_keeps_qml_layers_alive_during_paint_and_erase(scene, source, tmp_
         if locale == 'zh-CN':
             diameter_label = find(window, 'segmentationBrushDiameterLabel')
             assert diameter_label.property('lineCount') == 1
-        app.settingsController.setValue('layout', 'rightPanelWidth', 330)
+        window.resize(1600, 900)
+        app.settingsController.setValue('layout', 'rightPanelWidth', 420)
         QTest.qWait(50)
         assert abs(scope.mapToScene(QPointF()).y() - tool.mapToScene(QPointF()).y()) <= 3
         app.settingsController.setValue('layout', 'rightPanelWidth', 240)
@@ -503,3 +503,33 @@ def test_history_signal_connections_preserve_static_qml_metadata(exchange):
     assert history.metaObject().methodCount() == EditHistoryController.staticMetaObject.methodCount()
     assert history.metaObject().indexOfSlot('capture()') >= 0
     assert history.metaObject().indexOfSlot('schedule()') >= 0
+
+
+def test_four_d_roi_conversion_binds_nonzero_source_phase(exchange, tmp_path):
+    from test_four_d import _cross_series_four_d
+
+    app, _, controller = exchange
+    records = _cross_series_four_d(tmp_path / 'temporal', source_keyword='TemporalPositionIdentifier',
+                                   source_values=(3, 7, 12))
+    snapshot = DicomFolderScanSnapshot(tmp_path, 6, 6, 0, records)
+    app.panelController.update_series_session(snapshot)
+    app.workspaceController.createTab(records[0].series_instance_uid, 'Temporal', '4d')
+    tab = app.workspaceController.activeTab
+    wait_until(lambda: tab.voiController._phase_ready and not tab._active_mpr_requests)
+    tab.setPhaseIndex(1)
+    wait_until(lambda: tab._current_phase_index == 1 and tab.voiController._phase_ready
+               and not tab._active_mpr_requests)
+    tab.toolController.activateTool('measure')
+    view = tab.activeViewport
+    measure = view.measurementController
+    context = view._measurement_context(1, .1, kind=MeasurementKind.FREEHAND)
+    identifier = measure.paste_points([ImagePoint(.5, .5), ImagePoint(2.5, .5), ImagePoint(2, 1.5)], context)
+    assert identifier
+    assert controller.convertSelectedRoi(), controller.message
+    wait_until(lambda: not controller.busy)
+    assert not controller.isError, controller.message
+    record, = tab.voiController.records
+    assert record['phase'] == 1
+    assert record['source_measurement_id'] == identifier
+    assert record['mask'].any()
+    assert identifier in measure._measurements

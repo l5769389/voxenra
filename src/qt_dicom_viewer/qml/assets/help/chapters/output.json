@@ -40,8 +40,8 @@
     "related": [
       "measurement-report"
     ],
-    "example": "export.png",
-    "caption": "匿名选项、影像导出与测量报告入口。",
+    "example": "export-complete-2.1.1.png",
+    "caption": "整序列导出完成后，可定位输出、完成或再次导出。",
     "icon": "export"
   },
   {

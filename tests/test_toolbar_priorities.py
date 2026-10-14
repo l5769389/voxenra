@@ -43,9 +43,10 @@ def test_controller_updates_profile_for_active_series(qt_app):
 
 
 @pytest.mark.parametrize('locale', ['zh-CN', 'en-US'])
-def test_profiles_render_and_switch_in_place(qt_app, tmp_path, locale):
+@pytest.mark.parametrize('show_labels', [False, True])
+def test_profiles_render_and_switch_in_place(qt_app, tmp_path, locale, show_labels):
     from pathlib import Path
-    from PySide6.QtCore import QUrl
+    from PySide6.QtCore import QPointF, QUrl
     from PySide6.QtQuick import QQuickView
     from PySide6.QtTest import QTest
     from shiboken6 import delete
@@ -71,19 +72,21 @@ def test_profiles_render_and_switch_in_place(qt_app, tmp_path, locale):
     view.show()
     try:
         for index,controller in enumerate(controllers):
+            controller.settingsController.setValue('appearance', 'toolLabels', show_labels)
             view.rootObject().setProperty('toolController',controller)
             for width in (240,300):
-                view.resize(width,100)
+                view.resize(width,130)
                 QTest.qWait(45)
                 buttons = [i for i in _visual_children(view.rootObject())
                            if i.isVisible() and i.objectName().startswith('primaryTool-')]
                 expected = controller.toolbarGroups['common']+controller.toolbarGroups['primary']
                 assert [i.objectName().removeprefix('primaryTool-') for i in buttons] == expected
-                assert view.rootObject().property('implicitHeight') <= 110
+                assert view.rootObject().property('implicitHeight') <= 130
                 assert all(i.width()>0 and i.height()>0 for i in buttons)
+                assert all(i.mapToScene(QPointF(0, i.height())).y() <= view.height() for i in buttons)
                 labels = [i for i in _visual_children(view.rootObject())
                           if i.isVisible() and i.objectName() == 'toolbarLabel']
-                assert not labels  # All toolbar captions are hover-only.
+                assert bool(labels) == show_labels
                 assert view.grabWindow().save(str(tmp_path/f'profile-{index}-{width}.png'))
         assert not warnings,warnings
     finally:

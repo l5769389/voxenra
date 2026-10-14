@@ -243,3 +243,65 @@ def test_qa_row_actions_copy_and_only_delete_additional_rois(qa_workspace, qt_ap
     _click(window, _find(window, 'waterQaDelete-extra-2'))
     assert view.qaController.currentResult == baseline
     assert not warnings, warnings
+
+
+def test_qa_numeric_text_commits_once_and_escape_restores(qa_workspace, qt_app):
+    from PySide6.QtCore import QMetaObject
+    window, view, warnings = qa_workspace
+    _click(window, _find(window, "primaryTool-service"))
+    _click(window, _find(window, "serviceEntry-qa"))
+    wait_qa(qt_app, view.qaController)
+    number = _find(window, "waterQaSetting-roiDiameterMm")
+    field = number.property("contentItem")
+    field.forceActiveFocus()
+    QMetaObject.invokeMethod(field, "selectAll")
+    QTest.keyClick(window, "3")
+    QTest.keyClick(window, "0")
+    assert view.qaController.roiDiameterMm == 20
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert field.property("text") == "20"
+    field.forceActiveFocus()
+    QMetaObject.invokeMethod(field, "selectAll")
+    QTest.keyClick(window, "3")
+    QTest.keyClick(window, "0")
+    QTest.keyClick(window, Qt.Key_Return)
+    assert view.qaController.roiDiameterMm == 30
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('change', ['slice', 'disable'])
+def test_qa_draft_is_discarded_on_slice_change_or_disable(qa_workspace, qt_app, change):
+    from PySide6.QtCore import QMetaObject
+    from test_water_qa_controller import deliver_frame
+    window, view, warnings = qa_workspace
+    _click(window, _find(window, 'primaryTool-service'))
+    _click(window, _find(window, 'serviceEntry-qa'))
+    qa = view.qaController
+    wait_qa(qt_app, qa)
+    qa.setRoiDiameterMm(25)
+    wait_qa(qt_app, qa)
+    number = _find(window, 'waterQaSetting-roiDiameterMm')
+    field = number.property('contentItem')
+    field.forceActiveFocus()
+    QMetaObject.invokeMethod(field, 'selectAll')
+    QTest.keyClick(window, '3')
+    QTest.keyClick(window, '0')
+    assert qa.roiDiameterMm == 25
+    if change == 'slice':
+        qa.set_current_slice(1)
+        assert qa.status == 'waiting'
+    else:
+        number.setEnabled(False)
+    assert qa.roiDiameterMm == 25
+    assert not number.isEnabled()
+    assert number.property("value") == 25
+    assert field.property('text') == '25'
+    QTest.keyClick(window, Qt.Key_Return)
+    assert qa.roiDiameterMm == 25
+    if change == 'slice':
+        deliver_frame(view, water_render(view, index=1))
+        wait_qa(qt_app, qa)
+        assert number.isEnabled()
+        assert qa.roiDiameterMm == 25
+        assert field.property('text') == '25'
+    assert not warnings, warnings

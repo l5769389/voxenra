@@ -207,7 +207,7 @@ Rectangle {
                     objectName: "pacsQueryStudies"
                     Layout.fillWidth: true
                     text: browser.pacsController.busy && browser.pacsController.operation === "studies" ? qsTrId("text.0976") : qsTrId("text.0977")
-                    normalColor: Theme.primaryButtonBackground
+                    actionRole: "primary"
                     enabled: !browser.pacsController.busy
                     onClicked: browser.pacsController.queryStudies({
                         PatientName: patientName.text,
@@ -275,22 +275,56 @@ Rectangle {
                         spacing: 6
                         model: browser.pacsController.studies
                         Basic.ScrollBar.vertical: Components.AppScrollBar {}
-                        delegate: Rectangle {
+                        function focusStudy(index) {
+                            currentIndex = Math.max(0, Math.min(count - 1, index));
+                            positionViewAtIndex(currentIndex, ListView.Contain);
+                            if (currentItem) {
+                                currentItem.forceActiveFocus(Qt.TabFocusReason);
+                                // ListView may focus the new current item before forceActiveFocus.
+                                currentItem.focusReason = Qt.TabFocusReason;
+                            }
+                        }
+                        delegate: Components.AppButton {
                             id: studyRow
+                            required property int index
                             required property var modelData
                             objectName: "pacsStudy-" + modelData.uid
                             width: studiesList.width - 12
                             height: studyContent.implicitHeight + 24
-                            radius: 7
-                            color: browser.pacsController.selectedStudyUid === modelData.uid ? Theme.selectionBackground : studyHover.hovered ? Theme.cardBackgroundHover : Theme.panelBackgroundStrong
-                            border.color: browser.pacsController.selectedStudyUid === modelData.uid ? Theme.selectionBorder : Theme.borderSubtle
-                            ColumnLayout {
+                            cornerRadius: 7
+                            padding: 12
+                            normalColor: Theme.panelBackgroundStrong
+                            hoverColor: Theme.cardBackgroundHover
+                            baseBorderWidth: 1
+                            baseBorderColor: Theme.borderSubtle
+                            checked: browser.pacsController.selectedStudyUid === modelData.uid
+                            enabled: !browser.pacsController.busy
+                            activeFocusOnTab: index === studiesList.currentIndex
+                            Accessible.name: [studyPatient.text, studyPatientId.text, studyDescription.text,
+                                studyDate.text, studyAccession.text].join(", ")
+                            onActiveFocusChanged: {
+                                if (activeFocus) {
+                                    studiesList.currentIndex = index;
+                                    studiesList.positionViewAtIndex(index, ListView.Contain);
+                                }
+                            }
+                            Keys.onUpPressed: studiesList.focusStudy(index - 1)
+                            Keys.onDownPressed: studiesList.focusStudy(index + 1)
+                            Keys.onPressed: event => {
+                                if (event.key === Qt.Key_Home || event.key === Qt.Key_End) {
+                                    studiesList.focusStudy(event.key === Qt.Key_Home ? 0 : studiesList.count - 1);
+                                    event.accepted = true;
+                                }
+                            }
+                            Keys.onReturnPressed: click()
+                            Keys.onEnterPressed: click()
+                            onClicked: browser.pacsController.selectStudy(modelData.uid)
+                            contentItem: ColumnLayout {
                                 id: studyContent
-                                anchors.fill: parent
-                                anchors.margins: 12
                                 spacing: 6
                                 Text {
                                     Layout.fillWidth: true
+                                    id: studyPatient
                                     text: studyRow.modelData.patientName || qsTrId("text.0258")
                                     color: Theme.textPrimary
                                     font.pixelSize: 14
@@ -299,11 +333,13 @@ Rectangle {
                                 }
                                 Caption {
                                     Layout.fillWidth: true
+                                    id: studyPatientId
                                     text: "ID  " + (studyRow.modelData.patientId || "—")
                                     elide: Text.ElideRight
                                 }
                                 Text {
                                     Layout.fillWidth: true
+                                    id: studyDescription
                                     text: studyRow.modelData.description || qsTrId("text.0979")
                                     color: Theme.textSecondary
                                     font.pixelSize: 12
@@ -311,22 +347,16 @@ Rectangle {
                                 }
                                 Caption {
                                     Layout.fillWidth: true
+                                    id: studyDate
                                     text: (studyRow.modelData.date || qsTrId("text.0257")) + "  ·  " + (studyRow.modelData.modality || "—")
                                     wrapMode: Text.Wrap
                                 }
                                 Caption {
                                     Layout.fillWidth: true
+                                    id: studyAccession
                                     text: I18n.format(qsTrId("pacs.accession"), {value: studyRow.modelData.accession || "—"})
                                     elide: Text.ElideRight
                                 }
-                            }
-                            HoverHandler {
-                                id: studyHover
-                                cursorShape: Qt.PointingHandCursor
-                            }
-                            TapHandler {
-                                enabled: !browser.pacsController.busy
-                                onTapped: browser.pacsController.selectStudy(studyRow.modelData.uid)
                             }
                         }
                     }
@@ -455,7 +485,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: I18n.format(qsTrId("pacs.importSelected"), {count: browser.pacsController.selectedCount})
                     enabled: browser.pacsController.selectedCount > 0 && !browser.pacsController.busy
-                    normalColor: Theme.primaryButtonBackground
+                    actionRole: "primary"
                     onClicked: browser.pacsController.importSelected()
                 }
             }
@@ -488,7 +518,7 @@ Rectangle {
                     objectName: "pacsConfigureEmpty"
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTrId("text.0989")
-                    normalColor: Theme.primaryButtonBackground
+                    actionRole: "primary"
                     onClicked: browser.workspaceController.openDataSources()
                 }
             }

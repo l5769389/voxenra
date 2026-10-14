@@ -13,6 +13,7 @@ SettingsSplit {
         settingsController: root.settingsController
         Layout.fillWidth: true
         title: qsTrId("text.0836")
+        helpText: qsTrId("text.0840")
         Components.AppCheckBox { objectName: "setting-scale-enabled"; text: qsTrId("text.0837"); checked: root.values.enabled; onClicked: root.settingsController.setValue("scale", "enabled", checked) }
         RowLayout {
             Layout.fillWidth: true
@@ -26,7 +27,6 @@ SettingsSplit {
             }
         }
         SettingColor { Layout.fillWidth: true; title: qsTrId("text.0839"); settingName: "scale-color"; value: root.values.color; onEdited: color => root.settingsController.setValue("scale", "color", color) }
-        Components.HelpButton { Layout.alignment: Qt.AlignRight; explanation: qsTrId("text.0840") }
     }
     preview: Component {
         ColumnLayout {

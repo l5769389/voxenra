@@ -133,6 +133,61 @@ def test_archive_manifest_survives_cleanup_and_relocation(qt_app, tmp_path):
     finally: fresh.cleanup()
 
 
+def test_workspace_replacement_does_not_resurrect_previous_archive_instances(qt_app, tmp_path):
+    from PySide6.QtCore import QUrl
+
+    original = tmp_path / 'original'
+    original.mkdir()
+    record = phantom_series(original, 1, 'PRIVATE', '1.2.3.1', '20260903')
+    archive = tmp_path / 'input.zip'
+    with zipfile.ZipFile(archive, 'w') as out:
+        for instance in record.instances:
+            out.write(instance.path, instance.path.name)
+    empty_path = tmp_path / 'empty.voxworkspace'
+    saved_path = tmp_path / 'replacement.voxworkspace'
+    app = AppController(DicomImageProvider(), settings_path=False)
+    try:
+        manager, panel = app.workspaceDocumentController, app.panelController
+        assert manager.save_to(empty_path)
+        wait_until(lambda: not manager.busy)
+        assert panel.importUrls([QUrl.fromLocalFile(str(archive))])
+        wait_until(lambda: not panel.scanning)
+        assert not panel.importError, panel.statusMessage
+        archived_record = app._series_catalog.get_series(record.series_instance_uid)
+        assert archived_record.dicom_file_count == 3
+        app.workspaceController.createTab(record.series_instance_uid, 'CT', '2d')
+        wait_until(lambda: app.workspaceController.activeLoadState.status == 'ready')
+        assert manager.restore_from(empty_path)
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+        assert not app.workspaceController._tab_dict
+        assert not panel.hasSeries
+        assert not app._series_catalog.snapshot()
+        assert panel.importUrls([QUrl.fromLocalFile(str(record.first_file))])
+        wait_until(lambda: not panel.scanning)
+        replacement = app._series_catalog.get_series(record.series_instance_uid)
+        assert replacement.dicom_file_count == 1
+        assert replacement.instances[0].path == record.first_file
+        assert manager.save_to(saved_path)
+        wait_until(lambda: not manager.busy)
+        saved = read_document(saved_path)['series'][0]
+        assert len(saved['instances']) == 1
+        assert [source['path'] for source in saved['sources']] == [str(record.first_file)]
+    finally:
+        app.shutdown()
+    assert archive.is_file()
+    assert all(not instance.path.exists() for instance in archived_record.instances)
+    fresh = AppController(DicomImageProvider(), settings_path=False)
+    try:
+        manager = fresh.workspaceDocumentController
+        assert manager.restore_from(saved_path)
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError and not manager.hasMissingSources, manager.message
+        assert fresh._series_catalog.get_series(record.series_instance_uid).dicom_file_count == 1
+    finally:
+        fresh.shutdown()
+
+
 @pytest.mark.parametrize('archived', [False, True])
 def test_open_resave_restart_preserves_original_sources(qt_app, tmp_path, archived):
     """Exercise the controller's provenance handoff, not just the manifest codec."""
@@ -238,7 +293,7 @@ from test_pet_fusion import paired_series
 
 
 @pytest.mark.parametrize('kind', ['mpr', '3d', 'fusion', 'fusion3d'])
-def test_pet_workspace_roundtrip(qt_app, tmp_path, paired_series, kind):
+def test_pet_workspace_roundtrip(qt_app, tmp_path, paired_series, kind, monkeypatch):
     _, ct, pet = paired_series
     app = AppController(DicomImageProvider(), settings_path=False)
     try:
@@ -257,7 +312,10 @@ def test_pet_workspace_roundtrip(qt_app, tmp_path, paired_series, kind):
             source = tab
             workspace.createFusionVolumeTab(source)
             tab = workspace.activeTab
-            workspace.closeTab(source.tab_config.tab_id)
+            from PySide6.QtWidgets import QMessageBox
+            with monkeypatch.context() as closing:
+                closing.setattr(QMessageBox, 'exec', lambda self: QMessageBox.Close)
+                workspace.closeTab(source.tab_config.tab_id)
         elif kind == '3d':
             tab.activeViewport.setPetUpper(0.15)
         path = tmp_path / 'pet.voxworkspace'
@@ -473,6 +531,54 @@ def test_codec_limits_combined_mask_memory(monkeypatch):
     monkeypatch.setattr(codec, 'MAX_MASK_VOXELS', 12)
     with pytest.raises(ValueError, match='总量'):
         codec.loads(payload)
+
+
+def test_codec_rejects_combined_masks_before_writing(monkeypatch):
+    import qt_dicom_viewer.core.workspace_state as codec
+    monkeypatch.setattr(codec, 'MAX_MASK_VOXELS', 12)
+    within_limit = {'tabs': [{'mask': np.ones((1, 2, 2), bool)},
+                             {'mask': np.zeros((2, 2, 2), bool)}]}
+    restored = codec.loads(codec.dumps(within_limit))
+    np.testing.assert_array_equal(restored['tabs'][1]['mask'], within_limit['tabs'][1]['mask'])
+    too_large = {'tabs': [{'mask': np.ones((2, 2, 2), bool)},
+                          {'mask': np.zeros((2, 2, 2), bool)}]}
+    with pytest.raises(ValueError, match='总量'):
+        codec.dumps(too_large)
+    # Dirty detection must still work for a workspace that needs fewer masks
+    # before it can be saved; fingerprints never allocate restorable masks.
+    assert codec.fingerprint(too_large) != codec.fingerprint(within_limit)
+
+
+def test_oversized_mask_save_preserves_document_and_unsaved_edits(qt_app, tmp_path, monkeypatch):
+    import qt_dicom_viewer.core.workspace_state as codec
+    app, series = populated_app(tmp_path)
+    try:
+        workspace = app.workspaceController
+        workspace.createTab(series.series_instance_uid, '3D', '3d')
+        view = workspace.activeViewport
+        wait_until(lambda: view.loadState == 'ready')
+        manager = app.workspaceDocumentController
+        path = tmp_path / 'safe.voxworkspace'
+        assert manager.save_to(path)
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+        previous = path.read_bytes()
+        view.crop_mask = np.ones_like(view.volume.modality_pixels, dtype=bool)
+        view._bed_mask = view.crop_mask.copy()
+        view._bed_enabled = True
+        view._update_mask()
+        monkeypatch.setattr(codec, 'MAX_MASK_VOXELS', view.crop_mask.size * 3 // 2)
+        manager._close_after_save = True
+        assert manager.save_to(path)
+        wait_until(lambda: not manager.busy)
+        assert manager.isError and '总量' in manager.message
+        assert manager.dirty
+        assert not manager._close_after_save
+        assert path.read_bytes() == previous
+        assert read_document(path)['format'] == FORMAT
+        assert workspace.activeViewport is view and view.hasCrop
+    finally:
+        app.shutdown()
 
 
 def test_mr_workspace_preserves_active_series_with_multiple_selected(qt_app, tmp_path):

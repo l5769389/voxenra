@@ -20,7 +20,7 @@ def test_grouped_toolbar_more_and_width_stability(sidebar_scene, tmp_path):
             app.settingsController.setValue('layout', 'rightPanelWidth', width)
             QTest.qWait(60)
             toolbar = find(window, 'primaryToolBar')
-            assert toolbar.height() <= 110
+            assert toolbar.height() <= 130
             start_width = panel.width()
             for tool in ('window','pan','zoom','measure','service'):
                 click(window, find(window, 'primaryTool-'+tool))
@@ -36,7 +36,7 @@ def test_grouped_toolbar_more_and_width_stability(sidebar_scene, tmp_path):
             click(window, more)
             click(window, find(window, 'primaryTool-export'))
             assert ws.activeTab.toolController.activeTool == 'export'
-            assert toolbar.height() <= 110 and panel.width() == start_width
+            assert toolbar.height() <= 130 and panel.width() == start_width
             for name in ('primaryTool-window','primaryTool-measure','primaryToolsMore'):
                 item=find(window,name); pos=item.mapToScene(QPointF())
                 assert pos.x() >= 0 and pos.x()+item.width() <= window.width()

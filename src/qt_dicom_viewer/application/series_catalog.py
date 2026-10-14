@@ -9,6 +9,12 @@ class SeriesCatalog:
         for series in process.series:
             self._series_by_uid[series.series_instance_uid] = series
 
+    def replace(self, process: DicomFolderScanSnapshot | None) -> None:
+        self._series_by_uid = {
+            series.series_instance_uid: series
+            for series in process.series
+        } if process is not None else {}
+
     def snapshot(self):
         """Copy the index for background import; records are replaced, not mutated."""
         return dict(self._series_by_uid)

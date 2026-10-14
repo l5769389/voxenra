@@ -575,6 +575,19 @@ class PetWorkspaceController(TabController):
         values[index] = value
         self.set_registration(registration_from_parameters(values[:3], values[3:], self.pivot), preview=True)
 
+    @Slot('QVariantList')
+    def setRegistrationParameters(self, values):
+        if not self.isFusion or not self.ready or not self.registrationActive or len(values) != 6:
+            return
+        try:
+            parameters = np.asarray(values, dtype=float)
+        except (TypeError, ValueError):
+            return
+        if parameters.shape != (6,) or not np.all(np.isfinite(parameters)) or np.any(np.abs(parameters) > 10000):
+            return
+        self._refine_timer.stop()
+        self.set_registration(registration_from_parameters(parameters[:3], parameters[3:], self.pivot))
+
     @Slot()
     def centerAlign(self):
         if not self.isFusion or not self.ready:

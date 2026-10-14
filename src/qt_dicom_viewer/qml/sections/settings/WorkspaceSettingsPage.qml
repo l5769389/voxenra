@@ -14,6 +14,12 @@ ColumnLayout {
         Layout.fillWidth: true
         title: qsTrId("text.0866")
         description: qsTrId("text.0867")
+        helpObjectName: "workspaceExitDescription"
+        helpText: ({
+            ask: qsTrId("text.0872"),
+            save: qsTrId("text.0873"),
+            discard: qsTrId("text.0874")
+        })[page.settingsController.values.workspace.exitBehavior]
         Components.AppComboBox {
             id: behavior
             objectName: "workspaceExitBehavior"
@@ -29,15 +35,6 @@ ColumnLayout {
             currentIndex: model.findIndex(item => item.key === page.settingsController.values.workspace.exitBehavior)
             Accessible.name: qsTrId("text.0871")
             onActivated: page.settingsController.setValue("workspace", "exitBehavior", currentValue)
-        }
-        Components.HelpButton {
-            objectName: "workspaceExitDescription"
-            Layout.alignment: Qt.AlignRight
-            explanation: ({
-                ask: qsTrId("text.0872"),
-                save: qsTrId("text.0873"),
-                discard: qsTrId("text.0874")
-            })[page.settingsController.values.workspace.exitBehavior]
         }
     }
     SettingsSection {

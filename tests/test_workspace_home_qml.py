@@ -51,3 +51,25 @@ def test_home_recent_layout_and_open(scene, tmp_path, locale, theme):
     click(window, find(window, 'homeRecentRemove-0'))
     assert len(doc.recentWorkspaces) == 4
     assert not warnings, warnings
+
+
+def test_imported_home_opens_selected_series_and_keeps_import_separate(scene, tmp_path, monkeypatch):
+    from test_series_sidebar import phantom_series
+    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    window, app, warnings = scene
+    record = phantom_series(tmp_path, 1, 'HOME', '1.2.3.1', '20261014')
+    snapshot = DicomFolderScanSnapshot(tmp_path, 3, 3, 0, [record])
+    app.panelController.update_series_session(snapshot)
+    app.panelController._update_series_record(snapshot)
+    primary = find(window, 'homeOpenSelected')
+    assert not primary.isEnabled()
+    assert find(window, 'homeContinueImport').isEnabled()
+    click(window, find(window, 'series-' + record.series_instance_uid))
+    assert primary.isEnabled()
+    monkeypatch.setattr(app.panelController, 'openImportDialog',
+                        lambda: pytest.fail('Opening selected images must not invoke import'))
+    click(window, primary)
+    wait_until(lambda: app.workspaceController.activeViewport is not None
+               and app.workspaceController.activeViewport.loadState == 'ready')
+    assert app.workspaceController.activeViewport.viewport_config.series_uid == record.series_instance_uid
+    assert not warnings, warnings

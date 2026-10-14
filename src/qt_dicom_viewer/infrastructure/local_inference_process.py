@@ -1,6 +1,7 @@
 """Cancellable process-tree execution, with bounded diagnostics and structured events."""
 import json
 import os
+from pathlib import Path
 import signal
 import subprocess
 import time
@@ -46,14 +47,26 @@ def run_process(command, log_path, cancel, on_event=lambda event: None, *, timeo
     started=time.monotonic()
     with open(log_path,'w',encoding='utf-8') as log:
         job = None
+        lifetime_read = lifetime_write = None
         if os.name == 'nt':
             from .windows_inference_job import WindowsInferenceJob
             job = WindowsInferenceJob()
+        else:
+            helper = Path(__file__).with_name('posix_inference_supervisor.py')
+            if not helper.is_file():
+                raise FileNotFoundError('Inference process ownership resource is missing')
+            lifetime_read, lifetime_write = os.pipe()
+            options['pass_fds'] = (lifetime_read,)
+            # sys.executable can be the frozen GUI; command[0] is external Python.
+            command = [command[0], str(helper), str(lifetime_read), *command]
         try:
             process=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT,env=environment,**options)
         except BaseException:
             if job:job.close()
+            if lifetime_write is not None:os.close(lifetime_write)
             raise
+        finally:
+            if lifetime_read is not None:os.close(lifetime_read)
         pending=''
         try:
             if job:job.attach_and_resume(process.pid)
@@ -88,4 +101,7 @@ def run_process(command, log_path, cancel, on_event=lambda event: None, *, timeo
                 if process.poll() is None:process.kill()  # Also covers failed assignment.
                 process.wait()
             else:
-                terminate_tree(process)
+                # EOF is observed independently of the GUI's lifetime. The
+                # supervisor owns signalling/reaping its anchored job group.
+                os.close(lifetime_write)
+                process.wait(timeout=10)

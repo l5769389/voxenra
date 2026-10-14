@@ -52,11 +52,12 @@ def _types():
 
 
 def encode(value):
-    return _encode(value, fingerprint_masks=False)
+    return _encode(value, fingerprint_masks=False, mask_budget=[MAX_MASK_VOXELS])
 
 
-def _encode(value, *, fingerprint_masks):
-    descend = lambda child: _encode(child, fingerprint_masks=fingerprint_masks)
+def _encode(value, *, fingerprint_masks, mask_budget=None):
+    descend = lambda child: _encode(child, fingerprint_masks=fingerprint_masks,
+                                   mask_budget=mask_budget)
     from qt_dicom_viewer.i18n.messages import Message, JoinedMessage
     if isinstance(value, Message):
         return {"$message": value.key, "args": descend(value.args), "values": descend(value.values)}
@@ -87,6 +88,13 @@ def _encode(value, *, fingerprint_masks):
         return {k: descend(v) for k, v in value.items()}
     if isinstance(value, np.ndarray):
         if value.dtype == np.bool_ and value.size <= MAX_MASK_VOXELS:
+            # Match decode's whole-document limit before publishing a file that
+            # could not be reopened. Fingerprints must still detect unsaved
+            # edits when a workspace has grown beyond this storage limit.
+            if mask_budget is not None:
+                mask_budget[0] -= value.size
+                if mask_budget[0] < 0:
+                    raise ValueError(_msg('text.0123'))
             packed = np.packbits(value, axis=None)
             if fingerprint_masks:
                 return {"$maskDigest": sha256(packed).hexdigest(), "shape": list(value.shape)}

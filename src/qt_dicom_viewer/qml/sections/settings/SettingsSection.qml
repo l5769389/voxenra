@@ -9,6 +9,8 @@ Rectangle {
     default property alias contents: body.data
     property string title: ""
     property string description: ""
+    property string helpText: ""
+    property string helpObjectName: "settingsHelp-" + sectionKey
     property string sectionKey: title
     property var settingsController: null
     property bool sessionCollapsed: false
@@ -23,29 +25,42 @@ Rectangle {
         anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
         anchors.margins: 10
         spacing: 8
-        Components.AppButton {
-            objectName: "settingsGroup-" + root.sectionKey
-            Layout.fillWidth: true; Layout.preferredHeight: 28
-            normalColor: "transparent"; compact: true
-            Accessible.name: I18n.format(qsTrId("settings.expand"), {name: root.title, action: root.collapsed ? qsTrId("common.expand") : qsTrId("common.collapse")})
-            Accessible.description: root.description
-            Components.AppToolTip {
-                visible: parent !== null && (parent.hovered || parent.visualFocus) && root.description !== ""
-                text: root.description
-            }
-            onClicked: {
-                if (root.settingsController) {
-                    const groups = root.settingsController.values.layout.settingsCollapsedGroups.filter(key => key !== root.sectionKey)
-                    if (!root.collapsed) groups.push(root.sectionKey)
-                    root.settingsController.setValue("layout", "settingsCollapsedGroups", groups)
-                } else {
-                    root.sessionCollapsed = !root.sessionCollapsed
-                    State.collapsed[root.sectionKey] = root.sessionCollapsed
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            Components.AppButton {
+                objectName: "settingsGroup-" + root.sectionKey
+                Layout.fillWidth: true; Layout.minimumWidth: 0
+                Layout.preferredHeight: Math.max(28, contentItem.implicitHeight + topPadding + bottomPadding)
+                normalColor: "transparent"; compact: true
+                Accessible.name: I18n.format(qsTrId("settings.expand"), {name: root.title, action: root.collapsed ? qsTrId("common.expand") : qsTrId("common.collapse")})
+                Accessible.description: root.description
+                Components.AppToolTip {
+                    visible: parent !== null && (parent.hovered || parent.visualFocus) && root.description !== ""
+                    text: root.description
+                }
+                onClicked: {
+                    if (root.settingsController) {
+                        const groups = root.settingsController.values.layout.settingsCollapsedGroups.filter(key => key !== root.sectionKey)
+                        if (!root.collapsed) groups.push(root.sectionKey)
+                        root.settingsController.setValue("layout", "settingsCollapsedGroups", groups)
+                    } else {
+                        root.sessionCollapsed = !root.sessionCollapsed
+                        State.collapsed[root.sectionKey] = root.sessionCollapsed
+                    }
+                }
+                contentItem: RowLayout {
+                    Text { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; text: root.title; color: Theme.textPrimary; font.pixelSize: 14; font.weight: Font.DemiBold }
+                    Components.AppIcon { iconName: "chevron-down"; iconSize: 14; rotation: root.collapsed ? -90 : 0 }
                 }
             }
-            contentItem: RowLayout {
-                Text { Layout.fillWidth: true; text: root.title; color: Theme.textPrimary; font.pixelSize: 14; font.weight: Font.DemiBold }
-                Components.AppIcon { iconName: "chevron-down"; iconSize: 14; rotation: root.collapsed ? -90 : 0 }
+            Components.HelpButton {
+                objectName: root.helpObjectName
+                visible: root.helpText !== ""
+                Layout.minimumWidth: 28
+                Layout.maximumWidth: 28
+                Layout.alignment: Qt.AlignVCenter
+                explanation: root.helpText
             }
         }
         ColumnLayout {

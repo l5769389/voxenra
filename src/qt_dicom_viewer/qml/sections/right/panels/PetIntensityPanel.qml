@@ -59,6 +59,7 @@ ColumnLayout {
                 }
 
                 Components.AppNumberField {
+                    editContext: [petPanel.viewportController, petPanel.viewportController?.petActiveUnitLabel ?? "", petPanel.viewportController?.loadState ?? "ready"]
                     id: displayUpperInput
                     objectName: "petDisplayUpperInput"
                     Layout.preferredWidth: 92; implicitHeight: 32
@@ -129,6 +130,7 @@ ColumnLayout {
                 }
 
                 Components.AppNumberField {
+                    editContext: [petPanel.viewportController, petPanel.viewportController?.petActiveUnitLabel ?? "", petPanel.viewportController?.loadState ?? "ready"]
                     objectName: "petControlUpperInput"
                     // Partial digits must not repeatedly clamp the PET display
                     // upper limit while editing the slider's allowed range.

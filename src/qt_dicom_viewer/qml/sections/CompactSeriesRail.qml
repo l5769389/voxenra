@@ -10,6 +10,7 @@ Item {
     required property var panelController
     property var pacsController: null
     property var workspaceController: null
+    property bool showLabels: false
     signal contextRequested(string uid, real sceneX, real sceneY)
     property string anchorKey: ""
     property int anchorIndex: 0
@@ -61,7 +62,9 @@ Item {
             id: openImport
             buttonObjectName: "compactSidebarImport"
             visible: !rail.pacsController || rail.pacsController.localEnabled
-            width: 40; height: 32
+            width: 40; height: rail.showLabels ? 44 : 32
+            showLabel: rail.showLabels
+            shortLabel: qsTrId("sidebar.short.images")
             label: rail.panelController.scanning ? qsTrId("text.0620") : qsTrId("text.0532")
             tooltipText: label
             iconName: "nav-load-file"
@@ -73,7 +76,9 @@ Item {
             tooltipPlacement: "right"
             buttonObjectName: "compactSidebarPacs"
             visible: rail.pacsController !== null && rail.pacsController.pacsEnabled
-            width: 40; height: 32
+            width: 40; height: rail.showLabels ? 44 : 32
+            showLabel: rail.showLabels
+            shortLabel: "PACS"
             label: qsTrId("text.0494")
             tooltipText: label
             iconName: "nav-pacs"
@@ -96,8 +101,18 @@ Item {
         reuseItems: true
         boundsBehavior: Flickable.StopAtBounds
         Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
+        function focusRow(index, reason) {
+            if (index < 0 || index >= count) return false
+            currentIndex = index
+            positionViewAtIndex(index, ListView.Contain)
+            forceLayout()
+            const row = itemAtIndex(index)
+            if (row) row.forceActiveFocus(reason)
+            return !!row
+        }
         delegate: Item {
             id: entry
+            required property int index
             required property var modelData
             readonly property string uid: modelData.seriesInstanceUid
             readonly property bool selected: rail.panelController.selectedSeriesUids.includes(uid)
@@ -105,13 +120,42 @@ Item {
             objectName: "compactSeries-" + uid
             width: listing.width
             height: 46
+            activeFocusOnTab: index === listing.currentIndex
+            onActiveFocusChanged: if (activeFocus) {
+                listing.currentIndex = index
+                listing.positionViewAtIndex(index, ListView.Contain)
+            }
+            Accessible.role: Accessible.Button
+            Accessible.name: modelData.label + " · " + modelData.modality
+                + (modelData.subtitle ? " · " + modelData.subtitle : "")
+            Accessible.focusable: true
+            Accessible.checkable: true
+            Accessible.checked: selected
+            Accessible.onPressAction: rail.panelController.openSeriesView(uid, "2d")
+            Accessible.onToggleAction: rail.panelController.selectSeriesWithModifiers(uid, true)
+            Keys.onPressed: event => {
+                const backward = event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))
+                if (event.key === Qt.Key_Tab || backward || event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                    event.accepted = listing.focusRow(index + (backward || event.key === Qt.Key_Up ? -1 : 1),
+                        backward ? Qt.BacktabFocusReason : Qt.TabFocusReason)
+                } else if (event.key === Qt.Key_Home || event.key === Qt.Key_End) {
+                    event.accepted = listing.focusRow(event.key === Qt.Key_Home ? 0 : listing.count - 1, Qt.OtherFocusReason)
+                } else if (event.key === Qt.Key_Space) {
+                    rail.panelController.selectSeriesWithModifiers(uid, true)
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    rail.panelController.openSeriesView(uid, "2d")
+                    event.accepted = true
+                }
+            }
             Rectangle {
                 anchors.centerIn: parent
                 width: 40; height: 40
                 radius: 5
                 color: entry.selected ? Theme.selectionBackground : Theme.canvasBackground
-                border.width: entry.active ? 2 : 1
-                border.color: entry.active ? Theme.primaryColor : entry.selected ? Theme.selectionBorder
+                border.width: entry.activeFocus || entry.active ? 2 : 1
+                border.color: entry.activeFocus ? Theme.focusBorder
+                    : entry.active ? Theme.primaryColor : entry.selected ? Theme.selectionBorder
                     : mouse.containsMouse ? Theme.borderStrong : Theme.borderSubtle
                 Image {
                     id: thumbnail

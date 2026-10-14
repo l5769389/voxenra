@@ -97,5 +97,6 @@ def test_export_settings_ui_saves_destination_and_restores_default(scene, tmp_pa
     QTest.qWait(50)
     assert window.grabWindow().save(str(tmp_path / "dicom-export-settings.png"))
     click(window, find(window, "resetDisplaySettings"))
+    click(window, find(window, 'confirmSettingsReset'))
     assert field.property("text") == app.settingsController.defaultExportDirectory
     assert not warnings, warnings

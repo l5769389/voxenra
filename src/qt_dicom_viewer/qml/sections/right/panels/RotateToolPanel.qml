@@ -27,6 +27,7 @@ ColumnLayout {
                 Layout.preferredWidth: 1
                 iconName: modelData.iconName
                 label: modelData.label
+                shortLabel: modelData.shortLabel
 
                 onClicked: {
                     rotatePanel.actionTriggered(modelData.action);

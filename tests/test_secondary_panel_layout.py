@@ -126,3 +126,29 @@ def test_pet_secondary_controls(qt_app, paired_series, tmp_path):
         view.hide()
         delete(view)
         workspace.shutdown()
+
+
+def test_automatic_segmentation_action_shares_selector_row(sidebar_scene):
+    from test_tag_qml import find
+    window, app, records, warnings = sidebar_scene
+    workspace = app.workspaceController
+    workspace.createTab(records[0].series_instance_uid, 'CT', 'mpr')
+    wait_until(lambda: workspace.activeLoadState.status == 'ready')
+    workspace.activeTab.toolController.activateTool('segmentation')
+    for locale in ['zh-CN', 'en-US']:
+        app.languageController.selectLanguage(locale)
+        for width in [240, 300, 420]:
+            app.settingsController.setValue('layout', 'rightPanelWidth', width)
+            for mode in ['threshold', 'paint', 'erase']:
+                workspace.activeTab.voiController.setEditMode(mode)
+                QTest.qWait(40)
+                assert not window.grabWindow().isNull()
+                auto = find(window, 'automaticSegmentationButton')
+                manual = find(window, 'segmentationManualButton')
+                selector = find(window, 'segmentationEditMode' if mode == 'threshold' else 'segmentationBrushScope')
+                center_y = lambda item: item.mapToScene(QPointF(0, item.height() / 2)).y()
+                assert abs(center_y(auto) - center_y(selector)) <= 1
+                assert abs(center_y(auto) - center_y(manual)) <= 1
+                assert auto.width() == manual.width()
+                check_controls(window.contentItem(), (locale, width, mode, 'segmentation-actions'))
+    assert not warnings, warnings

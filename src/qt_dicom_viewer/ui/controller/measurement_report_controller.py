@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Event, Lock
 from dataclasses import replace
+from copy import deepcopy
 from qt_dicom_viewer.ui.measurement_source import display_parameters, capture_request
 
 from PySide6.QtCore import QObject, Property, Signal, Slot, QPointF, QRectF, Qt
@@ -23,7 +24,9 @@ KINDS = {"curve": _msg("measurement.curve"), "freehand": _msg("measurement.freeh
          "arrow": _msg('text.0377'), "text": _msg('text.0378'), "voi": "VOI", "segmentation": _msg('text.0379')}
 
 
-def capture_results(workspace, catalog, *, all_tabs=False, anonymous=True, include_images=False):
+def capture_results(workspace, catalog, *, all_tabs=False, anonymous=True, include_images=False,
+                    region_jobs=None):
+    """Capture rows, optionally deferring uncached region statistics to a worker."""
     tabs = ((workspace.all_tabs() if hasattr(workspace, "all_tabs") else list(workspace._tab_dict.values()))
             if all_tabs else [workspace.activeTab])
     rows, pictures, sources = [], [], set()
@@ -101,15 +104,62 @@ def capture_results(workspace, catalog, *, all_tabs=False, anonymous=True, inclu
                 raise ValueError(_msg('text.0390'))
             for item in voi.records:
                 result = voi.evaluations.get(item["id"])
-                if result is None: raise ValueError(_msg('text.0391'))
                 row = base(item["series"], _msg('text.0392'), item["kind"])
-                row.update(unit=item["unitLabel"], threshold=result.threshold,
-                           volume_cm3=result.metrics["volume"], pixel_count=result.metrics["count"],
-                           mean=result.metrics["mean"], std=result.metrics["sd"],
-                           minimum=result.metrics["minimum"], maximum=result.metrics["maximum"])
+                phase_index = item.get("phase")
+                phase_identifier = None
+                if phase_index is not None:
+                    # Saved region phases index the tab's original phase list,
+                    # which can differ from an expanded/reordered catalog.
+                    identifiers = tab._phase_identifiers
+                    if not isinstance(phase_index, int) or not 0 <= phase_index < len(identifiers):
+                        raise ValueError(_msg("results.changedSource"))
+                    phase_identifier = identifiers[phase_index]
+                    catalog_identifiers = catalog.get_series(item["series"]).phase_identifiers
+                    if phase_identifier not in catalog_identifiers:
+                        raise ValueError(_msg("results.changedSource"))
+                    row["phase"] = catalog_identifiers.index(phase_identifier) + 1
+                row["unit"] = item["unitLabel"]
+                if result is not None:
+                    _region_metrics(row, result)
+                elif region_jobs is not None:
+                    # Own mutable masks and metadata before edits, deletion,
+                    # phase changes or tab closure can affect this report.
+                    region_jobs.append((row, deepcopy(item), phase_identifier))
+                else:
+                    raise ValueError(_msg('text.0391'))
                 rows.append(row)
     if not rows: raise ValueError(_msg('text.0393'))
     return rows, pictures, sources
+
+
+def _region_metrics(row, result):
+    row.update(threshold=result.threshold,
+               volume_cm3=result.metrics["volume"], pixel_count=result.metrics["count"],
+               mean=result.metrics["mean"], std=result.metrics["sd"],
+               minimum=result.metrics["minimum"], maximum=result.metrics["maximum"])
+
+
+def evaluate_report_regions(jobs, catalog, cancelled):
+    """Complete frozen region rows without touching live views or their cache."""
+    from qt_dicom_viewer.core.mpr_voi import evaluate_voi
+    from qt_dicom_viewer.core.segmentation_masks import evaluate_mask
+    from qt_dicom_viewer.core.volume_manager import VolumeManager
+    from qt_dicom_viewer.core.render_cancellation import render_cancellation, check_render_cancelled
+
+    volumes = VolumeManager(maximum_cache_bytes=256 * 1024**2)
+    with render_cancellation(cancelled):
+        for row, record, phase_identifier in jobs:
+            check_render_cancelled()
+            series = catalog.get_series(record["series"])
+            volume = volumes.get_or_build(series, phase_identifier).in_unit(record["unit"])
+            if "mask" in record:
+                result = evaluate_mask(volume, record)
+            else:
+                result = evaluate_voi(volume, record["region"],
+                    threshold=record["threshold"] if record["kind"] == "segmentation" else None,
+                    percent=record["percent"], pet=record["pet"])
+            check_render_cancelled()
+            _region_metrics(row, result)
 
 
 def report_images(pictures):
@@ -238,8 +288,9 @@ class MeasurementReportController(QObject):
         if self._busy or self._closed: return False
         try:
             if format not in ("csv", "pdf"): raise ValueError(_msg('text.0397'))
+            region_jobs = []
             rows, pictures, sources = capture_results(self.workspace, self.catalog, all_tabs=all_tabs,
-                anonymous=anonymous, include_images=include_images and format == "pdf")
+                anonymous=anonymous, include_images=include_images and format == "pdf", region_jobs=region_jobs)
         except ValueError as error:
             self._finish(error_message(error), True)
             return False
@@ -254,6 +305,7 @@ class MeasurementReportController(QObject):
         self._result_path = ""
         self.changed.emit()
         def write():
+            evaluate_report_regions(region_jobs, catalog, self._cancel)
             if anonymous and pictures:
                 import pydicom
                 from qt_dicom_viewer.core.dicom_anonymizer import check_pixel_identity

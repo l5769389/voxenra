@@ -9,7 +9,7 @@ Components.AppDialog {
     id: dialog
     objectName: "pacsProfileDialog"
     title: profileId ? qsTrId("text.0877") : qsTrId("text.0878")
-    closeEnabled: !pacsController.busy
+    closeEnabled: true
     required property var pacsController
     property string profileId: ""
     property string saveError: ""
@@ -49,7 +49,15 @@ Components.AppDialog {
             timeout: timeoutField.text
         };
     }
-    onClosed: secretField.text = ""
+    onClosed: {
+        if (pacsController.busy && pacsController.operation === "test") pacsController.cancel()
+        secretField.text = ""
+    }
+    function save() {
+        if (pacsController.busy) return
+        if (pacsController.saveProfile(values())) accept()
+        else saveError = pacsController.message
+    }
 
     contentItem: ColumnLayout {
         spacing: 12
@@ -67,6 +75,7 @@ Components.AppDialog {
                 width: profileScroll.availableWidth
                 spacing: 8
                 Text {
+                    id: nameLabel
                     text: qsTrId("text.0879")
                     color: Theme.textMuted
                     font.pixelSize: 12
@@ -74,12 +83,15 @@ Components.AppDialog {
                 Components.AppTextField {
                     id: nameField
                     objectName: "pacsProfileName"
+                    Accessible.name: nameLabel.text
                     Layout.fillWidth: true
                     placeholderText: qsTrId("text.0880")
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
+                    onAccepted: dialog.save()
                 }
                 Text {
+                    id: urlLabel
                     text: qsTrId("text.0881")
                     color: Theme.textMuted
                     font.pixelSize: 12
@@ -88,10 +100,12 @@ Components.AppDialog {
                 Components.AppTextField {
                     id: urlField
                     objectName: "pacsProfileUrl"
+                    Accessible.name: urlLabel.text
                     Layout.fillWidth: true
                     placeholderText: "http://127.0.0.1:8042/dicom-web"
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
+                    onAccepted: dialog.save()
                 }
                 Text {
                     Layout.fillWidth: true
@@ -101,6 +115,7 @@ Components.AppDialog {
                     font.pixelSize: 11
                 }
                 Text {
+                    id: authLabel
                     text: qsTrId("text.0883")
                     color: Theme.textMuted
                     font.pixelSize: 12
@@ -109,6 +124,7 @@ Components.AppDialog {
                 Components.AppComboBox {
                     id: authField
                     objectName: "pacsProfileAuth"
+                    Accessible.name: authLabel.text
                     Layout.fillWidth: true
                     model: [qsTrId("text.0756"), qsTrId("text.0884"), qsTrId("text.0885")]
                     enabled: !dialog.pacsController.busy
@@ -116,6 +132,7 @@ Components.AppDialog {
                 }
                 Text {
                     visible: authField.currentIndex === 1
+                    id: usernameLabel
                     text: qsTrId("text.0886")
                     color: Theme.textMuted
                     font.pixelSize: 12
@@ -123,13 +140,16 @@ Components.AppDialog {
                 Components.AppTextField {
                     id: usernameField
                     objectName: "pacsProfileUsername"
+                    Accessible.name: usernameLabel.text
                     visible: authField.currentIndex === 1
                     Layout.fillWidth: true
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
+                    onAccepted: dialog.save()
                 }
                 Text {
                     visible: authField.currentIndex > 0
+                    id: secretLabel
                     text: authField.currentIndex === 1 ? qsTrId("text.0887") : qsTrId("text.0888")
                     color: Theme.textMuted
                     font.pixelSize: 12
@@ -137,12 +157,14 @@ Components.AppDialog {
                 Components.AppTextField {
                     id: secretField
                     objectName: "pacsProfileSecret"
+                    Accessible.name: secretLabel.text
                     visible: authField.currentIndex > 0
                     Layout.fillWidth: true
                     echoMode: TextInput.Password
                     placeholderText: dialog.existingSecret ? qsTrId("text.0889") : qsTrId("text.0890")
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
+                    onAccepted: dialog.save()
                 }
                 Text {
                     visible: authField.currentIndex > 0
@@ -153,6 +175,7 @@ Components.AppDialog {
                     wrapMode: Text.Wrap
                 }
                 Text {
+                    id: timeoutLabel
                     text: qsTrId("text.0892")
                     color: Theme.textMuted
                     font.pixelSize: 12
@@ -161,6 +184,7 @@ Components.AppDialog {
                 Components.AppTextField {
                     id: timeoutField
                     objectName: "pacsProfileTimeout"
+                    Accessible.name: timeoutLabel.text
                     Layout.fillWidth: true
                     validator: IntValidator {
                         bottom: 3
@@ -168,9 +192,17 @@ Components.AppDialog {
                     }
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
+                    onAccepted: dialog.save()
                 }
 
             }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: qsTrId("numeric.formSaveHint")
+            color: Theme.textMuted
+            font.pixelSize: 11
+            wrapMode: Text.Wrap
         }
         Text {
             objectName: "pacsProfileMessage"
@@ -193,7 +225,6 @@ Components.AppDialog {
         Components.AppButton {
             objectName: "pacsCancelProfile"
             text: qsTrId("text.0539")
-            enabled: !dialog.pacsController.busy
             onClicked: dialog.reject()
         }
         Components.AppButton {
@@ -201,10 +232,7 @@ Components.AppDialog {
             text: qsTrId("text.0893")
             actionRole: "primary"
             enabled: !dialog.pacsController.busy
-            onClicked: {
-                if (dialog.pacsController.saveProfile(dialog.values())) dialog.accept()
-                else dialog.saveError = dialog.pacsController.message
-            }
+            onClicked: dialog.save()
         }
     }
 }

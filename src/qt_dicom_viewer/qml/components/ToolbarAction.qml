@@ -102,6 +102,7 @@ Item {
                         iconSize: action.iconSize
                         detailColor: action.iconName === "fusion" ? Theme.fusionAccent : "transparent"
                         iconColor: !button.enabled ? action.disabledIconColor
+                            : action.primaryAction ? Theme.textOnPrimary
                             : action.segmented ? (button.hovered || button.down ? Theme.primaryHover : action.normalIconColor)
                             : action.resetAction && button.hovered ? Theme.resetActionColor
                             : button.down ? Theme.iconActive
@@ -133,6 +134,7 @@ Item {
                     text: action.shortLabel
                     horizontalAlignment: Text.AlignHCenter
                     color: !button.enabled ? Theme.textDisabled
+                        : action.primaryAction ? Theme.textOnPrimary
                         : action.resetAction && button.hovered ? Theme.resetActionColor
                         : button.checked ? Theme.textPrimary : Theme.textSecondary
                     font.pixelSize: Theme.toolbarLabelSize

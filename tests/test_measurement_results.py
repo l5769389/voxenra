@@ -200,10 +200,12 @@ def test_four_d_measurement_navigation_and_phase_reference(qt_app, tmp_path):
         assert pictures[0]['source']['parameters']['phase_identifier'] != pictures[1]['source']['parameters']['phase_identifier']
         images, errors = render_references(pictures, app._series_catalog, Event(), lambda _: None)
         assert len(images) == 2 and not errors
-        peers = {v.viewportId: v.measurementController.frame_key for v in tab.viewports_by_id.values() if v is not view}
         listing.locate(key)
-        wait_until(lambda: view.measurementController.selectedMeasurementId == first)
-        assert peers == {v.viewportId: v.measurementController.frame_key for v in tab.viewports_by_id.values() if v is not view}
+        wait_until(lambda: view.measurementController.selectedMeasurementId == first
+                   and not tab._active_mpr_requests)
+        assert tab.currentPhaseIndex == 0
+        assert all((v._voi_volume.modality_pixels == 10).all()
+                   for v in tab.viewports_by_id.values())
     finally:
         app.shutdown()
 

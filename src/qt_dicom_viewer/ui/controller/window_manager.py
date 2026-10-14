@@ -233,8 +233,8 @@ class WindowManager(QObject):
             return self.app.workspaceDocumentController.requestClose()
         self.cancelDrag()
         with self.changing():
-            for key in list(session._ids):
-                self.registry.closeTab(key)
+            if not self.registry.close_tabs(list(session._ids)):
+                return False
         if window_id != "main":
             QTimer.singleShot(0, lambda: self._retire(window_id))
         self.windowsChanged.emit()
@@ -248,9 +248,10 @@ class WindowManager(QObject):
             window.close()
             return
         with self.changing():
-            for key in list(ids):
-                self.registry.closeTab(key)
+            if not self.registry.close_tabs(ids):
+                return False
         self._close_empty_windows()
+        return True
 
     @Slot(str, result=bool)
     def canMoveTab(self, tab_id):

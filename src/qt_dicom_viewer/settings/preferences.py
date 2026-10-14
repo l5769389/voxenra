@@ -23,7 +23,8 @@ CORNERS = ("topLeft", "topRight", "bottomLeft", "bottomRight")
 METRICS = {"mean": _msg('text.0039'), "std": _msg('text.0040'), "minimum": _msg('text.0041'),
            "maximum": _msg('text.0042'), "area": _msg('text.0043'), "dimensions": _msg('text.0044'), "count": _msg('text.0045')}
 DEFAULTS = {
-    "appearance": {"theme": "dark", "language": "zh-CN", "interfaceScale": 100},
+    "appearance": {"theme": "dark", "language": "zh-CN", "interfaceScale": 100,
+                   "toolLabels": True, "sidebarLabels": True},
     "input": {"reverseWheel": False, "rightButton": "zoom", "middleButton": "selected",
               "windowSensitivity": 1.0, "zoomSensitivity": 1.0},
     "shortcuts": {"bindings": dict(DEFAULT_BINDINGS)},
@@ -73,6 +74,8 @@ def validate_value(section, key, value):
         if not isinstance(value, str) or (value and not re.fullmatch(r"\d+\.\d+\.\d+", value)):
             raise ValueError(_msg("updates.invalidVersion"))
     elif section == "appearance":
+        if key in ("toolLabels", "sidebarLabels") and not isinstance(value, bool):
+            raise ValueError(_msg('text.0050'))
         if key == "interfaceScale" and (type(value) is not int or value not in (100, 115, 130)):
             raise ValueError(_msg('appearance.invalidScale'))
         if key == "theme" and value not in ("dark", "graphite", "light"):

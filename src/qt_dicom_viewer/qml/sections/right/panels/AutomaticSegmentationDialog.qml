@@ -18,7 +18,39 @@ Components.AppDialog {
     title: qsTrId("autoSeg.title")
     titleIcon: "auto-segmentation"
     subtitle: (controller?.targetTitle ?? "") + " · " + qsTrId("autoSeg.fast")
+    readonly property var filteredOrgans: (controller?.organs ?? []).filter(
+        o => (o.name + " " + o.id).toLowerCase().includes(search.text.toLowerCase()))
+    onFilteredOrgansChanged: syncOrgans()
+    Component.onCompleted: syncOrgans()
+    function syncOrgans() {
+        // Selection/status notifications must update existing delegates so a
+        // click or Space does not discard the scroll position or active focus.
+        const rows = filteredOrgans
+        let sameOrder = organModel.count === rows.length
+        for (let i = 0; sameOrder && i < rows.length; ++i)
+            sameOrder = organModel.get(i).organId === rows[i].id
+        if (!sameOrder) {
+            organModel.clear()
+            for (const row of rows)
+                organModel.append({organId: row.id, label: row.name, isSelected: row.selected})
+        } else {
+            for (let i = 0; i < rows.length; ++i) {
+                organModel.setProperty(i, "label", rows[i].name)
+                organModel.setProperty(i, "isSelected", rows[i].selected)
+            }
+        }
+    }
+    ListModel { id: organModel }
     onOpened: { if (controller && controller.hasTarget && !controller.ready && !controller.busy) controller.checkEnvironment() }
+    onClosed: details.close()
+    Connections {
+        target: dialog.controller
+        function onChanged() {
+            // "done" means validated masks have been imported into the target.
+            if (dialog.visible && dialog.controller.state === "done")
+                dialog.accept()
+        }
+    }
     contentItem: ColumnLayout {
         spacing: 10
         RowLayout {
@@ -50,15 +82,17 @@ Components.AppDialog {
             Layout.fillHeight: true
             Layout.minimumHeight: 100
             clip: true
-            model: (dialog.controller?.organs ?? []).filter(o => (o.name + " " + o.id).toLowerCase().includes(search.text.toLowerCase()))
+            model: organModel
             Basic.ScrollBar.vertical: Basic.ScrollBar { }
             delegate: Components.AppCheckBox {
-                required property var modelData
+                required property string organId
+                required property string label
+                required property bool isSelected
                 width: organs.width - 14
-                text: modelData.name
-                checked: modelData.selected
+                text: label
+                checked: isSelected
                 enabled: !(dialog.controller?.busy ?? false)
-                onClicked: dialog.controller.selectOrgan(modelData.id, checked)
+                onClicked: dialog.controller.selectOrgan(organId, checked)
             }
         }
         Basic.ProgressBar {
@@ -67,6 +101,7 @@ Components.AppDialog {
             indeterminate: true
         }
         Text {
+            objectName: "automaticSegmentationMessage"
             Layout.fillWidth: true
             text: dialog.controller?.message ?? ""
             textFormat: Text.PlainText
@@ -99,6 +134,7 @@ Components.AppDialog {
     }
     Components.AppDialog {
         id: details
+        objectName: "automaticSegmentationLogDialog"
         parent: Basic.Overlay.overlay
         width: Math.min(680, (parent?.width ?? 720) - 32)
         height: Math.min(500, (parent?.height ?? 540) - 32)

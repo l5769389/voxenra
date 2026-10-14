@@ -58,6 +58,115 @@ def draw(tab, kind):
     return c.selectedId
 
 
+def test_measurement_location_switches_phase_before_exposing_regions(temporal):
+    from test_workspace_persistence import draw_length
+
+    tab, _, _ = temporal
+    view = tab.activeViewport
+    mid = draw_length(view)
+    frame = view.measurementController.frame_key
+    listing = tab.measurementResults
+    key = listing.items[0]['key']
+    first_region = draw(tab, 'voi')
+    tab.setPhaseIndex(1)
+    second_region = draw(tab, 'voi')
+    controller = tab.voiController
+    assert controller.evaluations[second_region].metrics['mean'] == 20
+
+    listing.locate(key)
+    settle(controller)
+
+    assert tab.currentPhaseIndex == controller.phaseIndex == 0
+    assert view.measurementController.selectedMeasurementId == mid
+    assert view.measurementController.frame_key == frame
+    assert all(v._voi_phase == 0 and (v._voi_volume.modality_pixels == 10).all()
+               for v in tab.viewports_by_id.values())
+    assert [r['id'] for r in controller.current_records] == [first_region]
+    assert controller.evaluations[first_region].metrics['mean'] == 10
+    tab.setPhaseIndex(1)
+    settle(controller)
+    assert [r['id'] for r in controller.current_records] == [second_region]
+    assert controller.evaluations[second_region].metrics['mean'] == 20
+
+
+def test_failed_measurement_phase_location_restores_current_region_source(temporal):
+    from test_workspace_persistence import draw_length
+
+    tab, requests, (worker, workspace) = temporal
+    draw_length(tab.activeViewport)
+    listing = tab.measurementResults
+    key = listing.items[0]['key']
+    tab.setPhaseIndex(1)
+    region = draw(tab, 'voi')
+    controller = tab.voiController
+    workspace.renderRequested.disconnect(worker.handleRenderRequest)
+    first = len(requests)
+    listing.locate(key)
+    assert not controller._phase_ready
+    failed = requests[first]
+    workspace.handleRenderFailure(RenderFailure(request_id=failed.request_id,
+        viewport_id=failed.viewport_id, error=RuntimeError('measurement phase failure')))
+    cursor = first + 1
+    while cursor < len(requests):
+        assert cursor - first < 20, 'Phase recovery did not settle'
+        worker.handleRenderRequest(requests[cursor])
+        cursor += 1
+    settle(controller)
+    assert tab.currentPhaseIndex == controller.phaseIndex == 1
+    assert all((v._voi_volume.modality_pixels == 20).all()
+               for v in tab.viewports_by_id.values())
+    assert controller.evaluations[region].metrics['mean'] == 20
+    assert not tab._active_mpr_requests and not tab._dirty_mpr_viewport_ids
+
+
+def test_locating_displayed_measurement_supersedes_inflight_phase(temporal):
+    from test_workspace_persistence import draw_length
+
+    tab, requests, (worker, workspace) = temporal
+    view = tab.activeViewport
+    mid = draw_length(view)
+    listing = tab.measurementResults
+    key = listing.items[0]['key']
+    workspace.renderRequested.disconnect(worker.handleRenderRequest)
+    first = len(requests)
+    tab.setPhaseIndex(1)
+    # The old phase is still displayed, but locating it must supersede the
+    # outstanding phase change instead of selecting a soon-to-disappear item.
+    listing.locate(key)
+    cursor = first
+    while cursor < len(requests):
+        assert cursor - first < 20, 'Measurement location did not settle'
+        worker.handleRenderRequest(requests[cursor])
+        cursor += 1
+    assert tab.currentPhaseIndex == tab.voiController.phaseIndex == 0
+    assert view.measurementController.selectedMeasurementId == mid
+    assert all((v._voi_volume.modality_pixels == 10).all()
+               for v in tab.viewports_by_id.values())
+
+
+def test_phase_selection_after_measurement_location_wins(temporal):
+    from test_workspace_persistence import draw_length
+
+    tab, requests, (worker, workspace) = temporal
+    draw_length(tab.activeViewport)
+    listing = tab.measurementResults
+    key = listing.items[0]['key']
+    tab.setPhaseIndex(1)
+    workspace.renderRequested.disconnect(worker.handleRenderRequest)
+    first = len(requests)
+    listing.locate(key)
+    tab.setPhaseIndex(2)
+    cursor = first
+    while cursor < len(requests):
+        assert cursor - first < 20, 'Phase selection did not settle'
+        worker.handleRenderRequest(requests[cursor])
+        cursor += 1
+    assert tab.currentPhaseIndex == tab.voiController.phaseIndex == 2
+    assert all((v._voi_volume.modality_pixels == 30).all()
+               for v in tab.viewports_by_id.values())
+    assert not tab._active_mpr_requests and not tab._dirty_mpr_viewport_ids
+
+
 def test_current_phase_playback_scrolls_only_slices_and_modes_switch(temporal):
     tab, requests, _ = temporal
     view = tab.activeViewport

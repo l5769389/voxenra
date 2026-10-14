@@ -49,33 +49,21 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
-        visible: panel.mode === "segmentation" && !!panel.automaticController
-        Layout.fillWidth: true
-        Controls.ToolActionButton {
-            objectName: "automaticSegmentationButton"
-            iconName: "auto-segmentation"
-            tooltipText: qsTrId("autoSeg.title")
-            label: qsTrId("autoSeg.title")
-            onClicked: {
-                panel.automaticController.prepare(panel.tabController)
-                automaticDialog.open()
-            }
-        }
-        Text {
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            visible: panel.automaticController?.busy ?? false
-            text: panel.automaticController?.message ?? ""
-            color: Theme.textSecondary
-            font.pixelSize: 12
-            wrapMode: Text.Wrap
-        }
-    }
     AutomaticSegmentationDialog {
         id: automaticDialog
         controller: panel.automaticController
         settingsController: panel.automaticController ? appController.settingsController : null
+    }
+
+    Text {
+        objectName: "voiCalculationError"
+        Layout.fillWidth: true
+        visible: (panel.controller?.error ?? "") !== ""
+        text: panel.controller?.error ?? ""
+        textFormat: Text.PlainText
+        color: Theme.warningColor
+        wrapMode: Text.Wrap
+        font.pixelSize: 12
     }
 
     GridLayout {
@@ -87,7 +75,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.columnSpan: 2
             // Keep short labels together; wrap only when the translated captions need it.
-            columns: !scope.visible || width >= editMode.singleLineWidth + scope.singleLineWidth + 28 + columnSpacing * 2 ? 3 : 2
+            columns: !scope.visible || width >= editMode.singleLineWidth + scope.singleLineWidth + selectorActions.implicitWidth + columnSpacing * 2 ? 3 : 2
             columnSpacing: 6
             rowSpacing: 6
             EditorCombo {
@@ -123,16 +111,52 @@ ColumnLayout {
                 })
                 onActivated: index => panel.controller.setBrushSphere(index === 1)
             }
-            Controls.ToolActionButton {
-                objectName: "segmentationManualButton"
-                Layout.preferredWidth: 28
-                Layout.preferredHeight: 28
-                minimumButtonWidth: 28
-                iconName: "manual"
-                iconSize: 18
-                label: qsTrId("text.0495")
-                onClicked: panel.manualRequested(panel.mode)
+            RowLayout {
+                id: selectorActions
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 6
+                Controls.ToolActionButton {
+                    objectName: "automaticSegmentationButton"
+                    visible: !!panel.automaticController
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    minimumButtonWidth: 28
+                    iconName: "auto-segmentation"
+                    iconSize: 18
+                    tooltipText: qsTrId("autoSeg.title")
+                    label: qsTrId("autoSeg.title")
+                    onClicked: {
+                        panel.automaticController.prepare(panel.tabController)
+                        automaticDialog.open()
+                    }
+                }
+                Controls.ToolActionButton {
+                    objectName: "segmentationManualButton"
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    minimumButtonWidth: 28
+                    iconName: "manual"
+                    iconSize: 18
+                    label: qsTrId("text.0495")
+                    onClicked: panel.manualRequested(panel.mode)
+                }
             }
+        }
+        Text {
+            objectName: "automaticSegmentationStatus"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.columnSpan: 2
+            visible: !!panel.tabController
+                && panel.automaticController?.targetTab === panel.tabController
+                && panel.automaticController?.targetPhase === (panel.controller?.phaseIndex ?? -1)
+                && ((panel.automaticController?.busy ?? false)
+                    || ["done", "error"].includes(panel.automaticController?.state))
+            text: panel.automaticController?.message ?? ""
+            textFormat: Text.PlainText
+            color: panel.automaticController?.state === "error" ? Theme.dangerColor : Theme.textSecondary
+            font.pixelSize: 12
+            wrapMode: Text.Wrap
         }
         RowLayout {
             Layout.fillWidth: true
@@ -184,6 +208,7 @@ ColumnLayout {
                 }
             }
             Components.AppNumberField {
+                editContext: [panel.controller, panel.mode, panel.controller?.selectedId ?? "", panel.relativeBrush, panel.selected.percent ?? false]
                 objectName: "segmentationBrushDiameter"
                 Layout.minimumWidth: 60
                 Layout.maximumWidth: 60
@@ -509,6 +534,7 @@ ColumnLayout {
                 }
             }
             Components.AppNumberField {
+                    editContext: [panel.controller, panel.mode, panel.controller?.selectedId ?? "", panel.relativeBrush, panel.selected.percent ?? false]
                     objectName: "voiThreshold"
                     Layout.fillWidth: true
                     visible: panel.selected.kind === "segmentation" && !panel.selected.fixedMask
@@ -540,6 +566,7 @@ ColumnLayout {
                     font.pixelSize: 12
                 }
                 Components.AppNumberField {
+                    editContext: [panel.controller, panel.mode, panel.controller?.selectedId ?? "", panel.relativeBrush, panel.selected.percent ?? false]
                     objectName: "voiDiameter"
                     Layout.fillWidth: true
                     Layout.preferredWidth: 96
@@ -576,6 +603,7 @@ ColumnLayout {
                 visible: !panel.selected.fixedMask
                 Layout.fillWidth: true
                 Components.AppNumberField {
+                    editContext: [panel.controller, panel.mode, panel.controller?.selectedId ?? "", panel.relativeBrush, panel.selected.percent ?? false]
                     objectName: "voiDepth"
                     Layout.fillWidth: true
                     compact: true
@@ -598,13 +626,5 @@ ColumnLayout {
                 onMoved: panel.controller.setDepth(value)
             }
         }
-    }
-    Text {
-        Layout.fillWidth: true
-        visible: (panel.controller?.error ?? "") !== ""
-        text: panel.controller?.error ?? ""
-        color: Theme.warningColor
-        wrapMode: Text.Wrap
-        font.pixelSize: 12
     }
 }

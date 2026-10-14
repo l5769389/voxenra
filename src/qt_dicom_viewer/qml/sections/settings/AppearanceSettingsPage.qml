@@ -75,6 +75,7 @@ ColumnLayout {
     }
     SettingsSection {
         sectionKey: "appearance-language"
+        helpText: qsTrId("appearance.packsHint")
         settingsController: page.settingsController
         Layout.fillWidth: true
         title: qsTrId("appearance.language")
@@ -96,7 +97,27 @@ ColumnLayout {
             Components.AppButton { objectName: "openLanguageDirectory"; baseBorderWidth: 1; compact: true; text: qsTrId("appearance.openPacks"); onClicked: page.language.openDirectory() }
             Components.AppButton { objectName: "reloadLanguagePacks"; baseBorderWidth: 1; compact: true; text: qsTrId("appearance.reloadPacks"); onClicked: page.language.reload() }
         }
-        Components.HelpButton { Layout.alignment: Qt.AlignRight; explanation: qsTrId("appearance.packsHint") }
-        Text { objectName: "languagePackStatus"; Layout.fillWidth: true; Layout.minimumHeight: 36; text: page.language.message; color: Theme.textSecondary; font.pixelSize: 12; wrapMode: Text.Wrap }
+        Text { objectName: "languagePackStatus"; Layout.fillWidth: true; visible: text.length > 0; text: page.language.message; color: Theme.textSecondary; font.pixelSize: 12; wrapMode: Text.Wrap }
+    }
+    SettingsSection {
+        sectionKey: "appearance-tools"
+        settingsController: page.settingsController
+        Layout.fillWidth: true
+        title: qsTrId("appearance.tools")
+        Components.AppCheckBox {
+            objectName: "setting-appearance-sidebarLabels"
+            Layout.fillWidth: true
+            text: qsTrId("appearance.sidebarLabels")
+            checked: page.settingsController.values.appearance.sidebarLabels
+            onToggled: page.settingsController.setValue("appearance", "sidebarLabels", checked)
+        }
+        Components.AppCheckBox {
+            objectName: "setting-appearance-toolLabels"
+            Layout.fillWidth: true
+            text: qsTrId("appearance.toolLabels")
+            checked: page.settingsController.values.appearance.toolLabels
+            onToggled: page.settingsController.setValue("appearance", "toolLabels", checked)
+        }
+        Text { Layout.fillWidth: true; wrapMode: Text.Wrap; text: qsTrId("appearance.toolLabelsHint"); color: Theme.textMuted; font.pixelSize: 12 }
     }
 }

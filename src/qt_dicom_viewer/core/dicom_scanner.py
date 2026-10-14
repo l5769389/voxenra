@@ -528,10 +528,14 @@ def _apply_cross_series_group(
         source_keyword,
         series_by_value,
     )
+    # Preserve explicit integer identifiers only when the whole group uses
+    # integers. Mixing them with ordinal IDs for fractional values can collide
+    # (for example 0, 0.5, 2 previously became 0, 2, 2).
+    integer_identifiers = all(isinstance(value, int) for value in source_values)
     phase_identifiers = {
         source_value: (
             source_value
-            if isinstance(source_value, int)
+            if integer_identifiers
             else index
         )
         for index, source_value in enumerate(

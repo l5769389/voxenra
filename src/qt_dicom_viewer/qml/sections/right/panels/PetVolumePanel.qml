@@ -53,6 +53,8 @@ ColumnLayout {
             Layout.fillWidth: true
             Text { text: qsTrId("text.1132"); color: Theme.textMuted }
             Components.AppNumberField {
+                editContext: [panel.controller, panel.controller?.loadState ?? "", panel.controller?.petUnitId ?? ""]
+                enabled: panel.controller?.loadState === "ready"
                 objectName: "fusionVolumePetThreshold"
                 Layout.fillWidth: true
                 numberValue: panel.display.petThreshold

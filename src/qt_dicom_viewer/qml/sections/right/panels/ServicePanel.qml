@@ -48,6 +48,7 @@ Item {
                         iconSize: 24
                         iconName: serviceEntry.modelData.iconName
                         label: serviceEntry.modelData.label
+                        shortLabel: serviceEntry.modelData.action === "service:qa" ? "QA" : label
                         textOnly: serviceEntry.modelData.action === "service:mtf"
                             || serviceEntry.modelData.action === "service:fwhm"
                         enabled: serviceEntry.modelData.action !== "service:qa"

@@ -99,12 +99,35 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 8
                 Layout.preferredWidth: Math.min(180, content.width)
-                visible: !emptyState.pacsController || emptyState.pacsController.localEnabled
+                visible: !emptyState.hasSeries && (!emptyState.pacsController || emptyState.pacsController.localEnabled)
                 enabled: !emptyState.documentBusy
                 text: emptyState.scanning ? qsTrId("text.0620") : qsTrId("home.openImages")
                 iconName: "nav-load-file"
                 iconSize: 18
                 actionRole: "primary"
+                onClicked: emptyState.panelController.openImportDialog()
+            }
+            Components.AppButton {
+                objectName: "homeOpenSelected"
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: 8
+                visible: emptyState.hasSeries
+                enabled: !emptyState.documentBusy && !!emptyState.panelController.activeSeriesUid
+                    && !(emptyState.panelController.activeMrViewErrors?.["2d"] ?? "")
+                text: qsTrId("home.openSelected")
+                iconName: "nav-view-2d"
+                actionRole: "primary"
+                onClicked: emptyState.panelController.openSeriesView(emptyState.panelController.activeSeriesUid, "2d")
+            }
+            Components.AppButton {
+                objectName: "homeContinueImport"
+                Layout.alignment: Qt.AlignHCenter
+                visible: emptyState.hasSeries && (!emptyState.pacsController || emptyState.pacsController.localEnabled)
+                enabled: !emptyState.documentBusy
+                text: qsTrId("home.continueImport")
+                iconName: "nav-load-file"
+                normalColor: "transparent"
+                baseBorderWidth: 1
                 onClicked: emptyState.panelController.openImportDialog()
             }
             GridLayout {

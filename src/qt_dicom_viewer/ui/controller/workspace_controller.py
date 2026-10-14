@@ -1,6 +1,7 @@
 from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 import logging
+from dataclasses import replace
 
 from PySide6.QtCore import QObject, Slot, Property, Signal
 
@@ -56,6 +57,7 @@ class WorkspaceController(QObject):
         self._image_provider = image_provider
         self._tag_read_service = TagReadService(self)
         self._window_manager = None
+        self._close_prompt_active = False
 
     @Slot()
     def openSettings(self):
@@ -96,8 +98,68 @@ class WorkspaceController(QObject):
             self.tabsChanged.emit()
         self.activateTabId(tab_id)
 
-    @Slot(str)
+    @Slot(str, result=bool)
     def closeTab(self, tab_id: str):
+        return self.close_tabs([tab_id])
+
+    def close_tabs(self, tab_ids):
+        """Confirm the entire operation before changing any tab or recovery state."""
+        if self._close_prompt_active:
+            return False
+        tab_ids = list(dict.fromkeys(key for key in tab_ids if key in self._tab_dict))
+        if any(self._has_editing_work(self._tab_dict[key]) for key in tab_ids):
+            self._close_prompt_active = True
+            try:
+                if not self._confirm_close_edits(tab_ids[0]):
+                    return False
+            finally:
+                self._close_prompt_active = False
+        for key in tab_ids:
+            self._close_tab(key)
+        return True
+
+    @staticmethod
+    def _has_editing_work(tab):
+        from qt_dicom_viewer.ui.workspace_snapshot import editable_state
+        if tab.tab_config.tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL, TabType.TAG):
+            return False
+        # Restoring or saving resets history, so committed content is the primary
+        # check. History also protects deleted work which can still be undone.
+        history = getattr(tab, "_edit_history", None)
+        if history is not None and (history.canUndo or history.canRedo):
+            return True
+        if any(WorkspaceController._has_editing_work(group) for group in getattr(tab, "groups", ())):
+            return True
+        # Analysis results and their committed ROIs are persisted separately
+        # from edit history; default settings alone are not editing work.
+        for view in tab.viewports_by_id.values():
+            for name in ("_mtf_controller", "_fwhm_controller", "_qa_controller"):
+                analysis = getattr(view, name, None)
+                if analysis is not None:
+                    saved = analysis.persistent_state()
+                    if saved.get("records") or saved.get("roi", {}).get("measurements"):
+                        return True
+        state = editable_state(tab)
+        if state.get("voi") or getattr(tab, "_registration_changed", False):
+            return True
+        return any(view.get("measurements") or view.get("annotations")
+                   or view.get("crop") is not None or view.get("bed") is not None
+                   for view in state["views"].values())
+
+    def _confirm_close_edits(self, tab_id):
+        from qt_dicom_viewer.ui.dialogs.tab_close_dialog import TabCloseDialog
+        appearance = getattr(self.parent(), "appearanceController", None)
+        manager = self._window_manager
+        session = manager.owner(tab_id) if manager is not None else None
+        owner = manager.windows.get(session.windowId) if session is not None else None
+        dialog = TabCloseDialog(appearance, owner)
+        try:
+            return dialog.exec() == TabCloseDialog.Close
+        finally:
+            dialog.deleteLater()
+
+    def _close_tab(self, tab_id: str):
+        """Dispose an approved close, or internal restore cleanup, without prompting."""
         if tab_id not in self._tab_dict:
             return
         tab = self._tab_dict.pop(tab_id)
@@ -233,7 +295,8 @@ class WorkspaceController(QObject):
     @Slot(str, str, str)
     def createTab(self,series_uid: str,
                         tab_label: str,
-                        tab_type: TabType
+                        tab_type: TabType,
+                        *, phase_identifiers=None,
                    ):
         try:
             tab_type = TabType(tab_type)
@@ -246,6 +309,7 @@ class WorkspaceController(QObject):
             series_uid,
             tab_label,
             tab_type,
+            phase_identifiers=phase_identifiers,
         )
         if created and tab is not None:
             if tab.tagController is not None:
@@ -258,6 +322,7 @@ class WorkspaceController(QObject):
         series_uid: str,
         tab_label: str,
         tab_type: TabType,
+        *, phase_identifiers=None,
     ) -> tuple[TabController | None, bool]:
         tab_id = f'{series_uid}_{tab_type}'
         if tab_id == self._active_tab_id:
@@ -288,6 +353,15 @@ class WorkspaceController(QObject):
                     series_uid,
                 )
                 return None, False
+
+            if phase_identifiers is not None:
+                identifiers = tuple(phase_identifiers)
+                if (tab_type != TabType.FOUR_D or len(identifiers) < 2
+                        or any(type(value) is not int for value in identifiers)
+                        or len(set(identifiers)) != len(identifiers)
+                        or not set(identifiers) <= set(series_display_meta.phase_identifiers)):
+                    raise ValueError(_msg('results.changedSource'))
+                series_display_meta = replace(series_display_meta, phase_identifiers=identifiers)
 
             tab_config = TabConfig(
                 tab_id = tab_id,

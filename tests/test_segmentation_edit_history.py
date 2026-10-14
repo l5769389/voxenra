@@ -70,8 +70,9 @@ def test_failed_snapshot_preserves_redo_and_current_history(setup_voi, history, 
         raise ValueError('document limit')
     monkeypatch.setattr(module, 'dumps', fail)
     draw(c, view)
-    with pytest.raises(ValueError, match='document limit'):
-        history.capture()
+    assert not history.capture()
+    assert 'document limit' in history.error
+    assert not history.canUndo and not history.canRedo
     assert history._current == current and history._undo == undo and history._redo == redo
 
 

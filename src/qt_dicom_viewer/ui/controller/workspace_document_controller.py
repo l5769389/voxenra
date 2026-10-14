@@ -14,7 +14,7 @@ from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer, QStandardPat
 from qt_dicom_viewer import __version__
 from qt_dicom_viewer.core.local_import import LocalImportStore, ImportCancelled
 from qt_dicom_viewer.core.workspace_document import (
-    FORMAT, VERSION, source_manifest, read_document, load_referenced_series)
+    FORMAT, VERSION, source_manifest, read_document, validate_document, load_referenced_series)
 from qt_dicom_viewer.core.workspace_state import atomic_write, dumps
 from qt_dicom_viewer.model import TabType
 from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot, apply_fusion_source
@@ -348,6 +348,7 @@ class WorkspaceDocumentController(QObject):
 
         def save():
             document["series"] = [source_manifest(record, resolver, path) for record in records]
+            validate_document(document)
             atomic_write(path, dumps(document))
             return {"kind": "save", "path": str(path), "recovery": recovery}
         self._submit(save, "save")
@@ -503,7 +504,14 @@ class WorkspaceDocumentController(QObject):
 
     @Slot()
     def skipMissing(self):
-        if self._pending is not None and self._pending["snapshot"] is not None:
+        if self._busy or self._closed:
+            return
+        if self.panel.scanning or self.app.pacsController.busy:
+            self._message, self._error = (_msg("import.waitForLocal") if self.panel.scanning
+                                          else _msg('text.0419')), True
+            self.changed.emit()
+            return
+        if self._pending is not None:
             self._begin_restore()
 
     def _begin_restore(self):
@@ -512,12 +520,14 @@ class WorkspaceDocumentController(QObject):
         self._error = False
         # Parsing and UID/geometry checks finish before existing tabs are closed.
         for tab_id in list(self.workspace._tab_dict):
-            self.workspace.closeTab(tab_id)
+            self.workspace._close_tab(tab_id)
         self.app.windowManager.restore_to_main()
         self._wired.clear()
         snapshot = payload["snapshot"]
-        if snapshot is not None:
-            self.app._series_catalog.update(snapshot)
+        # A workspace replaces the complete registry, including records retained
+        # for previously open or detached tabs. Incremental imports may merge
+        # only against sources belonging to the newly restored workspace.
+        self.app._series_catalog.replace(snapshot)
         old_store = self.panel._import_store
         self.panel._import_store = payload["store"]
         self._retired_stores = getattr(self, "_retired_stores", []) + [old_store]
@@ -575,7 +585,7 @@ class WorkspaceDocumentController(QObject):
                         return
                     self.workspace.createFusionVolumeTab(tab)
                     volume_tab = self.workspace.activeTab
-                    self.workspace.closeTab(tab.tab_config.tab_id)
+                    self.workspace._close_tab(tab.tab_config.tab_id)
                     self._loading_tab = (index, record, volume_tab, time.monotonic(), False, False)
                     return
                 if not applied:
@@ -609,7 +619,8 @@ class WorkspaceDocumentController(QObject):
             elif kind == "petctfusion" or fusion_volume:
                 self.workspace.createFusionTab(*uids)
             else:
-                self.workspace.createTab(uids[0], record["label"], kind)
+                self.workspace.createTab(uids[0], record["label"], kind,
+                                         phase_identifiers=record.get("phaseIdentifiers"))
             tab = self.workspace.activeTab
             if tab is None:
                 raise ValueError(_msg('text.0430'))

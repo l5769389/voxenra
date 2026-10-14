@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../components" as Components
 import "../../theme"
+import "ToolLabels.js" as ToolLabels
 
 Rectangle {
     id: toolBar
@@ -12,6 +13,8 @@ Rectangle {
     readonly property var volumeController: viewportController && viewportController.viewportType === "volume" ? viewportController : null
     property bool playbackActive: false
     property var tabController: null
+    readonly property bool showToolLabels: toolController?.settingsController?.values.appearance.toolLabels ?? false
+    readonly property real toolHeight: showToolLabels ? 54 : 36
     readonly property var tools: (toolController?.tools ?? []).filter(t =>
         t.toolType !== "service" || !viewportController?.workspaceTab?.twoDLayout || viewportController.viewportType === "stack")
     // Resolve by explicit priority order; catalog insertion must not reshuffle these rows.
@@ -42,9 +45,12 @@ Rectangle {
 
 
         buttonObjectName: "primaryTool-" + modelData.toolType
+        showLabel: toolBar.showToolLabels
+        shortLabel: running ? qsTrId("tools.short.stop")
+            : ToolLabels.label(modelData, toolBar.viewportController?.displayMappingEditor, true)
         label: modelData.toolType === "reset" && toolBar.volumeController
             ? qsTrId("mpr.tools.resetVolume") : running
-            ? qsTrId("playback.stop") : modelData.label
+            ? qsTrId("playback.stop") : ToolLabels.label(modelData, toolBar.viewportController?.displayMappingEditor, false)
         iconName: running ? (playMode === "phase" ? "cine-4d-stop" : "cine-stop") : modelData.iconName
         iconSize: Theme.toolbarIconSize
         placeholder: modelData.available === false
@@ -89,7 +95,7 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: 36
+                    Layout.preferredHeight: toolBar.toolHeight
                 }
             }
         }
@@ -102,14 +108,16 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     Layout.preferredWidth: 1
-                    Layout.preferredHeight: 36
+                    Layout.preferredHeight: toolBar.toolHeight
                 }
             }
             Components.ToolbarAction {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 1
-                Layout.preferredHeight: 36
+                Layout.preferredHeight: toolBar.toolHeight
+                showLabel: toolBar.showToolLabels
+                shortLabel: qsTrId("tools.short.more")
                 buttonObjectName: "primaryToolsMore"
                 iconName: "more"
                 iconSize: Theme.toolbarIconSize
@@ -134,7 +142,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: toolBar.toolHeight
                     }
                 }
             }
@@ -147,7 +155,7 @@ Rectangle {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
                         Layout.preferredWidth: 1
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: toolBar.toolHeight
                     }
                 }
             }

@@ -56,7 +56,7 @@ class TextAnnotationController(QObject):
             self.editorChanged.emit()
         self.annotationsChanged.emit()
 
-    def set_frame(self, series_uid: str, frame: FrameDisplayMeta) -> None:
+    def set_frame(self, series_uid: str, frame: FrameDisplayMeta, *, source_context: tuple = ()) -> None:
         geometry = frame.geometry
         pose = (
             geometry.pixel_spacing.row,
@@ -77,6 +77,10 @@ class TextAnnotationController(QObject):
                 for value in pose
             ),
         )
+        # Reconstructed phases and projections can share both geometry and SOP.
+        # Preserve the existing key for ordinary 2D workspace annotations.
+        if source_context:
+            frame_key += (source_context,)
         if frame_key == self._frame_key and frame.slice_index == self._current_slice:
             return
         self.cancelDraft()

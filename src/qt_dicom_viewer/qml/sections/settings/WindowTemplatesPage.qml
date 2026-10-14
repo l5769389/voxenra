@@ -9,6 +9,18 @@ ColumnLayout {
     property string editingId: ""
     spacing: 24
     function clearEditor() { editingId = ""; name.text = ""; ww.text = "400"; wl.text = "40" }
+    function saveEditor() {
+        if (settingsController.saveWindowTemplate(editingId, name.text,
+                ww.text.trim() ? Number(ww.text) : NaN,
+                wl.text.trim() ? Number(wl.text) : NaN)) clearEditor()
+    }
+    Connections {
+        target: root.settingsController
+        function onChanged() {
+            if (root.editingId && !root.settingsController.windowTemplates.some(item => item.presetId === root.editingId))
+                root.clearEditor()
+        }
+    }
     SettingsSection {
         Layout.fillWidth: true
         title: qsTrId("windowFile.title")
@@ -38,8 +50,8 @@ ColumnLayout {
         RowLayout {
             Layout.fillWidth: true; spacing: 12
             Text { Layout.fillWidth: true; text: qsTrId("text.0528"); color: Theme.textSubtle; font.pixelSize: 11 }
-            Text { Layout.minimumWidth: 78; Layout.maximumWidth: 78; Layout.fillWidth: true; objectName: "windowHeaderWW"; text: qsTrId("text.0780"); horizontalAlignment: Text.AlignRight; color: Theme.textSubtle; font.pixelSize: 11 }
-            Text { Layout.minimumWidth: 78; Layout.maximumWidth: 78; Layout.fillWidth: true; objectName: "windowHeaderWL"; text: qsTrId("text.0781"); horizontalAlignment: Text.AlignRight; color: Theme.textSubtle; font.pixelSize: 11 }
+            Text { Layout.minimumWidth: 78; Layout.maximumWidth: 78; Layout.fillWidth: true; objectName: "windowHeaderWW"; wrapMode: Text.Wrap; text: qsTrId("text.0780"); horizontalAlignment: Text.AlignRight; color: Theme.textSubtle; font.pixelSize: 11 }
+            Text { Layout.minimumWidth: 78; Layout.maximumWidth: 78; Layout.fillWidth: true; objectName: "windowHeaderWL"; wrapMode: Text.Wrap; text: qsTrId("text.0781"); horizontalAlignment: Text.AlignRight; color: Theme.textSubtle; font.pixelSize: 11 }
             Item { Layout.minimumWidth: 96; Layout.maximumWidth: 96; Layout.preferredHeight: 1 }
         }
         Repeater {
@@ -97,18 +109,36 @@ ColumnLayout {
             ColumnLayout {
                 Layout.fillWidth: true
                 Text { text: qsTrId("text.0528"); color: Theme.textMuted; font.pixelSize: 11 }
-                Components.AppTextField { id: name; objectName: "windowTemplateName"; Layout.fillWidth: true; placeholderText: qsTrId("text.0786"); maximumLength: 40 }
+                Components.AppTextField {
+                    id: name; objectName: "windowTemplateName"; Layout.fillWidth: true
+                    placeholderText: qsTrId("text.0786"); maximumLength: 40
+                    onAccepted: root.saveEditor()
+                    Keys.onEscapePressed: event => { root.clearEditor(); event.accepted = true }
+                }
             }
             ColumnLayout {
                 Layout.fillWidth: true; Layout.minimumWidth: root.width >= 420 ? 100 : 0; Layout.maximumWidth: root.width >= 420 ? 100 : Infinity
                 Text { text: qsTrId("text.0780"); color: Theme.textMuted; font.pixelSize: 11 }
-                Components.AppTextField { id: ww; objectName: "windowTemplateWidth"; Layout.fillWidth: true; text: "400" }
+                Components.AppTextField {
+                    id: ww; objectName: "windowTemplateWidth"; Layout.fillWidth: true; text: "400"
+                    onAccepted: root.saveEditor()
+                    Keys.onEscapePressed: event => { root.clearEditor(); event.accepted = true }
+                }
             }
             ColumnLayout {
                 Layout.fillWidth: true; Layout.minimumWidth: root.width >= 420 ? 100 : 0; Layout.maximumWidth: root.width >= 420 ? 100 : Infinity
                 Text { text: qsTrId("text.0781"); color: Theme.textMuted; font.pixelSize: 11 }
-                Components.AppTextField { id: wl; objectName: "windowTemplateCenter"; Layout.fillWidth: true; text: "40" }
+                Components.AppTextField {
+                    id: wl; objectName: "windowTemplateCenter"; Layout.fillWidth: true; text: "40"
+                    onAccepted: root.saveEditor()
+                    Keys.onEscapePressed: event => { root.clearEditor(); event.accepted = true }
+                }
             }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: qsTrId("numeric.saveHint")
+            color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.Wrap
         }
         RowLayout {
             Layout.fillWidth: true
@@ -124,9 +154,7 @@ ColumnLayout {
                 objectName: "saveWindowTemplate"
                 actionRole: "primary"
                 text: root.editingId ? qsTrId("text.0787") : qsTrId("text.0788")
-                onClicked: {
-                    if (root.settingsController.saveWindowTemplate(root.editingId, name.text, ww.text.trim() ? Number(ww.text) : NaN, wl.text.trim() ? Number(wl.text) : NaN)) root.clearEditor()
-                }
+                onClicked: root.saveEditor()
             }
         }
     }

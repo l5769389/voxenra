@@ -74,6 +74,46 @@ def make_archive(root, series, kind):
     return target
 
 
+@pytest.mark.parametrize('single_catalog_record', [False, True])
+@pytest.mark.parametrize('phase_index', [0, 1])
+def test_reimport_single_phase_preserves_cross_series_four_d(tmp_path, single_catalog_record, phase_index):
+    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
+    from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
+    from test_four_d import _cross_series_four_d
+
+    records = _cross_series_four_d(tmp_path)
+    base = records[:1] if single_catalog_record else records
+    phase = records[phase_index]
+    incoming_folder = tmp_path / 'incoming'
+    incoming_folder.mkdir()
+    files = []
+    for instance in phase.instances:
+        path = incoming_folder / instance.path.name
+        path.write_bytes(instance.path.read_bytes())
+        files.append(path)
+    incoming = list(DicomFolderScanner().scan_files(files, folder=incoming_folder))[-1]
+    worker = DicomScanWorker(files, base_series={r.series_instance_uid: r for r in base})
+    try:
+        merged = worker._merge_snapshot(incoming)
+        assert len(merged.series) == 3
+        assert merged.dicom_file_count == 2
+        assert merged.existing_file_count == 2
+        by_uid = {r.series_instance_uid: r for r in merged.series}
+        for index, previous in enumerate(records):
+            restored = by_uid[previous.series_instance_uid]
+            assert restored.supports_four_d
+            assert restored.phase_identifiers == (0, 1, 2)
+            assert restored.initial_phase_identifier == index
+            assert restored.series_description == previous.series_description
+            assert restored.series_number == previous.series_number
+            assert restored.dicom_file_count == 2
+            assert [len(p.instances) for p in restored.phases] == [2, 2, 2]
+            updated_phase = restored.phase_by_identifier(phase_index)
+            assert all(i.path.parent == incoming_folder for i in updated_phase.instances)
+    finally:
+        worker.store.cleanup()
+
+
 @pytest.mark.parametrize(
     "kind",
     ["rar", "zip", "7z", "tar", "tar.gz", "tar.bz2", "tar.xz", "gz", "bz2", "xz"],

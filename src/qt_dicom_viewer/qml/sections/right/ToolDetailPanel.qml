@@ -252,6 +252,8 @@ Rectangle {
             readonly property bool volumeWindow: detailPanel.viewportController?.viewportType === "volume"
             description: volumeWindow ? qsTrId("volume.windowHint") : detailPanel.viewportController?.overlayInfo?.supplementalColor ? qsTrId("ct.paletteHint") : ""
             settingsController: detailPanel.toolController?.settingsController ?? null
+            editContext: detailPanel.viewportController
+            contextReady: !!detailPanel.viewportController && (detailPanel.viewportController.loadState === undefined || detailPanel.viewportController.loadState === "ready")
             currentCenter: detailPanel.viewportController?.windowCenter ?? NaN
             currentWidth: detailPanel.viewportController?.windowWidth ?? NaN
             allowEditing: detailPanel.viewportController?.isPetViewport !== true

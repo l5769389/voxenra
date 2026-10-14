@@ -81,6 +81,7 @@ ColumnLayout {
                 Layout.preferredWidth: 1
                 iconName: modelData.iconName
                 label: modelData.label
+                shortLabel: modelData.shortLabel
 
                 onClicked: {
                     measurePanel.actionTriggered(modelData.action);

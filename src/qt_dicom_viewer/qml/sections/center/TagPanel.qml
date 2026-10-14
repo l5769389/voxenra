@@ -138,23 +138,26 @@ Rectangle {
                             }
                         }
                         Item { Layout.fillWidth: true }
-                        Field {
+                        Components.AppNumberField {
                             id: pageInput
                             objectName: "tagPageInput"
                             Layout.preferredWidth: 64
                             implicitHeight: 34
                             placeholderText: qsTrId("text.0902")
-                            text: String(panel.tagController.currentPage)
+                            numberValue: panel.tagController.currentPage
+                            editContext: panel.tagController
+                            // The controller reports an out-of-range page with its existing error text.
+                            minimum: 0; maximum: 2147483647; decimals: 0
                             enabled: panel.tagController.pageCount > 0
                             inputMethodHints: Qt.ImhDigitsOnly
-                            onAccepted: panel.tagController.jumpToPage(text)
+                            onEdited: value => panel.tagController.jumpToPage(String(value))
                         }
                         Components.AppButton {
                             objectName: "tagJump"
                             text: qsTrId("text.0903")
                             compact: true
                             enabled: panel.tagController.pageCount > 0
-                            onClicked: panel.tagController.jumpToPage(pageInput.text)
+                            onClicked: pageInput.commit()
                         }
                     }
                 }

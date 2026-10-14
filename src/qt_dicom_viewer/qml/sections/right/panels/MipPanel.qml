@@ -185,6 +185,7 @@ ColumnLayout {
                     radius: 16
 
                     Components.AppNumberField {
+                        editContext: mipPanel.toolController
                         id: thicknessInput
                         objectName: "mipThicknessInput-" + axisSection.modelData.plane
                         anchors.fill: parent

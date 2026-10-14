@@ -32,7 +32,7 @@ def fusion_scene(qt_app, paired_series):
     workspace.shutdown()
 
 
-def test_volume_tab_uses_committed_volumes_and_survives_source_close(fusion_scene):
+def test_volume_tab_uses_committed_volumes_and_survives_source_close(fusion_scene, monkeypatch):
     workspace, source, renderer, requests = fusion_scene
     initial_requests = len(requests)
     source.openVolumeView()
@@ -62,7 +62,10 @@ def test_volume_tab_uses_committed_volumes_and_survives_source_close(fusion_scen
     source.handleRenderResult(renderer.render(requests[-1]))
     assert view.petUnit == "kBq/ml"
     assert view.petThreshold == pytest.approx(view.petUpper*.1)
-    workspace.closeTab(source._tab_config.tab_id)
+    from PySide6.QtWidgets import QMessageBox
+    with monkeypatch.context() as closing:
+        closing.setattr(QMessageBox, 'exec', lambda self: QMessageBox.Close)
+        workspace.closeTab(source._tab_config.tab_id)
     assert view.source_workspace is None and "快照" in view.sceneLabel
     snapshot = view.scene
     source.snapshotCommitted.emit(initial)

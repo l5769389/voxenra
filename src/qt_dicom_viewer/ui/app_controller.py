@@ -12,6 +12,7 @@ from qt_dicom_viewer.service.render_serivce import RenderService
 from qt_dicom_viewer.ui.controller.panel_controller import  PanelController
 from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
 from qt_dicom_viewer.application.series_catalog import SeriesCatalog
+from qt_dicom_viewer.i18n import message as _msg
 
 
 class AppController(QObject):
@@ -48,11 +49,14 @@ class AppController(QObject):
         self._language_controller = LanguageController(self._settings_controller, self, root=language_root)
         self._series_export_controller = SeriesExportController(self._series_catalog, self._settings_controller, self)
         self._workspace_controller = WorkspaceController(self._series_catalog,self._image_provider,parent= self)
-        self._panel_controller = PanelController(parent=self, series_catalog=self._series_catalog, image_provider=image_provider)
+        self._panel_controller = PanelController(parent=self, series_catalog=self._series_catalog, image_provider=image_provider,
+            import_blocker=lambda: self._series_import_blocker("local"))
         from qt_dicom_viewer.ui.controller.window_manager import WindowManager
         self._window_manager = WindowManager(self, self._workspace_controller)
         self._export_controller = self._window_manager.mainWorkspace.exportController
-        self._pacs_controller = PacsController(self, config_path=pacs_config_path, import_root=pacs_import_root)
+        self._pacs_controller = PacsController(self, config_path=pacs_config_path, import_root=pacs_import_root,
+            series_catalog=self._series_catalog, import_blocker=lambda: self._series_import_blocker("pacs"))
+        self._pacs_controller.importStarted.connect(self._panel_controller.preparePacsImport)
         self._pacs_controller.imported.connect(self._panel_controller.acceptPacsImport)
         self._volume_manager = VolumeManager()
         self.render_service = RenderService(self._series_catalog, self._volume_manager, self)
@@ -73,6 +77,17 @@ class AppController(QObject):
         # The workspace document event filter handles save/discard/cancel for all
         # windows before accepting this normal Qt quit request.
         self._update_controller.exitRequested.connect(QCoreApplication.quit)
+
+    def _series_import_blocker(self, source):
+        document = getattr(self, "_workspace_document_controller", None)
+        if document is not None and document.restoring:
+            return _msg("import.waitForWorkspace")
+        if source == "pacs" and self._panel_controller.scanning:
+            return _msg("import.waitForLocal")
+        pacs = getattr(self, "_pacs_controller", None)
+        if source == "local" and pacs is not None and pacs.busy and pacs.operation == "import":
+            return _msg("import.waitForPacs")
+        return ""
 
 
     @Slot(QObject)

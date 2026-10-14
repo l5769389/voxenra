@@ -12,6 +12,7 @@ ColumnLayout {
         settingsController: page.settingsController
         Layout.fillWidth: true
         title: qsTrId("privacy.title")
+        helpText: qsTrId("privacy.hint")
         Components.AppCheckBox {
             objectName: "privacyHideIdentity"
             Layout.fillWidth: true
@@ -19,13 +20,13 @@ ColumnLayout {
             checked: page.settingsController.values.privacy.hideIdentity
             onToggled: page.settingsController.setValue("privacy", "hideIdentity", checked)
         }
-        Components.HelpButton { Layout.alignment: Qt.AlignRight; explanation: qsTrId("privacy.hint") }
     }
     SettingsSection {
         sectionKey: "privacy-recent"
         settingsController: page.settingsController
         Layout.fillWidth: true
         title: qsTrId("privacy.recent")
+        helpText: qsTrId("privacy.recentHint")
         RowLayout {
             Layout.fillWidth: true
             Components.AppButton {
@@ -35,7 +36,6 @@ ColumnLayout {
                 onClicked: appController.workspaceDocumentController.clearRecent()
             }
             Item { Layout.fillWidth: true }
-            Components.HelpButton { explanation: qsTrId("privacy.recentHint") }
         }
     }
 }

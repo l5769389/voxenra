@@ -277,11 +277,35 @@ def test_real_pet_workspace(qt_app, paired_series, tmp_path, fusion):
                              if x.objectName() == "registrationParameter-0")
             parameter.forceActiveFocus()
             QMetaObject.invokeMethod(parameter, "selectAll")
+            original_parameters = tab.registrationParameters
+            numeric_requests = []
+            workspace.renderRequested.connect(numeric_requests.append)
             QTest.keyClick(view, "3")
-            assert tab.registrationParameters[0] == pytest.approx(3)
+            assert tab.registrationParameters == original_parameters
+            tab.settingsChanged.emit()
+            assert parameter.property("text") == "3"
+            second = next(x for x in _visual_children(view.rootObject())
+                          if x.objectName() == "registrationParameter-1")
+            second.forceActiveFocus()
+            QMetaObject.invokeMethod(second, "selectAll")
+            QTest.keyClick(view, "4")
+            assert tab.registrationParameters == original_parameters
+            QTest.keyClick(view, Qt.Key_Return)
+            assert tab.registrationParameters[:2] == pytest.approx([3, 4])
+            assert len(numeric_requests) == 1
+            assert not numeric_requests[0].preview
             wait_until(lambda: not tab._requested.preview and tab._committed_request == tab._requested)
+            parameter.forceActiveFocus()
+            QMetaObject.invokeMethod(parameter, "selectAll")
+            QTest.keyClick(view, "5")
+            second.forceActiveFocus()
+            QMetaObject.invokeMethod(second, "selectAll")
+            QTest.keyClick(view, "6")
             QTest.keyClick(view, Qt.Key_Escape)
-            assert not tab.registrationActive
+            assert parameter.property("text") == "3" and second.property("text") == "4"
+            assert tab.registrationParameters[:2] == pytest.approx([3, 4])
+            assert len(numeric_requests) == 1
+            assert tab.registrationActive  # Escape cancels numeric drafts, keeps the tool active.
             tab.setPlane("coronal")
             wait_until(lambda: tab._committed_request == tab._requested)
         if fusion:

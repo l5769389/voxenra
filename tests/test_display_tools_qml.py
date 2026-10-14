@@ -79,7 +79,7 @@ def test_display_tool_panels_change_live_viewport_state(display_panel):
         if item.objectName().startswith("primaryTool-") and item.isVisible()
     ]
     assert primary_buttons
-    assert {button.height() for button in primary_buttons} == {36.0}
+    assert all(button.height() >= 36 for button in primary_buttons)
 
     _click(view, _find(root, "primaryTool-annotate"))
     _find(root, "annotatePanel")
@@ -178,8 +178,11 @@ def test_viewport_drag_renders_arrow_label_scale_and_color_overlays(
 
 
 @pytest.mark.parametrize("width", [220, 250, 420])
-def test_primary_toolbar_spacing_keeps_detail_space(display_panel, width, tmp_path):
+@pytest.mark.parametrize("show_labels", [False, True])
+def test_primary_toolbar_spacing_keeps_detail_space(display_panel, width, show_labels, tmp_path):
     view, controller, warnings = display_panel
+    controller._tool_controller.settingsController.setValue(
+        "appearance", "toolLabels", show_labels)
     view.resize(width, 600)
     QTest.qWait(60)
     buttons = sorted((item for item in _visual_children(view.rootObject())
@@ -189,16 +192,16 @@ def test_primary_toolbar_spacing_keeps_detail_space(display_panel, width, tmp_pa
     rows = {}
     for button in buttons:
         pos = button.mapToScene(QPointF())
-        assert button.height() == 36 and button.width() >= 36
+        assert button.height() >= 36 and button.width() >= 36
         assert 0 <= pos.x() < pos.x() + button.width() <= width
         rows.setdefault(pos.y(), []).append(button)
     for row in rows.values():
         for left, right in zip(row, row[1:]):
             assert right.mapToScene(QPointF()).x() - left.mapToScene(QPointF(left.width(), 0)).x() == pytest.approx(2)
     tops = sorted(rows)
-    assert all(b - a == 40 for a, b in zip(tops, tops[1:]))
+    assert all(b - a == rows[a][0].height() + 4 for a, b in zip(tops, tops[1:]))
     detail = _find(view.rootObject(), "toolDetailFlickable")
-    assert detail.mapToScene(QPointF()).y() == tops[-1] + 36 + 6
-    assert detail.height() >= 600 - len(rows) * 40 - 64
-    assert view.grabWindow().save(str(tmp_path / f"compact-toolbar-{width}.png"))
+    assert detail.mapToScene(QPointF()).y() == tops[-1] + rows[tops[-1]][0].height() + 6
+    assert detail.height() >= 400
+    assert view.grabWindow().save(str(tmp_path / f"compact-toolbar-{width}-{show_labels}.png"))
     assert not warnings, warnings

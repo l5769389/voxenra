@@ -135,6 +135,10 @@ class WaterQaController(QObject):
     def status(self):
         return self._status
 
+    @Property(str, notify=stateChanged)
+    def frameToken(self):
+        return repr(self._key) if self._frame is not None and self._key is not None else ""
+
     @_TextProperty(str, notify=_i18n_statusText, notify_name='_i18n_statusText', source_notify='stateChanged')
     def statusText(self):
         if not self.available:

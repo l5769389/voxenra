@@ -313,3 +313,20 @@ def test_roi_rejects_oblique_and_projection_provenance(source):
         roi_to_mask(volume, roi.measurement, (*roi.frame[:5], tuple(pose)))
     with pytest.raises(ValueError):
         roi_to_mask(volume, roi.measurement, (*roi.frame, ("max", 10)))
+
+
+def test_roi_phase_context_uses_source_identifier_and_preserves_workspace_index(source):
+    series, volume = source
+    roi = freehand(series, volume)
+    record, evaluation = roi_to_mask(volume, roi.measurement,
+        (*roi.frame, ("phase", 7)), phase=1, source_phase_identifier=7)
+    assert record["phase"] == 1
+    assert evaluation.metrics["count"] == roi.measurement.metrics.pixel_count
+
+
+@pytest.mark.parametrize('context', [("phase", 8), ("projection", "max", 10, "phase", 7), ("phase", 7, "unknown")])
+def test_roi_rejects_stale_or_projected_phase_context(source, context):
+    series, volume = source
+    roi = freehand(series, volume)
+    with pytest.raises(ValueError):
+        roi_to_mask(volume, roi.measurement, (*roi.frame, context), phase=1, source_phase_identifier=7)

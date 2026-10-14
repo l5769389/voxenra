@@ -258,6 +258,9 @@ class DicomFolderScanSnapshot:
     skipped_file_count: int
     series: list[DicomSeriesRecord]
     existing_file_count: int = 0
+    # Display-series UIDs actually read in this batch, before catalog/phase
+    # expansion. None preserves the semantics of raw scanner/legacy snapshots.
+    incoming_series_uids: frozenset[str] | None = None
 
 @dataclass(frozen=True, slots=True)
 class SeriesDisplayMeta:

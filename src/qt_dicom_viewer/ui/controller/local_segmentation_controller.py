@@ -1,5 +1,6 @@
 """Application-wide local inference job; results belong to their captured tab/phase."""
 from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Mapping
 from pathlib import Path
 from threading import Event
 import json
@@ -18,6 +19,36 @@ from qt_dicom_viewer.core.nrrd_exchange import write_nrrd
 from qt_dicom_viewer.core.workspace_state import dumps, MAX_MASK_VOXELS
 from qt_dicom_viewer.infrastructure.local_inference_process import run_process
 from qt_dicom_viewer.infrastructure.local_segmentation_environment import discover_python, discover_weights, normalize_weights
+
+
+def _string_list(value, *, nonempty=False):
+    return (isinstance(value, list) and (bool(value) or not nonempty)
+            and all(isinstance(item, str) and item.strip() for item in value))
+
+
+def _valid_probe(result):
+    if not isinstance(result, Mapping):
+        return False
+    organs, devices = result.get('organs'), result.get('devices')
+    return (type(result.get('protocol')) is int and result['protocol'] == 1
+            and type(result.get('model_ready')) is bool
+            and _string_list(organs, nonempty=True) and len(set(organs)) == len(organs)
+            and _string_list(devices, nonempty=True) and len(set(devices)) == len(devices)
+            and set(devices) <= {'cpu', 'gpu', 'mps'}
+            and ('version' not in result or isinstance(result['version'], str) and bool(result['version'].strip()))
+            and ('model_issues' not in result or _string_list(result['model_issues'])))
+
+
+def _validate_event(event):
+    if not isinstance(event, Mapping) or not isinstance(event.get('event'), str) or not event['event'].strip():
+        raise RuntimeError(_msg('autoSeg.invalidResponse'))
+    kind = event['event']
+    if (kind == 'stage' and event.get('stage') not in ('running', 'validating')
+            or kind == 'error' and (not isinstance(event.get('reason'), str) or not event['reason'].strip())
+            or kind == 'model' and not _string_list(event.get('issues'))):
+        # RuntimeError must propagate through run_process's JSON parse error handling.
+        raise RuntimeError(_msg('autoSeg.invalidResponse'))
+    return kind
 
 
 class LocalSegmentationController(QObject):
@@ -73,6 +104,10 @@ class LocalSegmentationController(QObject):
     def environment(self): return self._environment
     @Property(bool,notify=changed)
     def hasTarget(self): return self._target is not None
+    @Property(QObject,notify=changed)
+    def targetTab(self): return self._target[0]() if self._target is not None else None
+    @Property(int,notify=changed)
+    def targetPhase(self): return self._target[3] if self._target is not None and self._target[3] is not None else -1
     @Property(bool,notify=changed)
     def ready(self): return bool(self._environment.get('model_ready'))
     @translated_property('QVariantList',notify=_i18n_organs,notify_name='_i18n_organs',source_notify='changed')
@@ -187,6 +222,7 @@ class LocalSegmentationController(QObject):
         self._pending = None
         if self.busy:
             self.cancel()
+        self.changed.emit()
 
     @Slot()
     def checkEnvironment(self):
@@ -235,12 +271,16 @@ class LocalSegmentationController(QObject):
                 bridge=Path(__file__).resolve().parents[2] / 'infrastructure/totalsegmentator_bridge.py'
                 if not bridge.is_file():raise FileNotFoundError('TotalSegmentator bridge resource is missing')
                 def receive(event):
-                    if event.get('event') == 'error':
-                        bridge_errors.append(str(event.get('reason',''))[:500])
-                    if not self._closed and not cancel.is_set() and event.get('event')=='stage':
+                    if self._closed or cancel.is_set() or epoch != self._epoch:
+                        return
+                    kind = _validate_event(event)
+                    if kind == 'error':
+                        bridge_errors.append(event['reason'][:500])
+                    if mode == 'run' and kind == 'stage':
                         self.stageChanged.emit(event['stage'])
                 run_process([python,str(bridge),mode,str(root)],log,cancel,receive,timeout=120 if mode=='probe' else None)
                 if cancel.is_set():raise InterruptedError()
+                if bridge_errors:raise RuntimeError(bridge_errors[-1])
                 if mode=='probe':result=json.loads((root/'result.json').read_text())
                 else:result=read_results(root,target[2],request['organs'],phase=target[3],cancelled=cancel.is_set)
             except Exception as exc:
@@ -278,6 +318,7 @@ class LocalSegmentationController(QObject):
         if self._closed or epoch!=self._epoch:return
         self._logs=logs
         if mode=='probe':
+            self._environment={}
             self._environment_state='error' if error is not None else 'idle'
             self._environment_message=error_message(error) if error is not None else ''
         if self._cancel.is_set() or isinstance(error,InterruptedError):
@@ -288,10 +329,10 @@ class LocalSegmentationController(QObject):
             if self._configuration() != self._checked_config:
                 self._environment_state='idle';self._environment_message=''
                 self._fail(_msg('autoSeg.environmentChanged'));return
-            if result.get('protocol')!=1 or not result.get('organs') or not result.get('devices'):
-                self._environment_state='error';self._environment_message=_msg('autoSeg.unsupportedEnvironment')
+            if not _valid_probe(result):
+                self._environment_state='error';self._environment_message=_msg('autoSeg.invalidResponse')
                 self._fail(self._environment_message);return
-            self._environment=result
+            self._environment=dict(result)
             self._state='ready' if self.ready else 'error'
             self._message='' if self.ready else _msg('autoSeg.missingModel')
             self._environment_state=self._state;self._environment_message=self._message

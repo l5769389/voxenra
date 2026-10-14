@@ -26,13 +26,26 @@ ColumnLayout {
     signal inversionRequested()
     property string centerObjectName: "windowCenterInput"
     property string widthObjectName: "windowWidthInput"
+    property var editContext: null
+    property bool contextReady: true
     property bool dirty: false
     property bool namingTemplate: false
     property string errorText: ""
-    readonly property bool ready: Number.isFinite(currentCenter) && Number.isFinite(currentWidth)
+    readonly property bool ready: contextReady && Number.isFinite(currentCenter) && Number.isFinite(currentWidth)
     spacing: 8
 
     function roundedValue(value) { const scale = Math.pow(10, inputPrecision); return Math.round(value * scale) / scale }
+
+    function discardDraft() {
+        dirty = false
+        errorText = ""
+        namingTemplate = false
+        templateName.text = ""
+        syncInputs()
+    }
+    onEditContextChanged: discardDraft()
+    onContextReadyChanged: discardDraft()
+    onVisibleChanged: if (!visible) discardDraft()
 
     function syncInputs() {
         if (dirty) return
@@ -51,6 +64,7 @@ ColumnLayout {
         return {width: roundedValue(width), center: roundedValue(center)}
     }
     function applyInput() {
+        if (!ready) return
         const value = values()
         if (!value || !ready) return
         actionTriggered("", value.center, value.width)
@@ -69,8 +83,8 @@ ColumnLayout {
             errorText = settingsController.message
         }
     }
-    onCurrentCenterChanged: syncInputs()
-    onCurrentWidthChanged: syncInputs()
+    onCurrentCenterChanged: discardDraft()
+    onCurrentWidthChanged: discardDraft()
     Component.onCompleted: syncInputs()
 
     signal actionTriggered(
@@ -111,9 +125,10 @@ ColumnLayout {
                     enabled: windowPanel.ready
                     Accessible.name: qsTrId("text.0780")
                     selectByMouse: true
+                    Accessible.description: qsTrId("numeric.applyHint")
                     onTextEdited: windowPanel.dirty = true
                     onAccepted: windowPanel.applyInput()
-                    Keys.onEscapePressed: { windowPanel.dirty = false; windowPanel.syncInputs() }
+                    Keys.onEscapePressed: windowPanel.discardDraft()
                 }
             }
             ColumnLayout {
@@ -132,11 +147,19 @@ ColumnLayout {
                     enabled: windowPanel.ready
                     Accessible.name: qsTrId("text.0781")
                     selectByMouse: true
+                    Accessible.description: qsTrId("numeric.applyHint")
                     onTextEdited: windowPanel.dirty = true
                     onAccepted: windowPanel.applyInput()
-                    Keys.onEscapePressed: { windowPanel.dirty = false; windowPanel.syncInputs() }
+                    Keys.onEscapePressed: windowPanel.discardDraft()
                 }
             }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: qsTrId("numeric.applyHint")
+            color: Theme.textMuted
+            font.pixelSize: 11
+            wrapMode: Text.Wrap
         }
         RowLayout {
             Layout.fillWidth: true

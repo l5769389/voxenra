@@ -4,7 +4,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ## 操作动画
 
-- [本地 AI 自动分割：器官选择、计算与精修](39-ai-segmentation.gif)（真实操作，推理等待已压缩）
+- [本地 AI 自动分割：器官选择、失败重试与成功导入](49-ai-workflow-2.1.1.gif)（合成模体流程演示，模拟推理输出）
 - [ZIP 压缩包拖拽导入](06-zip-drag.gif)
 - [自由形状 ROI 绘制与统计](01-freehand-measurement.gif)
 - [画笔、橡皮与撤销重做](38-segmentation-refinement.gif)
@@ -58,7 +58,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 支持连接独立安装的 TotalSegmentator 环境，对 CT 当前时相进行快速分割，再使用现有工具精修和保存。
 
-[![四器官自动分割结果与 MPR 叠加](39-ai-segmentation.png)](39-ai-segmentation.gif)
+[![自动分割成功导入与 MPR 叠加（合成模体）](48-ai-complete-2.1.1.png)](49-ai-workflow-2.1.1.gif)
 
 <table>
 <tr>
@@ -99,7 +99,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 <td width="50%"><b>DICOM 标签</b><br><a href="21-dicom-tags.png"><img src="21-dicom-tags.png" alt="DICOM 标签" width="100%"></a></td>
 </tr>
 <tr>
-<td width="50%"><b>导出</b><br><a href="18-export.png"><img src="18-export.png" alt="导出" width="100%"></a></td>
+<td width="50%"><b>整序列导出完成</b><br><a href="46-export-complete-2.1.1.png"><img src="46-export-complete-2.1.1.png" alt="导出" width="100%"></a></td>
 <td width="50%"><b>工作区保存对话框</b><br><a href="17-workspace.png"><img src="17-workspace.png" alt="工作区保存对话框" width="100%"></a></td>
 </tr>
 <tr>
@@ -122,15 +122,18 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ![中性深灰主题下的 MR 阅片](37-theme-graphite.png)
 
-- [主题与语言设置](38-appearance-settings.png)
+- [主题与语言设置](44-appearance-2.1.1.png)
 - [本地 JSON 窗模板](39-window-presets.png)
 
-## 2.0.0 设置与开始页面
+## 设置与开始页面
 
 - [鼠标与工具快捷键](40-input-settings.png)
 - [隐私设置](41-privacy-settings.png)
-- [空白工作区入口](42-workspace-home.png)
+- [导入后工作区入口](45-imported-home-2.1.1.png) · [English](en/45-imported-home-2.1.1.png)
+- [导出完成与再次导出](46-export-complete-2.1.1.png) · [English](en/46-export-complete-2.1.1.png)
+- [自动分割失败与重试](47-ai-error-2.1.1.png) · [English](en/47-ai-error-2.1.1.png)
+- [自动分割成功导入](48-ai-complete-2.1.1.png) · [English](en/48-ai-complete-2.1.1.png)
 
-本次重新采集工作区、导出、外观、窗模板、MTF 和分割精修截图；导入与精修动画同步更新。
+2.1.1 重新采集外观与说明文字、导入后入口、导出完成及自动分割反馈；中英文均使用应用自身窗口捕获。自动分割为合成模体及模拟推理输出的流程演示，不表示模型精度或耗时。
 
 - [更新摘要（中文）](43-update-summary.png) · [Update summary (English)](en/43-update-summary.png)

@@ -44,6 +44,7 @@ def test_settings_pages_load_resize_and_reset(scene, category, tmp_path):
     bottom = reset.mapToScene(QPointF(reset.width(), reset.height()))
     assert 0 <= top.x() < bottom.x() <= window.width() and 0 <= top.y() < bottom.y() <= window.height()
     click(window, reset)
+    click(window, find(window, 'confirmSettingsReset'))
     shot(window, category + '-minimum', tmp_path)
     assert not warnings, warnings
 

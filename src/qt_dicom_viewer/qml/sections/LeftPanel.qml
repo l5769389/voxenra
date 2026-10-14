@@ -16,18 +16,21 @@ Rectangle {
     property var workspaceController: null
     property var exportController: null
     property var documentController: null
+    readonly property bool showNavigationLabels: typeof appController !== "undefined"
+        ? appController.settingsController?.values.appearance.sidebarLabels ?? false : false
+    readonly property real navigationButtonHeight: Theme.toolbarButtonHeight + (showNavigationLabels ? 8 : 0)
     readonly property string activeSeriesUid: panelController.activeSeriesUid
     readonly property string activeSeriesModality: panelController.activeSeriesModality
     readonly property var navigationActions: [
-        {label: qsTrId("text.0532"), type: "file", icon: "nav-load-file", supported: true},
-        {label: qsTrId("text.0494"), type: "pacs", icon: "nav-pacs", supported: true},
-        {label: qsTrId("text.0679"), type: "2d", icon: "nav-view-2d", supported: true},
-        {label: qsTrId("text.0680"), type: "mpr", icon: "nav-view-mpr", supported: true},
-        {label: qsTrId("text.0681"), type: "3d", icon: "nav-view-3d", supported: true},
-        {label: qsTrId("text.0682"), type: "montage", icon: "nav-view-tile", supported: true},
-        {label: qsTrId("text.0683"), type: "4d", icon: "nav-view-4d", supported: true},
-        {label: qsTrId("text.0684"), type: "tag", icon: "nav-view-tag", supported: true},
-        {label: qsTrId("text.0685"), type: "fusion", icon: "fusion", supported: true}
+        {label: qsTrId("text.0532"), shortLabel: qsTrId("sidebar.short.images"), type: "file", icon: "nav-load-file", supported: true},
+        {label: qsTrId("text.0494"), shortLabel: "PACS", type: "pacs", icon: "nav-pacs", supported: true},
+        {label: qsTrId("text.0679"), shortLabel: "2D", type: "2d", icon: "nav-view-2d", supported: true},
+        {label: qsTrId("text.0680"), shortLabel: "MPR", type: "mpr", icon: "nav-view-mpr", supported: true},
+        {label: qsTrId("text.0681"), shortLabel: "3D", type: "3d", icon: "nav-view-3d", supported: true},
+        {label: qsTrId("text.0682"), shortLabel: qsTrId("sidebar.short.montage"), type: "montage", icon: "nav-view-tile", supported: true},
+        {label: qsTrId("text.0683"), shortLabel: "4D", type: "4d", icon: "nav-view-4d", supported: true},
+        {label: qsTrId("text.0684"), shortLabel: qsTrId("sidebar.short.tag"), type: "tag", icon: "nav-view-tag", supported: true},
+        {label: qsTrId("text.0685"), shortLabel: qsTrId("sidebar.short.fusion"), type: "fusion", icon: "fusion", supported: true}
     ].filter(action => action.type === "file"
         ? !leftPanel.pacsController || leftPanel.pacsController.localEnabled
         : action.type !== "pacs" || (leftPanel.pacsController && leftPanel.pacsController.pacsEnabled))
@@ -108,7 +111,8 @@ Rectangle {
         Layout.preferredWidth: 1
         Layout.minimumWidth: 0
         label: isFileAction && leftPanel.panelController.scanning ? qsTrId("text.0620") : actionData.label
-        shortLabel: actionData.label
+        showLabel: leftPanel.showNavigationLabels
+        shortLabel: actionData.shortLabel
         iconSize: Theme.navigationIconSize
         hoverWhenDisabled: true
         checked: (isFileAction || isPacsAction) && leftPanel.activeSource === actionData.type
@@ -157,6 +161,7 @@ Rectangle {
         panelController: leftPanel.panelController
         pacsController: leftPanel.pacsController
         workspaceController: leftPanel.workspaceController
+        showLabels: leftPanel.showNavigationLabels
         onContextRequested: (uid, sceneX, sceneY) => seriesContextMenu.openFor(uid, sceneX, sceneY)
     }
 
@@ -173,7 +178,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.leftMargin: 10
             Layout.rightMargin: 10
-            Layout.preferredHeight: Theme.toolbarButtonHeight * 2 + 4
+            Layout.preferredHeight: leftPanel.navigationButtonHeight * 2 + 4
             color: "transparent"
 
             ColumnLayout {
@@ -181,7 +186,7 @@ Rectangle {
                 spacing: 4
 
                 Item {
-                    implicitHeight: Theme.toolbarButtonHeight
+                    implicitHeight: leftPanel.navigationButtonHeight
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Rectangle {
@@ -271,22 +276,60 @@ Rectangle {
             boundsBehavior: Flickable.StopAtBounds
             Basic.ScrollBar.vertical: Components.AppScrollBar { }
 
+            function focusRow(index, reason) {
+                if (index < 0 || index >= count) return false
+                currentIndex = index
+                positionViewAtIndex(index, ListView.Contain)
+                forceLayout()
+                const row = itemAtIndex(index)
+                if (row) row.forceActiveFocus(reason)
+                return !!row
+            }
+
             delegate: Rectangle {
                 id: entry
+                required property int index
                 required property var modelData
                 readonly property bool isSeries: modelData.kind === "series"
                 readonly property bool selected: isSeries && leftPanel.panelController.selectedSeriesUids.includes(modelData.seriesInstanceUid)
                 objectName: isSeries ? "series-" + modelData.seriesInstanceUid : "sidebar-" + modelData.key
                 width: seriesList.width
                 height: isSeries ? 58 : modelData.kind === "patient" ? 30 : 26
+                activeFocusOnTab: index === seriesList.currentIndex
+                border.width: activeFocus ? 2 : 0
+                border.color: Theme.focusBorder
+                onActiveFocusChanged: if (activeFocus) {
+                    seriesList.currentIndex = index
+                    seriesList.positionViewAtIndex(index, ListView.Contain)
+                }
+                function activate() {
+                    if (isSeries)
+                        leftPanel.panelController.openSeriesView(modelData.seriesInstanceUid, "2d")
+                    else if (leftPanel.panelController.patientSearch.trim() === "")
+                        leftPanel.panelController.toggleGroup(modelData.key)
+                }
+                Keys.onPressed: event => {
+                    const backward = event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))
+                    if (event.key === Qt.Key_Tab || backward || event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                        event.accepted = seriesList.focusRow(index + (backward || event.key === Qt.Key_Up ? -1 : 1),
+                            backward ? Qt.BacktabFocusReason : Qt.TabFocusReason)
+                    } else if (event.key === Qt.Key_Home || event.key === Qt.Key_End) {
+                        event.accepted = seriesList.focusRow(event.key === Qt.Key_Home ? 0 : seriesList.count - 1, Qt.OtherFocusReason)
+                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                        if (event.key === Qt.Key_Space && isSeries)
+                            leftPanel.panelController.selectSeriesWithModifiers(modelData.seriesInstanceUid, true)
+                        else activate()
+                        event.accepted = true
+                    }
+                }
                 Accessible.role: Accessible.Button
                 Accessible.name: modelData.label + (modelData.subtitle ? " · " + modelData.subtitle : "")
-                Accessible.onPressAction: {
-                    if (entry.isSeries)
-                        leftPanel.panelController.openSeriesView(entry.modelData.seriesInstanceUid, "2d")
-                    else if (leftPanel.panelController.patientSearch.trim() === "")
-                        leftPanel.panelController.toggleGroup(entry.modelData.key)
-                }
+                Accessible.focusable: true
+                Accessible.checkable: isSeries
+                Accessible.checked: selected
+                Accessible.onPressAction: activate()
+                Accessible.onToggleAction: if (isSeries)
+                    leftPanel.panelController.selectSeriesWithModifiers(modelData.seriesInstanceUid, true)
                 color: selected ? Theme.selectionBackground
                     : mouse.containsMouse ? Theme.cardBackgroundHover
                     : isSeries ? "transparent" : Theme.panelBackgroundStrong
@@ -417,6 +460,8 @@ Rectangle {
                     height: 40
                     z: 2
                     checked: entry.selected
+                    // The row is one keyboard stop; Space performs this same toggle.
+                    focusPolicy: Qt.NoFocus
                     Accessible.name: entry.modelData.label
                     onClicked: leftPanel.panelController.selectSeriesWithModifiers(entry.modelData.seriesInstanceUid, true)
                 }

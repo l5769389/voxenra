@@ -112,18 +112,23 @@ def mask_record(volume, mask, offset, *, name, color="#ed55ed", phase=None, allo
     return record, evaluate_mask(volume, record)
 
 
-def roi_to_mask(volume, measurement, frame, *, phase=None):
+def roi_to_mask(volume, measurement, frame, *, phase=None, source_phase_identifier=None):
     """Rasterize a closed freehand ROI on the nearest parallel native voxel layer.
 
     The source grid is sampled at voxel centers. No extrusion, interpolation or
-    threshold is implied by converting one planar measurement.
+    threshold is implied by converting one planar measurement. ``phase`` is the
+    saved workspace index; ``source_phase_identifier`` validates the DICOM
+    identifier in the measurement's sampling provenance.
     """
     outline = roi_outline(measurement.points, getattr(measurement, "smooth", False))
+    expected_context = (() if source_phase_identifier is None
+                        else (("phase", source_phase_identifier),))
     if (
         str(getattr(measurement, "kind", "")) != "freehand"
         or not simple_polygon(outline)
         or frame is None
-        or len(frame) != 6
+        or len(frame) not in (6, 7)
+        or frame[6:] != expected_context
         or len(frame[5]) != 11
         or measurement.series_uid != volume.series_uid
     ):

@@ -214,6 +214,32 @@ ApplicationWindow {
         visible: !window.nativeTitleBar
         height: visible ? implicitHeight : 0
     }
+    footer: Rectangle {
+        visible: (window.editHistory?.error ?? "") !== ""
+        implicitHeight: visible ? historyErrorRow.implicitHeight + 20 : 0
+        color: Theme.panelBackground
+        border.color: Theme.dangerColor
+        RowLayout {
+            id: historyErrorRow
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 12
+            Text {
+                objectName: "historyErrorMessage"
+                Layout.fillWidth: true
+                text: window.editHistory?.error ?? ""
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                color: Theme.dangerColor
+                font.pixelSize: 12
+            }
+            Components.AppButton {
+                objectName: "retryHistoryCapture"
+                text: qsTrId("history.retry")
+                onClicked: window.editHistory?.capture()
+            }
+        }
+    }
     Shortcut {
         context: Qt.WindowShortcut
         sequence: window.shortcuts?.fixedSequence("open") ?? ""

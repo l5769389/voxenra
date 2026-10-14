@@ -27,6 +27,7 @@ Rectangle {
         anchors.fill: parent; anchors.margins: 4; anchors.rightMargin: 42
         iconName: "reset"
         label: root.toolController ? root.toolController.resetLabel : qsTrId("text.0576")
+        shortLabel: qsTrId("tools.short.reset")
         enabled: root.showReset && !root.playbackActive
         hoverColor: Theme.resetActionHover
         pressedColor: Theme.resetActionPressed
@@ -52,6 +53,7 @@ Rectangle {
             baseBorderColor: Theme.controlBorder
             disabledColor: Theme.controlBackground
             text: root.panel === "segmentation" ? qsTrId("text.0739") : qsTrId("text.0740")
+            shortLabel: root.panel === "segmentation" ? qsTrId("tools.short.segmentation") : qsTrId("tools.short.voi")
             enabled: !root.playbackActive && (root.voiController?.items ?? []).some(item => item.kind === root.panel)
             onClicked: root.voiController.clear(root.panel)
         }
@@ -68,6 +70,7 @@ Rectangle {
             baseBorderColor: Theme.controlBorder
             disabledColor: Theme.controlBackground
             text: qsTrId("text.0741")
+            shortLabel: qsTrId("text.0969")
             textColor: Theme.warningColor
             enabled: !root.playbackActive && (root.voiController?.items?.length ?? 0) > 0
             onClicked: root.voiController.clear("")

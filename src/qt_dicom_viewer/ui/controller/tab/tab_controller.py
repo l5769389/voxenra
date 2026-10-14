@@ -168,6 +168,9 @@ class TabController(QObject):
         self.pausePlayback()
         self.activateViewport(view.viewportId)
         view._measure_controller.cancel_transaction()
+        if isinstance(request, MprRenderRequest) and self.temporalPlayback:
+            self._navigate_temporal_measurement(view, source, request)
+            return
         if isinstance(request, MprRenderRequest) and not hasattr(view, "slice_frame"):
             # Route this one physical plane without broadcasting navigation to peers.
             for key, target in list(self._active_mpr_requests.items()):
@@ -186,6 +189,28 @@ class TabController(QObject):
         view._latest_request_id = request.request_id
         view.render_pending = True
         self.renderRequested.emit(request)
+
+    def _navigate_temporal_measurement(self, view, source, request):
+        phase = self._phase_identifiers.index(request.phase_identifier)
+        # A 4D plane shares its volume with VOI and 3D. Restore its source phase
+        # as one complete batch before exposing quantitative regions again.
+        # Superseded requests may still finish, but their IDs are no longer accepted.
+        self._active_mpr_requests.clear()
+        self._mpr_request_phase_identifiers.clear()
+        self._mpr_request_window_revisions.clear()
+        self._dirty_mpr_viewport_ids.clear()
+        self._pending_phase_index = None
+        self._set_target_mpr_state(self._target_mpr_state)
+        self._voi_controller.set_phase(phase, ready=False)
+        self._rendering_phase_index = phase
+        navigation = source.get("navigation")
+        if navigation is not None:
+            view._mpr_state = navigation
+        view._independent_measurement_source = dict(source)
+        view.render_pending = True
+        self._dirty_mpr_viewport_ids.update(self._mpr_viewport_ids())
+        self.playbackAvailabilityChanged.emit()
+        self._try_start_next_mpr_render()
 
     @Property(QObject, constant=True)
     def mprLayout(self):
@@ -1016,6 +1041,7 @@ class TabController(QObject):
             if self._voi_controller is not None:
                 self._voi_controller.set_phase(self._current_phase_index, ready=False)
             if self._target_mpr_state is not None:
+                self._set_target_mpr_state(self._target_mpr_state)
                 self._dirty_mpr_viewport_ids.update(
                     self._mpr_viewport_ids()
                 )

@@ -107,10 +107,11 @@ def test_mip_panel_updates_mode_enablement_and_live_thickness(
     QTest.keyClick(view, Qt.Key_3)
     QTest.keyClick(view, Qt.Key_6)
     QTest.qWait(40)
-    assert controller.mprThicknesses["axial"] == 36
-    assert _find(view, "mipThickness-axial").property("value") == 36
+    assert controller.mprThicknesses["axial"] != 36
     QTest.keyClick(view, Qt.Key_Return)
     QTest.qWait(40)
+    assert controller.mprThicknesses["axial"] == 36
+    assert _find(view, "mipThickness-axial").property("value") == 36
 
     _click(view, _find(view, "mipThickness-axial"), 0.52)
     QTest.qWait(40)

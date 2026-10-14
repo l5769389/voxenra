@@ -498,6 +498,7 @@ class ToolController(QObject):
             {
                 "action": item.action,
                 "label": item.label,
+                "shortLabel": _msg("tools.action." + item.action),
                 "iconName": item.icon_name,
             }
             for item in ROTATE_ACTIONS
@@ -509,6 +510,7 @@ class ToolController(QObject):
             {
                 "action": item.action,
                 "label": item.label,
+                "shortLabel": _msg("tools.action." + item.action),
                 "iconName": item.icon_name,
             }
             for item in MEASURE_ACTIONS
@@ -549,6 +551,7 @@ def build_tool_items(
     items = [
         {
             "toolType": definition.tool_type.value,
+            "shortLabel": _msg("tools.short." + definition.tool_type.value),
             "label": (
                 _msg('mapping.title')
                 if definition.tool_type == ToolType.WINDOW

@@ -26,6 +26,7 @@ ColumnLayout {
             compact: true
             momentary: true
             label: qsTrId("text.0377")
+            shortLabel: qsTrId("tools.action.annotate:arrow")
             iconName: "annotate-arrow"
             checked: annotatePanel.viewportController.activeInteraction === "annotate:arrow"
             onClicked: annotatePanel.viewportController.setAnnotationMode(false)
@@ -36,6 +37,7 @@ ColumnLayout {
             compact: true
             momentary: true
             label: qsTrId("text.0378")
+            shortLabel: qsTrId("tools.action.annotate:text")
             iconName: "annotate-text"
             checked: annotatePanel.viewportController.activeInteraction === "annotate:text"
             onClicked: annotatePanel.viewportController.setAnnotationMode(true)

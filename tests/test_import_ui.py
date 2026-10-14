@@ -304,3 +304,85 @@ def test_typed_file_is_selected_after_async_navigation(qt_app, tmp_path):
         assert dialog.paths == [str(file)]
     finally:
         delete(dialog)
+
+
+@pytest.mark.parametrize('kind', ['folder', 'file', 'missing'])
+def test_confirm_commits_typed_path_instead_of_previous_selection(qt_app, tmp_path, kind):
+    original = tmp_path / 'original'; original.mkdir()
+    previous = original / 'previous.dcm'; previous.write_bytes(b'dicom')
+    target = tmp_path / ('target.dcm' if kind == 'file' else 'target')
+    if kind == 'folder': target.mkdir()
+    elif kind == 'file': target.write_bytes(b'dicom')
+    dialog = LocalImportDialog(str(original)); dialog.show()
+    try:
+        wait_until(lambda: not dialog._loading)
+        dialog.view.selectionModel().select(dialog.model.index(str(previous)),
+            QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        dialog.path_edit.setFocus()
+        dialog.path_edit.selectAll()
+        QTest.keyClicks(dialog.path_edit, str(target))
+        QTest.mouseClick(dialog.open_button, Qt.LeftButton)
+        wait_until(lambda: not dialog._loading)
+        if kind == 'missing':
+            assert dialog.isVisible() and not dialog.paths
+            assert dialog.path_edit.text() == str(target)
+            # A repeated click may retry, but must never fall back to the old selection.
+            QTest.mouseClick(dialog.open_button, Qt.LeftButton)
+            wait_until(lambda: not dialog._loading)
+            assert dialog.isVisible() and not dialog.paths
+        else:
+            assert dialog.result() == QDialog.Accepted
+            assert dialog.paths == [str(target)]
+    finally:
+        dialog.close(); delete(dialog)
+
+
+def test_cancel_during_typed_path_check_never_accepts_late_result(qt_app, tmp_path, monkeypatch):
+    from threading import Event
+    import qt_dicom_viewer.ui.dialogs.local_import_dialog as picker
+    original = tmp_path / 'original'; original.mkdir()
+    target = tmp_path / 'target'; target.mkdir()
+    entered, release = Event(), Event()
+    scandir = picker.os.scandir
+    def delayed(path):
+        if Path(path) == target:
+            entered.set()
+            assert release.wait(5)
+        return scandir(path)
+    monkeypatch.setattr(picker.os, 'scandir', delayed)
+    dialog = LocalImportDialog(str(original)); dialog.show()
+    try:
+        wait_until(lambda: not dialog._loading)
+        dialog.path_edit.setText(str(target))
+        QTest.mouseClick(dialog.open_button, Qt.LeftButton)
+        wait_until(entered.is_set)
+        QTest.mouseClick(dialog.cancel_button, Qt.LeftButton)
+        release.set()
+        wait_until(lambda: not dialog._loading)
+        assert dialog.result() == QDialog.Rejected and not dialog.paths
+    finally:
+        release.set(); dialog.close(); delete(dialog)
+
+
+@pytest.mark.parametrize('kind', ['hidden', 'directory-alias'])
+def test_typed_file_never_falls_back_to_importing_parent(qt_app, tmp_path, kind):
+    actual = tmp_path / 'actual'; actual.mkdir()
+    target = actual / ('.scan.dcm' if kind == 'hidden' else 'scan.dcm')
+    target.write_bytes(b'dicom')
+    typed = target
+    if kind == 'directory-alias':
+        alias = tmp_path / 'alias'
+        try: alias.symlink_to(actual, target_is_directory=True)
+        except OSError: pytest.skip('Directory symlinks unavailable')
+        typed = alias / target.name
+    dialog = LocalImportDialog(str(tmp_path)); dialog.show()
+    try:
+        wait_until(lambda: not dialog._loading)
+        dialog.path_edit.setText(str(typed))
+        QTest.mouseClick(dialog.open_button, Qt.LeftButton)
+        wait_until(lambda: not dialog._loading)
+        assert dialog.result() == QDialog.Accepted
+        assert len(dialog.paths) == 1 and Path(dialog.paths[0]).resolve() == target
+        assert Path(dialog.paths[0]).is_file()
+    finally:
+        dialog.close(); delete(dialog)

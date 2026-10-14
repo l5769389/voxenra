@@ -10,7 +10,7 @@
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
 
 ## 功能概览
 
@@ -33,9 +33,9 @@
 - **本机推理**：连接已有 TotalSegmentator 环境，计算当前时相的完整 CT；支持按环境选择 CUDA、Apple MPS 或 CPU。
 - **结果继续编辑**：三平面叠加查看，画笔／橡皮精修、显隐、撤销；随工作区保存，或导出 SEG / NRRD。
 
-[![Voxenra 本地 AI 自动分割：器官选择、TotalSegmentator 计算与结果查看](docs/screenshots/39-ai-segmentation.gif)](docs/screenshots/39-ai-segmentation.png)
+[![Voxenra 自动分割流程：合成模体中的选择、失败重试与成功导入](docs/screenshots/49-ai-workflow-2.1.1.gif)](docs/screenshots/48-ai-complete-2.1.1.png)
 
-真实操作演示，推理等待已压缩，不代表实际计算耗时。需另行安装 TotalSegmentator 和 CT 快速模型；在 **设置 → AI** 检测环境。自动结果可核查和精修。
+当前应用的合成模体流程演示，模拟推理输出以展示选择、失败重试和成功导入；不代表模型精度或计算耗时。需另行安装 TotalSegmentator 和 CT 快速模型；在 **设置 → AI** 检测环境。自动结果可核查和精修。
 
 [配置与使用教程](https://l5769389.github.io/voxenra/zh/segmentation.html) · [TotalSegmentator 项目](https://github.com/wasserth/TotalSegmentator)
 
@@ -125,7 +125,7 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 <table>
 <tr>
-<td width="50%"><b>本地导入</b><br><a href="docs/screenshots/15-mixed-import.png"><img src="docs/screenshots/15-mixed-import.png" alt="文件、文件夹与压缩包混合导入" width="100%"></a></td>
+<td width="50%"><b>导入后工作区</b><br><a href="docs/screenshots/45-imported-home-2.1.1.png"><img src="docs/screenshots/45-imported-home-2.1.1.png" alt="打开选中序列或继续导入" width="100%"></a></td>
 <td width="50%"><b>PACS 浏览器</b><br><a href="docs/screenshots/16-pacs-browser.png"><img src="docs/screenshots/16-pacs-browser.png" alt="PACS 检查查询与序列下载" width="100%"></a></td>
 </tr>
 <tr>
@@ -142,11 +142,15 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 [深色主题](docs/screenshots/25-theme-dark.png) · [浅色主题](docs/screenshots/26-theme-light.png)
 
-可设置界面大小、鼠标拖动、滚轮方向与工具快捷键，重复或保留按键会被拦截。隐私设置支持新视图隐藏身份叠加、清除最近工作区记录。
+可设置界面大小、鼠标拖动、滚轮方向与工具快捷键，重复或保留按键会被拦截。左侧栏操作与右侧工具说明文字可独立开关。隐私设置支持新视图隐藏身份叠加、清除最近工作区记录。
 
-![鼠标操作与工具快捷键设置](docs/screenshots/40-input-settings.png)
+![主题、语言与独立按钮说明文字设置](docs/screenshots/44-appearance-2.1.1.png)
+
+[鼠标操作与工具快捷键设置](docs/screenshots/40-input-settings.png)
 
 更新提示按界面语言显示简短摘要，可查看完整发布说明。[更新弹窗](docs/screenshots/43-update-summary.png)
+
+[整序列导出完成](docs/screenshots/46-export-complete-2.1.1.png) · [自动分割失败与重试](docs/screenshots/47-ai-error-2.1.1.png)
 
 [查看完整界面图集](docs/screenshots/README.md)
 

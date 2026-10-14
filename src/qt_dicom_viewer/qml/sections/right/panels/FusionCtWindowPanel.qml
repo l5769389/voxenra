@@ -10,6 +10,8 @@ WindowLevelToolPanel {
     widthObjectName: "fusionCtWidth"
     settingsController: controller?.toolController?.settingsController ?? null
     presets: (settingsController?.windowTemplates ?? []).filter(p => p.enabled)
+    editContext: panel.controller
+    contextReady: controller?.ready === true
     currentCenter: controller?.ctCenter ?? NaN
     currentWidth: controller?.ctWidth ?? NaN
     supportsInversion: true

@@ -10,7 +10,22 @@ ColumnLayout {
     required property var viewportController
     readonly property var mapping: viewportController?.displayMapping ?? ({})
     property bool backgroundExpanded: false
+    readonly property string rangeContext: JSON.stringify({unit: mapping.unit, mode: mapping.mode,
+        lower: mapping.lower, upper: mapping.upper})
     spacing: 12
+    function discardRange() { lowerInput.sync(); upperInput.sync() }
+    function applyRange() {
+        if (!lowerInput.enabled || !upperInput.enabled) return
+        if (!lowerInput.acceptableInput || !upperInput.acceptableInput
+                || !lowerInput.text.trim() || !upperInput.text.trim()) return
+        const lower = Number(lowerInput.text), upper = Number(upperInput.text)
+        if (!Number.isFinite(lower) || !Number.isFinite(upper) || lower >= upper) return
+        panel.viewportController.setDisplayRange(lower, upper)
+        discardRange()
+    }
+    onViewportControllerChanged: discardRange()
+    onRangeContextChanged: discardRange()
+    onVisibleChanged: if (!visible) discardRange()
 
     Components.PanelHeading {
         objectName: "ScalarMappingPanelHeading"
@@ -75,24 +90,48 @@ ColumnLayout {
             Layout.fillWidth: true
             Text { text: qsTrId("mapping.lower"); color: Theme.textMuted; font.pixelSize: 12 }
             Components.AppNumberField {
+                id: lowerInput
                 objectName: "mappingLower"
                 Layout.fillWidth: true
-                minimum: -1e12; maximum: 1e12; decimals: 3; commitOnFinish: true
+                minimum: -1e12; maximum: 1e12; decimals: 3; commitOnFinish: false
+                editContext: [panel.viewportController, panel.viewportController?.loadState ?? "ready", panel.rangeContext]
+                enabled: panel.viewportController.loadState === undefined || panel.viewportController.loadState === "ready"
                 numberValue: panel.mapping.lower ?? 0
-                onEdited: value => panel.viewportController.setDisplayRange(value, panel.mapping.upper)
+                onAccepted: panel.applyRange()
+                Keys.onEscapePressed: panel.discardRange()
             }
         }
         ColumnLayout {
             Layout.fillWidth: true
             Text { text: qsTrId("mapping.upper"); color: Theme.textMuted; font.pixelSize: 12 }
             Components.AppNumberField {
+                id: upperInput
                 objectName: "mappingUpper"
                 Layout.fillWidth: true
-                minimum: -1e12; maximum: 1e12; decimals: 3; commitOnFinish: true
+                minimum: -1e12; maximum: 1e12; decimals: 3; commitOnFinish: false
+                editContext: [panel.viewportController, panel.viewportController?.loadState ?? "ready", panel.rangeContext]
+                enabled: panel.viewportController.loadState === undefined || panel.viewportController.loadState === "ready"
                 numberValue: panel.mapping.upper ?? 1
-                onEdited: value => panel.viewportController.setDisplayRange(panel.mapping.lower, value)
+                onAccepted: panel.applyRange()
+                Keys.onEscapePressed: panel.discardRange()
             }
         }
+    }
+    Text {
+        visible: panel.mapping.mode === "custom"
+        Layout.fillWidth: true
+        text: qsTrId("numeric.applyHint")
+        color: Theme.textMuted; font.pixelSize: 11; wrapMode: Text.Wrap
+    }
+    Components.AppButton {
+        objectName: "applyMappingRange"
+        visible: panel.mapping.mode === "custom"
+        Layout.fillWidth: true
+        text: qsTrId("text.1090")
+        enabled: lowerInput.enabled && upperInput.enabled && lowerInput.acceptableInput && upperInput.acceptableInput
+            && lowerInput.text.trim().length > 0 && upperInput.text.trim().length > 0
+            && Number(lowerInput.text) < Number(upperInput.text)
+        onClicked: panel.applyRange()
     }
     Text {
         visible: !!panel.mapping.warning
@@ -113,6 +152,8 @@ ColumnLayout {
         sourceComponent: Component {
             WindowLevelToolPanel {
                 description: qsTrId("ct.paletteHint")
+                editContext: panel.viewportController
+                contextReady: panel.viewportController.loadState === undefined || panel.viewportController.loadState === "ready"
                 currentCenter: panel.viewportController.windowCenter
                 currentWidth: panel.viewportController.windowWidth
                 allowTemplates: false

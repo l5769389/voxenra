@@ -61,7 +61,7 @@ def test_restore_retains_mode_but_never_restarts_timer(temporal, mode):
 
 @pytest.mark.parametrize('mode', ['slice', 'phase'])
 @pytest.mark.parametrize('action', ['focus', 'layout', 'viewport', 'close'])
-def test_four_d_layout_and_tool_combinations(temporal, mode, action):
+def test_four_d_layout_and_tool_combinations(temporal, mode, action, monkeypatch):
     tab, _, (_, workspace) = temporal
     tab.mprLayout.setLayout('quad')
     region = draw(tab, 'segmentation')
@@ -84,6 +84,8 @@ def test_four_d_layout_and_tool_combinations(temporal, mode, action):
         assert not tab.playing and tab.toolController._locked_tool is None
         assert tab.mprLayout.volumeTools._locked_tool is None
     else:
+        from PySide6.QtWidgets import QMessageBox
+        monkeypatch.setattr(QMessageBox, "exec", lambda self: QMessageBox.Close)
         workspace.closeTab(tab.tab_config.tab_id)
         assert not tab.playing and not tab._phase_timer.isActive()
     assert any(r['id'] == region for r in tab.voiController.records)

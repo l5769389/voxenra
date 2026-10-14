@@ -10,6 +10,62 @@ Item {
     required property var settingsController
     required property string category
     required property string title
+    onCategoryChanged: resetDialog.close()
+    function requestReset(section, title) {
+        resetDialog.section = section
+        resetDialog.sectionTitle = title
+        resetDialog.open()
+    }
+    function resetImpact(section) {
+        const summaries = {
+            appearance: qsTrId("settings.reset.appearance"), input: qsTrId("settings.reset.input"),
+            shortcuts: qsTrId("settings.reset.shortcuts"),
+            privacy: qsTrId("settings.reset.privacy"), workspace: qsTrId("settings.reset.workspace"),
+            updates: qsTrId("settings.reset.updates"), export: qsTrId("settings.reset.export"),
+            colormap: qsTrId("settings.reset.colormap"), crosshair: qsTrId("settings.reset.crosshair"),
+            corners: qsTrId("settings.reset.corners"), scale: qsTrId("settings.reset.scale"),
+            measurement: qsTrId("settings.reset.measurement"), roi: qsTrId("settings.reset.roi"),
+            services: qsTrId("settings.reset.services"), ai: qsTrId("settings.reset.ai")
+        }
+        return section === "window" ? I18n.format(qsTrId("settings.reset.window"), {
+            count: page.settingsController.values.window.custom.length
+        }) : summaries[section] ?? ""
+    }
+    Components.AppDialog {
+        id: resetDialog
+        objectName: "settingsResetDialog"
+        property string section: ""
+        property string sectionTitle: ""
+        parent: Basic.Overlay.overlay
+        anchors.centerIn: parent
+        width: Math.min(500, (parent?.width ?? 532) - 32)
+        title: I18n.format(qsTrId("settings.reset.title"), {section: sectionTitle})
+        contentItem: Text {
+            objectName: "settingsResetImpact"
+            text: page.resetImpact(resetDialog.section) + "\n\n" + qsTrId("settings.reset.scope")
+            textFormat: Text.PlainText
+            color: Theme.textSecondary
+            font.pixelSize: 13
+            wrapMode: Text.Wrap
+        }
+        footer: Components.AppDialogFooter {
+            Components.AppButton {
+                objectName: "cancelSettingsReset"
+                text: qsTrId("text.0539")
+                onClicked: resetDialog.reject()
+            }
+            Components.AppButton {
+                objectName: "confirmSettingsReset"
+                text: qsTrId("settings.reset.confirm")
+                actionRole: resetDialog.section === "window" ? "danger" : "primary"
+                onClicked: {
+                    if (page.settingsController.resetSection(resetDialog.section)) resetDialog.accept()
+                    else resetDialog.reject()
+                }
+            }
+        }
+        onOpened: contentItem.forceActiveFocus()
+    }
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
@@ -18,7 +74,11 @@ Item {
             Layout.fillWidth: true
             Text { Layout.fillWidth: true; text: page.title; color: Theme.textPrimary; font.pixelSize: 18; font.bold: true }
             Text { text: qsTrId("text.0842"); color: Theme.textSubtle; font.pixelSize: 11 }
-            Components.AppButton { objectName: "resetDisplaySettings"; text: qsTrId("text.0843"); compact: true; normalColor: "transparent"; baseBorderWidth: 1; onClicked: page.settingsController.resetSection(page.category) }
+            Components.AppButton {
+                objectName: "resetDisplaySettings"
+                text: qsTrId("text.0843"); compact: true; normalColor: "transparent"; baseBorderWidth: 1
+                onClicked: page.requestReset(page.category, page.title)
+            }
         }
         Item { Layout.fillWidth: true; Layout.preferredHeight: 2 }
         Text {
@@ -41,6 +101,7 @@ Item {
             Basic.ScrollBar.vertical: Components.AppScrollBar {}
             Loader {
                 id: content
+                objectName: "settingsCategoryContent"
                 width: Math.min(scroll.availableWidth, ["window", "services", "ai"].includes(page.category) ? 760 : 1000)
                 sourceComponent: ({input: inputPage, privacy: privacyPage, colormap: colorsPage, window: windowsPage, crosshair: crosshairPage,
                     corners: cornersPage, scale: scalePage, measurement: measurementPage, roi: roiPage,
@@ -48,7 +109,13 @@ Item {
             }
         }
     }
-    Component { id: inputPage; InputSettingsPage { settingsController: page.settingsController } }
+    Component {
+        id: inputPage
+        InputSettingsPage {
+            settingsController: page.settingsController
+            onResetShortcutsRequested: page.requestReset("shortcuts", qsTrId("input.shortcuts"))
+        }
+    }
     Component { id: privacyPage; PrivacySettingsPage { settingsController: page.settingsController } }
     Component { id: colorsPage; ColorMapsPage { settingsController: page.settingsController } }
     Component { id: windowsPage; WindowTemplatesPage { settingsController: page.settingsController } }

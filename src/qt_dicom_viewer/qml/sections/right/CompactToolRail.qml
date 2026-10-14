@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic as Basic
 import "../../components" as Components
 import "../../theme"
+import "ToolLabels.js" as ToolLabels
 import "panels" as Panels
 Flickable {
     id: rail
@@ -12,6 +13,7 @@ Flickable {
     required property var toolController
     required property var viewportController
     property var tabController: null
+    readonly property bool showToolLabels: toolController?.settingsController?.values.appearance.toolLabels ?? false
     property string expandedTool: ""
     property var panelPopup: null
     signal panelRequested(string tool, bool closeOnly)
@@ -26,9 +28,28 @@ Flickable {
     Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
     onToolControllerChanged: { expandedTool = ""; palettePopup.close() }
     onViewportControllerChanged: palettePopup.close()
-    onContentYChanged: palettePopup.close()
+    // Layout shrinkage also changes contentY; only a user scroll dismisses the flyout.
+    onMovementStarted: palettePopup.close()
     onExpandedToolChanged: if (expandedTool !== "pseudocolor") palettePopup.close()
     onVisibleChanged: if (!visible) expandedTool = ""
+    function revealFocusedAction(view) {
+        const item = rail.Window.window?.activeFocusItem
+        if (!item) return
+        let ancestor = item
+        while (ancestor && ancestor !== view.contentItem) ancestor = ancestor.parent
+        if (!ancestor) return
+        const top = item.mapToItem(view.contentItem, 0, 0).y
+        const target = top < view.contentY ? top
+            : top + item.height > view.contentY + view.height ? top + item.height - view.height : view.contentY
+        view.contentY = Math.max(view.originY, Math.min(target, view.originY + Math.max(0, view.contentHeight - view.height)))
+    }
+    Connections {
+        target: rail.Window.window
+        function onActiveFocusItemChanged() {
+            rail.revealFocusedAction(rail)
+            rail.revealFocusedAction(paletteScroll)
+        }
+    }
     Connections {
         target: rail.toolController ?? null
         function onActiveToolChanged() {
@@ -42,8 +63,8 @@ Flickable {
         if (tool === "measure") return toolController?.measureActions ?? []
         if (tool === "rotate") return toolController?.rotateActions ?? []
         if (tool === "annotate") return [
-            {action: "annotate:arrow", label: qsTrId("text.0377"), iconName: "annotate-arrow"},
-            {action: "annotate:text", label: qsTrId("text.0378"), iconName: "annotate-text"}]
+            {action: "annotate:arrow", label: qsTrId("text.0377"), shortLabel: qsTrId("tools.action.annotate:arrow"), iconName: "annotate-arrow"},
+            {action: "annotate:text", label: qsTrId("text.0378"), shortLabel: qsTrId("tools.action.annotate:text"), iconName: "annotate-text"}]
         if (tool === "pseudocolor") return (viewportController?.colorMapOptions ?? []).map(c => ({
             action: c.colorMap, label: c.label, iconName: "pseudocolor", stops: c.stops}))
         return []
@@ -64,7 +85,10 @@ Flickable {
             toolController.activateTool(tool)
             expandedTool = tool
             palettePopup.anchorItem = anchor
-            palettePopup.open()
+            // Let collapsed secondary rows and the scroll bounds settle first.
+            Qt.callLater(function() {
+                if (rail.expandedTool === "pseudocolor") palettePopup.open()
+            })
         } else if (groupedTools.includes(tool)) {
             const close = expandedTool === tool
             toolController.activateTool(tool)
@@ -140,12 +164,16 @@ Flickable {
                 bottomPadding: secondary.visible ? 10 : 0
                 Components.ToolbarAction {
                     id: primaryButton
-                    width: 40; height: 38
+                    width: rail.showToolLabels ? group.width : 40
+                    height: rail.showToolLabels ? 54 : 38
+                    showLabel: rail.showToolLabels
+                    shortLabel: group.running ? qsTrId("tools.short.stop")
+                        : ToolLabels.label(group.modelData, rail.viewportController?.displayMappingEditor, true)
                     x: (group.width - width) / 2
                     buttonObjectName: "compactTool-" + group.modelData.toolType
                     tooltipPlacement: "left"
                     label: group.running
-                        ? qsTrId("playback.stop") : group.modelData.label
+                        ? qsTrId("playback.stop") : ToolLabels.label(group.modelData, rail.viewportController?.displayMappingEditor, false)
                     iconName: group.running
                         ? (group.playMode === "phase" ? "cine-4d-stop" : "cine-stop") : group.modelData.iconName
                     iconSize: 22
@@ -188,14 +216,16 @@ Flickable {
                         id: subbuttons
                         x: (secondary.width - width) / 2
                         y: 6
-                        width: 32
+                        width: rail.showToolLabels ? secondary.width : 32
                         spacing: 4
                         Repeater {
                             model: secondary.visible ? rail.childrenFor(group.modelData.toolType) : []
                             delegate: Components.ToolbarAction {
                                 id: child
                                 required property var modelData
-                                width: 32; height: 32
+                                width: subbuttons.width; height: rail.showToolLabels ? 48 : 32
+                                showLabel: rail.showToolLabels
+                                shortLabel: modelData.shortLabel ?? modelData.face ?? modelData.label
                                 buttonObjectName: "compactAction-" + modelData.action
                                 label: group.modelData.toolType === "measure" && !rail.viewportController?.hasPhysicalSpacing
                                     ? qsTrId("measurement.noCalibration") : modelData.label

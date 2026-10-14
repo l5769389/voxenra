@@ -108,6 +108,34 @@ def test_failures_are_reported_and_new_settings_retry(setup_voi, monkeypatch):
     assert not controller.error
 
 
+@pytest.mark.parametrize('failure', [MemoryError, RuntimeError])
+def test_empty_evaluation_exception_is_terminal_preserves_region_and_retries(setup_voi, monkeypatch, failure):
+    from test_dicom_tags import wait_until
+    controller, viewport, tools = setup_voi
+    import qt_dicom_viewer.ui.controller.tab.mpr_voi_controller as module
+    original = module.evaluate_voi
+    entered = Event()
+    def fail(*args, **kwargs):
+        entered.set()
+        raise failure()
+    monkeypatch.setattr(module, 'evaluate_voi', fail)
+    draw(controller, viewport)
+    committed = controller.records[0]['region']
+    key = controller.selectedId
+    wait_until(lambda: entered.is_set() and not controller._running)
+    assert controller.error and not controller.busy and not controller.evaluations
+    assert len(controller.records) == 1 and controller.records[0]['region'] == committed
+    assert controller.selectedId == key
+    controller.cancel()
+    tools.activateTool('voi')
+    tools.activateTool('segmentation')
+    assert controller.error and not controller.busy
+    monkeypatch.setattr(module, 'evaluate_voi', original)
+    controller.setThreshold(400)
+    settle(controller)
+    assert not controller.error and controller.evaluations[key].metrics['count'] > 0
+
+
 def test_sources_and_masks_stay_in_physical_coordinates_after_render_change(setup_voi):
     controller, viewport, _ = setup_voi
     draw(controller, viewport)

@@ -482,6 +482,7 @@ class Image2DViewportController(ViewportController):
         self._text_annotation_controller.set_frame(
             result.series_uid,
             result.frame_meta,
+            source_context=source_context,
         )
         if self.isPetViewport:
             self._measure_controller.refresh_roi_metrics(result.modality_pixel, result.frame_meta)
@@ -719,6 +720,8 @@ class Image2DViewportController(ViewportController):
             if (
                 image_valid
                 and buttons & Qt.MouseButton.LeftButton.value
+                and self._frame_meta is not None
+                and self._frame_meta.slice_index == self._state.slice_index
             ):
                 self._annotation_drag_active = self._text_annotation_controller.beginAnnotation(column, row)
             return None

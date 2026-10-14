@@ -22,7 +22,7 @@ from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceControll
 from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
 
 
-def test_workspace_batch_lifecycle(qt_app, paired_series):
+def test_workspace_batch_lifecycle(qt_app, paired_series, monkeypatch):
     catalog, ct, pet = paired_series
     workspace = WorkspaceController(catalog, DicomImageProvider())
     requests = []
@@ -56,6 +56,8 @@ def test_workspace_batch_lifecycle(qt_app, paired_series):
     tab.setRegistrationParameter(0, 2.)
     tab.handleRenderResult(renderer.render(requests[-1]))
     assert tab.matrix[0, 3] == 2.
+    from PySide6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: QMessageBox.Close)
     workspace.closeTab(tab._tab_config.tab_id)
 
 

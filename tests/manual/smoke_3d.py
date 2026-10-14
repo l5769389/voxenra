@@ -13,6 +13,9 @@ from tempfile import TemporaryDirectory
 import time
 import traceback
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from toolbar_navigation import reveal_primary_tool
+
 import numpy as np
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, generate_uid
@@ -129,6 +132,7 @@ def main():
             yield from visual_children(child)
 
     def find_item(name):
+        reveal_primary_tool(root.contentItem(), name)
         return next(item for item in visual_children(root.contentItem())
                     if item.objectName() == name and item.isVisible())
 

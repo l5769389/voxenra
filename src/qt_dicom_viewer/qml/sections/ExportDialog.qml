@@ -140,7 +140,8 @@ Components.AppDialog {
     footer: Components.AppDialogFooter {
         Components.AppButton {
             objectName: "cancelExport"
-            text: dialog.controller && dialog.controller.busy ? qsTrId("text.0656") : qsTrId("text.0539")
+            text: dialog.controller && dialog.controller.busy ? qsTrId("text.0656")
+                : dialog.controller?.outputDirectory ? qsTrId("text.0864") : qsTrId("text.0539")
             onClicked: {
                 if (dialog.controller.busy) dialog.controller.cancelExport()
                 else dialog.reject()
@@ -148,7 +149,7 @@ Components.AppDialog {
         }
         Components.AppButton {
             objectName: "startExport"
-            text: qsTrId("text.0657")
+            text: dialog.controller?.outputDirectory ? qsTrId("export.again") : qsTrId("text.0657")
             actionRole: "primary"
             enabled: dialog.controller && !dialog.controller.busy && dialog.controller.instanceCount > 0
             onClicked: dialog.controller.startExport(format.currentIndex === 0 ? "dicom" : "png", anonymous.checked)

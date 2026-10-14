@@ -342,6 +342,7 @@ def test_service_settings_have_own_navigation_search_and_reset(scene):
     settings.setValue('services', 'rampThicknessAngle', 45)
     calculations = settings.section('services')
     click(window, find(window, 'resetDisplaySettings'))
+    click(window, find(window, 'confirmSettingsReset'))
     assert settings.section('services') == calculations
     settings.setValue('measurement', 'fontSize', 18)
     type_text(window, find(window, 'settingsSearch'), 'MTF')
@@ -352,6 +353,7 @@ def test_service_settings_have_own_navigation_search_and_reset(scene):
     assert find(window, 'setting-services-mtfFrequencyUnit').property('currentText') == 'lp/cm'
     assert '45°' in find(window, 'setting-services-rampThicknessAngle').property('currentText')
     click(window, find(window, 'resetDisplaySettings'))
+    click(window, find(window, 'confirmSettingsReset'))
     assert find(window, 'setting-services-mtfGaussianEquivalent').property('checked')
     assert settings.section('measurement')['fontSize'] == 18
     assert settings.section('services')['mtfFrequencyUnit'] == 'lp/mm'

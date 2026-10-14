@@ -36,6 +36,38 @@ Rectangle {
     readonly property real navigationLimit: Math.max(156, Math.min(300, width - 360 - 8))
     readonly property real navigationWidth: Math.min(navigationLimit,
         dragWidth >= 0 ? dragWidth : settingsController.values.layout.settingsNavigationWidth)
+    property string revealCategoryKey: selectedCategory
+    function revealCategory(key) {
+        revealCategoryKey = key
+        revealTimer.restart()
+    }
+    onNavigationWidthChanged: revealTimer.restart()
+    Connections {
+        target: navigationScroll.contentItem
+        function onContentHeightChanged() { revealTimer.restart() }
+        function onHeightChanged() { revealTimer.restart() }
+    }
+    Timer {
+        id: revealTimer
+        interval: 40
+        onTriggered: {
+            // Layout and translated labels settle after the focus/selection
+            // event. Find the live delegate so filtering cannot leave a stale item.
+            for (let i = 0; i < categoryRepeater.count; ++i) {
+                const entry = categoryRepeater.itemAt(i)
+                if (!entry || !entry.visible || entry.modelData.key !== page.revealCategoryKey) continue
+                const button = entry.navigationButton
+                const scroller = navigationScroll.contentItem
+                const top = button.mapToItem(scroller.contentItem, 0, 0).y
+                const bottom = top + button.height
+                scroller.contentY = Math.max(0, Math.min(
+                    Math.max(0, scroller.contentHeight - scroller.height),
+                    top < scroller.contentY ? top : bottom > scroller.contentY + scroller.height
+                        ? bottom - scroller.height : scroller.contentY))
+                break
+            }
+        }
+    }
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -118,19 +150,27 @@ Rectangle {
                     placeholderText: qsTrId("text.0835")
                 }
                 Basic.ScrollView {
+                    id: navigationScroll
                     objectName: "settingsCategoryScroll"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     contentWidth: availableWidth
+                    rightPadding: 10
                     clip: true
+                    Basic.ScrollBar.horizontal.policy: Basic.ScrollBar.AlwaysOff
+                    Basic.ScrollBar.vertical: Components.AppScrollBar {
+                        objectName: "settingsNavigationScrollBar"
+                    }
                     ColumnLayout {
-                        width: parent.width
+                        width: navigationScroll.availableWidth
                         spacing: page.compactNavigation ? 0 : 4
                         Repeater {
+                            id: categoryRepeater
                             model: page.categories
                             delegate: ColumnLayout {
                                 id: entry
                                 required property var modelData
+                                property alias navigationButton: category
                                 Layout.fillWidth: true
                                 spacing: page.compactNavigation ? 0 : 4
                                 visible: !search.text || (modelData.title + modelData.subtitle).toLowerCase().includes(search.text.toLowerCase())
@@ -144,17 +184,23 @@ Rectangle {
                                     id: category
                                     objectName: "settingsCategory-" + entry.modelData.key
                                     Layout.fillWidth: true
-                                    Layout.minimumHeight: page.compactNavigation ? 28 : 34
-                                    Layout.preferredHeight: Layout.minimumHeight
-                                    Layout.maximumHeight: Layout.minimumHeight
+                                    implicitHeight: Math.max(page.compactNavigation ? 28 : 34, categoryLabel.implicitHeight + category.topPadding + category.bottomPadding)
+                                    Layout.minimumHeight: implicitHeight
+                                    Layout.preferredHeight: implicitHeight
+                                    Layout.maximumHeight: implicitHeight
                                     topPadding: 4
                                     bottomPadding: 4
                                     checked: page.selectedCategory === entry.modelData.key
+                                    onActiveFocusChanged: if (activeFocus) page.revealCategory(entry.modelData.key)
+                                    onCheckedChanged: if (checked) page.revealCategory(entry.modelData.key)
+                                    onVisibleChanged: if (visible && checked) page.revealCategory(entry.modelData.key)
+                                    Component.onCompleted: if (checked) page.revealCategory(entry.modelData.key)
                                     onClicked: page.settingsController.selectCategory(entry.modelData.key)
                                     Accessible.name: entry.modelData.title
                                     contentItem: Text {
+                                        id: categoryLabel
                                         text: entry.modelData.shortTitle ?? entry.modelData.title; color: category.checked ? Theme.textPrimary : Theme.textSecondary
-                                        elide: Text.ElideRight; maximumLineCount: 1
+                                        wrapMode: Text.Wrap
                                         font.pixelSize: 13; font.weight: category.checked ? Font.DemiBold : Font.Normal
                                         verticalAlignment: Text.AlignVCenter
                                     }

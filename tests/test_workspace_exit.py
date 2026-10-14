@@ -303,6 +303,7 @@ def test_workspace_exit_settings_qml(scene, size, tmp_path):
     click(window, recovery)
     assert not app.workspaceDocumentController.automaticRecovery
     click(window, find(window, 'resetDisplaySettings'))
+    click(window, find(window, 'confirmSettingsReset'))
     assert preference(app) == 'ask' and combo.property('currentValue') == 'ask'
     assert app.workspaceDocumentController.automaticRecovery
     assert not warnings, warnings

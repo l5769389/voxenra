@@ -132,12 +132,19 @@ class MeasurementResultsController(QObject):
         self.tab.activateViewport(view.viewportId)
         if measure.presentation(item.measurement_id)["hidden"]:
             measure.update_presentation(item.measurement_id, hidden=False)
-        if measure.frame_for(item.measurement_id) == measure.frame_key and not view.render_pending:
+        source = measure.source(item.measurement_id)
+        owner = getattr(self.tab, "_owners", {}).get(view.viewportId, self.tab)
+        # A visible old 4D frame can still be awaiting a global phase change.
+        # Locating it must cancel that change and restore a coherent volume.
+        settled_phase = not owner.temporalPlayback or (
+            not owner._active_mpr_requests and not owner._dirty_mpr_viewport_ids
+            and owner._rendering_phase_index is None and owner._pending_phase_index is None
+            and source.get("parameters", {}).get("phase_identifier") == owner._phase_identifier_for_render())
+        if measure.frame_for(item.measurement_id) == measure.frame_key and not view.render_pending and settled_phase:
             measure.select_completed(item.measurement_id)
             self._message = ""
             self.changed.emit()
             return
-        source = measure.source(item.measurement_id)
         # Legacy stack records can be located by a verified instance; oblique
         # and projected records require their original sampling parameters.
         if not source and str(view.viewport_config.viewport_type.value) == "stack":
@@ -145,7 +152,6 @@ class MeasurementResultsController(QObject):
             from qt_dicom_viewer.ui.measurement_source import capture_request
             source = capture_request(replace(view._build_render_request(initial=False), slice_index=item.slice_index))
         try:
-            owner = getattr(self.tab, "_owners", {}).get(view.viewportId, self.tab)
             self._pending = (view, measure, item.measurement_id)
             owner.navigate_measurement(view, source)
             self._message = ""

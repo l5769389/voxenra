@@ -90,6 +90,7 @@
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/measurementLayer/RoiMetricCard.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/PrimaryToolBar.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/ToolDetailPanel.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/right/ToolLabels.js</file>
         <file>src/qt_dicom_viewer/qml/sections/right/ToolResetBar.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/manual/OperationManual.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/manual/ManualNavigation.qml</file>
@@ -229,6 +230,12 @@
         <file>src/qt_dicom_viewer/qml/assets/icons/crosshair-rotate.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/save.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/help/manual.json</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/appearance-2.1.1.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/export-complete-2.1.1.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/ai-workflow-2.1.1.gif</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/appearance-2.1.1.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/export-complete-2.1.1.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/ai-workflow-2.1.1.gif</file>
         <file>src/qt_dicom_viewer/qml/assets/help/chapters/start.json</file>
         <file>src/qt_dicom_viewer/qml/assets/help/chapters/views.json</file>
         <file>src/qt_dicom_viewer/qml/assets/help/chapters/measure.json</file>

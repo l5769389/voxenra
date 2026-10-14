@@ -12,15 +12,16 @@ Item {
     property real centerX: root.crosshairPosition.x
     property real centerY: root.crosshairPosition.y
 
-    property real centerGap: root.crosshairStyle.centerGap
-    property real lineWidth: root.crosshairStyle.lineWidth
-    property real horizontalWidth: root.crosshairStyle.horizontalWidth ?? lineWidth
-    property real verticalWidth: root.crosshairStyle.verticalWidth ?? lineWidth
-    property color horizontalColor: root.crosshairStyle.horizontalColor
-    property color verticalColor: root.crosshairStyle.verticalColor
-    property real armLength: root.crosshairStyle.armLength ?? 2 * Math.hypot(root.width, root.height)
-    readonly property real outlineWidth: root.crosshairStyle.outlineWidth ?? 0
-    readonly property color outlineColor: root.crosshairStyle.outlineColor ?? "black"
+    // A viewport can release its controller before this visual layer retires.
+    property real centerGap: root.crosshairStyle?.centerGap ?? 0
+    property real lineWidth: root.crosshairStyle?.lineWidth ?? 0
+    property real horizontalWidth: root.crosshairStyle?.horizontalWidth ?? lineWidth
+    property real verticalWidth: root.crosshairStyle?.verticalWidth ?? lineWidth
+    property color horizontalColor: root.crosshairStyle?.horizontalColor ?? "transparent"
+    property color verticalColor: root.crosshairStyle?.verticalColor ?? "transparent"
+    property real armLength: root.crosshairStyle?.armLength ?? 2 * Math.hypot(root.width, root.height)
+    readonly property real outlineWidth: root.crosshairStyle?.outlineWidth ?? 0
+    readonly property color outlineColor: root.crosshairStyle?.outlineColor ?? "black"
 
     component LocatorArm: Item {
         id: arm

@@ -129,6 +129,8 @@ def tab_snapshot(tab):
                   linkedWindow=tab._linked_mpr_window, phase=tab._current_phase_index,
                   fps=tab._fps, playbackMode=tab.playbackMode, tool=str(tab.toolController.activeTool),
                   toolSelection=tab.toolController.persistent_selection())
+    if config.tab_type == TabType.FOUR_D:
+        record["phaseIdentifiers"] = tab._phase_identifiers
     if getattr(tab, "_voi_controller", None) is not None:
         record["segmentationTool"] = tab.voiController.persistent_selection()
     if tab.mprLayout is not None:
@@ -188,6 +190,10 @@ def apply_tab_snapshot(tab, record):
     if "views" not in record:
         return
     tab.pausePlayback()
+    if tab.tab_config.tab_type == TabType.FOUR_D and "phaseIdentifiers" in record:
+        identifiers = tuple(record["phaseIdentifiers"])
+        if identifiers != tab._phase_identifiers:
+            raise ValueError(_msg('results.changedSource'))
     if tab.tab_config.tab_type == TabType.COMPARE_MPR:
         tab.restore_comparison(record["mprCompare"])
         for view in tab.viewports_by_id.values():

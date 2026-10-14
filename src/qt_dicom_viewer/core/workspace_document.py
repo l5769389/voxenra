@@ -1,13 +1,15 @@
 """Workspace manifests reference original files/archives, never temporary extracts."""
 from qt_dicom_viewer.i18n import message as _msg
 from pathlib import Path
+from dataclasses import replace
 
 from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner, _build_series_from_map, _build_series_record
 from qt_dicom_viewer.core.workspace_state import loads, MAX_DOCUMENT_BYTES
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from qt_dicom_viewer.model import DicomFolderScanSnapshot, DicomPhaseRecord
 
 FORMAT = "VoxenraWorkspace"
 VERSION = 1
+MAX_TABS = 64
 
 
 def instance_signature(instance):
@@ -58,21 +60,54 @@ def source_manifest(series, store, document_path):
         except ValueError:
             pass
         sources.append({"path": str(source), "relative": relative})
-    return {"uid": series.series_instance_uid, "sources": sources,
-            "instances": [instance_signature(i) for i in instances.values()]}
+    result = {"uid": series.series_instance_uid, "sources": sources,
+              "instances": [instance_signature(i) for i in instances.values()]}
+    if series.phases:
+        indexes = {identity: index for index, identity in enumerate(instances)}
+        result["phases"] = [{"identifier": phase.phase_identifier,
+                             "instances": [indexes[i.frame_identity] for i in phase.instances]}
+                            for phase in series.phases]
+    return result
+
+
+def _validate_phase_manifest(record):
+    if "phases" not in record:
+        return
+    phases = record["phases"]
+    if not isinstance(phases, list) or not phases or len(phases) > len(record["instances"]):
+        raise ValueError(_msg('text.0215'))
+    identifiers, used = set(), set()
+    for phase in phases:
+        if (not isinstance(phase, dict) or type(phase.get("identifier")) is not int
+                or phase["identifier"] in identifiers or not isinstance(phase.get("instances"), list)
+                or not phase["instances"]):
+            raise ValueError(_msg('text.0215'))
+        identifiers.add(phase["identifier"])
+        for index in phase["instances"]:
+            if type(index) is not int or not 0 <= index < len(record["instances"]) or index in used:
+                raise ValueError(_msg('text.0215'))
+            used.add(index)
+    if len(used) != len(record["instances"]):
+        raise ValueError(_msg('text.0215'))
 
 
 def read_document(path):
     path = Path(path)
     if path.stat().st_size > MAX_DOCUMENT_BYTES:
         raise ValueError(_msg('text.0127'))
-    document = loads(path.read_bytes())
+    return validate_document(loads(path.read_bytes()))
+
+
+def validate_document(document):
+    """Apply the same manifest contract before saving and after decoding."""
     if not isinstance(document, dict) or document.get("format") != FORMAT or document.get("version") != VERSION:
         raise ValueError(_msg('text.0210'))
     series, tabs = document.get("series"), document.get("tabs")
     if (not isinstance(series, list) or not isinstance(tabs, list)
-            or len(series) > 10000 or len(tabs) > 64):
+            or len(series) > 10000):
         raise ValueError(_msg('text.0211'))
+    if len(tabs) > MAX_TABS:
+        raise ValueError(_msg('workspace.tabLimit', limit=MAX_TABS))
     known = set()
     count = 0
     for record in series:
@@ -95,6 +130,7 @@ def read_document(path):
                 for sig in signatures):
             raise ValueError(_msg('text.0215'))
         count += len(signatures)
+        _validate_phase_manifest(record)
     if count > 100000:
         raise ValueError(_msg('text.0216'))
     for tab in tabs:
@@ -157,6 +193,13 @@ def _validate_tab(tab):
             raise ValueError(_msg('text.0222'))
     if utility or tab["type"] == "tag":
         return
+    if "phaseIdentifiers" in tab:
+        identifiers = tab["phaseIdentifiers"]
+        if (tab["type"] != "4d" or not isinstance(identifiers, (tuple, list))
+                or len(identifiers) < 2 or any(type(value) is not int for value in identifiers)
+                or len(set(identifiers)) != len(identifiers)
+                or type(tab.get("phase")) is not int or not 0 <= tab["phase"] < len(identifiers)):
+            raise ValueError(_msg('text.0222'))
     if (not isinstance(tab.get("views"), dict) or not isinstance(tab.get("edits"), dict)
             or not isinstance(tab.get("projection"), MprProjectionSettings)
             or tab.get("mpr") is not None and not isinstance(tab["mpr"], MprState)
@@ -224,7 +267,7 @@ def load_referenced_series(document, path, store, *, extra_paths=(), cancelled=l
                                                 cancelled=cancelled, can_publish=lambda: False):
         pass
     available = {s.series_instance_uid: s for s in latest.series} if latest else {}
-    missing, selected, all_instances, legacy_groups = [], [], {}, {}
+    missing, selected, all_instances, legacy_groups, saved_phases = [], [], {}, {}, {}
     for record in document["series"]:
         series = available.get(record["uid"])
         if series is None:
@@ -246,6 +289,11 @@ def load_referenced_series(document, path, store, *, extra_paths=(), cancelled=l
             all_instances[instance.frame_identity] = instance
         if record["uid"] in legacy_groups:
             legacy_groups[record["uid"]] = resolved
+        _validate_phase_manifest(record)
+        if "phases" in record:
+            saved_phases[record["uid"]] = tuple(DicomPhaseRecord(
+                phase["identifier"], tuple(resolved[index] for index in phase["instances"]))
+                for phase in record["phases"])
         selected.append(record["uid"])
     # Exclude newly added files in a referenced folder from the saved workspace.
     groups = {}
@@ -255,5 +303,14 @@ def load_referenced_series(document, path, store, *, extra_paths=(), cancelled=l
     for uid, instances in legacy_groups.items():
         if uid in selected:
             series.append(_build_series_record(instances))
+    for index, record in enumerate(series):
+        phases = saved_phases.get(record.series_instance_uid)
+        if phases is not None:
+            # Restore saved identifiers only when each complete source group
+            # still matches the scanner's geometry and temporal grouping.
+            identities = lambda groups: {frozenset(i.frame_identity for i in p.instances) for p in groups}
+            if identities(phases) != identities(record.phases):
+                raise ValueError(_msg('results.changedSource'))
+            series[index] = replace(record, phases=phases)
     file_count = len({i.path for i in all_instances.values()})
     return DicomFolderScanSnapshot(Path(path).parent, len(files), file_count, 0, series), missing

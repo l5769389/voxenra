@@ -257,7 +257,7 @@ def test_services_are_available_as_a_primary_panel_only_tool_in_2d() -> None:
 
     controller.activateTool("service")
 
-    assert controller.activeToolLabel == "服务"
+    assert controller.activeToolLabel == "分析"
     assert controller.activeToolIcon == "service"
     assert controller.activePanel == "service"
     assert controller.activeInteraction == ""

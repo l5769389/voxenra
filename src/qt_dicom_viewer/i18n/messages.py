@@ -106,4 +106,7 @@ def localize(value, translations=None):
 
 def error_message(error):
     if not isinstance(error, BaseException): return error
-    return error.args[0] if len(error.args) == 1 and isinstance(error.args[0], (Message, JoinedMessage)) else str(error)
+    if isinstance(error, MemoryError):
+        return Message('errors.outOfMemory')
+    value = error.args[0] if len(error.args) == 1 and isinstance(error.args[0], (Message, JoinedMessage)) else str(error)
+    return value or Message('errors.operationFailed')

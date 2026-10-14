@@ -14,5 +14,6 @@ for source in sorted(root.rglob("*")):
     datas.append((str(source), str(Path("qt_dicom_viewer/qml") / relative.parent)))
 
 # Executed by the separately configured Python, not imported into the bundle.
-bridge = root.parent / "infrastructure/totalsegmentator_bridge.py"
-datas.append((str(bridge), "qt_dicom_viewer/infrastructure"))
+for name in ("totalsegmentator_bridge.py", "posix_inference_supervisor.py"):
+    helper = root.parent / "infrastructure" / name
+    datas.append((str(helper), "qt_dicom_viewer/infrastructure"))

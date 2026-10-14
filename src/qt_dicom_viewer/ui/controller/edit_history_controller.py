@@ -4,15 +4,21 @@ from PySide6.QtGui import QKeySequence
 
 from qt_dicom_viewer.core.workspace_state import dumps, loads
 from qt_dicom_viewer.ui.workspace_snapshot import editable_state, edit_signature, apply_edits
+from qt_dicom_viewer.i18n import message as _msg
+from qt_dicom_viewer.i18n.messages import error_message
+from qt_dicom_viewer.i18n.qt import translated_property
 
 
 class EditHistoryController(QObject):
     changed = Signal()
+    _i18n_error = Signal()
 
     def __init__(self, tab):
         super().__init__(tab)
         self.tab = tab
         self._undo, self._redo = [], []
+        self._error = ""
+        self._current = self._signature = None
         self._restoring = False
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
@@ -38,7 +44,11 @@ class EditHistoryController(QObject):
 
     @Property(bool, notify=changed)
     def canUndo(self):
-        return bool(self._undo)
+        return not self._error and bool(self._undo)
+
+    @translated_property(str, notify=_i18n_error, notify_name='_i18n_error', source_notify='changed')
+    def error(self):
+        return self._error
 
     @Property(str, constant=True)
     def undoShortcutText(self):
@@ -50,15 +60,14 @@ class EditHistoryController(QObject):
 
     @Property(bool, notify=changed)
     def canRedo(self):
-        return bool(self._redo)
+        return not self._error and bool(self._redo)
 
     def reset(self):
         self._timer.stop()
         self._undo.clear()
         self._redo.clear()
-        state = editable_state(self.tab)
-        self._current = dumps(state)
-        self._signature = edit_signature(state)
+        self._current = self._signature = None
+        self.capture()
         self.changed.emit()
 
     # Keep these receivers in the class metaobject. Dynamic per-instance slots
@@ -74,21 +83,33 @@ class EditHistoryController(QObject):
     def capture(self):
         self._timer.stop()
         if self._restoring or getattr(self.tab, "_registration_dragging", False):
-            return
-        state = editable_state(self.tab)
-        signature = edit_signature(state)
+            return False
+        try:
+            state = editable_state(self.tab)
+            signature = edit_signature(state)
+            snapshot = dumps(state) if signature != self._signature else self._current
+        except Exception as error:
+            self._error = _msg('history.recordFailed', reason=error_message(error))
+            self.changed.emit()
+            return False
         if signature == self._signature:
-            return
-        snapshot = dumps(state)
-        self._undo.append(self._current)
+            if self._error:
+                self._error = ""
+                self.changed.emit()
+            return True
+        if self._current is not None:
+            self._undo.append(self._current)
         self._redo.clear()
         self._current, self._signature = snapshot, signature
+        self._error = ""
         while len(self._undo) > 100 or sum(map(len, self._undo)) > 64 * 1024**2:
             self._undo.pop(0)
         self.changed.emit()
+        return True
 
     def _apply(self, source, destination):
-        self.capture()
+        if not self.capture():
+            return
         if not source:
             return
         before, target = self._current, source[-1]

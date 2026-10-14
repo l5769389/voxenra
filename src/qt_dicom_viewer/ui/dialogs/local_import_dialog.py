@@ -95,6 +95,7 @@ class LocalImportDialog(QDialog):
         self.paths = []
         self._directory = ""
         self._navigation_id = 0
+        self._accept_navigation = 0
         self._loading = False
         self._directory_results = queue.SimpleQueue()
         self._directory_timer = QTimer(self)
@@ -231,12 +232,14 @@ class LocalImportDialog(QDialog):
             for index in self.view.selectionModel().selectedRows(0)
         ]
 
-    def navigate(self, directory, *, typed=False, restore_selection=()):
+    def navigate(self, directory, *, typed=False, restore_selection=(), accept_after=False):
         self._navigation_id += 1
         request = self._navigation_id
+        self._accept_navigation = request if accept_after else 0
         results = self._directory_results
         self._loading = True
         self.path_edit.setText(directory)
+        self.path_edit.setEnabled(not accept_after)
         self.view.setEnabled(False)
         self.open_button.setEnabled(False)
         self.selection_label.setText(_msg('import.readingDirectory'))
@@ -250,12 +253,17 @@ class LocalImportDialog(QDialog):
                 path = Path(directory).expanduser() if directory else None
                 selected = list(restore_selection)
                 if typed and path.is_file():
-                    selected = [str(path.absolute())]
+                    # Match the canonical directory used by model rows even
+                    # when the user entered a directory symlink.
+                    selected = [str(path.parent.resolve() / path.name)]
                     path = path.parent
                 target = str(path.resolve()) if path is not None else ""
                 if target:
                     with os.scandir(target) as entries:
                         files = [QFileInfo(entry.path) for entry in entries if not entry.name.startswith('.')]
+                    # An explicitly typed hidden file is still a valid source.
+                    if typed and selected and Path(selected[0]).name.startswith('.'):
+                        files.append(QFileInfo(selected[0]))
                 else:
                     files = QDir.drives()
                 for info in files:
@@ -274,10 +282,14 @@ class LocalImportDialog(QDialog):
             if request != self._navigation_id:
                 continue
             self._loading = False
+            accept_after = self._accept_navigation == request
+            self._accept_navigation = 0
             self._directory_timer.stop()
+            self.path_edit.setEnabled(True)
             self.view.setEnabled(True)
             if error:
-                self.path_edit.setText(self._directory)
+                if not accept_after:
+                    self.path_edit.setText(self._directory)
                 self.update_selection()
                 self.selection_label.setText(_msg('import.directoryUnavailable'))
                 continue
@@ -298,6 +310,12 @@ class LocalImportDialog(QDialog):
                     self.view.selectionModel().select(index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
                     self.view.scrollTo(index)
             self.update_selection()
+            if accept_after:
+                if selected and set(self.selected_paths()) != set(selected):
+                    self.path_edit.setText(selected[0])
+                    self.selection_label.setText(_msg('text.0545'))
+                    continue
+                self.accept()
 
     def _refresh_directory(self):
         if self.isVisible() and not self._loading:
@@ -333,12 +351,19 @@ class LocalImportDialog(QDialog):
     def accept(self):
         if self._loading:
             return
+        if self.path_edit.text() != self._directory:
+            self.navigate(self.path_edit.text(), typed=True, accept_after=True)
+            return
         paths = self.selected_paths() or ([self._directory] if self._directory else [])
         if not paths or not all(Path(path).exists() for path in paths):
             self.selection_label.setText(_msg('text.0545'))
             return
         self.paths = paths
         super().accept()
+
+    def reject(self):
+        self._accept_navigation = 0
+        super().reject()
 
 
 def select_import_paths(directory=""):

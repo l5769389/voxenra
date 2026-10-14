@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.0/Voxenra-2.1.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 ## Features
 
@@ -33,9 +33,9 @@ Go from CT viewing to editable organ segmentation in the same workspace:
 - **Run locally**: Connect an existing TotalSegmentator environment and process the full CT volume of the current phase using available CUDA, Apple MPS, or CPU devices.
 - **Keep editing**: Review overlays in three planes, refine with paint/erase, toggle visibility, undo, and save a workspace or export SEG / NRRD.
 
-[![Voxenra local AI segmentation: organ selection, TotalSegmentator inference, and result review](docs/screenshots/39-ai-segmentation.gif)](docs/screenshots/39-ai-segmentation.png)
+[![Voxenra automatic segmentation workflow: synthetic phantom selection, failure, retry and successful import](docs/screenshots/en/49-ai-workflow-2.1.1.gif)](docs/screenshots/en/48-ai-complete-2.1.1.png)
 
-Recorded in the real application (Chinese UI); inference waiting is shortened and does not indicate runtime. Install TotalSegmentator and its CT fast model separately, then check the environment in **Settings → AI**. Review and refine automatic results.
+Recorded in the current application using a synthetic phantom and simulated inference output to demonstrate selection, failure, retry and successful import; this does not indicate model accuracy or runtime. Install TotalSegmentator and its CT fast model separately, then check the environment in **Settings → AI**. Review and refine automatic results.
 
 [Setup and workflow guide](https://l5769389.github.io/voxenra/en/segmentation.html) · [TotalSegmentator project](https://github.com/wasserth/TotalSegmentator)
 
@@ -125,7 +125,7 @@ Workspaces preserve image references, layouts, measurements, segmentation masks,
 
 <table>
 <tr>
-<td width="50%"><b>Local import</b><br><a href="docs/screenshots/15-mixed-import.png"><img src="docs/screenshots/15-mixed-import.png" alt="Mixed file, folder, and archive import" width="100%"></a></td>
+<td width="50%"><b>Imported workspace</b><br><a href="docs/screenshots/en/45-imported-home-2.1.1.png"><img src="docs/screenshots/en/45-imported-home-2.1.1.png" alt="Open selected series or import more images" width="100%"></a></td>
 <td width="50%"><b>PACS browser</b><br><a href="docs/screenshots/16-pacs-browser.png"><img src="docs/screenshots/16-pacs-browser.png" alt="PACS study query and series download" width="100%"></a></td>
 </tr>
 <tr>
@@ -142,11 +142,15 @@ Choose **dark, neutral gray, or light** in **Settings → Appearance & language*
 
 [Dark theme](docs/screenshots/25-theme-dark.png) · [Light theme](docs/screenshots/26-theme-light.png)
 
-Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Conflicting or reserved shortcuts are rejected. Privacy options control identity overlays in new views and let you clear recent workspace entries.
+Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Conflicting or reserved shortcuts are rejected. Independent switches show labels for sidebar actions and right-side tools. Privacy options control identity overlays in new views and let you clear recent workspace entries.
 
-![Mouse bindings and tool shortcuts](docs/screenshots/40-input-settings.png)
+![Theme, language and independent button labels](docs/screenshots/en/44-appearance-2.1.1.png)
+
+[Mouse bindings and tool shortcuts](docs/screenshots/40-input-settings.png)
 
 Update prompts show a concise summary in the selected interface language, with access to full release notes. [Update dialog](docs/screenshots/en/43-update-summary.png)
+
+[Series export completion](docs/screenshots/en/46-export-complete-2.1.1.png) · [Automatic segmentation retry](docs/screenshots/en/47-ai-error-2.1.1.png)
 
 [View the interface gallery](docs/screenshots/README.md)
 

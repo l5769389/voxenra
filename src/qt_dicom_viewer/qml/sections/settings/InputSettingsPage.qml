@@ -7,6 +7,7 @@ import "../../theme"
 ColumnLayout {
     id: page
     required property var settingsController
+    signal resetShortcutsRequested()
     readonly property var shortcuts: appController.shortcutController
     spacing: 12
     Component.onDestruction: shortcuts.cancelRecording()
@@ -86,7 +87,14 @@ ColumnLayout {
                 }
             }
         }
-        Components.AppButton { objectName: "resetShortcuts"; text: qsTrId("text.0843"); onClicked: { page.shortcuts.cancelRecording(); page.settingsController.resetSection("shortcuts") } }
+        Components.AppButton {
+            objectName: "resetShortcuts"
+            text: qsTrId("text.0843")
+            onClicked: {
+                page.shortcuts.cancelRecording()
+                page.resetShortcutsRequested()
+            }
+        }
     }
     SettingsSection {
         sectionKey: "input-fixed"

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
+from qt_dicom_viewer.core.series_import import merge_import_snapshot
 from qt_dicom_viewer.model import DicomFolderScanSnapshot
 from .client import DicomWebClient, PacsError, check_cancel
 
@@ -20,7 +21,7 @@ class PacsImportResult:
         shutil.rmtree(self.folder, ignore_errors=True)
 
 
-def import_series(client: DicomWebClient, selections: list[dict], root: Path, progress) -> PacsImportResult:
+def import_series(client: DicomWebClient, selections: list[dict], root: Path, progress, *, base_series=None) -> PacsImportResult:
     root.mkdir(parents=True, exist_ok=True)
     folder = Path(tempfile.mkdtemp(prefix="import-", dir=root))
     try:
@@ -41,6 +42,8 @@ def import_series(client: DicomWebClient, selections: list[dict], root: Path, pr
             check_cancel(client.cancel)
         if snapshot is None or snapshot.dicom_file_count != len(requests) or snapshot.skipped_file_count:
             raise PacsError(_msg('text.0337'))
+        check_cancel(client.cancel)
+        snapshot = merge_import_snapshot(snapshot, base_series or {})
         check_cancel(client.cancel)
         return PacsImportResult(folder, snapshot)
     except BaseException:

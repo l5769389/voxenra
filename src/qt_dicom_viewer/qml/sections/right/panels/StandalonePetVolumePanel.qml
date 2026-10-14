@@ -21,6 +21,8 @@ ColumnLayout {
     }
     Text { text: qsTrId("text.1098") + (panel.controller?.petUnit ?? ""); color: Theme.textSecondary }
     Components.AppNumberField {
+        editContext: [panel.controller, panel.controller?.loadState ?? "", panel.controller?.petUnitId ?? ""]
+        enabled: panel.controller?.loadState === "ready"
         objectName: "pet3dUpper"
         Layout.fillWidth: true
         commitOnFinish: true
@@ -30,6 +32,8 @@ ColumnLayout {
     }
     Text { text: qsTrId("text.1099") + (panel.controller?.petUnit ?? ""); color: Theme.textSecondary }
     Components.AppNumberField {
+        editContext: [panel.controller, panel.controller?.loadState ?? "", panel.controller?.petUnitId ?? ""]
+        enabled: panel.controller?.loadState === "ready"
         objectName: "pet3dThreshold"
         Layout.fillWidth: true
         commitOnFinish: true

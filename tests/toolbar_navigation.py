@@ -21,6 +21,7 @@ def reveal_primary_tool(root, name):
         top = root
         while top.parentItem() is not None:
             top = top.parentItem()
-        window = next(w for w in QGuiApplication.allWindows() if w.contentItem() == top)
+        window = next(w for w in QGuiApplication.allWindows()
+                      if hasattr(w, "contentItem") and w.contentItem() == top)
         QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, position)
         QTest.qWait(40)

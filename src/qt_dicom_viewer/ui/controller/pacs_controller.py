@@ -22,6 +22,9 @@ class _Signals(QObject):
 class _Job(QRunnable):
     def __init__(self, number, action, cancel):
         super().__init__()
+        # The controller retains jobs through queued completion and may remove
+        # a cancelled queued job with tryTake(). Avoid auto-delete/ABA races.
+        self.setAutoDelete(False)
         self.number, self.action, self.cancel = number, action, cancel
         self.signals = _Signals()
         self.result = None
@@ -57,10 +60,13 @@ class PacsController(QObject):
     profilesChanged = Signal()
     studiesChanged = Signal()
     seriesChanged = Signal()
+    importStarted = Signal(object)
     imported = Signal(object)
 
-    def __init__(self, parent=None, *, config_path=None, import_root=None):
+    def __init__(self, parent=None, *, config_path=None, import_root=None, series_catalog=None, import_blocker=None):
         super().__init__(parent)
+        self._series_catalog = series_catalog
+        self._import_blocker = import_blocker or (lambda: "")
         config_root = Path(QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation))
         self._store = PacsConfigStore(Path(config_path) if config_path else config_root / "pacs.json")
         self._import_root = Path(import_root) if import_root else Path(
@@ -82,11 +88,15 @@ class PacsController(QObject):
         self._has_study_next, self._has_series_next = False, False
         self._busy, self._operation, self._progress = False, "", 0.0
         self._pool = QThreadPool(self)
-        self._pool.setMaxThreadCount(1)
+        # One spare worker lets a retry proceed while a cancelled socket times out.
+        # Keep the bound fixed even when the user repeatedly cancels.
+        self._pool.setMaxThreadCount(2)
+        self._jobs = {}
         self._job, self._cancel, self._number, self._closing = None, Event(), 0, False
         self._success = None
         self._tested_profile_id = ""
         self._tested_draft = None
+        self._tested_feedback = {}
 
     @_TextProperty('QVariantList', notify=_i18n_profiles, notify_name='_i18n_profiles', source_notify='profilesChanged')
     def profiles(self):
@@ -100,7 +110,8 @@ class PacsController(QObject):
         return self._test_results.get("draft", {})
 
     def _test_feedback(self, state, message):
-        self._test_results[self._test_target] = {"state": state, "message": message}
+        self._tested_feedback = {"state": state, "message": message}
+        self._test_results[self._test_target] = dict(self._tested_feedback)
         if self._test_target != "draft":
             self._statuses[self._test_target] = {"testing": _msg('text.0500'), "success": _msg('text.0501'),
                                                 "error": _msg('text.0502'), "cancelled": _msg('text.0503')}[state]
@@ -261,7 +272,8 @@ class PacsController(QObject):
         original = next((p for p in self._profiles if p.id == profile.id), None)
         if self._commit(rows, self._default):
             if self._connection_matches(profile, self._tested_draft):
-                self._statuses[profile.id] = _msg('text.0501')
+                self._statuses[profile.id] = _msg('text.0501' if self._tested_feedback['state'] == 'success' else 'text.0502')
+                self._test_results[profile.id] = dict(self._tested_feedback)
             elif not self._connection_matches(profile, original):
                 self._statuses.pop(profile.id, None)
                 self._test_results.pop(profile.id, None)
@@ -311,7 +323,9 @@ class PacsController(QObject):
         self._success = success
         self._notify({"test": _msg('text.0509'), "studies": _msg('text.0510'),
                       "series": _msg('text.0511'), "import": _msg('text.0512')}[operation])
-        self._job = _Job(self._number, lambda progress: action(self._cancel, progress), self._cancel)
+        cancel = self._cancel
+        self._job = _Job(self._number, lambda progress: action(cancel, progress), cancel)
+        self._jobs[self._number] = self._job
         self._job.signals.finished.connect(self._finished)
         self._job.signals.progress.connect(self._on_progress)
         self._pool.start(self._job)
@@ -324,6 +338,7 @@ class PacsController(QObject):
 
     @Slot(int, object, object)
     def _finished(self, number, result, error):
+        self._jobs.pop(number, None)
         if number != self._number or self._closing or self._cancel.is_set():
             if isinstance(result, PacsImportResult):
                 result.discard()
@@ -349,7 +364,7 @@ class PacsController(QObject):
                                          for key in ("url", "auth", "username", "secret", "timeout"))
 
     def _test(self, profile):
-        self._tested_draft = None
+        self._tested_draft = profile
         self._tested_profile_id = next((p.id for p in self._profiles if p == profile), "")
         def done(message):
             self._tested_draft = profile
@@ -366,6 +381,7 @@ class PacsController(QObject):
         if self._busy:
             return
         self._test_target = profile_id
+        self._tested_draft = None
         try:
             self._test(self._profile(profile_id))
         except ValueError as exc:
@@ -460,22 +476,42 @@ class PacsController(QObject):
 
     @Slot()
     def importSelected(self):
-        if self._busy or not self._selected or not self._pacs_enabled:
+        if self._busy or self._closing or not self._selected or not self._pacs_enabled:
+            return
+        if reason := self._import_blocker():
+            self._notify(reason, True)
             return
         profile = self._profile(self._selected_profile)
         rows = [row for row in self._series if row["uid"] in self._selected]
+        # The app serializes catalog writers before this GUI-thread snapshot.
+        # Downloading, sorting and rebuilding temporal groups stay in the worker.
+        base_series = self._series_catalog.snapshot() if self._series_catalog is not None else {}
+        self.importStarted.emit(tuple(row["uid"] for row in rows))
         def done(result):
             self.imported.emit(result.snapshot)
             self._notify(_msg('text.0519', value1=len(rows), value2=result.snapshot.dicom_file_count))
             self._selected.clear()
         self._start("import", lambda cancel, progress: import_series(
-            DicomWebClient(profile, cancel), rows, self._import_root, progress), done)
+            DicomWebClient(profile, cancel), rows, self._import_root, progress,
+            base_series=base_series), done)
 
     @Slot()
     def cancel(self):
         if self._busy:
             self._cancel.set()
-            self._notify(_msg('text.0520'))
+            if self._operation == "test":
+                job = self._job
+                # Queued tests never need to run; retain running jobs until their
+                # queued completion arrives, but detach their generation now.
+                if job is not None and self._pool.tryTake(job):
+                    self._jobs.pop(self._number, None)
+                self._number += 1
+                self._busy, self._job, self._success = False, None, None
+                self._tested_draft = None
+                self._test_feedback("cancelled", _msg('text.0513'))
+                self._notify(_msg('text.0338'))
+            else:
+                self._notify(_msg('text.0520'))
 
     @Slot()
     def shutdown(self):
@@ -483,8 +519,12 @@ class PacsController(QObject):
             return
         self._closing = True
         self._cancel.set()
+        for job in self._jobs.values():
+            job.cancel.set()
         self._pool.waitForDone()
         # A worker may finish before its queued GUI callback is delivered.
         # Such a result has not been handed to the catalog and must be discarded.
-        if self._job is not None and isinstance(self._job.result, PacsImportResult):
-            self._job.result.discard()
+        for job in self._jobs.values():
+            if isinstance(job.result, PacsImportResult):
+                job.result.discard()
+        self._jobs.clear()

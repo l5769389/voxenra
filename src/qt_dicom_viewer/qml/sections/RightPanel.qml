@@ -24,6 +24,19 @@ Rectangle {
     signal manualRequested(string chapter)
     readonly property var volumeController: viewportController && viewportController.viewportType === "volume"
         ? viewportController : null
+    readonly property string regionCalculationError:
+        (tabController?.voiController ?? viewportController?.voiController)?.error ?? ""
+    function revealRegionError() {
+        if (regionCalculationError === "") return
+        Qt.callLater(() => {
+            if (rightPanel.regionCalculationError === "") return
+            if (!rightPanel.collapsed && ["voi", "segmentation"].includes(rightPanel.toolController?.activePanel))
+                detailFlickable.contentY = 0
+            if (compactPanel.visible && ["voi", "segmentation"].includes(compactPanel.panelTool))
+                compactDetailFlickable.contentY = 0
+        })
+    }
+    onRegionCalculationErrorChanged: revealRegionError()
 
     color: Theme.panelBackground
     border.color: Theme.panelBorder
@@ -31,7 +44,7 @@ Rectangle {
     radius: 8
     clip: true
 
-    onCollapsedChanged: { compactPanel.close(); syncCompactTool() }
+    onCollapsedChanged: { compactPanel.close(); syncCompactTool(); revealRegionError() }
     onToolControllerChanged: { compactPanel.close(); syncCompactTool() }
     onViewportControllerChanged: compactPanel.close()
     onVisibleChanged: if (!visible) compactPanel.close()
@@ -166,6 +179,7 @@ Rectangle {
 
     Connections {
         target: rightPanel.toolController ?? null
+        function onActivePanelChanged() { rightPanel.revealRegionError() }
         function onActiveToolChanged() {
             if (rightPanel.toolController.activeTool !== compactPanel.panelTool) compactPanel.close()
         }
@@ -176,6 +190,7 @@ Rectangle {
     }
     Components.ToolFlyout {
         id: compactPanel
+        onOpened: rightPanel.revealRegionError()
         objectName: "compactVolumePanel"
         parent: rightPanel
         property string panelTool: ""
@@ -193,6 +208,7 @@ Rectangle {
         title: rightPanel.toolController?.activeToolLabel ?? ""
         closeButtonName: "compactVolumePanelClose"
         Flickable {
+            id: compactDetailFlickable
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true

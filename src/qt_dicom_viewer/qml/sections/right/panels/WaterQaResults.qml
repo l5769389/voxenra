@@ -14,6 +14,9 @@ ColumnLayout {
     readonly property var result: controller ? controller.currentResult : ({})
     readonly property bool ready: result.rois !== undefined
     readonly property bool editing: controller ? controller.dragging : false
+    readonly property string inputContext: (controller?.frameToken ?? "") + "|" + (controller?.status ?? "")
+    readonly property bool inputReady: !!controller && controller.available
+        && controller.frameToken.length > 0 && !["waiting", "calculating"].includes(controller.status)
     spacing: 10
 
     RowLayout {
@@ -122,11 +125,25 @@ ColumnLayout {
                 from: setting.modelData.minimum
                 to: 100
                 value: panel.controller ? panel.controller[setting.modelData.field] : 20
-                enabled: !!panel.controller && panel.controller.available
+                enabled: panel.inputReady
                 editable: true
+                live: false
+                readonly property var editContext: [panel.controller, panel.inputContext]
+                function modelValue() { return panel.controller ? panel.controller[setting.modelData.field] : 20 }
+                function discardDraft() {
+                    value = Qt.binding(function() { return number.modelValue() })
+                    contentItem.text = textFromValue(modelValue(), locale)
+                }
+                onEditContextChanged: discardDraft()
+                onEnabledChanged: if (!enabled) discardDraft()
+                onVisibleChanged: if (!visible) discardDraft()
+                Accessible.description: qsTrId("numeric.commitHint")
+                Components.AppToolTip { visible: number.hovered; text: number.Accessible.description }
                 leftPadding: 24
                 rightPadding: 24
                 onValueModified: {
+                    // Disabling can finish the TextInput before enabledChanged arrives.
+                    if (!enabled || !visible || !panel.inputReady) { discardDraft(); return }
                     if (setting.modelData.field === "roiDiameterMm")
                         panel.controller.setRoiDiameterMm(value)
                     else
@@ -142,6 +159,7 @@ ColumnLayout {
                     validator: number.validator
                     inputMethodHints: Qt.ImhDigitsOnly
                     selectByMouse: true
+                    Keys.onEscapePressed: event => { number.discardDraft(); event.accepted = true }
                 }
                 up.indicator: Rectangle {
                     x: number.width-width

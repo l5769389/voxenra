@@ -16,6 +16,7 @@ Components.AppButton {
     Accessible.description: qsTrId("analysis.coordinates")
     onClicked: editor.open()
     onVisibleChanged: if (!visible) editor.close()
+    onControllerChanged: editor.close()
 
     Basic.Popup {
         id: editor

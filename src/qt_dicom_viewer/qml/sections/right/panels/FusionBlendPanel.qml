@@ -19,6 +19,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Text { Layout.fillWidth: true; text: qsTrId("text.1135"); color: Theme.textPrimary }
         Components.AppNumberField {
+            editContext: [panel.controller, panel.controller?.ready ?? true]
             objectName: "fusionOpacityInput"
             Layout.preferredWidth: 80
             numberValue: panel.controller.opacity * 100

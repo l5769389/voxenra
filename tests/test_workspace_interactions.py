@@ -21,7 +21,7 @@ from test_tag_qml import find, click, type_text, descendants
 QML = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml'
 
 
-def test_live_number_and_reset_while_input_keeps_focus(scene):
+def test_number_commit_and_reset_while_input_keeps_focus(scene):
     window, app, warnings = scene
     app.workspaceController.openSettings()
     app.settingsController.selectCategory('measurement')
@@ -30,6 +30,9 @@ def test_live_number_and_reset_while_input_keeps_focus(scene):
     slider = find(window, 'setting-measurement-lineWidth')
     type_text(window, field, '2.75')
     assert field.hasActiveFocus()
+    assert slider.property('value') == 1.5
+    assert app.settingsController.values['measurement']['lineWidth'] == 1.5
+    QTest.keyClick(window, Qt.Key_Return)
     assert slider.property('value') == 2.75
     assert app.settingsController.values['measurement']['lineWidth'] == 2.75
     app.settingsController.resetSection('measurement')

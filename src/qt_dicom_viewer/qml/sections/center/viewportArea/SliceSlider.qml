@@ -90,6 +90,8 @@ Item {
         }
     }
     onVisibleChanged: if (!visible) jumpPopup.close()
+    onViewportControllerChanged: jumpPopup.close()
+    onSliceNumberChanged: jumpPopup.close()
 
     Text {
         id: minimumLabel

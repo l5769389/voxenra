@@ -8,6 +8,40 @@ from test_tag_qml import find, click
 from test_dicom_tags import qt_app, wait_until
 
 
+def test_skip_all_missing_sources_restores_settings_from_visible_button(sidebar_scene, tmp_path):
+    window, app, records, warnings = sidebar_scene
+    manager, workspace = app.workspaceDocumentController, app.workspaceController
+    workspace.createTab(records[0].series_instance_uid, 'CT', '2d')
+    wait_until(lambda: workspace.activeLoadState.status == 'ready')
+    workspace.openSettings()
+    path = tmp_path / 'missing-sources.voxworkspace'
+    assert manager.save_to(path)
+    wait_until(lambda: not manager.busy)
+    assert not manager.isError, manager.message
+    original = path.read_bytes()
+    for record in records:
+        for instance in record.instances:
+            instance.path.unlink()
+    assert manager.restore_from(path)
+    wait_until(lambda: not manager.busy and manager.hasMissingSources)
+    dialog = window.findChild(QObject, 'workspaceDocumentDialog')
+    wait_until(lambda: dialog.property('visible'))
+    skip = dialog.findChild(QObject, 'skipWorkspaceSources')
+    assert skip.isEnabled() and skip.isVisible()
+    click(skip.window(), skip)
+    wait_until(lambda: not manager.busy and not manager.hasMissingSources)
+    assert workspace.activeTabType == 'settings'
+    assert len(workspace._tab_dict) == 1
+    assert not app._series_catalog.snapshot()
+    assert manager.dirty and not manager.path
+    assert manager.isError and manager.message
+    assert path.read_bytes() == original
+    assert find(window, 'settingsPage').isVisible()
+    QTest.qWait(80)
+    assert window.grabWindow().save(str(tmp_path / 'skip-missing-restored-settings.png'))
+    assert not warnings, warnings
+
+
 def test_workspace_menu_compact_footer_and_restored_width(sidebar_scene, tmp_path):
     window, app, records, warnings = sidebar_scene
     sidebar = find(window, 'sidebarContainer')

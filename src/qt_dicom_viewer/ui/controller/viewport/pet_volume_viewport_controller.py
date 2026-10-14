@@ -63,6 +63,10 @@ class PetVolumeViewportController(VolumeViewportController):
         return self.scene.pet_volume.pixel_value_meta.unit if self.scene else ""
 
     @Property(str, notify=sceneChanged)
+    def petUnitId(self):
+        return self.scene.pet_volume.pixel_value_meta.unit_id if self.scene else ""
+
+    @Property(str, notify=sceneChanged)
     def ctPreset(self): return self._ct_preset
 
     @Property(str, notify=sceneChanged)

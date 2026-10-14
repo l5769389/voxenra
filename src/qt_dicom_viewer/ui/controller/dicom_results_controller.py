@@ -33,6 +33,16 @@ def _instances(catalog, uid, phase=None, sop=None):
     return tuple(series.instances)
 
 
+def _source_phase_identifier(tab, phase_index):
+    """VOI/workspace phases are indexes; catalog phases use DICOM identifiers."""
+    if phase_index is None:
+        return None
+    identifiers = tab._phase_identifiers
+    if not isinstance(phase_index, int) or not 0 <= phase_index < len(identifiers):
+        raise ValueError(_msg("results.changedSource"))
+    return identifiers[phase_index]
+
+
 def capture_dicom_results(workspace, catalog, *, report=True):
     tab = workspace.activeTab
     if tab is None:
@@ -69,11 +79,24 @@ def capture_dicom_results(workspace, catalog, *, report=True):
             ):
                 raise ValueError(_msg("results.projectedMeasurement"))
             for item in measurements:
+                frame = measure._measurement_frames.get(item.measurement_id)
+                instances = _instances(catalog, item.series_uid, sop=item.sop_instance_uid)
+                if frame is not None and len(frame) == 7:
+                    context = frame[6]
+                    if isinstance(context, (tuple, list)) and len(context) == 2 and context[0] == "phase":
+                        phase = context[1]
+                        if not isinstance(phase, int):
+                            raise ValueError(_msg("results.changedSource"))
+                        # Only discard a phase marker after resolving its exact
+                        # DICOM sources; current tab phase can differ from the
+                        # phase on which this committed measurement was drawn.
+                        instances = _instances(catalog, item.series_uid, phase=phase)
+                        frame = frame[:6]
                 planar.append(
                     PlanarResult(
                         item,
-                        measure._measurement_frames.get(item.measurement_id),
-                        _instances(catalog, item.series_uid, sop=item.sop_instance_uid),
+                        frame,
+                        instances,
                         is_mpr=getattr(view, "_plane_geometry", None) is not None,
                     )
                 )
@@ -100,7 +123,11 @@ def capture_dicom_results(workspace, catalog, *, report=True):
                 SegmentResult(
                     dict(record),
                     frozen,
-                    _instances(catalog, record["series"], record.get("phase")),
+                    _instances(
+                        catalog,
+                        record["series"],
+                        _source_phase_identifier(tab, record.get("phase")),
+                    ),
                 )
             )
     if not planar and not segments:
@@ -244,7 +271,9 @@ class DicomResultsController(QObject):
             raise ValueError(_msg("text.0390"))
         if view._tool_controller.mpr_projection_settings.enabled:
             raise ValueError(_msg("results.projectedMeasurement"))
-        instances = _instances(self.catalog, volume.series_uid, voi._phase)
+        instances = _instances(
+            self.catalog, volume.series_uid, _source_phase_identifier(tab, voi._phase)
+        )
         return tab, voi, view, volume, instances
 
     @Slot()
@@ -388,9 +417,11 @@ class DicomResultsController(QObject):
         from qt_dicom_viewer.core.segmentation_masks import roi_to_mask
 
         phase = voi._phase
+        source_phase_identifier = _source_phase_identifier(tab, phase)
 
         def convert():
-            record, evaluation = roi_to_mask(volume, item, frame, phase=phase)
+            record, evaluation = roi_to_mask(volume, item, frame, phase=phase,
+                                            source_phase_identifier=source_phase_identifier)
             return [record], {record["id"]: evaluation}
 
         return self._start_masks(voi, volume, phase, convert)

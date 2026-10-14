@@ -229,3 +229,111 @@ def test_python_picker_preserves_virtual_environment_symlink(integrated,monkeypa
     monkeypatch.setattr(module.QFileDialog,'getOpenFileName',picker)
     c.choosePython()
     assert s.values['services']['segmentationPython']==str(link)
+
+
+def probe_result(**changes):
+    return dict(protocol=1, model_ready=True, organs=['liver'], devices=['cpu'],
+                version='2.18.0', model_issues=[]) | changes
+
+
+@pytest.mark.parametrize('result', [
+    None, [], 'ready', {},
+    probe_result(protocol=True), probe_result(protocol='1'),
+    probe_result(model_ready='false'), probe_result(model_ready=None),
+    probe_result(organs='liver'), probe_result(organs=[{}]), probe_result(organs=['']),
+    probe_result(organs=['liver', 'liver']), probe_result(organs=[]),
+    probe_result(devices='cpu'), probe_result(devices=[{}]), probe_result(devices=['unknown']),
+    probe_result(devices=[]), probe_result(version=[]), probe_result(model_issues='missing'),
+])
+def test_malformed_probe_is_terminal_and_clears_stale_readiness(integrated, result):
+    c, tab, voi, volume, settings = integrated
+    c._checked_config = c._configuration()
+    c._environment = probe_result()
+    c._state = c._environment_state = 'checking'
+    c._receive((c._epoch, 'probe', result, None, 'probe diagnostics'))
+    assert c.state == c.environmentState == 'error'
+    assert not c.busy and not c.ready and c.environment == {}
+    assert c.message and c.environmentMessage and c.logs == 'probe diagnostics'
+    assert c.organs == [] and c.devices == ['auto']
+
+
+@pytest.mark.parametrize('event', [None, [], {}, {'event': []},
+    {'event': 'stage'}, {'event': 'stage', 'stage': []},
+    {'event': 'error', 'reason': {}}, {'event': 'error', 'reason': ''}])
+def test_malformed_bridge_event_is_actionable_and_environment_retry_succeeds(integrated, monkeypatch, event):
+    import json
+    import sys
+    from pathlib import Path
+    from test_dicom_tags import wait_until
+    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    c, tab, voi, volume, settings = integrated
+    settings.setValue('services', 'segmentationPython', sys.executable)
+    response = {'event': event}
+    def bridge(command, log, cancel, receive, **kwargs):
+        if 'event' in response:
+            receive(response['event'])
+        (Path(command[-1]) / 'result.json').write_text(json.dumps(probe_result()))
+    monkeypatch.setattr(module, 'run_process', bridge)
+    c.checkEnvironment()
+    wait_until(lambda: not c.busy)
+    assert c.state == c.environmentState == 'error' and not c.ready
+    assert c.message and c.environmentMessage
+    assert not list(c._cache.glob('job-*'))
+    response.clear()
+    c.checkEnvironment()
+    wait_until(lambda: not c.busy)
+    assert c.state == c.environmentState == 'ready' and c.ready
+    assert c.organs[0]['id'] == 'liver' and c.devices == ['auto', 'cpu']
+
+
+def test_malformed_probe_ignores_stale_epoch_and_cancel_wins(integrated):
+    c, tab, voi, volume, settings = integrated
+    c._checked_config = c._configuration()
+    c._state = c._environment_state = 'checking'
+    c._receive((c._epoch - 1, 'probe', None, None, 'stale'))
+    assert c.state == 'checking' and c.logs == ''
+    c.cancel()
+    c._receive((c._epoch, 'probe', [], None, 'cancelled'))
+    assert c.state == 'cancelled' and c.environmentState == 'idle' and not c.busy
+
+
+@pytest.mark.parametrize('response', [
+    {'result': []}, {'result': None},
+    {'event': [], 'result': probe_result()},
+    {'event': {'event': 'stage'}, 'result': probe_result()},
+    {'event': {'event': 'error', 'reason': 'service failure'}, 'result': probe_result()},
+])
+def test_external_probe_failure_is_terminal_and_retry_recovers(integrated, monkeypatch, tmp_path, response):
+    import json
+    import sys
+    from test_dicom_tags import wait_until
+    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    c, tab, voi, volume, settings = integrated
+    script = tmp_path / 'fake_bridge.py'
+    script.write_text("""import json, sys
+from pathlib import Path
+root = Path(sys.argv[1])
+response = json.loads(Path(sys.argv[2]).read_text())
+if 'event' in response:
+    print('VOXENRA_EVENT ' + json.dumps(response['event']), flush=True)
+(root / 'result.json').write_text(json.dumps(response['result']))
+""")
+    control = tmp_path / 'response.json'
+    control.write_text(json.dumps(response))
+    real_run = module.run_process
+    def external_probe(command, log, cancel, receive, **kwargs):
+        return real_run([sys.executable, str(script), command[-1], str(control)], log, cancel, receive, **kwargs)
+    monkeypatch.setattr(module, 'run_process', external_probe)
+    settings.setValue('services', 'segmentationPython', sys.executable)
+    c.checkEnvironment()
+    wait_until(lambda: not c.busy)
+    assert c.state == c.environmentState == 'error' and not c.ready
+    assert c.message and c.environmentMessage
+    event = response.get('event')
+    if isinstance(event, dict) and event.get('event') == 'error':
+        assert 'service failure' in c.message
+    assert not list(c._cache.glob('job-*'))
+    control.write_text(json.dumps({'result': probe_result()}))
+    c.checkEnvironment()
+    wait_until(lambda: not c.busy)
+    assert c.state == c.environmentState == 'ready' and c.ready

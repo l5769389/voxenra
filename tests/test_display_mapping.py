@@ -13,7 +13,7 @@ from test_ct_perfusion import perfusion, save_and_scan
 from test_dicom_tags import qt_app, wait_until
 from test_live_windowing import image_pixels, pause_worker, drain, begin_drag, move_drag
 from test_pacs_qml import scene
-from test_tag_qml import find, click
+from test_tag_qml import find, click, type_text
 from manual.test_mr_samples import ready
 
 
@@ -126,9 +126,26 @@ def test_mapping_ui_modes_and_gray_controls(scene,tmp_path):
     assert find(window,'mappingUnit').property('text').endswith('ml/100ml/s')
     click(window,find(window,'mappingCustom'))
     assert view.displayMapping['mode']=='custom'
-    field=find(window,'mappingUpper')
-    field.setProperty('text','100');field.commit()
-    assert view.displayMapping['upper']==100
+    wait_until(lambda: view.loadState == 'ready')
+    assert find(window, 'mappingLower').isEnabled()
+    assert find(window, 'mappingUpper').isEnabled()
+    before = (view.displayMapping['lower'], view.displayMapping['upper'])
+    type_text(window, find(window, 'mappingLower'), '30')
+    # An equivalent mapping notification from a completed render is not a new context.
+    view.displayMappingChanged.emit()
+    assert find(window, 'mappingLower').property('text') == '30'
+    type_text(window, find(window, 'mappingUpper'), '100')
+    assert (view.displayMapping['lower'], view.displayMapping['upper']) == before
+    click(window, find(window, 'applyMappingRange'))
+    assert (view.displayMapping['lower'], view.displayMapping['upper']) == (30, 100)
+    wait_until(lambda: view.loadState == 'ready')
+    assert find(window, 'mappingLower').isEnabled()
+    type_text(window, find(window, 'mappingLower'), '70')
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert find(window, 'mappingLower').property('text') == '30'
+    assert find(window, 'mappingUpper').property('text') == '100'
     click(window,find(window,'mappingSource'))
     assert view.displayMapping['mode']=='source'
     click(window,find(window,'mappingBackground'))

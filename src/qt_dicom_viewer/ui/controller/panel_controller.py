@@ -2,6 +2,7 @@ from qt_dicom_viewer.i18n.messages import error_message
 from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from typing import Dict
+from dataclasses import replace
 
 from qt_dicom_viewer.core.local_import import LocalImportStore
 
@@ -45,8 +46,10 @@ class PanelController(QObject):
     fusionDialogChanged = Signal()
 
     # parent=self 是 Qt 的对象所有权关系，不是业务上的“父子 Controller 调用关系”。
-    def __init__(self, parent=None, series_catalog=None, *, image_provider=None) -> None:
+    def __init__(self, parent=None, series_catalog=None, *, image_provider=None, import_blocker=None) -> None:
         super().__init__(parent)
+        self._import_blocker = import_blocker or (lambda: "")
+        self._pacs_import_source_uids = None
         self.selectionChanged.connect(self.viewSupportChanged.emit)
         self._scan_thread: QThread | None = None
         self._scan_worker: DicomScanWorker | None = None
@@ -62,6 +65,7 @@ class PanelController(QObject):
         self._last_import_snapshot = None
         self._scan_series_record: Dict[str, DicomSeriesRecord] = {}
         self._removed_series_uids: set[str] = set()
+        self._local_import_restorable_uids: set[str] = set()
         self._series_catalog:SeriesCatalog = series_catalog
         self._active_series_uid = ""
         self._selected_series_uids = []
@@ -99,16 +103,18 @@ class PanelController(QObject):
         return document is not None and document.restoring
 
     def _start_import(self, paths):
-        if self._closing or self._scanning or not paths or self._workspace_is_restoring():
-            return
+        if self._closing or self._scanning or not paths:
+            return False
+        if self._import_is_blocked(retry_paths=paths):
+            return False
         self._last_import_snapshot = None
         self._import_clean_success = False
         self._last_import_paths = list(paths)
         self._import_task_open = True
         self._import_progress = -1.0
         self._set_status(_msg('text.0472'))
-        # An explicit new import can restore items removed from the previous scan.
-        self._removed_series_uids.clear()
+        # Only sources actually read by this import may restore hidden items.
+        self._local_import_restorable_uids = set(self._removed_series_uids)
         self._set_scanning(True)
         thread = QThread(self)
         worker = DicomScanWorker(paths, self._import_store,
@@ -121,6 +127,22 @@ class PanelController(QObject):
         worker.moveToThread(thread)
         self._wire_scan_thread(self._scan_thread, self._scan_worker)
         thread.start()
+        return True
+
+    def _import_is_blocked(self, *, retry_paths=()):
+        reason = self._import_blocker()
+        if not reason and self._workspace_is_restoring():
+            reason = _msg("import.waitForWorkspace")
+        if not reason:
+            return False
+        self._last_import_paths = list(retry_paths)
+        self._last_import_snapshot = None
+        self._import_progress = -1.0
+        self._import_clean_success = False
+        self._set_status(reason, True)
+        self._import_task_open = True
+        self.importTaskChanged.emit()
+        return True
 
     def _wire_scan_thread(self,thread: QThread | None, worker: QObject | None) -> None:
         if thread is None or worker is None:
@@ -143,7 +165,15 @@ class PanelController(QObject):
         if self._closing or result is None: return
         self._last_import_snapshot = result
         try:
-            self._update_series_record(result)
+            requested = result.incoming_series_uids
+            if requested is None:
+                requested = {s.series_instance_uid for s in result.series}
+            restored = requested & self._local_import_restorable_uids
+            self._removed_series_uids.difference_update(restored)
+            self._local_import_restorable_uids.difference_update(restored)
+            visible = set(self._scan_series_record) | requested
+            self._update_series_record(replace(result, series=[s for s in result.series
+                                       if s.series_instance_uid in visible]))
             self.update_series_session(result)
         finally:
             if self._scan_worker:
@@ -170,8 +200,11 @@ class PanelController(QObject):
 
     @Slot()
     def retryImport(self):
-        if not self._scanning and self._last_import_paths:
-            self._start_import(self._last_import_paths)
+        if not self._scanning:
+            if self._last_import_paths:
+                self._start_import(self._last_import_paths)
+            else:
+                self.openImportDialog()
 
     def update_series_session(self, dicom_scan_snapshot:DicomFolderScanSnapshot):
         self._series_catalog.update(dicom_scan_snapshot)
@@ -225,16 +258,20 @@ class PanelController(QObject):
 
     @Slot("QVariantList", result=bool)
     def importUrls(self, urls):
-        if not self.canImportUrls(urls): return False
-        self._start_import([QUrl(url).toLocalFile() for url in urls])
-        return True
+        if not self.canImportUrls(urls):
+            if not self._closing and not self._scanning:
+                self._import_is_blocked()
+            return False
+        return self._start_import([QUrl(url).toLocalFile() for url in urls])
 
     @Slot()
     def openImportDialog(self):
-        if self._closing or self._workspace_is_restoring():
+        if self._closing:
             return
         if self._scanning:
             self.cancelImport()
+            return
+        if self._import_is_blocked():
             return
         paths = select_import_paths(self._last_import_directory)
         if paths:
@@ -606,18 +643,39 @@ class PanelController(QObject):
             self._scan_thread.wait()
 
     @Slot(object)
+    def preparePacsImport(self, source_uids):
+        self._pacs_import_source_uids = set(source_uids)
+        # Explicit reimport can restore that source, but a removal made while
+        # downloading must remain effective when the merged snapshot arrives.
+        for uid in tuple(self._removed_series_uids):
+            series = self._series_catalog.get_series(uid)
+            if uid in self._pacs_import_source_uids or (series is not None and
+                    any(i.series_instance_uid in self._pacs_import_source_uids for i in series.instances)):
+                self._removed_series_uids.discard(uid)
+
+    @Slot(object)
     def acceptPacsImport(self, snapshot: DicomFolderScanSnapshot):
         if self._closing:
             return
-        for series in snapshot.series:
-            self._removed_series_uids.discard(series.series_instance_uid)
+        sources, self._pacs_import_source_uids = self._pacs_import_source_uids, None
+        requested = {s.series_instance_uid for s in snapshot.series if sources is None or
+                     any(i.series_instance_uid in sources for i in s.instances)}
+        if sources is None and snapshot.incoming_series_uids is not None:
+            requested = snapshot.incoming_series_uids
+        if sources is None:
+            self._removed_series_uids.difference_update(requested)
         self.update_series_session(snapshot)
-        self._update_series_record(snapshot)
+        # Rebuilt phase peers update the catalog, but only already-visible or
+        # explicitly requested sources belong in the sidebar.
+        visible = set(self._scan_series_record) | requested
+        self._update_series_record(replace(snapshot, series=[s for s in snapshot.series
+                                    if s.series_instance_uid in visible]))
         self.setPatientSearch("")
         self._collapsed_groups.clear()
         self.sidebarItemsChanged.emit()
-        if snapshot.series:
-            first_uid = snapshot.series[0].series_instance_uid
+        first_uid = next((s.series_instance_uid for s in snapshot.series
+                          if s.series_instance_uid in requested and s.series_instance_uid in self._scan_series_record), None)
+        if first_uid is not None:
             self.selectSeries(first_uid)
             self.openSeriesView(first_uid, "2d")
 
@@ -709,6 +767,7 @@ class PanelController(QObject):
         if not removed:
             return
         self._removed_series_uids.update(removed)
+        self._local_import_restorable_uids.difference_update(removed)
         self._thumbnail_timer.stop()
         for uid in removed:
             del self._scan_series_record[uid]
