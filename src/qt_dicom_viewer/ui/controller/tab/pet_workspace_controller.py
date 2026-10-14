@@ -79,6 +79,7 @@ class PetWorkspaceController(TabController):
         self._default_pet_color = self._pet_color
         settings.sectionChanged.connect(self._preferences_changed)
 
+    @Slot(str)
     def _preferences_changed(self, section):
         if section == "colormap":
             self._pet_color = self._tool_controller.settingsController.section("colormap")["pet"]
@@ -384,6 +385,7 @@ class PetWorkspaceController(TabController):
         # A result from before the press cannot replace the new target.
         self._latest = None
 
+    @Slot()
     def _submit_locator(self):
         if self._locator_dragging:
             self._locator_submitted_at = monotonic()
@@ -395,6 +397,7 @@ class PetWorkspaceController(TabController):
             self._locator_dragging = False
             self.request_render(locator=True, locator_final=True)
 
+    @Slot()
     def _finish_pointer_interaction(self):
         self.finish_locator_drag()
         for viewport in self._viewport_dict.values():
@@ -406,6 +409,7 @@ class PetWorkspaceController(TabController):
             viewport._active_drag_start_position = None
             viewport._fusion_window_target = None
 
+    @Slot(object)
     def move_center(self, center):
         if self._target_mpr_state is None:
             return
@@ -421,11 +425,13 @@ class PetWorkspaceController(TabController):
         else:
             self.request_render()
 
+    @Slot(object, float)
     def _rotate_plane(self, plane, angle):
         if self._target_mpr_state:
             self._target_mpr_state = rotate_crosshair_state(self._target_mpr_state, plane, angle)
             self.request_render()
 
+    @Slot(object, float)
     def _rotate_3d(self, axis, angle):
         if self._target_mpr_state:
             self._target_mpr_state = rotate_mpr_state_3d(self._target_mpr_state, axis, angle)
@@ -447,6 +453,7 @@ class PetWorkspaceController(TabController):
         if np.isfinite([center, width]).all():
             self.set_ct_window(WindowLevel(center, max(1., width)))
 
+    @Slot()
     def _window_display_invalidated(self):
         if self.pet_display.pending:
             self.request_render()
@@ -528,6 +535,7 @@ class PetWorkspaceController(TabController):
             self._tool_controller.activateTool(ToolType.CT_WINDOW.value)
         self._sync_registration_tool()
 
+    @Slot()
     def _sync_registration_tool(self):
         enabled = bool(self.isFusion and self.ready
                        and self._tool_controller.activeTool == ToolType.REGISTRATION)

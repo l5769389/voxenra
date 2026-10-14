@@ -193,6 +193,7 @@ class CompareMprTabController(TabController):
             group.geometryEdited.connect(lambda before, after, source=group: self._sync_geometry(source, before, after))
         self._active_viewport_id = self.groups[0].activeViewport.viewportId
 
+    @Slot(object)
     def _forward_request(self, request):
         self._render_slabs[request.request_id] = request.slab_thickness_mm if request.projection_mode is not None else 0.
         self._active_mpr_requests[request.request_id] = request.viewport_id
@@ -341,6 +342,7 @@ class CompareMprTabController(TabController):
         self._zoom_scales[source.viewportType] = self._fit_scale(source) * source.zoom
         self._apply_zoom_scales()
 
+    @Slot()
     def _apply_zoom_scales(self):
         if not self._zoom_linked:
             return

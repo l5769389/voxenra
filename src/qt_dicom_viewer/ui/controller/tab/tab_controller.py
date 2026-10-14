@@ -146,6 +146,7 @@ class TabController(QObject):
             self._measurement_results = MeasurementResultsController(self)
         return self._measurement_results
 
+    @Slot(object)
     def _remember_measurement_request(self, request):
         from qt_dicom_viewer.ui.measurement_source import capture_request
         view = self.viewports_by_id.get(request.viewport_id)
@@ -416,6 +417,7 @@ class TabController(QObject):
     def _slice_playback_busy(self, viewport) -> bool:
         return bool(viewport.render_pending or self._active_mpr_requests or self._dirty_mpr_viewport_ids)
 
+    @Slot()
     def _handle_playback_timeout(self) -> None:
         if not self._playing:
             return
@@ -861,6 +863,7 @@ class TabController(QObject):
 
         self.renderRequested.emit(request)
 
+    @Slot(object)
     def _set_mpr_window(self, change: WindowLevelChange, *, render=True) -> None:
         if (not self._link_mpr_windows
                 or not all(isfinite(v) for v in (change.window.center, change.window.width))

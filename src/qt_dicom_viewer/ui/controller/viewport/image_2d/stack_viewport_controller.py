@@ -1,6 +1,7 @@
 import logging
 import uuid
 from dataclasses import replace
+from PySide6.QtCore import Slot
 
 from qt_dicom_viewer.model import (
     RenderRequest,
@@ -44,10 +45,12 @@ class StackViewportController(Image2DViewportController):
         self.transformChanged.connect(self._mtf_controller.roiController.clearHover)
         self.transformChanged.connect(self._fwhm_controller.roiController.clearHover)
 
+    @Slot(str)
     def _service_selected(self, action):
         if action == "service:qa":
             self._qa_controller.activate()
 
+    @Slot()
     def _service_panel_changed(self):
         if self._tool_controller.restoring_selection:
             return

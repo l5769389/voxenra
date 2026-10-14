@@ -71,6 +71,7 @@ class MprVoiController(QObject):
         tools.activeInteractionChanged.connect(self._activate)
         tools.settingsController.sectionChanged.connect(self._preferences_changed)
 
+    @Slot(str)
     def _preferences_changed(self, section):
         if section == "measurement":
             self.changed.emit()
@@ -305,6 +306,7 @@ class MprVoiController(QObject):
         record["id"] = d["id"]
         return record, result
 
+    @Slot()
     def _activate(self):
         if self.tools.restoring_selection:
             return
@@ -762,6 +764,7 @@ class MprVoiController(QObject):
         if not self._closed:
             self._timer.start()
 
+    @Slot()
     def _launch(self):
         if self._closed or self._running or not self._phase_ready:
             return

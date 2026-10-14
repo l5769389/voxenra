@@ -151,6 +151,7 @@ class MeasurementController(QObject):
     def settingsController(self):
         return self._settings_controller
 
+    @Slot(str)
     def _preferences_changed(self, section):
         if section != "measurement":
             return

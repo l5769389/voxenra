@@ -229,6 +229,7 @@ class Image2DViewportController(ViewportController):
         name = self._settings_controller.section("colormap")[category]
         self._state = replace(self._state, display_style=DisplayStyle(name, COLOR_MAPS[name][1][0]))
 
+    @Slot(str)
     def _preferences_changed(self, section):
         if section == "measurement":
             style = self._settings_controller.section("measurement")
@@ -316,6 +317,7 @@ class Image2DViewportController(ViewportController):
         return self._tool_controller.activeInteraction
 
 
+    @Slot()
     def _handle_active_interaction_changed(self) -> None:
         self.cancelMeasurement()
         self.clearInteractionHover()
@@ -1131,6 +1133,7 @@ class Image2DViewportController(ViewportController):
         self.present_display_image(map_display(gray, self._modality_pixel, frame.pixel_value_meta,
             overlay, frame.source_palette, self._state.display_mapping, self.activeColorMap))
 
+    @Slot()
     def _pet_display_invalidated(self):
         self.refresh_window_image()
         self.request_render()

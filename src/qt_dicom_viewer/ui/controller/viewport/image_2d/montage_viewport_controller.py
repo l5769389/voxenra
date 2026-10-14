@@ -236,6 +236,7 @@ class MontageViewportController(ViewportController):
         name = self.settingsController.section("colormap")[category]
         self._state = replace(self._state, display_style=DisplayStyle(name, COLOR_MAPS[name][1][0]))
 
+    @Slot(str)
     def _preferences_changed(self, section):
         if section == "colormap":
             before = self._state.display_style

@@ -33,3 +33,11 @@ macOS 为 Apple Silicon、ad-hoc 签名，未配置 Developer ID 或 Apple 公�
 ## Windows 首轮回归与修正
 
 首轮 [Windows 流水线](https://github.com/l5769389/voxenra/actions/runs/38532322459) 在完整回归中发现两项失败（2838 项、2753 通过、83 跳过、2 失败），因此未生成 Windows 发布包，也未公开 Release。关闭弹窗的子按钮框在晚到语言事件中恢复了系统默认标签；另有离屏字体环境的中文 PDF 缺字，需要原生 Windows 字体验证。修正后的提交与成品另行完整验收，首轮安装包不作为最终发布产物。
+
+## 第二轮候选与进一步定位
+
+第二轮提交 `4dc6db8b6937a6404e4520437165b9692d30cefd` 的 Windows 原生中文 PDF、关闭弹窗与时相数据回归已通过；因随后发现跨控制器接口缓存问题，主动取消其余流水线，本轮不计为最终 Windows 构建通过。原生中文 PDF 检查保留 PDF、渲染图片与完整中文断言；时相数据测试使用英文，避免离屏字体库存影响数据断言。
+
+第二轮 macOS 在打包／原生界面并行时的完整回归为 2843 项、2769 通过、72 跳过、2 失败：`test_workspace_selected_tools_visible_after_reopen[graphite-zh-CN]` 与 `test_corner_menu_switches_real_planes_without_losing_stack_edits[en-US-light]`。五轮独立文件验证共 85 项通过，但单进程禁用磁盘缓存的对照再次复现后者（16 通过、1 失败），未用重复通过覆盖失败记录。
+
+进一步用最小对象替换案例确认：未声明静态槽的信号接收方法产生实例动态元对象，旧对象释放后其地址被其他类型复用，QML 保留旧接口缓存；Python 对象仍有效且接口完整，QML 却丢失属性和方法。仅补静态槽声明的对照连续 10,000 次通过。相关控制器修正后另行完整验收；不使用延长等待、关闭缓存或隐藏 QML 错误作为修复。

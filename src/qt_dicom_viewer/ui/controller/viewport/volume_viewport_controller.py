@@ -451,6 +451,7 @@ class VolumeViewportController(ViewportController):
         self._load_state, self._error = state, error
         self.loadStateChanged.emit()
 
+    @Slot()
     def _tool_changed(self):
         self.cancel_drag()
         if self.activeInteraction == InteractionType.VOLUME_CROP and self._crop_mode != "inside":

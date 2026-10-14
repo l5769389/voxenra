@@ -186,6 +186,7 @@ class CompareTabController(TabController):
         index = view._frame_meta.slice_index if displayed and view._frame_meta else view._state.slice_index or 0
         return geometries[index] if 0 <= index < len(geometries) else None
 
+    @Slot()
     def _update_reference_lines(self):
         for view in self._viewport_dict.values(): view.referenceLinesChanged.emit()
 

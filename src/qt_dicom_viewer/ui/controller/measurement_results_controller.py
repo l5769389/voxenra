@@ -22,6 +22,7 @@ class MeasurementResultsController(QObject):
         if hasattr(tab, "twoDLayout"):
             tab.twoDLayout.cellsChanged.connect(self.watch_views)
 
+    @Slot()
     def watch_views(self):
         current = set(self.tab.viewports_by_id.values())
         for view in self._watched - current:
@@ -46,6 +47,7 @@ class MeasurementResultsController(QObject):
             view.loadStateChanged.connect(self._check_failure)
         self.changed.emit()
 
+    @Slot()
     def _changed(self):
         self.changed.emit()
 
@@ -160,12 +162,14 @@ class MeasurementResultsController(QObject):
             self._message = _msg("results.locationUnavailable")
         self.changed.emit()
 
+    @Slot()
     def _check_failure(self):
         if self._pending is not None and self._pending[0].loadState == "error":
             self._pending = None
             self._message = _msg("results.locationUnavailable")
             self.changed.emit()
 
+    @Slot()
     def _select_pending(self):
         if self._pending is None:
             return

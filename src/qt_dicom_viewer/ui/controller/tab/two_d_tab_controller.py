@@ -20,6 +20,7 @@ class PlaneViewportController(MprViewportController):
         super().__init__(*args, **kwargs)
         self.crosshairCenterChangeRequested.connect(self._move_center)
 
+    @Slot(object)
     def _move_center(self, center):
         if self.slice_frame is not None:
             self.slice_frame = replace(self.slice_frame, center_patient=center)

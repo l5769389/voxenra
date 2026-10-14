@@ -292,6 +292,7 @@ class MprLayoutController(QObject):
             self.setReferenceMode("planes")
             self.setLinkRotation(True)
 
+    @Slot(str)
     def _settings_changed(self, section):
         if section == "layout":
             self.preferencesChanged.emit()
@@ -366,6 +367,7 @@ class MprLayoutController(QObject):
         else:
             self.tab._handle_crosshair_center_change_requested(center)
 
+    @Slot()
     def _camera_changed(self):
         old, self._previous_camera = self._previous_camera, self._view.state
         if self._disposed:

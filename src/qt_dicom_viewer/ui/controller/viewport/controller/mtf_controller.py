@@ -180,6 +180,7 @@ class MtfController(QObject):
             self.recordsChanged.emit()
             self.stateChanged.emit()
 
+    @Slot(str)
     def _preferences_changed(self, section):
         if section in ("measurement", "services"):
             self.stateChanged.emit()

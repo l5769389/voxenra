@@ -35,6 +35,7 @@ class ManualTabController(UtilityTabController):
         if settings is not None:
             settings.sectionChanged.connect(self._settings_changed)
 
+    @Slot(str)
     def _settings_changed(self, section):
         if section == "layout": self.navigationWidthChanged.emit()
 
