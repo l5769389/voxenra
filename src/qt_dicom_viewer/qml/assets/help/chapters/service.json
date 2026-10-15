@@ -22,7 +22,8 @@
       {
         "title": "结果边界",
         "body": "返回原层可恢复 ROI，**重置 MTF** 清除当前视口 MTF 结果。未做有限目标尺寸修正，不支持跨层平均或 MPR 分析，**不自动判定合格**。",
-        "messageId": "manual.mtf.section3"
+        "messageId": "manual.mtf.section3",
+        "important": true
       },
       {
         "title": "保存与重新计算",

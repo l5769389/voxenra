@@ -35,27 +35,40 @@ article { min-width: 0; }
 article h1 { margin: 0 0 9px; font-size: clamp(32px, 3vw, 40px); font-weight: 760; letter-spacing: -.035em; line-height: 1.22; }
 .summary { margin: 0 0 24px; font-size: 16px; line-height: 1.7; color: var(--body); }
 .shortcuts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
-.shortcut { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; color: var(--body); font-size: 12px; }
+.shortcut { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; border: 1px solid var(--line); border-radius: 5px; padding: 7px 10px; color: var(--body); font-size: 12px; }
+.shortcut > span { white-space: nowrap; }
 .shortcut kbd { color: var(--ink); border: 1px solid #d4e0ea; border-radius: 4px; padding: 1px 5px; font-family: inherit; background: #f7fafc; }
 .examples { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 17px; margin: 22px 0 30px; }
 .examples figure { margin: 0; }
 .examples a { display: block; border: 1px solid #cad8e4; border-radius: 6px; overflow: hidden; box-shadow: 0 6px 18px #173c6212; background: #0d151f; }
 .examples a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
-.examples img { width: 100%; max-height: 430px; display: block; object-fit: contain; }
+.examples img { width: 100%; height: auto; max-height: 430px; display: block; object-fit: contain; }
 .examples figcaption { color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 9px; }
 .figure { margin: 20px 0 28px; border-radius: 6px; overflow: auto; background: #111c26; }
 .figure svg { display: block; width: 100%; min-width: 600px; }
 .step { position: relative; padding: 16px 0 21px; margin: 0; border-bottom: 1px solid var(--line); scroll-margin-top: 78px; }
 .step h2 { margin: 0 0 8px; font-size: 19px; line-height: 1.4; font-weight: 710; }
-.step p { color: var(--body); margin: 0; font-size: 15px; line-height: 1.82; }
-.step strong { color: var(--ink); font-weight: 680; }
-.step.important { margin: 12px 0; padding: 17px 20px; border: 0; border-left: 3px solid var(--blue); background: #f1f7fd; }
+.step p { color: var(--body); margin: 0; font-size: 16px; line-height: 1.85; overflow-wrap: anywhere; }
+.step p + p { margin-top: 13px; }
+.step strong { color: var(--ink); font-weight: 750; }
+.step.important { margin: 18px 0; padding: 19px 22px; border: 1px solid #e7d2a7; border-left: 4px solid #a36c10; border-radius: 5px; background: #fff9ed; }
+.step .notice-label { color: #80540b; font-size: 12px; font-weight: 750; margin: 0 0 7px; }
+.compact-outline { display: none; margin: 0 0 24px; padding: 13px 16px; background: var(--blue-soft); border-radius: 6px; }
+.compact-outline summary { cursor: pointer; font-weight: 650; }
+.compact-outline nav { display: grid; gap: 12px; margin-top: 16px; }
+.compact-outline a { font-size: 14px; line-height: 1.5; text-decoration: none; }
+.tutorial { margin: 22px 0 0; padding: 14px; border: 1px solid var(--line); border-radius: 7px; background: #f7fafc; }
+.tutorial img { display: block; width: 100%; height: auto; border-radius: 4px; background: #15212a; }
+.tutorial figcaption { margin-top: 12px; font-size: 13px; line-height: 1.7; color: var(--body); }
+.tutorial-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 12px; font-size: 13px; }
+.tutorial-controls button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--blue); border-radius: 5px; background: white; color: var(--blue); font-weight: 650; cursor: pointer; }
+.tutorial-controls button[aria-pressed="true"] { background: var(--blue-soft); }
 .related { padding-top: 32px; }
 .related h2 { margin: 0 0 13px; font-size: 16px; }
 .related div { display: flex; flex-wrap: wrap; gap: 10px 22px; }
 .related a { text-decoration: none; font-size: 14px; }
 .related a:hover { text-decoration: underline; }
-.page-outline { position: sticky; top: calc(var(--site-header-height) + 30px); align-self: start; border-left: 1px solid var(--line); padding: 0 0 0 19px; margin-top: 5px; }
+.page-outline { position: sticky; top: calc(var(--site-header-height) + 30px); align-self: start; border-left: 1px solid var(--line); padding: 0 0 0 19px; margin-top: 5px; max-height: calc(100vh - var(--site-header-height) - 60px); overflow-y: auto; }
 .page-outline h2 { font-size: 13px; margin: 0 0 14px; font-weight: 730; }
 .page-outline nav { display: flex; flex-direction: column; gap: 12px; }
 .page-outline a { color: var(--muted); text-decoration: none; font-size: 12px; line-height: 1.5; }
@@ -82,14 +95,22 @@ footer { max-width: 1110px; margin: 70px auto 0; border-top: 1px solid var(--lin
 .home-group a { display: block; padding: 5px 0; font-size: 13px; line-height: 1.35; text-decoration: none; }
 .home-group a:hover { text-decoration: underline; }
 .home-main footer { margin-top: 45px; }
+.start-routes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 28px 0; }
+.start-routes a { padding: 17px; border: 1px solid #c8e0ea; background: #f3fafd; border-radius: 6px; text-decoration: none; }
+.start-routes a:hover { border-color: var(--blue); }
+.start-routes strong, .start-routes span { display: block; }
+.start-routes strong { font-size: 16px; margin-bottom: 8px; }
+.start-routes span { color: var(--body); font-size: 13px; line-height: 1.6; }
 
 @media (max-width: 1160px) {
   .reading-layout { display: block; max-width: 820px; }
   .page-outline { display: none; }
+  .compact-outline { display: block; }
   .home-hero { gap: 28px; }
 }
 @media (max-width: 920px) {
   .home-directory { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .start-routes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .home-group, .home-group:nth-last-child(-n+4) { border-bottom: 1px solid var(--line); }
   .home-group:nth-child(odd) { border-left: 0; padding-left: 5px; }
   .home-group:nth-child(even) { border-left: 1px solid var(--line); padding-left: 24px; }
@@ -119,5 +140,7 @@ footer { max-width: 1110px; margin: 70px auto 0; border-top: 1px solid var(--lin
   .home-group, .home-group:nth-child(even), .home-group:nth-last-child(-n+2) { border-left: 0; border-bottom: 1px solid var(--line); padding: 19px 0; }
   .home-group:last-child { border-bottom: 0; }
   .step h2 { font-size: 18px; }
-  .step p { font-size: 14px; }
+  .step p { font-size: 15px; }
+  .tutorial { padding: 9px; }
+  .start-routes { grid-template-columns: 1fr; }
 }

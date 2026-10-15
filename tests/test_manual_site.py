@@ -136,3 +136,39 @@ def test_manual_rich_text_escapes_untrusted_markup():
     assert SITE.rich("<script>x</script> **重点** `Ctrl+O`") == (
         "&lt;script&gt;x&lt;/script&gt; <strong>重点</strong> <strong>Ctrl+O</strong>"
     )
+
+
+def test_manual_paragraphs_keep_emphasis_and_escape_html():
+    assert SITE.paragraphs('**Save** first.\n\nA < B\nNext line') == (
+        '<p><strong>Save</strong> first.</p><p>A &lt; B<br>Next line</p>'
+    )
+
+
+def test_tutorials_are_opt_in_and_all_assets_and_section_targets_exist(tmp_path):
+    SITE.build(tmp_path)
+    for code in ('zh', 'en'):
+        for chapter in ('local-import', 'measurement', 'mpr', '4d', 'volume', 'segmentation'):
+            page = tmp_path / code / f'{chapter}.html'
+            source = page.read_text(encoding='utf-8')
+            assert 'class="tutorial"' in source
+            assert 'data-animation=' in source
+            assert 'aria-pressed="false"' in source
+            assert '<img src="../assets/tutorials/' in source
+            links = Links()
+            links.feed(source)
+            for reference in links.references:
+                parsed = urlsplit(reference)
+                if parsed.scheme or parsed.netloc or not parsed.path:
+                    continue
+                assert (page.parent / parsed.path).is_file(), reference
+        segmentation = (tmp_path / code / 'segmentation.html').read_text(encoding='utf-8')
+        assert f'../assets/tutorials/{code}-ai-workflow' in segmentation
+
+
+def test_chapter_search_includes_shortcuts_and_section_titles(tmp_path):
+    SITE.build(tmp_path)
+    for code in ('zh', 'en'):
+        for page in ('index', 'workspace'):
+            source = (tmp_path / code / f'{page}.html').read_text(encoding='utf-8')
+            assert 'ctrl+shift+o' in source
+            assert '⇧⌘o' in source

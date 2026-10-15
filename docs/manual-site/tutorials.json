@@ -1,0 +1,164 @@
+[
+  {
+    "chapter": "local-import",
+    "section": "manual.local-import.section0",
+    "name": "zip-import",
+    "sources": {
+      "zh": "docs/screenshots/06-zip-drag.gif",
+      "en": "docs/screenshots/06-zip-drag.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-zip-import.png",
+      "en": "tutorial-posters/en-zip-import.png"
+    },
+    "captions": {
+      "zh": "拖入压缩包，等待导入，再打开序列。",
+      "en": "Drag an archive in, wait for import, then open the series."
+    },
+    "chinese_ui": true
+  },
+  {
+    "chapter": "measurement",
+    "section": "manual.measurement.section4",
+    "name": "freehand-roi",
+    "sources": {
+      "zh": "docs/screenshots/01-freehand-measurement.gif",
+      "en": "docs/screenshots/01-freehand-measurement.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-freehand-roi.png",
+      "en": "tutorial-posters/en-freehand-roi.png"
+    },
+    "captions": {
+      "zh": "逐点勾画自由形状 ROI，完成后查看统计。",
+      "en": "Place points for a freehand ROI, finish it, and inspect the statistics."
+    },
+    "chinese_ui": true
+  },
+  {
+    "chapter": "measurement",
+    "section": "manual.measurement.section6",
+    "name": "curve",
+    "sources": {
+      "zh": "docs/screenshots/33-curve-measurement.gif",
+      "en": "docs/screenshots/33-curve-measurement.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-curve.png",
+      "en": "tutorial-posters/en-curve.png"
+    },
+    "captions": {
+      "zh": "选择曲线，依次放点，完成后查看弧长。",
+      "en": "Choose Curve, place control points, and finish to read the arc length."
+    },
+    "chinese_ui": true
+  },
+  {
+    "chapter": "mpr",
+    "section": "manual.mpr.section4",
+    "name": "mpr-layout",
+    "sources": {
+      "zh": "docs/screenshots/11-mpr-layouts.gif",
+      "en": "docs/screenshots/11-mpr-layouts.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-mpr-layout.png",
+      "en": "tutorial-posters/en-mpr-layout.png"
+    },
+    "captions": {
+      "zh": "切换布局，对照三切面与 3D 的位置关系。",
+      "en": "Switch layouts to compare the three planes and their 3D positions."
+    },
+    "chinese_ui": true
+  },
+  {
+    "chapter": "4d",
+    "section": "manual.4d.section1",
+    "name": "4d-playback",
+    "sources": {
+      "zh": "docs/screenshots/03-4d-playback.gif",
+      "en": "docs/screenshots/03-4d-playback.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-4d-playback.png",
+      "en": "tutorial-posters/en-4d-playback.png"
+    },
+    "captions": {
+      "zh": "播放多个时相，观察同一位置随时相变化。",
+      "en": "Play through phases and observe changes at the same position."
+    },
+    "chinese_ui": true
+  },
+  {
+    "chapter": "volume",
+    "section": "manual.volume.section1",
+    "name": "volume-presets",
+    "sources": {
+      "zh": "docs/screenshots/04-volume-presets.gif",
+      "en": "docs/screenshots/04-volume-presets.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-volume-presets.png",
+      "en": "tutorial-posters/en-volume-presets.png"
+    },
+    "captions": {
+      "zh": "切换三维模板，观察显示效果；模板不会生成分割。",
+      "en": "Switch volume presets to compare appearance; presets do not create segments."
+    },
+    "chinese_ui": true
+  },
+  {
+    "chapter": "segmentation",
+    "section": "manual.segmentation.section6",
+    "name": "refinement",
+    "sources": {
+      "zh": "docs/screenshots/38-segmentation-refinement.gif",
+      "en": "docs/screenshots/38-segmentation-refinement.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-refinement.png",
+      "en": "tutorial-posters/en-refinement.png"
+    },
+    "captions": {
+      "zh": "用画笔和橡皮精修范围，再撤销或重做。",
+      "en": "Refine a region with Paint and Erase, then undo or redo."
+    },
+    "chinese_ui": true
+  },
+  {
+    "chapter": "segmentation",
+    "section": "manual.segmentation.auto2",
+    "name": "ai-workflow",
+    "sources": {
+      "zh": "src/qt_dicom_viewer/qml/assets/help/ai-workflow-2.1.1.gif",
+      "en": "src/qt_dicom_viewer/qml/assets/help/en/ai-workflow-2.1.1.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-ai-workflow.png",
+      "en": "tutorial-posters/en-ai-workflow.png"
+    },
+    "captions": {
+      "zh": "合成模体演示：失败提示、重试、成功导入。推理输出为模拟数据，不表示模型精度或耗时。",
+      "en": "Synthetic phantom demo: error, retry, and successful import. Inference output is simulated; it does not demonstrate model accuracy or runtime."
+    },
+    "chinese_ui": false
+  },
+  {
+    "chapter": "language-packs",
+    "section": "manual.language-packs.section3",
+    "name": "language-pack",
+    "sources": {
+      "zh": "src/qt_dicom_viewer/qml/assets/help/language-pack.gif",
+      "en": "src/qt_dicom_viewer/qml/assets/help/en/language-pack.gif"
+    },
+    "posters": {
+      "zh": "tutorial-posters/zh-language-pack.png",
+      "en": "tutorial-posters/en-language-pack.png"
+    },
+    "captions": {
+      "zh": "添加语言包后，重新加载并选择新语言。",
+      "en": "After adding a language pack, reload it and select the language."
+    },
+    "chinese_ui": false
+  }
+]

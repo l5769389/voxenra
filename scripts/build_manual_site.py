@@ -57,7 +57,10 @@ def product_image_asset(prefix: str, name: str) -> str:
 
 def product_image_size(name: str) -> str:
     """Reserve screenshot space before lazy loading, keeping section anchors stable."""
-    path = ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name]
+    return image_size(ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name])
+
+
+def image_size(path: Path) -> str:
     with path.open("rb") as source:
         header = source.read(24)
     if header.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -86,6 +89,41 @@ def rich(value: str) -> str:
         else escape(part).replace("\n", "<br>")
         for part in parts
     )
+
+
+def paragraphs(value: str) -> str:
+    return "".join(f"<p>{rich(part)}</p>" for part in re.split(r"\n\s*\n", value) if part.strip())
+
+
+def chapter_search(chapter: dict, messages: dict[str, str]) -> str:
+    prefix = f'manual.{chapter["id"]}.'
+    parts = [messages[prefix + "title"], messages[prefix + "summary"]]
+    for index, section in enumerate(chapter["sections"]):
+        key = section.get("messageId", prefix + f"section{index}")
+        parts.extend(messages[key + suffix] for suffix in (".title", ".body"))
+    for item in chapter.get("shortcuts", []):
+        parts.extend((item["keys"], item["mac"]))
+    return " ".join(parts).lower()
+
+
+def tutorial(item: dict, code: str) -> str:
+    name = f'{code}-{item["name"]}'
+    caption = item["captions"][code]
+    if code == "en" and item.get("chinese_ui"):
+        caption += " Recorded with the Chinese interface; follow the steps above in English."
+    if item.get("chinese_ui"):
+        caption += (" 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。" if code == "zh"
+                    else " Tool positions may differ from the current version; follow the written steps on this page.")
+    play, stop = (("播放演示", "停止并返回静态图") if code == "zh" else ("Play demo", "Stop and show still image"))
+    full = "查看完整动图" if code == "zh" else "Open full animation"
+    # The GIF is not requested until the reader explicitly starts it.
+    return (f'<figure class="tutorial"><img src="../assets/tutorials/{name}.png" '
+            f'data-still="../assets/tutorials/{name}.png" data-animation="../assets/tutorials/{name}.gif" '
+            f'{image_size(SITE / item["posters"][code])} alt="{escape(caption)}" loading="lazy">'
+            f'<figcaption>{escape(caption)}</figcaption><div class="tutorial-controls">'
+            f'<button type="button" hidden aria-pressed="false" data-play="{play}" data-stop="{stop}">{play}</button>'
+            f'<a href="../assets/tutorials/{name}.gif" target="_blank" rel="noopener">{full}</a>'
+            '</div></figure>')
 
 
 def icon(name: str) -> str:
@@ -152,23 +190,29 @@ def render_chapter(chapter: dict, messages: dict[str, str], language: dict[str, 
         chips = []
         for index, item in enumerate(chapter["shortcuts"]):
             label = messages[item.get("messageId", prefix + f"shortcut{index}")]
-            chips.append(f'<span class="shortcut"><span>{escape(label)}</span><kbd>{escape(item["keys"])}</kbd><kbd>{escape(item["mac"])}</kbd></span>')
+            chips.append(f'<span class="shortcut"><span>{escape(label)}</span><span>Windows <kbd>{escape(item["keys"])}</kbd></span><span>macOS <kbd>{escape(item["mac"])}</kbd></span></span>')
         content.append(f'<div class="shortcuts" aria-label="{escape(language["shortcuts"])}">{"".join(chips)}</div>')
     images = [chapter["example"]] if "example" in chapter else chapter.get("examples", [])
+    images = [name for name in images if not name.endswith(".gif")]
     if images:
         cards = []
         for index, image in enumerate(images):
             # The English screenshots are maintained separately in the same help bundle.
             folder = "en/" if language["pack"] == "en-US" else ""
             label = language["examples"][index] if len(images) > 1 else messages.get(prefix + "caption", title)
-            cards.append(f'<figure><a href="../assets/help/{folder}{escape(image)}" target="_blank" rel="noopener"><img src="../assets/help/{folder}{escape(image)}" alt="{escape(label)}" loading="lazy"></a><figcaption>{escape(label)}</figcaption></figure>')
+            cards.append(f'<figure><a href="../assets/help/{folder}{escape(image)}" target="_blank" rel="noopener"><img src="../assets/help/{folder}{escape(image)}" {image_size(HELP / folder / image)} alt="{escape(label)}" loading="lazy"></a><figcaption>{escape(label)}</figcaption></figure>')
         content.append(f'<div class="examples">{"".join(cards)}</div>')
     if chapter.get("figure"):
         content.append(figure(chapter["figure"], messages, language))
+    chapter_tutorials = [item for item in load_json(SITE / "tutorials.json") if item["chapter"] == chapter_id]
     for index, section in enumerate(chapter["sections"]):
         key = section.get("messageId", prefix + f"section{index}")
         css = "step important" if section.get("important") else "step"
-        content.append(f'<section class="{css}" id="step-{index + 1}"><h2>{escape(messages[key + ".title"])}</h2><p>{rich(messages[key + ".body"])}</p></section>')
+        code = "zh" if language["pack"] == "zh-CN" else "en"
+        notice = ('<p class="notice-label">' + ("重要提示" if code == "zh" else "Important") + '</p>'
+                  if section.get("important") else "")
+        demos = "".join(tutorial(item, code) for item in chapter_tutorials if item["section"] == key)
+        content.append(f'<section class="{css}" id="step-{index + 1}">{notice}<h2>{escape(messages[key + ".title"])}</h2>{paragraphs(messages[key + ".body"])}{demos}</section>')
     if chapter.get("related"):
         links = []
         for related in chapter["related"]:
@@ -191,8 +235,7 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
             if item["category"] != category["id"]:
                 continue
             selected = ' aria-current="page" class="selected"' if item["id"] == chapter["id"] else ""
-            searchable = " ".join([titles[item["id"]], messages[f'manual.{item["id"]}.summary']] +
-                                  [messages[section.get("messageId", f'manual.{item["id"]}.section{i}') + ".body"] for i, section in enumerate(item["sections"])])
+            searchable = chapter_search(item, messages)
             links.append(f'<a href="{escape(item["id"])}.html"{selected} data-search="{escape(searchable.lower())}">{escape(titles[item["id"]])}</a>')
         groups.append(f'<section class="nav-group"><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</section>')
     title = titles[chapter["id"]]
@@ -204,6 +247,9 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
         key = section.get("messageId", f'manual.{chapter["id"]}.section{index}')
         outline_links.append(f'<a href="#step-{index + 1}">{escape(messages[key + ".title"])}</a>')
     outline = "".join(outline_links)
+    compact_outline = f'<details class="compact-outline"><summary>{"本页内容 · 点击展开" if code == "zh" else "On this page"}</summary><nav>{outline}</nav></details>'
+    summary_html = '<p class="summary">' + escape(messages[f'manual.{chapter["id"]}.summary']) + '</p>'
+    article = article.replace(summary_html, summary_html + compact_outline, 1)
     return f'''<!doctype html>
 <html lang="{language["pack"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(messages[f'manual.{chapter["id"]}.summary'])}">
@@ -222,6 +268,19 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
     description = ("从导入影像到测量、分割与导出，按任务查找操作步骤。" if code == "zh"
                    else "Find practical steps for importing, viewing, measuring, segmenting, and exporting medical images.")
     header = site_header(code, "manual")
+    routes = (
+        (("第一次使用", "打开影像、浏览并保存", "quick-start.html#step-1"),
+         ("测量与标注", "看演示，跟着完成一次测量", "measurement.html#step-1"),
+         ("自动分割", "配置环境、运行并检查结果", "segmentation.html#step-11"),
+         ("遇到问题", "加载、恢复与失败处理", "faq.html#step-1"))
+        if code == "zh" else
+        (("First use", "Open, browse, and save", "quick-start.html#step-1"),
+         ("Measure & annotate", "Follow the steps and demos", "measurement.html#step-1"),
+         ("AI segmentation", "Set up, run, and review", "segmentation.html#step-11"),
+         ("Get help", "Loading, recovery, and errors", "faq.html#step-1"))
+    )
+    start_links = ''.join(f'<a href="{url}"><strong>{title}</strong><span>{body}</span></a>' for title, body, url in routes)
+    start = f'<nav class="start-routes" aria-label="{"按任务开始" if code == "zh" else "Start with a task"}">{start_links}</nav>'
     groups = []
     for category in categories:
         links = []
@@ -229,8 +288,7 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
             if chapter["category"] != category["id"]:
                 continue
             title = messages[f'manual.{chapter["id"]}.title']
-            searchable = " ".join([title, messages[f'manual.{chapter["id"]}.summary']] +
-                                  [messages[section.get("messageId", f'manual.{chapter["id"]}.section{i}') + ".body"] for i, section in enumerate(chapter["sections"])])
+            searchable = chapter_search(chapter, messages)
             links.append(f'<a href="{escape(chapter["id"])}.html" data-search="{escape(searchable.lower())}">{escape(title)}</a>')
         groups.append(f'<section class="home-group">{icon(category["icon"])}<div><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</div></section>')
     return f'''<!doctype html><html lang="{language["pack"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -239,7 +297,7 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
 <body class="home">{header}
 <main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img src="{product_image_asset('../', 'hero-mpr.png')}" alt="{'Voxenra 多平面重建与三维视图' if code == 'zh' else 'Voxenra multiplanar and 3D views'}" loading="eager"></figure></div>
-<div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
+{start}<div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
 <footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main><script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
 
 
@@ -259,7 +317,7 @@ PRODUCT_COPY = {
         "workflow_cards": (
             ("本地导入", "文件、文件夹和压缩包可混合选择，也可拖入窗口。"),
             ("PACS 查询", "连接 DICOMweb PACS，查询检查并选择序列导入。"),
-            ("工作区", "保存布局、测量与分析结果，并恢复上次选中的工具。"),
+            ("工作区", "保存布局、测量与分析结果。工作区引用原始影像，请同时保留源文件。"),
         ),
         "workflow_images": (("拖拽 ZIP 压缩包导入", "feature-zip-drag.gif"), ("PACS 检索与序列选择", "feature-pacs.png"), ("保存与恢复工作区", "feature-workspace-overview.png")),
         "viewing_title": "从二维切片到三维重建",
@@ -278,6 +336,9 @@ PRODUCT_COPY = {
         "quality_captions": ("水模 QA · CT 值与均匀性", "点源 MTF · 曲线与指标"),
         "closing_title": "开始使用 Voxenra", "closing_body": "适用于 macOS Apple Silicon 与 Windows。",
         "mac_download": "下载 DMG", "win_setup": "下载安装版", "win_portable": "下载便携版",
+        "mac_help": "适用于 Apple 芯片（M 系列），不适用于 Intel Mac。打开 DMG 后，将 Voxenra 拖入应用程序文件夹。",
+        "win_help": "日常使用建议选安装版；便携版无需安装，保存 EXE 后直接运行。两者均适用于 64 位 Windows。",
+        "first_run": "下载后从快速开始入门",
         "releases": "发布记录", "github": "GitHub 仓库", "alt_hero": "Voxenra 中的 MR 多平面重建与 3D 视图",
         "alt_viewing": "Voxenra 中的 MR 原始切片视图", "alt_fusion": "Voxenra 中的 CT、PET 与融合视图",
         "alt_analysis": "Voxenra 中的 MPR 分割与统计面板",
@@ -301,7 +362,7 @@ PRODUCT_COPY = {
         "workflow_cards": (
             ("Local import", "Select files, folders, and archives together, or drag them into the window."),
             ("PACS query", "Connect to a DICOMweb PACS, find studies, and import selected series."),
-            ("Workspace", "Preserve layouts, measurements, segmentation masks, analysis results, and selected tools."),
+            ("Workspace", "Preserve layouts, measurements, segmentation, and analysis. Workspaces reference the original images, so keep the source files."),
         ),
         "workflow_images": (("Drag a ZIP archive to import", "feature-zip-drag.gif"), ("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace-overview.png")),
         "viewing_title": "From 2D slices to 3D reconstruction",
@@ -320,6 +381,9 @@ PRODUCT_COPY = {
         "quality_captions": ("Water-phantom QA · CT values and uniformity", "Point-source MTF · curve and metrics"),
         "closing_title": "Get started with Voxenra", "closing_body": "Available for macOS Apple Silicon and Windows.",
         "mac_download": "Download DMG", "win_setup": "Download installer", "win_portable": "Download portable",
+        "mac_help": "For Apple silicon (M-series), not Intel Macs. Open the DMG, then drag Voxenra into Applications.",
+        "win_help": "Choose the installer for everyday use. The portable EXE runs without installation. Both require 64-bit Windows.",
+        "first_run": "After downloading, follow Quick start",
         "releases": "Releases", "github": "GitHub repository", "alt_hero": "MR multiplanar and 3D views in Voxenra",
         "alt_viewing": "MR original-slice view in Voxenra", "alt_fusion": "CT, PET, and fused views in Voxenra",
         "alt_analysis": "MPR segmentation and statistics panel in Voxenra",
@@ -348,7 +412,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     feature_rows = [f'''<section class="product-feature product-feature-wide" id="ai">
 <div class="product-feature-copy"><h2>{escape(copy["ai_title"])}</h2><p>{escape(copy["ai_body"])}</p></div>
 <figure><a href="{ai_image}" target="_blank" rel="noopener"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{ai_still}"><img src="{ai_image}" {product_image_size("feature-ai-segmentation.gif")} alt="{escape(copy["ai_caption"])}" loading="lazy"></picture></a><figcaption>{escape(copy["ai_caption"])}</figcaption></figure>
-<div class="ai-details"><p>{escape(copy["ai_scope"])}</p><a href="{prefix}{code}/segmentation.html">{escape(copy["ai_link"])}</a></div></section>''']
+<div class="ai-details"><p>{escape(copy["ai_scope"])}</p><a href="{prefix}{code}/segmentation.html#step-11">{escape(copy["ai_link"])}</a></div></section>''']
     for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
         title = escape(copy[key + "_title"])
         image_url = product_image_asset(prefix, image)
@@ -418,9 +482,9 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <section class="product-appearance product-container" id="appearance"><div class="product-feature-copy"><h2>{escape(copy["appearance_title"])}</h2><p>{escape(copy["appearance_body"])}</p></div>
 <div class="theme-media-grid">{"".join(theme_images)}</div></section></div>
 <section class="product-closing product-container" id="download"><h2>{escape(copy["closing_title"])}</h2><p>{escape(copy["closing_body"])}</p>
-<div class="download-platforms"><div class="download-platform"><img src="{prefix}assets/macos.svg" alt=""><h3>macOS</h3><p>Apple Silicon · {version}</p><div class="download-links"><a href="{mac_url}">{escape(copy["mac_download"])}</a></div></div>
-<div class="download-platform"><img src="{prefix}assets/windows.svg" alt=""><h3>Windows</h3><p>x64 · {version}</p><div class="download-links"><a href="{win_setup_url}">{escape(copy["win_setup"])}</a><a href="{win_portable_url}">{escape(copy["win_portable"])}</a></div></div></div>
-<a class="closing-manual" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></section></main>
+<div class="download-platforms"><div class="download-platform"><img src="{prefix}assets/macos.svg" alt=""><h3>macOS</h3><p>Apple Silicon · {version}</p><div class="download-links"><a href="{mac_url}">{escape(copy["mac_download"])}</a></div><p class="download-help">{escape(copy["mac_help"])}</p></div>
+<div class="download-platform"><img src="{prefix}assets/windows.svg" alt=""><h3>Windows</h3><p>x64 · {version}</p><div class="download-links"><a href="{win_setup_url}">{escape(copy["win_setup"])}</a><a href="{win_portable_url}">{escape(copy["win_portable"])}</a></div><p class="download-help">{escape(copy["win_help"])}</p></div></div>
+<a class="closing-manual" href="{prefix}{code}/quick-start.html">{escape(copy["first_run"])}</a></section></main>
 <footer class="product-footer"><div class="product-container"><div><strong>Voxenra</strong><p>{escape(copy["description"])}</p></div><nav aria-label="{'页脚' if code == 'zh' else 'Footer'}"><a href="https://github.com/l5769389/voxenra">{escape(copy["github"])}</a><a href="{prefix}{manual_home}">{escape(copy["manual"])}</a><a href="https://github.com/l5769389/voxenra/releases">{escape(copy["releases"])}</a><a href="{prefix}{other_home}">{escape(copy["language"])}</a></nav></div></footer></body></html>'''
 
 
@@ -462,6 +526,16 @@ def build(output: Path) -> None:
             destination = asset_output / "help" / prefix / name
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(HELP / prefix / name, destination)
+    tutorial_output = asset_output / "tutorials"
+    tutorial_output.mkdir(exist_ok=True)
+    for item in load_json(SITE / "tutorials.json"):
+        chapter = next(ch for ch in chapters if ch["id"] == item["chapter"])
+        if not any(s.get("messageId", f'manual.{chapter["id"]}.section{i}') == item["section"]
+                   for i, s in enumerate(chapter["sections"])):
+            raise ValueError(f'Unknown tutorial section: {item["section"]}')
+        for code in LANGUAGES:
+            shutil.copy2(ROOT / item["sources"][code], tutorial_output / f'{code}-{item["name"]}.gif')
+            shutil.copy2(SITE / item["posters"][code], tutorial_output / f'{code}-{item["name"]}.png')
     (output / ".nojekyll").touch()
     (output / "index.html").write_text(render_product_home("zh", release), encoding="utf-8")
     (output / "en-us").mkdir(exist_ok=True)

@@ -142,12 +142,14 @@
       {
         "title": "清除范围",
         "body": "**清除分割 / 清除 VOI** 删除当前类型，**全部清除** 删除当前 MPR 页签两种范围，不影响其他页签。**4D 中两种清除都仅作用于当前时相**，其他时相的范围保留。",
-        "messageId": "manual.management.section1"
+        "messageId": "manual.management.section1",
+        "important": true
       },
       {
         "title": "下次继续",
         "body": "范围与实际分割掩膜可随 **工作区** 保存恢复，同时恢复所选区域、画笔／橡皮模式、尺寸及作用范围；未提交的笔画不保存，播放保持暂停。统计可导出测量报告，分割可通过 SEG / NRRD 交换。支持结构化 SR 导出；RTSTRUCT 和 SR 导入尚未实现。关闭未保存页签会丢失当前结果。",
-        "messageId": "manual.management.section2"
+        "messageId": "manual.management.section2",
+        "important": true
       }
     ],
     "cursorLegend": true,
