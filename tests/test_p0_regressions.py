@@ -66,7 +66,14 @@ def test_4d_locate_save_restore_preserves_peer_phases(qt_app, tmp_path):
         tab.setPhaseIndex(2)
         wait_until(lambda: tab._current_phase_index==2 and not tab._active_mpr_requests)
         tab.measurementResults.locate(key)
-        wait_until(lambda: view.measurementController.selectedMeasurementId==mid)
+        # Selection can finish before the peer planes in the same 4D batch.
+        # Capture only after the whole source phase has been restored.
+        wait_until(lambda: view.measurementController.selectedMeasurementId == mid
+                   and not tab._active_mpr_requests
+                   and tab._rendering_phase_index is None
+                   and tab._current_phase_index == 0)
+        assert all(v.measurementController.frame_key[-1] == ('phase', 0)
+                   for v in tab.viewports_by_id.values())
         expected={v.viewportId: v.measurementController.frame_key for v in tab.viewports_by_id.values()}
         saved=tab_snapshot(tab)
         apply_tab_snapshot(tab,saved)
