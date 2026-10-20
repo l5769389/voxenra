@@ -89,12 +89,20 @@ class ShortcutController(QObject):
     def activate(self, action, tools, tab):
         if tools is None or tab is None or QGuiApplication.mouseButtons() != Qt.NoButton: return False
         target = 'segmentation' if action in ('paint','erase') else action
+        if action == 'play':
+            mode = tab.playbackMode
+            if tab.temporalPlayback and getattr(tab.activeViewport, 'viewportType', '') == 'volume':
+                mode = 'phase'
+            target = 'slice-play' if tab.temporalPlayback and mode == 'slice' else 'play'
         if action == 'window' and not any(t['toolType']=='window' for t in tools.tools):
             target = 'ct-window'
         available = next((t for t in tools.tools if t['toolType']==target and t.get('available', True) and t.get('enabled', True)), None)
         if not available: return False
+        if action == 'play':
+            tab.togglePlaybackMode(mode)
+            return True
         # Repeated tool shortcuts select rather than collapse an already open panel.
-        if tools.activeTool != target or action == 'play': tools.activateTool(target)
+        if tools.activeTool != target: tools.activateTool(target)
         if action in ('paint','erase'):
             controller = getattr(tab, 'voiController', None)
             if controller is None: return False

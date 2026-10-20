@@ -413,6 +413,12 @@ class MprViewportController(Image2DViewportController):
         if geometry is None:
             return None
 
+        # ImageCanvas converts screen tolerances to image pixels using the
+        # smaller spacing. Convert them back to mm before comparing distances.
+        spacing = min(geometry.row_spacing, geometry.column_spacing)
+        center_tolerance *= spacing
+        line_tolerance *= spacing
+
         # 在毫米空间做距离判定，避免非正方形像素扭曲命中区域。
         dx = (
             point.column - center.column

@@ -119,7 +119,7 @@ def tutorial(item: dict, code: str) -> str:
     # The GIF is not requested until the reader explicitly starts it.
     return (f'<figure class="tutorial"><img src="../assets/tutorials/{name}.png" '
             f'data-still="../assets/tutorials/{name}.png" data-animation="../assets/tutorials/{name}.gif" '
-            f'{image_size(SITE / item["posters"][code])} alt="{escape(caption)}" loading="lazy">'
+            f'{image_size(HELP / item["posters"][code])} alt="{escape(caption)}" loading="lazy">'
             f'<figcaption>{escape(caption)}</figcaption><div class="tutorial-controls">'
             f'<button type="button" hidden aria-pressed="false" data-play="{play}" data-stop="{stop}">{play}</button>'
             f'<a href="../assets/tutorials/{name}.gif" target="_blank" rel="noopener">{full}</a>'
@@ -204,7 +204,7 @@ def render_chapter(chapter: dict, messages: dict[str, str], language: dict[str, 
         content.append(f'<div class="examples">{"".join(cards)}</div>')
     if chapter.get("figure"):
         content.append(figure(chapter["figure"], messages, language))
-    chapter_tutorials = [item for item in load_json(SITE / "tutorials.json") if item["chapter"] == chapter_id]
+    chapter_tutorials = [item for item in load_json(HELP / "tutorials.json") if item["chapter"] == chapter_id]
     for index, section in enumerate(chapter["sections"]):
         key = section.get("messageId", prefix + f"section{index}")
         css = "step important" if section.get("important") else "step"
@@ -528,14 +528,14 @@ def build(output: Path) -> None:
             shutil.copy2(HELP / prefix / name, destination)
     tutorial_output = asset_output / "tutorials"
     tutorial_output.mkdir(exist_ok=True)
-    for item in load_json(SITE / "tutorials.json"):
+    for item in load_json(HELP / "tutorials.json"):
         chapter = next(ch for ch in chapters if ch["id"] == item["chapter"])
         if not any(s.get("messageId", f'manual.{chapter["id"]}.section{i}') == item["section"]
                    for i, s in enumerate(chapter["sections"])):
             raise ValueError(f'Unknown tutorial section: {item["section"]}')
         for code in LANGUAGES:
-            shutil.copy2(ROOT / item["sources"][code], tutorial_output / f'{code}-{item["name"]}.gif')
-            shutil.copy2(SITE / item["posters"][code], tutorial_output / f'{code}-{item["name"]}.png')
+            shutil.copy2(HELP / item["sources"][code], tutorial_output / f'{code}-{item["name"]}.gif')
+            shutil.copy2(HELP / item["posters"][code], tutorial_output / f'{code}-{item["name"]}.png')
     (output / ".nojekyll").touch()
     (output / "index.html").write_text(render_product_home("zh", release), encoding="utf-8")
     (output / "en-us").mkdir(exist_ok=True)

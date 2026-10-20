@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.1/Voxenra-2.1.1-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.2/Voxenra-2.1.2-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.2/Voxenra-2.1.2-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.2/Voxenra-2.1.2-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 ## Features
 
@@ -121,7 +121,9 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 Import source images on the left and associated SEG / NRRD segments on the right. Mix files, folders, and archives, drag in images, query PACS, inspect DICOM tags, and export PNG or source DICOM.
 
-Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual, feedback, and optional startup update checks.
+Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
+
+![Offline manual and workflow demos](docs/screenshots/en/50-offline-manual-2.1.2.png)
 
 <table>
 <tr>

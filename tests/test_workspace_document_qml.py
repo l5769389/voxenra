@@ -162,3 +162,40 @@ def test_report_controls_and_single_view_layout_binding(sidebar_scene, tmp_path)
     assert find(window, 'viewportExportAnonymous').property('checked')
     assert window.grabWindow().save(str(tmp_path / 'workspace-export-panel.png'))
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize('outcome', ['invalid', 'cancelled'])
+def test_aborted_workspace_open_shows_reason_and_keeps_image(sidebar_scene, tmp_path, outcome):
+    from qt_dicom_viewer.core.workspace_document import read_document
+    from qt_dicom_viewer.core.workspace_state import dumps
+    window, app, records, warnings = sidebar_scene
+    manager, workspace = app.workspaceDocumentController, app.workspaceController
+    workspace.createTab(records[0].series_instance_uid, 'CT', '2d')
+    wait_until(lambda: workspace.activeLoadState.status == 'ready')
+    original = workspace.activeTab
+    path = tmp_path / 'saved.voxworkspace'
+    assert manager.save_to(path)
+    wait_until(lambda: not manager.busy)
+    assert not manager.isError, manager.message
+    original.activeViewport.setZoom(2)
+    if outcome == 'invalid':
+        document = read_document(path)
+        document['activeTab'] = []
+        path.write_bytes(dumps(document))
+    assert manager.restore_from(path)
+    if outcome == 'cancelled':
+        manager._executor.submit(lambda: None).result(timeout=10)
+        manager.cancel()
+    wait_until(lambda: not manager.busy)
+    assert workspace.activeTab is original and original.activeViewport.zoom == 2
+    assert not manager.restoring and manager.dirty
+    dialog = window.findChild(QObject, 'workspaceDocumentDialog')
+    wait_until(lambda: dialog.property('visible'))
+    message = dialog.findChild(QObject, 'workspaceDocumentMessage')
+    assert message.isVisible()
+    assert ('页签编号' if outcome == 'invalid' else '取消') in message.property('text')
+    assert dialog.findChild(QObject, 'saveWorkspaceAs').isEnabled()
+    QTest.qWait(80)
+    assert window.grabWindow().save(str(tmp_path / f'workspace-{outcome}.png'))
+    assert message.window().grabWindow().save(str(tmp_path / f'workspace-{outcome}-message.png'))
+    assert not warnings, warnings

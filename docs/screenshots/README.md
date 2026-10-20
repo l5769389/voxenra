@@ -112,7 +112,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>显示设置</b><br><a href="22-display-settings.png"><img src="22-display-settings.png" alt="显示设置" width="100%"></a></td>
-<td width="50%"><b>离线手册</b><br><a href="30-offline-manual.png"><img src="30-offline-manual.png" alt="离线手册" width="100%"></a></td>
+<td width="50%"><b>离线手册</b><br><a href="50-offline-manual-2.1.2.png"><img src="50-offline-manual-2.1.2.png" alt="离线手册" width="100%"></a></td>
 </tr>
 </table>
 

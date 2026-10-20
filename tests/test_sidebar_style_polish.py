@@ -148,7 +148,10 @@ def test_manual_body_is_selectable_copyable_and_has_no_duplicate_title(sidebar_s
     previous = QGuiApplication.clipboard().text()
     try:
         QTest.keyClick(window, Qt.Key_C, Qt.ControlModifier)
-        assert QGuiApplication.clipboard().text() == body.property('selectedText')
+        # Qt exposes rich-text line/paragraph separators in selectedText but
+        # exports ordinary newlines to the plain-text clipboard.
+        selected = body.property('selectedText').replace('\u2028', '\n').replace('\u2029', '\n')
+        assert QGuiApplication.clipboard().text() == selected
     finally:
         QGuiApplication.clipboard().setText(previous)
     assert window.grabWindow().save(str(tmp_path/'manual-selection.png'))
@@ -343,4 +346,27 @@ def test_compact_layout_and_palette_switch_without_reopening(sidebar_scene, tmp_
     assert layout.property('visible')
     click(window, find(window, 'compactTool-pan'))
     assert not layout.property('visible')
+    assert not warnings, warnings
+
+
+def test_compact_palette_accessible_selection_updates_view(sidebar_scene, tmp_path):
+    from PySide6.QtGui import QAccessible, QAccessibleActionInterface
+    window, app, records, warnings = sidebar_scene
+    view = open_image(app, records[0])
+    click(window, find(window, 'toggleRightPanel'))
+    rail = find(window, 'compactToolRail')
+    reveal(window, rail, find(window, 'compactTool-pseudocolor'))
+    for option in view.colorMapOptions:
+        interface = QAccessible.queryAccessibleInterface(find(window, 'compactAction-' + option['colorMap']))
+        assert interface.text(QAccessible.Name) == option['label']
+        assert bool(interface.state().checked) == (option['colorMap'] == view.activeColorMap)
+    button = find(window, 'compactAction-blackbody')
+    interface = QAccessible.queryAccessibleInterface(button)
+    interface.actionInterface().doAction(QAccessibleActionInterface.pressAction())
+    wait_until(lambda: view.activeColorMap == 'blackbody')
+    popup = window.findChild(QObject, 'compactPalettePopup')
+    assert not popup.property('visible')
+    reveal(window, rail, find(window, 'compactTool-pseudocolor'))
+    assert interface.state().checked
+    assert window.grabWindow().save(str(tmp_path / 'accessible-palette.png'))
     assert not warnings, warnings

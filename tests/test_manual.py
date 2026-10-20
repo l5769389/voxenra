@@ -4,8 +4,9 @@ import sys
 import xml.etree.ElementTree as ET
 
 import pytest
-from PySide6.QtCore import QObject, QPointF, Qt
+from PySide6.QtCore import QCoreApplication, QEvent, QObject, QPointF, Qt, QUrl
 from PySide6.QtTest import QTest
+from shiboken6 import isValid
 
 from qt_dicom_viewer.ui.controller.manual_tab_controller import ManualTabController, manual_content, manual_rich_text
 from qt_dicom_viewer.ui.svg_icon_provider import render_icon
@@ -52,6 +53,22 @@ def test_manual_content_and_bundled_resources(qt_app):
         assert not image.isNull() and image.width() == size
 
 
+def test_offline_tutorial_catalog_has_packaged_assets_and_localized_sections(qt_app):
+    import json
+    catalog = json.loads((QML / 'assets/help/tutorials.json').read_text())
+    assert len(catalog) == 9
+    resources = {f.text for f in ET.parse(ROOT / 'Voxenra.qrc').iter('file')}
+    controller = ManualTabController()
+    for item in catalog:
+        controller.selectChapter(item['chapter'])
+        demos = [demo for section in controller.currentChapter['sections']
+                 for demo in section.get('tutorials', [])]
+        assert any(demo['id'] == item['name'] for demo in demos)
+        for path in list(item['sources'].values()) + list(item['posters'].values()):
+            assert (QML / 'assets/help' / path).is_file()
+            assert 'src/qt_dicom_viewer/qml/assets/help/' + path in resources
+
+
 def test_manual_emphasis_preserves_literal_html_and_searchable_shortcuts(qt_app):
     assert manual_rich_text('选择 **调窗**，按 `Enter`。\nA < B & C') == (
         '选择 <b>调窗</b>，按 <b>Enter</b>。<br>A &lt; B &amp; C')
@@ -66,36 +83,136 @@ def test_manual_emphasis_preserves_literal_html_and_searchable_shortcuts(qt_app)
     assert any(s.get('important') and '<b>' in s['bodyHtml'] for s in controller.currentChapter['sections'])
 
 
+def reveal_tutorial(window, name):
+    wait_until(lambda: not find(window, 'operationManual').property('restoring'))
+    shot = find(window, 'manualTutorial-' + name)
+    reading = find(window, 'manualReadingArea')
+    top = shot.mapToItem(reading.property('contentItem'), QPointF()).y()
+    reading.setProperty('contentY', min(max(0, top - 20), reading.property('contentHeight') - reading.height()))
+    QTest.qWait(60)
+    return shot
+
+
+def flush_deferred_deletes():
+    # wait_until pumps processEvents rather than QApplication.exec; explicitly
+    # deliver the DeferredDelete events that the normal app event loop delivers.
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+
+
 def test_language_pack_tutorial_animation_and_english_switch(scene):
     window, app, warnings = scene
     window.resize(1440, 900)
-    app.workspaceController.openManual('language-packs')
-    controller = app.workspaceController.manualController
-    wait_until(lambda: find(window, 'manualExample').property('frameCount') == 5)
-    example = find(window, 'manualExample')
-    assert find(window, 'manualChapterTitle').property('text') == '新增语言包'
-    frame = example.property('currentFrame')
-    wait_until(lambda: example.property('currentFrame') != frame)
-    click(window, find(window, 'manualScreenshotButton'))
-    preview = window.findChild(QObject, 'manualScreenshotPreview')
+    ws = app.workspaceController
+    ws.openManual('language-packs')
+    controller = ws.manualController
+    shot = reveal_tutorial(window, 'language-pack')
+    assert shot.property('playing') is False
+    assert shot.findChild(QObject, 'manualAnimation') is None
+    assert shot.findChild(QObject, 'manualExample').property('source').toString().endswith('.png')
+    click(window, shot.findChild(QObject, 'manualTutorialPlay'))
+    wait_until(lambda: shot.findChild(QObject, 'manualAnimation') is not None)
+    animation = shot.findChild(QObject, 'manualAnimation')
+    wait_until(lambda: animation.property('frameCount') == 5)
+    frame = animation.property('currentFrame')
+    wait_until(lambda: animation.property('currentFrame') != frame)
+    click(window, shot.findChild(QObject, 'manualScreenshotButton'))
+    preview = shot.findChild(QObject, 'manualScreenshotPreview')
     wait_until(lambda: preview.property('visible'))
-    full = preview.findChild(QObject, 'manualFullScreenshot')
-    assert full.property('frameCount') == 5 and full.property('playing')
-    assert not example.property('playing')
+    full = preview.findChild(QObject, 'manualFullAnimation')
+    wait_until(lambda: full.property('frameCount') == 5)
+    assert shot.findChild(QObject, 'manualAnimation') is None
     QTest.keyClick(full.window(), Qt.Key_Escape)
     wait_until(lambda: not preview.property('visible'))
+    assert not shot.property('playing')
+    assert shot.findChild(QObject, 'manualAnimation') is None
 
     app.languageController.selectLanguage('en-US')
     wait_until(lambda: find(window, 'manualChapterTitle').property('text') == 'Add a language pack')
-    assert controller.chapterId == 'language-packs'
-    assert controller.currentChapter['example'] == 'en/language-pack.gif'
-    assert 'Restart and select' in controller.currentChapter['sections'][3]['title']
-    assert example.property('source').toString().endswith('/en/language-pack.gif')
-    controller.setSearch('language pack')
-    assert 'language-packs' in [c['id'] for group in controller.navigation for c in group['chapters']]
+    shot = reveal_tutorial(window, 'language-pack')
+    assert shot.property('file') == 'en/language-pack.gif'
+    assert shot.property('poster') == 'tutorials/en-language-pack.png'
+    assert 'reload' in shot.property('caption').lower()
+    assert shot.property('withinViewport')
+    click(window, shot.findChild(QObject, 'manualTutorialPlay'))
+    wait_until(lambda: shot.findChild(QObject, 'manualAnimation') is not None)
+    running = shot.findChild(QObject, 'manualAnimation')
+    ws.openSettings()
+    # The tab host may destroy the inactive page entirely; either way, its
+    # decoder must be released and returning to the tab must not restart it.
+    find(window, 'settingsPage')
+    flush_deferred_deletes()
+    wait_until(lambda: not isValid(running))
+    ws.openManual()
+    shot = reveal_tutorial(window, 'language-pack')
+    assert not shot.property('playing')
     app.languageController.selectLanguage('zh-CN')
     wait_until(lambda: find(window, 'manualChapterTitle').property('text') == '新增语言包')
-    assert controller.currentChapter['example'] == 'language-pack.gif'
+    assert not warnings, warnings
+
+
+def test_tutorial_stops_offscreen_and_on_chapter_change(scene):
+    window, app, warnings = scene
+    window.resize(1280, 720)
+    ws = app.workspaceController
+    ws.openManual('measurement')
+    shot = reveal_tutorial(window, 'freehand-roi')
+    click(window, shot.findChild(QObject, 'manualTutorialPlay'))
+    wait_until(lambda: shot.findChild(QObject, 'manualAnimation') is not None)
+    reading = find(window, 'manualReadingArea')
+    reading.setProperty('contentY', 0)
+    wait_until(lambda: not shot.property('playing'))
+    flush_deferred_deletes()
+    wait_until(lambda: shot.findChild(QObject, 'manualAnimation') is None)
+    shot = reveal_tutorial(window, 'curve')
+    click(window, shot.findChild(QObject, 'manualTutorialPlay'))
+    assert shot.property('playing')
+    ws.openManual('quick-start')
+    wait_until(lambda: not find(window, 'operationManual').property('restoring'))
+    assert find(window, 'operationManual').property('playingTutorialId') == ''
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('theme,locale,size', [
+    ('dark', 'zh-CN', (1440, 900)),
+    ('light', 'en-US', (1000, 600)),
+    ('graphite', 'zh-CN', (1280, 720)),
+])
+def test_all_offline_demos_and_notices_render_in_themes(scene, theme, locale, size, tmp_path, monkeypatch):
+    import json
+    window, app, warnings = scene
+    from test_window_sizing import fit_desktop
+    fit_desktop(window, app, monkeypatch, size)
+    app.settingsController.setValue('appearance', 'theme', theme)
+    app.languageController.selectLanguage(locale)
+    ws = app.workspaceController
+    for item in json.loads((QML / 'assets/help/tutorials.json').read_text()):
+        ws.openManual(item['chapter'])
+        shot = reveal_tutorial(window, item['name'])
+        assert shot.findChild(QObject, 'manualAnimation') is None
+        assert shot.findChild(QObject, 'manualExample').property('sourceSize').width() > 0
+        play = shot.findChild(QObject, 'manualTutorialPlay')
+        assert play.mapToScene(QPointF(play.width(), play.height())).y() <= window.height()
+        click(window, play)
+        wait_until(lambda: shot.findChild(QObject, 'manualAnimation') is not None)
+        animation = shot.findChild(QObject, 'manualAnimation')
+        wait_until(lambda: animation.property('frameCount') > 1)
+        source = QUrl.fromLocalFile(str(QML / 'sections/manual/ManualScreenshot.qml')).resolved(animation.property('source'))
+        assert source.isLocalFile() and Path(source.toLocalFile()).is_file()
+        click(window, play)
+        flush_deferred_deletes()
+        assert shot.findChild(QObject, 'manualAnimation') is None
+        if item['name'] == 'freehand-roi':
+            assert window.grabWindow().save(str(tmp_path / f'demo-{theme}-{locale}.png'))
+    ws.openManual('quick-start')
+    wait_until(lambda: not find(window, 'operationManual').property('restoring'))
+    reading = find(window, 'manualReadingArea')
+    section = find(window, 'manualSection-4')
+    top = section.mapToItem(reading.property('contentItem'), QPointF()).y()
+    reading.setProperty('contentY', min(top, reading.property('contentHeight') - reading.height()))
+    label = find(window, 'manualImportantLabel-4')
+    assert label.property('text') == ('Important' if locale == 'en-US' else '重要提示')
+    QTest.qWait(100)  # Let the navigation selection and scroll position paint.
+    assert window.grabWindow().save(str(tmp_path / f'notice-{theme}-{locale}.png'))
     assert not warnings, warnings
 
 

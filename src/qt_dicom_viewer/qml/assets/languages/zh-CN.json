@@ -2586,6 +2586,19 @@
         "manual.faq.section5.title": "自动分割失败或看不到结果",
         "manual.faq.section5.body": "**失败时**，先读部位选择窗口里的具体原因，再打开 **详情** 查看日志。按提示核对环境、模型、设备或内存，处理后重试；失败和取消不会导入半成品。\n\n**运行完成但暂未显示时**，返回运行时的目标页签和时相，并结束正在进行的编辑；结果才会导入。成功导入后弹窗自动关闭，可在分割列表中核对部位、显隐和颜色。未检出的部位会单独提示。",
         "manual.faq.section6.title": "意外退出后如何继续",
-        "manual.faq.section6.body": "重新打开软件，在 **工作区** 中查看是否有恢复副本；有副本时选择 **恢复**。如果提示缺少影像，使用 **重新定位…** 找到原文件、文件夹或压缩包。\n\n没有可用副本时，打开最近主动保存的工作区。**最近一次保存或恢复副本之后的操作可能无法找回**；请定期保存重要结果。"
+        "manual.faq.section6.body": "重新打开软件，在 **工作区** 中查看是否有恢复副本；有副本时选择 **恢复**。如果提示缺少影像，使用 **重新定位…** 找到原文件、文件夹或压缩包。\n\n没有可用副本时，打开最近主动保存的工作区。**最近一次保存或恢复副本之后的操作可能无法找回**；请定期保存重要结果。",
+        "manual.tutorial.play": "播放演示",
+        "manual.tutorial.stop": "停止并返回静态图",
+        "manual.important": "重要提示",
+        "manual.tutorial.zip-import.caption": "拖入压缩包，等待导入，再打开序列。 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。",
+        "manual.tutorial.freehand-roi.caption": "逐点勾画自由形状 ROI，完成后查看统计。 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。",
+        "manual.tutorial.curve.caption": "选择曲线，依次放点，完成后查看弧长。 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。",
+        "manual.tutorial.mpr-layout.caption": "切换布局，对照三切面与 3D 的位置关系。 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。",
+        "manual.tutorial.4d-playback.caption": "播放多个时相，观察同一位置随时相变化。 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。",
+        "manual.tutorial.volume-presets.caption": "切换三维模板，观察显示效果；模板不会生成分割。 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。",
+        "manual.tutorial.refinement.caption": "用画笔和橡皮精修范围，再撤销或重做。 录屏中的工具位置可能与当前版本不同，请以本页文字步骤为准。",
+        "manual.tutorial.ai-workflow.caption": "合成模体演示：失败提示、重试、成功导入。推理输出为模拟数据，不表示模型精度或耗时。",
+        "manual.tutorial.language-pack.caption": "添加语言包后，重新加载并选择新语言。",
+        "workspace.invalidActiveTab": "工作区中的活动页签编号无效。"
     }
 }

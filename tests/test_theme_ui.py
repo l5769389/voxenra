@@ -25,7 +25,7 @@ def capture(window, name, tmp_path):
     assert image.save(str(destination / (name + '.png')))
 
 
-def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tmp_path):
+def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tmp_path, monkeypatch):
     window, app, records, warnings = sidebar_scene
     window.resize(1280, 800)
     ws = app.workspaceController
@@ -48,6 +48,11 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     app.workspaceDocumentController._autosave.stop()
     app.workspaceDocumentController._dirty = False
     for theme in ('light', 'dark', 'graphite'):
+        # Native dialogs can leave Cocoa's key window elsewhere after closing.
+        # Re-enter the window before checking a hover state in the next theme.
+        window.requestActivate()
+        QTest.mouseMove(window, QPointF(2, 2).toPoint())
+        QTest.qWait(30)
         button = find(window, 'themeChoice-' + theme)
         center = button.mapToScene(QPointF(button.width()/2, button.height()/2)).toPoint()
         QTest.mouseMove(window, center)
@@ -87,12 +92,14 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
         assert not app.seriesExportController.dialogOpen
     restored = SettingsController(path=app.settingsController._path)
     assert restored.values['appearance']['theme'] == 'graphite'
-    window.resize(1000, 640); QTest.qWait(100)
-    capture(window, 'graphite-compact-settings', tmp_path)
-    assert find(window, 'themeChoice-light').isVisible()
-    app.languageController.selectLanguage('en-US')
-    QTest.qWait(80)
-    capture(window, 'graphite-compact-english', tmp_path)
+    from test_window_sizing import fit_desktop
+    with monkeypatch.context() as small_desktop:
+        fit_desktop(window, app, small_desktop, (1000, 640))
+        capture(window, 'graphite-compact-settings', tmp_path)
+        assert find(window, 'themeChoice-light').isVisible()
+        app.languageController.selectLanguage('en-US')
+        QTest.qWait(80)
+        capture(window, 'graphite-compact-english', tmp_path)
     window.resize(1280, 800)
     click(window, find(window, 'workspaceTab-' + image_tab.tab_config.tab_id))
     click(window, find(window, 'primaryTool-measure'))

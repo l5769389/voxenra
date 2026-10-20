@@ -15,9 +15,14 @@ Rectangle {
     property bool restoring: true
     property string positionChapter: ""
     property bool active: true
+    property string playingTutorialId: ""
+    onArticleChanged: playingTutorialId = ""
     onActiveChanged: {
         if (active) restorePosition()
-        else restoring = true
+        else {
+            restoring = true
+            playingTutorialId = ""
+        }
     }
     property bool petExample: false
     color: Theme.panelBackgroundStrong
@@ -194,6 +199,8 @@ Rectangle {
                     file: manual.article.example
                         ?? ((manual.article.examples?.length ?? 0) > 0 ? manual.article.examples[manual.petExample ? 1 : 0] : "")
                     caption: manual.article.caption ?? qsTrId("text.0952")
+                    pageActive: manual.active
+                    readingViewport: readingArea
                 }
                 VoiManualFigure {
                     Layout.fillWidth: true
@@ -212,14 +219,14 @@ Rectangle {
                         readonly property bool important: modelData.important ?? false
                         Layout.fillWidth: true
                         implicitHeight: sectionContent.implicitHeight + (important ? 20 : 0)
-                        color: important ? Theme.selectionBackground : "transparent"
+                        color: important ? Theme.warningSurface : "transparent"
                         radius: 5
                         Rectangle {
                             visible: step.important
                             width: 3
                             height: parent.height
                             radius: 1
-                            color: Theme.primaryColor
+                            color: Theme.warningColor
                         }
                         ColumnLayout {
                             id: sectionContent
@@ -227,6 +234,15 @@ Rectangle {
                             y: step.important ? 10 : 0
                             width: step.width - (step.important ? 28 : 0)
                             spacing: 6
+                            Components.SelectableText {
+                                objectName: "manualImportantLabel-" + step.index
+                                Layout.fillWidth: true
+                                visible: step.important
+                                text: qsTrId("manual.important")
+                                color: Theme.warningColor
+                                font.pixelSize: 12
+                                font.weight: Font.DemiBold
+                            }
                             Components.SelectableText {
                                 Layout.fillWidth: true
                                 text: step.modelData.title
@@ -242,8 +258,28 @@ Rectangle {
                                 text: "<p style=\"margin:0; line-height:145%\">" + step.modelData.bodyHtml + "</p>"
                                 textFormat: TextEdit.RichText
                                 color: Theme.textSecondary
-                                font.pixelSize: 14
+                                font.pixelSize: 15
                                 wrapMode: TextEdit.Wrap
+                            }
+                            Repeater {
+                                model: step.modelData.tutorials ?? []
+                                delegate: ManualScreenshot {
+                                    id: tutorialShot
+                                    required property var modelData
+                                    objectName: "manualTutorial-" + modelData.id
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 10
+                                    maximumPreviewHeight: readingArea.height < 620 ? 180 : 280
+                                    file: modelData.file
+                                    poster: modelData.poster
+                                    caption: modelData.caption
+                                    pageActive: manual.active
+                                    readingViewport: readingArea
+                                    playing: manual.playingTutorialId === modelData.id
+                                    onPlayRequested: manual.playingTutorialId = modelData.id
+                                    onStopRequested: if (manual.playingTutorialId === modelData.id)
+                                        manual.playingTutorialId = ""
+                                }
                             }
                         }
                     }

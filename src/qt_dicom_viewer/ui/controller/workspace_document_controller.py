@@ -481,6 +481,14 @@ class WorkspaceDocumentController(QObject):
                 self._last_recovery_at = datetime.now().astimezone().strftime("%H:%M:%S")
                 self._recovery_error = ""
         else:
+            # A load can finish before cancellation, with its success signal
+            # still queued. Do not replace the current workspace in that gap.
+            if self._cancel.is_set():
+                payload["store"].cleanup()
+                self._busy = self._restoring = False
+                self._message, self._error = _msg('text.0421'), True
+                self.changed.emit()
+                return
             if self._pending is not None:
                 self._pending["store"].cleanup()
             self._pending = payload
@@ -512,6 +520,9 @@ class WorkspaceDocumentController(QObject):
             self.changed.emit()
             return
         if self._pending is not None:
+            # Skipping missing sources is a new user-requested restore, not a
+            # continuation of a cancelled location retry.
+            self._cancel.clear()
             self._begin_restore()
 
     def _begin_restore(self):
@@ -632,34 +643,44 @@ class WorkspaceDocumentController(QObject):
         self._restore_timer.stop()
         self._loading_tab = None
         payload = self._pending
-        if payload is not None:
-            ordered = [self._restored_ids[index] for index in sorted(self._restored_ids)]
-            ordered.extend(key for key in self.workspace._tab_dict if key not in ordered)
-            self.workspace._tab_dict = {key: self.workspace._tab_dict[key] for key in ordered
-                                        if key in self.workspace._tab_dict}
-            self.app.windowManager.restore_to_main()
-            self.workspace.tabsChanged.emit()
-            if payload["missing"]:
-                error = True
-                message += _msg('text.0432', value1=len(payload['missing']))
-            active = self._restored_ids.get(payload["document"].get("activeTab", 0))
-            if active:
-                self.workspace.activateTabId(active)
-            self._path = "" if error or Path(payload["path"]) == self._recovery_path else payload["path"]
-            if self._path:
-                self._remember_recent(self._path)
-            if Path(payload["path"]) == self._recovery_path:
-                self._previous_recovery = False
-                self._owns_recovery = True
-        self._pending = None
-        self._busy = False
-        self._dirty = bool(error or not self._path)
-        self._recovery_dirty = True  # A reopened workspace must replace any older recovery snapshot.
-        self._message, self._error = message, error
-        self.changed.emit()
-        self.restored.emit()
-        self._restoring = False
-        self.changed.emit()
+        try:
+            if payload is not None:
+                ordered = [self._restored_ids[index] for index in sorted(self._restored_ids)]
+                ordered.extend(key for key in self.workspace._tab_dict if key not in ordered)
+                self.workspace._tab_dict = {key: self.workspace._tab_dict[key] for key in ordered
+                                            if key in self.workspace._tab_dict}
+                self.app.windowManager.restore_to_main()
+                self.workspace.tabsChanged.emit()
+                if payload["missing"]:
+                    error = True
+                    message += _msg('text.0432', value1=len(payload['missing']))
+                active = (self._restored_ids.get(payload["document"].get("activeTab", 0))
+                          or next(iter(self.workspace._tab_dict), ""))
+                if active:
+                    self.workspace.activateTabId(active)
+                self._path = "" if error or Path(payload["path"]) == self._recovery_path else payload["path"]
+                if self._path:
+                    self._remember_recent(self._path)
+                if Path(payload["path"]) == self._recovery_path:
+                    self._previous_recovery = False
+                    self._owns_recovery = True
+        except Exception as failure:
+            error = True
+            message = _msg('text.0431', value1=error_message(failure))
+            self._path = ""
+        finally:
+            self._pending = None
+            self._load_queue = []
+            self._busy = False
+            self._dirty = bool(error or not self._path)
+            self._recovery_dirty = True  # Replace any older recovery snapshot.
+            self._message, self._error = message, error
+            try:
+                self.changed.emit()
+                self.restored.emit()
+            finally:
+                self._restoring = False
+                self.changed.emit()
 
     @Slot()
     def cancel(self):

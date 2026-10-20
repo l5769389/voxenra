@@ -124,10 +124,10 @@ class LinkedPetViewport(MprViewportController):
     def _crosshair_hit_test(self, position, center_tolerance, line_tolerance):
         if not self.showLocalizer or self._plane_geometry is None:
             return None
-        spacing = min(self._plane_geometry.row_spacing, self._plane_geometry.column_spacing)
-        # QML supplies pixel tolerances; MPR tests distances in millimetres.
-        target = super()._crosshair_hit_test(position, center_tolerance * spacing *
-            (2 if self.owner.compactCrosshair else 1), line_tolerance * spacing)
+        # The shared MPR hit test handles pixel-to-mm conversion. Preserve the
+        # larger target for the compact locator without converting twice.
+        target = super()._crosshair_hit_test(position, center_tolerance *
+            (2 if self.owner.compactCrosshair else 1), line_tolerance)
         if self._starting_nonlocator_drag and target == CrosshairTargetKind.CENTER:
             return None
         if self.owner.compactCrosshair and target != CrosshairTargetKind.CENTER:

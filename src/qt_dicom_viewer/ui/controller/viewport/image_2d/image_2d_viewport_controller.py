@@ -1015,8 +1015,10 @@ class Image2DViewportController(ViewportController):
             modifiers: int,
     ) -> None:
         if self._state.slice_index is not None and self._state.slice_count is not None:
+            direction = -1 if self.settingsController.section("input")["reverseWheel"] else 1
             slice_change = self._scroll_operation.handle_wheel(
-                angle_delta_y=angle_delta_y * (-1 if self.settingsController.section("input")["reverseWheel"] else 1),
+                angle_delta_y=angle_delta_y * direction,
+                pixel_delta_y=pixel_delta_y * direction,
                 current_index=self._state.slice_index,
                 slice_count=self._state.slice_count,
             )

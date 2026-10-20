@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls.Basic as Basic
 import "../../components" as Components
@@ -8,10 +9,40 @@ import "../../theme"
 ColumnLayout {
     id: shot
     required property string file
+    property string poster: ""
     property string caption: ""
     property real maximumPreviewHeight: 240
+    property bool playing: false
+    property bool pageActive: true
+    property var readingViewport: null
+    signal playRequested()
+    signal stopRequested()
+    readonly property bool animated: file.toLowerCase().endsWith(".gif")
     readonly property url imageUrl: file ? "../../assets/help/" + file : ""
-    spacing: 6
+    readonly property url stillUrl: poster ? "../../assets/help/" + poster : imageUrl
+    readonly property bool windowVisible: !Window.window || (Window.window.visibility !== Window.Hidden
+        && Window.window.visibility !== Window.Minimized)
+    readonly property bool withinViewport: {
+        if (!readingViewport) return true
+        const scrollY = readingViewport.contentY
+        // Track layout positions explicitly: mapToItem alone does not notify
+        // this binding when an ancestor moves during a language relayout.
+        let top = 0
+        for (let item = shot; item && item !== readingViewport.contentItem; item = item.parent)
+            top += item.y
+        return top + height > scrollY && top < scrollY + readingViewport.height
+    }
+    readonly property bool playbackAllowed: pageActive && visible && windowVisible
+        && (preview.visible || withinViewport)
+    onPlaybackAllowedChanged: if (!playbackAllowed) {
+        stopRequested()
+        preview.close()
+    }
+    onFileChanged: {
+        stopRequested()
+        preview.close()
+    }
+    spacing: 8
     visible: file !== ""
     Basic.Button {
         id: button
@@ -24,14 +55,31 @@ ColumnLayout {
         Accessible.name: I18n.format(qsTrId("manual.enlarge"), {caption: shot.caption})
         onClicked: preview.open()
         HoverHandler { cursorShape: Qt.PointingHandCursor }
-        contentItem: AnimatedImage {
-            id: example
-            objectName: "manualExample"
-            source: shot.imageUrl
-            playing: shot.visible && !preview.visible
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            mipmap: true
+        contentItem: Item {
+            Image {
+                id: example
+                objectName: "manualExample"
+                anchors.fill: parent
+                source: shot.stillUrl
+                visible: !inlineAnimation.active
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                mipmap: true
+            }
+            Loader {
+                id: inlineAnimation
+                anchors.fill: parent
+                active: shot.animated && shot.playing && shot.playbackAllowed && !preview.visible
+                sourceComponent: AnimatedImage {
+                    objectName: "manualAnimation"
+                    source: inlineAnimation.active ? shot.imageUrl : ""
+                    playing: inlineAnimation.active
+                    cache: false
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    onStatusChanged: if (status === AnimatedImage.Error) shot.stopRequested()
+                }
+            }
         }
         background: Rectangle {
             color: Theme.appBackground
@@ -46,8 +94,14 @@ ColumnLayout {
         text: I18n.format(qsTrId("manual.caption"), {caption: shot.caption})
         textFormat: TextEdit.PlainText
         color: Theme.textMuted
-        font.pixelSize: 11
+        font.pixelSize: 12
         wrapMode: TextEdit.Wrap
+    }
+    Components.AppButton {
+        objectName: "manualTutorialPlay"
+        visible: shot.animated
+        text: shot.playing ? qsTrId("manual.tutorial.stop") : qsTrId("manual.tutorial.play")
+        onClicked: shot.playing ? shot.stopRequested() : shot.playRequested()
     }
     Basic.Dialog {
         id: preview
@@ -65,16 +119,16 @@ ColumnLayout {
         focus: true
         closePolicy: Basic.Popup.CloseOnEscape
         onOpened: original.checked = false
+        onClosed: shot.stopRequested()
         background: Rectangle { color: Theme.panelBackgroundStrong }
-        // The native caption supplies the only close control.
         header: Item { implicitHeight: 0 }
         contentItem: Basic.ScrollView {
             id: scroll
             implicitWidth: 0
             implicitHeight: 0
             clip: true
-            contentWidth: fullImage.width
-            contentHeight: fullImage.height
+            contentWidth: fullCanvas.width
+            contentHeight: fullCanvas.height
             Basic.ScrollBar.horizontal: Basic.ScrollBar {
                 height: 8
                 padding: 1
@@ -85,22 +139,41 @@ ColumnLayout {
                 }
             }
             Basic.ScrollBar.vertical: Components.AppScrollBar {}
-            AnimatedImage {
-                id: fullImage
-                objectName: "manualFullScreenshot"
-                source: shot.imageUrl
-                playing: preview.visible
-                width: original.checked ? sourceSize.width : scroll.availableWidth
-                height: original.checked ? sourceSize.height : scroll.availableHeight
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                mipmap: true
+            Item {
+                id: fullCanvas
+                width: original.checked ? fullImage.sourceSize.width : scroll.availableWidth
+                height: original.checked ? fullImage.sourceSize.height : scroll.availableHeight
+                Image {
+                    id: fullImage
+                    objectName: "manualFullScreenshot"
+                    anchors.fill: parent
+                    source: preview.visible ? shot.stillUrl : ""
+                    visible: !fullAnimation.active
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    mipmap: true
+                }
+                Loader {
+                    id: fullAnimation
+                    anchors.fill: parent
+                    active: preview.visible && shot.animated && shot.playing && shot.playbackAllowed
+                    sourceComponent: AnimatedImage {
+                        objectName: "manualFullAnimation"
+                        source: fullAnimation.active ? shot.imageUrl : ""
+                        playing: fullAnimation.active
+                        cache: false
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                        onStatusChanged: if (status === AnimatedImage.Error) shot.stopRequested()
+                    }
+                }
             }
         }
         footer: RowLayout {
-            implicitHeight: 44
+            implicitHeight: Math.max(44, footerCaption.implicitHeight + 16)
             spacing: 12
             Components.SelectableText {
+                id: footerCaption
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.leftMargin: 12
@@ -109,6 +182,13 @@ ColumnLayout {
                 color: Theme.textSecondary
                 font.pixelSize: 12
                 wrapMode: TextEdit.Wrap
+            }
+            Components.AppButton {
+                objectName: "manualPreviewPlay"
+                visible: shot.animated
+                compact: true
+                text: shot.playing ? qsTrId("manual.tutorial.stop") : qsTrId("manual.tutorial.play")
+                onClicked: shot.playing ? shot.stopRequested() : shot.playRequested()
             }
             Components.AppButton {
                 id: original

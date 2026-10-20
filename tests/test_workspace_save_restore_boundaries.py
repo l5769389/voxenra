@@ -114,3 +114,158 @@ def test_skip_all_missing_sources_finishes_restore_and_preserves_original(qt_app
         assert path.read_bytes() == original
     finally:
         app.shutdown()
+
+
+@pytest.mark.parametrize('active', [[], {}, '0', None, True, -1, 1, 0.5])
+def test_invalid_active_tab_is_rejected_before_restore(tmp_path, active):
+    path = tmp_path / 'invalid.voxworkspace'
+    path.write_bytes(dumps(dict(format='VoxenraWorkspace', version=1, series=[],
+                               tabs=[dict(type='manual', label='Manual', series=[])], activeTab=active)))
+    with pytest.raises(ValueError):
+        read_document(path)
+
+
+@pytest.mark.parametrize('tabs,active', [([], 0), ([], 'missing'),
+    ([dict(type='manual', label='Manual', series=[])], 'missing'),
+    ([dict(type='manual', label='Manual', series=[]), dict(type='settings', label='Settings', series=[])], 1)])
+def test_valid_active_tab_and_legacy_default_remain_readable(tmp_path, tabs, active):
+    document = dict(format='VoxenraWorkspace', version=1, series=[], tabs=tabs)
+    if active != 'missing':
+        document['activeTab'] = active
+    path = tmp_path / 'valid.voxworkspace'
+    path.write_bytes(dumps(document))
+    assert read_document(path).get('activeTab', 0) == (0 if active == 'missing' else active)
+
+
+def test_invalid_active_tab_preserves_current_workspace(qt_app, tmp_path):
+    app, _ = populated_app(tmp_path)
+    try:
+        manager, workspace = app.workspaceDocumentController, app.workspaceController
+        old_tab = workspace.activeTab
+        old_tab.activeViewport.setZoom(3)
+        path = tmp_path / 'invalid.voxworkspace'
+        assert manager.save_to(path)
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+        document = read_document(path)
+        old_tab.activeViewport.setZoom(4)
+        document['activeTab'] = []
+        path.write_bytes(dumps(document))
+        assert manager.restore_from(path)
+        wait_until(lambda: not manager.busy)
+        assert manager.isError and not manager.restoring
+        assert workspace.activeTab is old_tab
+        assert old_tab.activeViewport.zoom == 4 and manager.dirty
+        assert manager.save_to(tmp_path / 'still-saveable.voxworkspace')
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+    finally:
+        app.shutdown()
+
+
+@pytest.mark.parametrize('missing', [False, True])
+def test_cancel_after_worker_completion_keeps_current_workspace(qt_app, tmp_path, monkeypatch, missing):
+    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
+
+    app, record = populated_app(tmp_path)
+    try:
+        manager, workspace = app.workspaceDocumentController, app.workspaceController
+        path = tmp_path / 'saved.voxworkspace'
+        assert manager.save_to(path)
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+        old_tab = workspace.activeTab
+        old_store = app.panelController._import_store
+        old_tab.activeViewport.setZoom(3)
+        if missing:
+            for instance in record.instances:
+                instance.path.unlink()
+        resources = []
+        store_type = module.LocalImportStore
+        def make_store():
+            store = store_type()
+            resources.append(store.root)
+            return store
+        monkeypatch.setattr(module, 'LocalImportStore', make_store)
+        assert manager.restore_from(path)
+        # Complete the single-worker queue without delivering GUI signals.
+        manager._executor.submit(lambda: None).result(timeout=10)
+        manager.cancel()
+        wait_until(lambda: not manager.busy)
+        assert workspace.activeTab is old_tab
+        assert old_tab.activeViewport.zoom == 3 and manager.dirty
+        assert manager.path == str(path)
+        assert app.panelController._import_store is old_store
+        assert not manager.restoring and not manager.hasMissingSources
+        assert manager._pending is None
+        assert resources and all(not root.exists() for root in resources)
+        assert '取消' in manager.message
+    finally:
+        app.shutdown()
+
+
+def test_finish_restore_failure_unlocks_saving_and_reports_reason(qt_app, tmp_path, monkeypatch):
+    app, _ = populated_app(tmp_path)
+    try:
+        manager = app.workspaceDocumentController
+        path = tmp_path / 'saved.voxworkspace'
+        assert manager.save_to(path)
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+        manager._pending = dict(document=read_document(path), path=str(path), missing=[])
+        manager._restored_ids = {0: app.workspaceController.activeTabId}
+        manager._busy = manager._restoring = True
+        manager._restore_timer.start()
+        def fail_activation(_):
+            raise RuntimeError('tab activation failed')
+        with monkeypatch.context() as patch:
+            patch.setattr(app.workspaceController, 'activateTabId', fail_activation)
+            manager._finish_restore('Restored')
+        assert manager.isError and 'tab activation failed' in manager.message
+        assert not manager.restoring and not manager._restore_timer.isActive()
+        assert manager._pending is None and manager.path == '' and manager.dirty
+        assert manager.save_to(tmp_path / 'recovered.voxworkspace')
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+    finally:
+        app.shutdown()
+
+
+def test_skip_missing_after_cancelled_location_retry_restores_available_tabs(qt_app, tmp_path, monkeypatch):
+    from test_series_sidebar import phantom_series
+    from qt_dicom_viewer.ui.dialogs import local_import_dialog
+    app, available = populated_app(tmp_path)
+    try:
+        manager, workspace, panel = app.workspaceDocumentController, app.workspaceController, app.panelController
+        missing = phantom_series(tmp_path, 2, 'SYNTHETIC-B', '1.2.3.2', '20261020')
+        snapshot = DicomFolderScanSnapshot(tmp_path, 6, 6, 0, [available, missing])
+        panel.update_series_session(snapshot)
+        panel._update_series_record(snapshot)
+        workspace.createTab(missing.series_instance_uid, 'Missing', 'tag')
+        path = tmp_path / 'two-series.voxworkspace'
+        assert manager.save_to(path)
+        wait_until(lambda: not manager.busy)
+        assert not manager.isError, manager.message
+        original = path.read_bytes()
+        for instance in missing.instances:
+            instance.path.unlink()
+        assert manager.restore_from(path)
+        wait_until(lambda: not manager.busy)
+        assert manager.hasMissingSources
+        pending = manager._pending
+        monkeypatch.setattr(local_import_dialog, 'select_import_paths', lambda: [str(available.instances[0].path)])
+        manager.locateMissing()
+        manager._executor.submit(lambda: None).result(timeout=10)
+        manager.cancel()
+        wait_until(lambda: not manager.busy)
+        assert manager._pending is pending
+        manager.skipMissing()
+        wait_until(lambda: not manager.busy)
+        assert len(workspace._tab_dict) == 1
+        assert workspace.activeTabType == '2d'
+        assert workspace.activeViewport.loadState == 'ready'
+        assert manager._pending is None and not manager.restoring
+        assert manager.isError and manager.dirty and not manager.path
+        assert path.read_bytes() == original
+    finally:
+        app.shutdown()

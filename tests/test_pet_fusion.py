@@ -469,7 +469,15 @@ def test_registration_tool_and_window_are_independent(qt_app, paired_series):
     assert fusion._crosshair_hit_test(distant_line, 1, 1) is None
     tab.setCompactCrosshair(False)
     assert fusion._crosshair_hit_test(distant_line, 1, 1) is not None
+    # This fixture has 2 mm pixels. Pixel tolerances must be converted exactly
+    # once, including through the PET override of the shared MPR hit test.
+    assert fusion._plane_geometry.row_spacing == fusion._plane_geometry.column_spacing == 2
+    nearby = PointerPosition(Point(0, 0), ImagePoint(center.column + 2, center.row + 2))
+    outside = PointerPosition(Point(0, 0), ImagePoint(center.column + 3, center.row + 3))
+    assert fusion._crosshair_hit_test(nearby, 4, 1).value == 'center'
+    assert fusion._crosshair_hit_test(outside, 4, 1) is None
     tab.setCompactCrosshair(True)
+    assert fusion._crosshair_hit_test(outside, 4, 1).value == 'center'
     tab.toolController.activateTool("registration")
     assert tab.registrationActive
     assert tab.toolController.activePanel == "registration"

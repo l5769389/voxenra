@@ -174,3 +174,34 @@ def test_window_transfer_stops_playback_and_releases_tools(sidebar_scene):
     assert not tab.playing and not tab._phase_timer.isActive()
     assert tab.toolController._locked_tool is None
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize('mode', ['slice', 'phase'])
+def test_play_shortcut_toggles_current_four_d_mode(temporal, mode):
+    from qt_dicom_viewer.ui.controller.shortcut_controller import ShortcutController
+    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    tab, _, _ = temporal
+    shortcuts = ShortcutController(SettingsController(path=False))
+    tab.togglePlaybackMode(mode)
+    assert tab.playing
+    assert shortcuts.activate('play', tab.toolController, tab)
+    assert not tab.playing and not tab._phase_timer.isActive()
+    assert shortcuts.activate('play', tab.toolController, tab)
+    assert tab.playing and tab.playbackMode == mode
+    assert tab.toolController.activeTool == ('slice-play' if mode == 'slice' else 'play')
+
+
+def test_four_d_play_shortcut_uses_phase_on_reference_viewport(temporal):
+    from qt_dicom_viewer.ui.controller.shortcut_controller import ShortcutController
+    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    tab, _, _ = temporal
+    shortcuts = ShortcutController(SettingsController(path=False))
+    tab.mprLayout.setLayout('quad')
+    tab.togglePlaybackMode('slice')
+    assert tab.playing
+    tab.mprLayout.activate()
+    assert not tab.playing and tab.activeViewport.viewportType == 'volume'
+    assert shortcuts.activate('play', tab.activeToolController, tab)
+    assert tab.playing and tab.playbackMode == 'phase'
+    assert shortcuts.activate('play', tab.activeToolController, tab)
+    assert not tab.playing

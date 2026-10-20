@@ -11,6 +11,7 @@ class ScrollInteractionConfig:
     swap_direction: bool = False
     wheel_threshold: float = 120
     touch_threshold: float = 60
+    pixel_wheel_threshold: float = 60
 
 
 DEFAULT_SCROLL_CONFIG = ScrollInteractionConfig()
@@ -22,6 +23,7 @@ class ScrollOperation(DragOperation):
         super().__init__()
         self._config = config
         self._accumulator = 0.0
+        self._wheel_unit = None
         self._start_slice = 0
         self._slice_count  = 0
 
@@ -29,34 +31,44 @@ class ScrollOperation(DragOperation):
             self,
             *,
             angle_delta_y: float,
+            pixel_delta_y: float = 0,
             current_index: int,
             slice_count: int,
     ) -> SliceIndexChange | None:
-        if angle_delta_y == 0:
-            return None
-
         if slice_count <= 0:
             return None
+
+        # Retain conventional wheel behavior when both values are supplied.
+        # Pixel-only touchpad events have their own units and accumulation.
+        if angle_delta_y != 0:
+            delta, threshold, unit = angle_delta_y, self._config.wheel_threshold, "angle"
+        else:
+            delta, threshold, unit = pixel_delta_y, self._config.pixel_wheel_threshold, "pixel"
+        if not math.isfinite(delta) or delta == 0:
+            return None
+        if unit != self._wheel_unit:
+            self._accumulator = 0.0
+            self._wheel_unit = unit
 
         # 滚动方向改变时清理之前的残余量。
         if (
                 self._accumulator != 0
                 and self._accumulator
-                * angle_delta_y < 0
+                * delta < 0
         ):
             self._accumulator = 0.0
 
-        self._accumulator += angle_delta_y
+        self._accumulator += delta
 
         steps = math.trunc(
-            self._accumulator / self._config.wheel_threshold
+            self._accumulator / threshold
         )
 
         if steps == 0:
             return None
 
         self._accumulator -= (
-                steps * self._config.wheel_threshold
+                steps * threshold
         )
         if self._config.swap_direction:
             next_index = current_index + steps
@@ -98,3 +110,4 @@ class ScrollOperation(DragOperation):
 
     def reset(self) -> None:
         self._accumulator = 0.0
+        self._wheel_unit = None

@@ -144,3 +144,17 @@ def test_detached_window_uses_same_reading_minimum(sidebar_scene, tmp_path):
     wait_until(lambda: session.windowId not in app.windowManager.sessions)
     assert_reading_area(window)
     assert not warnings, warnings
+
+
+def fit_desktop(window, app, monkeypatch, size):
+    """Exercise the app's real small-desktop policy, then assert the client size."""
+    geometry = app.windowManager._window_geometry['main']
+    desktop = QRect(geometry.client_area())
+    desktop.setWidth(size[0])
+    desktop.setHeight(size[1])
+    monkeypatch.setattr(geometry, 'client_area', lambda: desktop)
+    geometry.fit()
+    window.resize(*size)
+    QTest.qWait(80)
+    assert (window.width(), window.height()) == size
+    assert desktop.contains(window.geometry())

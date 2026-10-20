@@ -2586,6 +2586,19 @@
         "manual.faq.section5.title": "AI segmentation fails or results are missing",
         "manual.faq.section5.body": "**On failure**, read the reason in the organ-selection dialog, then open **Details** for the log. Check the environment, model, device, or memory as indicated, and retry after addressing the cause. Failed or cancelled runs do not import partial results.\n\n**If the run has finished but results are not visible**, return to the target tab and phase used for the run, and finish any active edit so import can proceed. After successful import, the dialog closes. Check organs, visibility, and colors in the segmentation list. Organs not detected are reported separately.",
         "manual.faq.section6.title": "Continue after an unexpected exit",
-        "manual.faq.section6.body": "Reopen the app and check **Workspace** for a recovery copy. If one is available, choose **Restore**. If images are missing, use **Relocate…** to find the original files, folder, or archive.\n\nIf no usable recovery copy is available, open the workspace you last saved. **Changes made after the last save or recovery copy may be lost**, so save important results regularly."
+        "manual.faq.section6.body": "Reopen the app and check **Workspace** for a recovery copy. If one is available, choose **Restore**. If images are missing, use **Relocate…** to find the original files, folder, or archive.\n\nIf no usable recovery copy is available, open the workspace you last saved. **Changes made after the last save or recovery copy may be lost**, so save important results regularly.",
+        "manual.tutorial.play": "Play demo",
+        "manual.tutorial.stop": "Stop and show still image",
+        "manual.important": "Important",
+        "manual.tutorial.zip-import.caption": "Drag an archive in, wait for import, then open the series. Recorded with the Chinese interface; follow the steps above in English. Tool positions may differ from the current version; follow the written steps on this page.",
+        "manual.tutorial.freehand-roi.caption": "Place points for a freehand ROI, finish it, and inspect the statistics. Recorded with the Chinese interface; follow the steps above in English. Tool positions may differ from the current version; follow the written steps on this page.",
+        "manual.tutorial.curve.caption": "Choose Curve, place control points, and finish to read the arc length. Recorded with the Chinese interface; follow the steps above in English. Tool positions may differ from the current version; follow the written steps on this page.",
+        "manual.tutorial.mpr-layout.caption": "Switch layouts to compare the three planes and their 3D positions. Recorded with the Chinese interface; follow the steps above in English. Tool positions may differ from the current version; follow the written steps on this page.",
+        "manual.tutorial.4d-playback.caption": "Play through phases and observe changes at the same position. Recorded with the Chinese interface; follow the steps above in English. Tool positions may differ from the current version; follow the written steps on this page.",
+        "manual.tutorial.volume-presets.caption": "Switch volume presets to compare appearance; presets do not create segments. Recorded with the Chinese interface; follow the steps above in English. Tool positions may differ from the current version; follow the written steps on this page.",
+        "manual.tutorial.refinement.caption": "Refine a region with Paint and Erase, then undo or redo. Recorded with the Chinese interface; follow the steps above in English. Tool positions may differ from the current version; follow the written steps on this page.",
+        "manual.tutorial.ai-workflow.caption": "Synthetic phantom demo: error, retry, and successful import. Inference output is simulated; it does not demonstrate model accuracy or runtime.",
+        "manual.tutorial.language-pack.caption": "After adding a language pack, reload it and select the language.",
+        "workspace.invalidActiveTab": "The active tab index in the workspace is invalid."
     }
 }

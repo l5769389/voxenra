@@ -235,3 +235,24 @@ def test_input_page_readonly_left_and_key_badges(sidebar_scene, tmp_path, theme,
         assert pos.x() >= 0 and pos.x()+badge.width() <= scroll.width()
     assert window.grabWindow().save(str(tmp_path/'basic-shortcuts.png'))
     assert not sidebar_scene[3], sidebar_scene[3]
+
+
+def test_space_starts_and_stops_slice_playback(sidebar_scene, tmp_path):
+    window, app, tab = reading_scene(sidebar_scene)
+    view = tab.activeViewport
+    first_slice = view.sliceIndex
+    QTest.keyClick(window, Qt.Key_Space)
+    assert tab.playing and tab.playbackMode == 'slice'
+    wait_until(lambda: view.sliceIndex != first_slice)
+    play = find(window, 'primaryTool-play')
+    assert play.parentItem().property('iconName') == 'cine-stop'
+    assert window.grabWindow().save(str(tmp_path / 'space-playing.png'))
+    QTest.keyClick(window, Qt.Key_Space)
+    assert not tab.playing and not tab._phase_timer.isActive()
+    wait_until(lambda: not view.render_pending)
+    stopped_slice = view.sliceIndex
+    QTest.qWait(250)
+    assert view.sliceIndex == stopped_slice
+    assert play.parentItem().property('iconName') == 'cine-play'
+    assert window.grabWindow().save(str(tmp_path / 'space-stopped.png'))
+    assert not sidebar_scene[3], sidebar_scene[3]

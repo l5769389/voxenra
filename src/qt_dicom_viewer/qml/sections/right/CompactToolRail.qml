@@ -20,7 +20,7 @@ Flickable {
     readonly property var directTools: ["window", "ct-window", "pet-window", "scroll", "pan", "zoom", "volume-rotate", "mpr-rotate-3d"]
     readonly property var groupedTools: ["rotate", "measure", "annotate", "pseudocolor", "volume-direction"]
     readonly property var panelTools: viewportController?.viewportType === "volume"
-        ? ["volume-preset", "mpr-layout", "viewport-settings"] : ["mpr-layout", "viewport-settings"]
+        ? ["volume-preset", "mpr-layout", "viewport-settings"] : ["mpr-layout", "viewport-settings", "service"]
     contentWidth: width
     contentHeight: entries.height + 8
     clip: true

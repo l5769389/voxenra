@@ -205,3 +205,22 @@ def test_primary_toolbar_spacing_keeps_detail_space(display_panel, width, show_l
     assert detail.height() >= 400
     assert view.grabWindow().save(str(tmp_path / f"compact-toolbar-{width}-{show_labels}.png"))
     assert not warnings, warnings
+
+
+def test_pseudocolor_accessible_names_selection_and_activation(display_panel):
+    from PySide6.QtGui import QAccessible, QAccessibleActionInterface
+    view, controller, warnings = display_panel
+    root = view.rootObject()
+    _click(view, _find(root, 'primaryTool-pseudocolor'))
+    for option in controller.colorMapOptions:
+        button = _find(root, 'colorMap-' + option['colorMap'])
+        interface = QAccessible.queryAccessibleInterface(button)
+        assert interface.text(QAccessible.Name) == option['label']
+        assert bool(interface.state().checked) == (option['colorMap'] == controller.activeColorMap)
+    button = _find(root, 'colorMap-blackbody')
+    interface = QAccessible.queryAccessibleInterface(button)
+    for _ in range(2):
+        interface.actionInterface().doAction(QAccessibleActionInterface.pressAction())
+        assert controller.activeColorMap == 'blackbody'
+        assert interface.state().checked
+    assert not warnings, warnings

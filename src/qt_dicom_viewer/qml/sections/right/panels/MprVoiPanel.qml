@@ -572,7 +572,7 @@ ColumnLayout {
                     Layout.preferredWidth: 96
                     compact: true
                     numberValue: panel.selected.diameter ?? 1
-                    minimum: panel.relativeBrush ? 1 : 0.1
+                    minimum: 0.1
                     maximum: panel.selected.depthMax ?? 1000
                     decimals: 2
                     onEdited: value => panel.controller.setDiameter(value)
@@ -608,7 +608,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     compact: true
                     numberValue: panel.selected.depth ?? 1
-                    minimum: panel.relativeBrush ? 1 : 0.1
+                    minimum: 0.1
                     maximum: panel.selected.depthMax ?? 1000
                     decimals: 2
                     onEdited: value => panel.controller.setDepth(value)

@@ -30,6 +30,9 @@ ColumnLayout {
             id: colorMapButton
             required property var modelData
             objectName: pseudoColorPanel.buttonPrefix + modelData.colorMap
+            Accessible.name: modelData.label
+            Accessible.checkable: true
+            Accessible.checked: checked
             Layout.fillWidth: true
             implicitHeight: 36
             topPadding: 6

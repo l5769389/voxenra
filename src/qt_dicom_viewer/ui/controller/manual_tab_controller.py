@@ -72,12 +72,20 @@ class ManualTabController(UtilityTabController):
     def currentChapter(self):
         chapter = dict(self._chapters[self._chapter])
         from qt_dicom_viewer.i18n import messages
-        if messages._active is not None and messages._active.locale != 'zh-CN':
+        code = 'en' if messages._active is not None and messages._active.locale != 'zh-CN' else 'zh'
+        # Animated examples now live next to their relevant instructions.
+        if chapter.get('example', '').endswith('.gif'):
+            chapter.pop('example')
+        if code == 'en':
             if chapter.get('example'): chapter['example'] = 'en/' + chapter['example']
             if chapter.get('examples'): chapter['examples'] = ['en/' + name for name in chapter['examples']]
         category = next(c for c in self._content["categories"] if c["id"] == chapter["category"])
         return dict(chapter, categoryTitle=category["title"],
-                    sections=[dict(section, bodyHtml=manual_rich_text(section["body"]))
+                    sections=[dict(section, bodyHtml=manual_rich_text(section["body"]),
+                                   tutorials=[dict(id=item['name'], file=item['sources'][code],
+                                                   poster=item['posters'][code],
+                                                   caption=_msg('manual.tutorial.' + item['name'] + '.caption'))
+                                              for item in section.get('tutorials', [])])
                               for section in chapter["sections"]],
                     relatedChapters=[dict(id=key, title=_msg("manual." + key + ".title"))
                                      for key in chapter.get("related", [])

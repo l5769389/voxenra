@@ -15,6 +15,7 @@ def manual_content():
     content = json.loads(root.joinpath("manual.json").read_text(encoding="utf-8"))
     content["chapters"] = [chapter for category in content["categories"]
                            for chapter in json.loads(root.joinpath(category["file"]).read_text(encoding="utf-8"))]
+    tutorials = json.loads(root.joinpath('tutorials.json').read_text(encoding='utf-8'))
     for category in content['categories']:
         category['title'] = _msg('manual.category.' + category['id'])
     for chapter in content['chapters']:
@@ -22,8 +23,11 @@ def manual_content():
         for field in ('title', 'summary', 'caption'):
             if field in chapter: chapter[field] = _msg(prefix + field)
         for index, section in enumerate(chapter['sections']):
+            section_id = section.get('messageId', prefix + f'section{index}')
             for field in ('title', 'body'):
-                section[field] = _msg(section.get('messageId', prefix + f'section{index}') + '.' + field)
+                section[field] = _msg(section_id + '.' + field)
+            section['tutorials'] = [item for item in tutorials
+                                    if item['chapter'] == chapter['id'] and item['section'] == section_id]
         for index, shortcut in enumerate(chapter.get('shortcuts', [])):
             shortcut['label'] = _msg(shortcut.get('messageId', prefix + f'shortcut{index}'))
     return content

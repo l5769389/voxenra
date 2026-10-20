@@ -220,6 +220,7 @@ Rectangle {
                 width: parent.width - 8
                 height: implicitHeight
                 activePanel: compactPanel.visible ? compactPanel.panelTool : ""
+                onManualRequested: chapter => rightPanel.manualRequested(chapter)
                 viewportController: rightPanel.viewportController
                 toolController: rightPanel.toolController
                 tabController: rightPanel.tabController

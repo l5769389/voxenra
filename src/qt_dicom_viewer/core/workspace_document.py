@@ -108,6 +108,9 @@ def validate_document(document):
         raise ValueError(_msg('text.0211'))
     if len(tabs) > MAX_TABS:
         raise ValueError(_msg('workspace.tabLimit', limit=MAX_TABS))
+    active = document.get("activeTab", 0)
+    if type(active) is not int or not 0 <= active < max(1, len(tabs)):
+        raise ValueError(_msg('workspace.invalidActiveTab'))
     known = set()
     count = 0
     for record in series:
