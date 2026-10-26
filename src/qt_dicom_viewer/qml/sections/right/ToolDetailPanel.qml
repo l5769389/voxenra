@@ -304,6 +304,7 @@ Rectangle {
     Component {
         id: serviceComponent
         Panels.ServicePanel {
+            historyController: detailPanel.tabController?.historyController ?? null
             onManualRequested: chapter => detailPanel.manualRequested(chapter)
             toolController: detailPanel.toolController
             viewportController: detailPanel.viewportController

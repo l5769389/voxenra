@@ -12,6 +12,7 @@ Item {
 
     required property var toolController
     property var viewportController: null
+    property var historyController: null
     readonly property string selectedService: servicePanel.toolController
         ? servicePanel.toolController.activeService : ""
 
@@ -82,6 +83,7 @@ Item {
         }
 
         WaterQaResults {
+            historyController: servicePanel.historyController
             onManualRequested: servicePanel.manualRequested("water-qa")
             Layout.fillWidth: true
             Layout.minimumWidth: 0

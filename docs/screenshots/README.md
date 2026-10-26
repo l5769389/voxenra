@@ -67,7 +67,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>VOI 分析</b><br><a href="20-voi.png"><img src="20-voi.png" alt="VOI 分析" width="100%"></a></td>
-<td width="50%"><b>CT 水模 QA</b><br><a href="19-water-qa.png"><img src="19-water-qa.png" alt="CT 水模 QA" width="100%"></a></td>
+<td width="50%"><b>CT 水模 QA</b><br><a href="19-water-qa-2.1.3.png"><img src="19-water-qa-2.1.3.png" alt="CT 水模 QA" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>点源 MTF</b><br><a href="28-mtf-analysis.png"><img src="28-mtf-analysis.png" alt="点源 MTF" width="100%"></a></td>
@@ -92,7 +92,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>本地导入</b><br><a href="15-mixed-import.png"><img src="15-mixed-import.png" alt="本地导入" width="100%"></a></td>
-<td width="50%"><b>工作区全景</b><br><a href="36-workspace-overview.png"><img src="36-workspace-overview.png" alt="工作区全景" width="100%"></a></td>
+<td width="50%"><b>工作区全景</b><br><a href="45-workspace-home-2.1.3.png"><img src="45-workspace-home-2.1.3.png" alt="工作区全景" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>PACS 导入</b><br><a href="23-pacs-import.png"><img src="23-pacs-import.png" alt="PACS 导入" width="100%"></a></td>
@@ -100,7 +100,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>整序列导出完成</b><br><a href="46-export-complete-2.1.1.png"><img src="46-export-complete-2.1.1.png" alt="导出" width="100%"></a></td>
-<td width="50%"><b>工作区保存对话框</b><br><a href="17-workspace.png"><img src="17-workspace.png" alt="工作区保存对话框" width="100%"></a></td>
+<td width="50%"><b>工作区保存对话框</b><br><a href="17-workspace-2.1.3.png"><img src="17-workspace-2.1.3.png" alt="工作区保存对话框" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>独立窗口</b><br><a href="13-detached-tabs.png"><img src="13-detached-tabs.png" alt="独立窗口" width="100%"></a></td>
@@ -129,7 +129,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 - [鼠标与工具快捷键](40-input-settings.png)
 - [隐私设置](41-privacy-settings.png)
-- [导入后工作区入口](45-imported-home-2.1.1.png) · [English](en/45-imported-home-2.1.1.png)
+- [导入后工作区入口](45-workspace-home-2.1.3.png) · [English](en/45-workspace-home-2.1.3.png)
 - [导出完成与再次导出](46-export-complete-2.1.1.png) · [English](en/46-export-complete-2.1.1.png)
 - [自动分割失败与重试](47-ai-error-2.1.1.png) · [English](en/47-ai-error-2.1.1.png)
 - [自动分割成功导入](48-ai-complete-2.1.1.png) · [English](en/48-ai-complete-2.1.1.png)

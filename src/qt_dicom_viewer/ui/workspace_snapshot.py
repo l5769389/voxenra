@@ -13,10 +13,13 @@ def view_key(view):
     return f"{config.series_uid}|{config.viewport_type.value}|{config.role}"
 
 
-def editable_state(tab):
+def editable_state(tab, *, include_qa=True):
     result = {"views": {}}
     for view in tab.viewports_by_id.values():
         state = {}
+        qa = getattr(view, "_qa_controller", None)
+        if include_qa and qa is not None and qa.history_state():
+            state["qa"] = qa.history_state()
         measure = getattr(view, "_measure_controller", None)
         if measure is not None:
             state.update(measure.persistent_state())
@@ -43,6 +46,11 @@ def edit_signature(state):
     from qt_dicom_viewer.core.workspace_state import fingerprint
     state = dict(state, views={k: dict(v) for k, v in state["views"].items()})
     for view in state["views"].values():
+        if "qa" in view:
+            qa = view["qa"]
+            view["qa"] = dict(qa, records={key: None if record is None else
+                {k: v for k, v in record.items() if k != "timestamp"}
+                for key, record in qa.get("records", {}).items()})
         if "measurements" in view:
             view["measurements"] = {k: replace(m, metrics=type(m.metrics)())
                                     if isinstance(m, RoiMeasurement) else m
@@ -54,9 +62,12 @@ def edit_signature(state):
     return fingerprint(state)
 
 
-def apply_edits(tab, state):
+def apply_edits(tab, state, *, restore_qa=True):
     for view in tab.viewports_by_id.values():
         record = state.get("views", {}).get(view_key(view), {})
+        qa = getattr(view, "_qa_controller", None)
+        if restore_qa and qa is not None:
+            qa.restore_history_state(record.get("qa", {}))
         measure = getattr(view, "_measure_controller", None)
         if measure is not None:
             measure.restore_state(record)
@@ -123,7 +134,7 @@ def tab_snapshot(tab):
     focused = tab.viewports_by_id.get(tab.focusedViewportId)
     if focused is None and tab.mprLayout is not None and tab.focusedViewportId == tab.mprLayout.volumeViewport.viewportId:
         focused = tab.mprLayout.volumeViewport
-    record.update(edits=editable_state(tab), views={}, activeView=view_key(tab.activeViewport) if tab.activeViewport is not None else "",
+    record.update(edits=editable_state(tab, include_qa=False), views={}, activeView=view_key(tab.activeViewport) if tab.activeViewport is not None else "",
                   focusedView=view_key(focused) if focused is not None else "",
                   mpr=tab._target_mpr_state, projection=tab.toolController.mpr_projection_settings,
                   linkedWindow=tab._linked_mpr_window, phase=tab._current_phase_index,
@@ -199,7 +210,7 @@ def apply_tab_snapshot(tab, record):
         for view in tab.viewports_by_id.values():
             if view_key(view) == record.get("activeView"):
                 tab.activateViewport(view.viewportId)
-        apply_edits(tab, record["edits"])
+        apply_edits(tab, record["edits"], restore_qa=False)
         tab.toolController.restore_selection(record.get("toolSelection"), record.get("tool"))
         return
     from qt_dicom_viewer.ui.controller.viewport.image_2d.montage_viewport_controller import MontageViewportController
@@ -276,7 +287,7 @@ def apply_tab_snapshot(tab, record):
             tab.focusSingleViewport(view.viewportId)
     # Restore geometry before submitting new renders; frame-bound metrics will
     # refresh only after their matching plane has been accepted.
-    apply_edits(tab, record["edits"])
+    apply_edits(tab, record["edits"], restore_qa=False)
     if record.get("linkedWindow") is not None:
         tab._set_mpr_window(record["linkedWindow"], render=False)
     if hasattr(tab, "pet_display"):

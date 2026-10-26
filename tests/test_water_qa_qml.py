@@ -204,7 +204,7 @@ def test_overlay_tracks_physical_transform_and_parameter_reset(qa_workspace, qt_
 
 
 @pytest.mark.parametrize("qa_workspace", [(1200, 980), (760, 560)], indirect=True)
-def test_qa_row_actions_copy_and_only_delete_additional_rois(qa_workspace, qt_app, tmp_path):
+def test_qa_row_actions_copy_and_delete_all_rois(qa_workspace, qt_app, tmp_path):
     window, view, warnings = qa_workspace
     _click(window, _find(window, 'primaryTool-service'))
     _click(window, _find(window, 'serviceEntry-qa'))
@@ -212,7 +212,7 @@ def test_qa_row_actions_copy_and_only_delete_additional_rois(qa_workspace, qt_ap
     QTest.qWait(40)
     for key in ('center','left','right','top','bottom'):
         assert _find(window, 'waterQaCopy-'+key).isEnabled()
-        assert not _find(window, 'waterQaDelete-'+key).isEnabled()
+        assert _find(window, 'waterQaDelete-'+key).isEnabled()
     baseline = view.qaController.currentResult
     flick = _find(window, 'toolDetailFlickable')
     target = _find(window, 'waterQaCopy-center')
@@ -242,6 +242,52 @@ def test_qa_row_actions_copy_and_only_delete_additional_rois(qa_workspace, qt_ap
     assert len(view.qaController.roiItems) == 6
     _click(window, _find(window, 'waterQaDelete-extra-2'))
     assert view.qaController.currentResult == baseline
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize("qa_workspace", [(1200, 820), (760, 560)], indirect=True)
+def test_fallback_without_warning_drag_delete_and_regenerate_in_qml(qa_workspace, qt_app, tmp_path):
+    from test_water_qa_controller import deliver_frame
+    window, view, warnings = qa_workspace
+    deliver_frame(view, water_render(view, pixels=np.zeros((320, 400), dtype=np.float32)))
+    _click(window, _find(window, 'primaryTool-service'))
+    _click(window, _find(window, 'serviceEntry-qa'))
+    qa = view.qaController
+    wait_qa(qt_app, qa)
+    QTest.qWait(40)
+    assert _find(window, 'waterQaModeTitle').property('text') == '圆形 ROI'
+    for name in ('waterQaNotice', 'waterQaError', 'waterQaMetrics', 'waterQaPhantomSize'):
+        assert not any(i.objectName() == name and i.isVisible()
+                       for i in _visual_children(window.rootObject()))
+    assert not _find(window, 'waterQaSetting-edgeClearanceMm').isEnabled()
+    pixels = _find(window, 'dicomPixelLayer')
+    roi = qa.currentResult['rois'][0]
+    _mouse_drag(window, _scene(pixels, roi['column'], roi['row']),
+                _scene(pixels, roi['column']+12, roi['row']+8))
+    assert qa.currentResult['rois'][0]['column'] == pytest.approx(roi['column']+12, abs=1)
+    flick = _find(window, 'toolDetailFlickable')
+    target = _find(window, 'waterQaDelete-center')
+    y = target.mapToItem(flick, QPointF()).y()
+    flick.setProperty('contentY', max(0, flick.property('contentY')+y-target.height()))
+    QTest.qWait(40)
+    _click(window, target)
+    assert len(qa.roiItems) == 4
+    assert all(r['key'] != 'center' for r in qa.currentResult['rois'])
+    assert not any(i.objectName() == 'waterQaVoi-center' and i.isVisible()
+                   for i in _visual_children(window.rootObject()))
+    assert window.grabWindow().save(str(tmp_path/f'qa-fallback-delete-{window.width()}.png'))
+    flick.setProperty('contentY', 0)
+    QTest.qWait(40)
+    _click(window, _find(window, 'waterQa-analyze'))
+    wait_qa(qt_app, qa)
+    QTest.qWait(40)
+    assert len(qa.roiItems) == 5
+    assert _find(window, 'waterQaVoi-center').isVisible()
+    assert window.grabWindow().save(str(tmp_path/f'qa-fallback-{window.width()}.png'))
+    assert not any(i.objectName() == 'qaInfoButton'
+                   for i in _visual_children(window.rootObject()))
+    assert not any(i.objectName() == 'mtfInfoExplanation' and i.isVisible()
+                   for i in _visual_children(window.contentItem()))
     assert not warnings, warnings
 
 

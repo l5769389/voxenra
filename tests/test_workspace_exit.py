@@ -234,13 +234,13 @@ def test_exit_confirmation_theme_and_document_specific_actions(exit_app, tmp_pat
             assert box.checkBox().text()
             assert box.grab().save(str(tmp_path / f'exit-{named}-{theme}-{locale}.png'))
             if locale == 'zh-CN':
-                assert box.button(QMessageBox.Save).text() == ('更新' if named else '保存工作区…')
-                assert box.button(QMessageBox.Discard).text() == ('不更新' if named else '不保存')
+                assert box.button(QMessageBox.Save).text() == ('保存更改' if named else '保存工作区…')
+                assert box.button(QMessageBox.Discard).text() == ('不保存' if named else '不保存')
                 assert box.button(QMessageBox.Cancel).text() == '取消'
                 if named:
-                    assert box.text() == '是否更新工作区？'
+                    assert box.text() == '是否保存对当前工作区的修改？'
             else:
-                assert box.button(QMessageBox.Save).text() == ('Update' if named else 'Save workspace…')
+                assert box.button(QMessageBox.Save).text() == ('Save changes' if named else 'Save workspace…')
             assert '复查 <1>' not in box.text()
             if named:
                 assert not box.informativeText()

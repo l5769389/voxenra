@@ -110,6 +110,21 @@ ApplicationWindow {
     }
     Shortcut {
         context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("reopenClosedTab") ?? ""
+        enabled: window.standardShortcutsAllowed && !window.editingText
+            && (window.documentController?.canReopenClosed ?? false)
+        onActivated: window.documentController.reopenLastClosed()
+    }
+    Shortcut {
+        objectName: "newWorkspaceShortcut"
+        context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("newWorkspace") ?? ""
+        enabled: window.standardShortcutsAllowed && !window.editingText
+            && (window.documentController?.canCreateNew ?? false)
+        onActivated: window.documentController.newWorkspace()
+    }
+    Shortcut {
+        context: Qt.WindowShortcut
         sequence: window.shortcuts?.fixedSequence("save") ?? ""
         enabled: window.standardShortcutsAllowed && !!window.documentController && !window.documentController.busy
         onActivated: window.documentController.save()
@@ -188,6 +203,7 @@ ApplicationWindow {
     Connections {
         target: window.documentController
         property bool needsAttention: false
+        function onNewWorkspaceCreated() { workspaceDocumentDialog.close() }
         function onRestored() {
             if (!window.documentController.isError) workspaceDocumentDialog.close()
             if (window.detached) return

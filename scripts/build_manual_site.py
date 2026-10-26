@@ -31,9 +31,9 @@ PRODUCT_SCREENSHOTS = {
     "feature-pacs.png": "16-pacs-browser.png",
     "feature-zip-drop.png": "35-zip-drop.png",
     "feature-zip-drag.gif": "06-zip-drag.gif",
-    "feature-workspace-overview.png": "36-workspace-overview.png",
+    "feature-workspace-overview.png": "45-workspace-home-2.1.3.png",
     "feature-4d.gif": "03-4d-playback.gif",
-    "feature-water-qa.png": "19-water-qa.png",
+    "feature-water-qa.png": "19-water-qa-2.1.3.png",
     "feature-mtf.png": "28-mtf-analysis.png",
 }
 LANGUAGES = {

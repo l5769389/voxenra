@@ -178,3 +178,28 @@ def test_nonfinite_pixels_and_under_sampled_rois_are_rejected():
         analyze_water_phantom(pixels, (1, 1))
     with pytest.raises(ValueError, match="16 个像素"):
         analyze_water_phantom(water_image(), (1, 1), WaterQaSettings(2, 20))
+
+
+def test_fallback_uses_original_samples_with_physical_circles_and_no_water_metrics():
+    from qt_dicom_viewer.core.water_qa import create_fallback_rois
+    y, x = np.indices((280, 400))
+    pixels = (x*.8+y*.2).astype(np.float32)
+    spacing = (.8, .6)
+    result = create_fallback_rois(pixels, spacing)
+    assert result.phantom is None and result.uniformity_hu is None
+    for roi in result.rois:
+        mask = ((x-roi.column)*spacing[1])**2+((y-roi.row)*spacing[0])**2 <= roi.radius_mm**2
+        assert roi.pixel_count == mask.sum()
+        assert roi.mean_hu == pytest.approx(pixels[mask].astype(float).mean())
+        assert roi.std_hu == pytest.approx(pixels[mask].astype(float).std())
+        assert roi.delta_center_hu == pytest.approx(roi.mean_hu-result.rois[0].mean_hu)
+
+
+def test_fallback_rejects_invalid_or_too_small_inputs():
+    from qt_dicom_viewer.core.water_qa import create_fallback_rois
+    with pytest.raises(ValueError, match="直径"):
+        create_fallback_rois(np.zeros((40, 40)), (1, 1))
+    with pytest.raises(ValueError, match="16 个像素"):
+        create_fallback_rois(np.zeros((320, 400)), (1, 1), WaterQaSettings(2, 20))
+    with pytest.raises(ValueError, match="非有限"):
+        create_fallback_rois(np.full((320, 400), np.nan), (1, 1))

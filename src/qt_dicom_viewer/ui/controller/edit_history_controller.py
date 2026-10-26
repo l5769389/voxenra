@@ -35,7 +35,8 @@ class EditHistoryController(QObject):
 
     def watch_view(self, view):
         for name, signal in (("_measure_controller", "measurementsChanged"),
-                             ("_text_annotation_controller", "annotationsChanged")):
+                             ("_text_annotation_controller", "annotationsChanged"),
+                             ("_qa_controller", "historyChanged")):
             owner = getattr(view, name, None)
             if owner is not None:
                 getattr(owner, signal).connect(self.schedule)

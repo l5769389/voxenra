@@ -11,7 +11,8 @@ import math
 import numpy as np
 from PySide6.QtCore import QObject, Property, QRunnable, QThreadPool, Qt, Signal, Slot
 
-from qt_dicom_viewer.core.water_qa import analyze_water_phantom, measure_water_phantom
+from qt_dicom_viewer.core.water_qa import (analyze_water_phantom, measure_qa_rois,
+    create_fallback_rois, WaterPhantomDetectionError, BASELINE_KEYS)
 from qt_dicom_viewer.model.water_qa import WaterQaSettings
 
 
@@ -29,10 +30,15 @@ class _QaTask(QRunnable):
 
     def run(self):
         try:
-            result = (measure_water_phantom(self.pixels, self.spacing, self.previous.phantom,
-                self.settings, centers=[(r.column, r.row) for r in self.previous.rois[:5]],
-                extra_rois=self.previous.rois[5:]) if self.previous is not None and self.previous.settings == self.settings else
-                analyze_water_phantom(self.pixels, self.spacing, self.settings))
+            if self.previous is not None and self.previous.settings == self.settings:
+                result = measure_qa_rois(self.pixels, self.spacing, self.previous.phantom,
+                    self.settings, self.previous.rois, detection_issue=self.previous.detection_issue)
+            else:
+                try:
+                    result = analyze_water_phantom(self.pixels, self.spacing, self.settings)
+                except WaterPhantomDetectionError as exc:
+                    result = create_fallback_rois(self.pixels, self.spacing, self.settings,
+                                                  detection_issue=exc.message_key)
         except Exception as exc:
             self.signals.completed.emit(self.token, self.key, None, error_message(exc) or _msg('text.0591'))
         else:
@@ -41,9 +47,11 @@ class _QaTask(QRunnable):
 
 class WaterQaController(QObject):
     recordsChanged = Signal()
+    historyChanged = Signal()
     _i18n_provenance = Signal()
     _i18n_currentResult = Signal()
     _i18n_error = Signal()
+    _i18n_notice = Signal()
     _i18n_roiItems = Signal()
     _i18n_statusText = Signal()
     stateChanged = Signal()
@@ -60,6 +68,12 @@ class WaterQaController(QObject):
         self._pending = None
         self._cache = OrderedDict()
         self._records = {}
+        self._history_baseline = {}
+        self._history_overrides = {}
+        self._history_settings = None
+        self._history_enabled = None
+        self._edit_request_token = None
+        self._fresh_request_token = None
         self._restored = False
         self._token = 0
         self._closed = False
@@ -70,14 +84,50 @@ class WaterQaController(QObject):
         self._hover_key = ""
         self._selected_key = ""
 
-    def _remember_result(self):
+    def _remember_result(self, *, user_edit=False):
         if self._result is None or self._key is None:
             return
         from datetime import datetime, timezone
         from qt_dicom_viewer import __version__
         self._records[repr(self._key)] = dict(key=self._key, result=self._result,
-            timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"), algorithm="1", app=__version__)
+            timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"), algorithm="2", app=__version__)
+        key = repr(self._key)
+        if user_edit:
+            self._history_overrides[key] = self._records[key]
+            self._history_settings, self._history_enabled = self._settings, self._enabled
+            self.historyChanged.emit()
+        else:
+            self._history_baseline.setdefault(key, self._records[key])
         self.recordsChanged.emit()
+
+    def history_state(self):
+        # Automatically discovered slices are cache data, not user undo steps.
+        if not self._history_overrides and self._history_settings is None:
+            return {}
+        return dict(records=dict(self._history_overrides), settings=self._history_settings,
+                    enabled=self._history_enabled)
+
+    def restore_history_state(self, state):
+        if state == self.history_state() and self._edit_request_token is None:
+            return
+        self._invalidate()
+        self._cache.clear()
+        self._history_overrides = dict(state.get("records", {}))
+        self._history_settings = state.get("settings")
+        self._history_enabled = state.get("enabled")
+        self._records = dict(self._history_baseline)
+        for key, record in self._history_overrides.items():
+            if record is None:
+                self._records.pop(key, None)
+            else:
+                self._records[key] = record
+        self._enabled = (bool(self._records) if self._history_enabled is None else self._history_enabled)
+        self._settings = self._history_settings or WaterQaSettings()
+        self._restored = bool(self._records) or self._enabled
+        self._restore_current_record()
+        self.settingsChanged.emit()
+        self.recordsChanged.emit()
+        self.stateChanged.emit()
 
     @_TextProperty(str, notify=_i18n_provenance, notify_name="_i18n_provenance", source_notify="stateChanged")
     def provenance(self):
@@ -98,6 +148,9 @@ class WaterQaController(QObject):
         self._enabled = state.get("enabled", False)
         self._settings = state.get("settings", WaterQaSettings())
         self._records = {repr(r["key"]): r for r in state.get("records", [])}
+        self._history_baseline = dict(self._records)
+        self._history_overrides = {}
+        self._history_settings = self._history_enabled = None
         self._restore_current_record()
         self.settingsChanged.emit()
         self.stateChanged.emit()
@@ -159,6 +212,16 @@ class WaterQaController(QObject):
     def error(self):
         return self._error
 
+    @_TextProperty(str, notify=_i18n_notice, notify_name='_i18n_notice', source_notify='stateChanged')
+    def notice(self):
+        if self._result is None or self._status != "ready":
+            return ""
+        if self._result.phantom is None:
+            return _msg('qa.fallbackNotice', reason=_msg(self._result.detection_issue or 'text.0080'))
+        if not set(BASELINE_KEYS).issubset(r.key for r in self._result.rois):
+            return _msg('qa.incompleteNotice')
+        return ""
+
     @Property(float, notify=settingsChanged)
     def roiDiameterMm(self):
         return self._settings.roi_diameter_mm
@@ -172,7 +235,7 @@ class WaterQaController(QObject):
         if self._result is None or self._status != "ready":
             return {}
         result = asdict(self._result)
-        result["rois"] = [dict(asdict(roi), removable=roi.key.startswith("extra-")) for roi in self._result.rois]
+        result["rois"] = [dict(asdict(roi), removable=True) for roi in self._result.rois]
         return result
 
     @_TextProperty('QVariantList', notify=_i18n_roiItems, notify_name='_i18n_roiItems', source_notify='stateChanged')
@@ -180,16 +243,15 @@ class WaterQaController(QObject):
         if self._result is None or self._frame is None or self._status != "ready":
             return []
         row_spacing, column_spacing = self._frame.instance_meta.pixel_spacing
-        colors = ("#f6bf66", "#41cce5", "#41cce5", "#8de1b1", "#8de1b1")
-        colors += ("#c4a7ff",) * max(0, len(self._result.rois)-5)
+        colors = dict(zip(BASELINE_KEYS, ("#f6bf66", "#41cce5", "#41cce5", "#8de1b1", "#8de1b1")))
         centers = self._draft_centers or [(r.column, r.row) for r in self._result.rois]
         return [dict(key=r.key, label=r.label, column=center[0], row=center[1],
                      radiusColumn=r.radius_mm/column_spacing, radiusRow=r.radius_mm/row_spacing,
-                     meanHu=r.mean_hu, stdHu=r.std_hu, color=color,
+                     meanHu=r.mean_hu, stdHu=r.std_hu, color=colors.get(r.key, "#c4a7ff"),
                      editing=self._drag is not None and self._drag[0] == index,
                      hovered=r.key == self._hover_key, selected=r.key == self._selected_key,
-                     removable=r.key.startswith("extra-"))
-                for index, (r, color, center) in enumerate(zip(self._result.rois, colors, centers))]
+                     removable=True)
+                for index, (r, center) in enumerate(zip(self._result.rois, centers))]
 
     def _hit_roi(self, column, row):
         if (not self._enabled or self._status != "ready" or self._result is None
@@ -234,6 +296,14 @@ class WaterQaController(QObject):
         index, start_column, start_row = self._drag
         roi, phantom = self._result.rois[index], self._result.phantom
         sy, sx = self._frame.instance_meta.pixel_spacing
+        if phantom is None:
+            rows, columns = self._pixels.shape
+            center = (min(columns-1-roi.radius_mm/sx, max(roi.radius_mm/sx, roi.column+column-start_column)),
+                      min(rows-1-roi.radius_mm/sy, max(roi.radius_mm/sy, roi.row+row-start_row)))
+            if center != self._draft_centers[index]:
+                self._draft_centers[index] = center
+                self.stateChanged.emit()
+            return
         dx = (roi.column+column-start_column-phantom.column)*sx
         dy = (roi.row+row-start_row-phantom.row)*sy
         distance = math.hypot(dx, dy)
@@ -251,18 +321,24 @@ class WaterQaController(QObject):
         self.update_drag(column, row)
         centers = self._draft_centers
         self._drag = self._draft_centers = None
+        if centers == [(r.column, r.row) for r in self._result.rois]:
+            self.stateChanged.emit()
+            return
         try:
-            result = measure_water_phantom(self._pixels, self._frame.instance_meta.pixel_spacing,
-                                          self._result.phantom, self._settings, centers=centers[:5],
-                                          extra_rois=tuple(replace(r, column=p[0], row=p[1])
-                                              for r, p in zip(self._result.rois[5:], centers[5:])))
+            result = self._remeasure(tuple(replace(r, column=p[0], row=p[1])
+                                          for r, p in zip(self._result.rois, centers)))
         except ValueError as exc:
             self._error = error_message(exc)  # Keep the last complete, valid measurement.
         else:
             self._result, self._error = result, ""
             self._cache[self._cache_key()] = (result, "")
-            self._remember_result()
+            self._remember_result(user_edit=True)
         self.stateChanged.emit()
+
+    def _remeasure(self, rois):
+        return measure_qa_rois(self._pixels, self._frame.instance_meta.pixel_spacing,
+                              self._result.phantom, self._settings, rois,
+                              detection_issue=self._result.detection_issue)
 
     @Slot(str, result=bool)
     def copyRoi(self, key):
@@ -282,7 +358,11 @@ class WaterQaController(QObject):
             step = source.radius_mm * 2.2
             x = source.column + step*math.cos(math.radians(angle))/sx
             y = source.row + step*math.sin(math.radians(angle))/sy
-            if (math.hypot((x-phantom.column)*sx, (y-phantom.row)*sy) + source.radius_mm <= phantom.radius_mm
+            inside = (math.hypot((x-phantom.column)*sx, (y-phantom.row)*sy) + source.radius_mm <= phantom.radius_mm
+                      if phantom is not None else
+                      source.radius_mm/sx <= x <= self._pixels.shape[1]-1-source.radius_mm/sx
+                      and source.radius_mm/sy <= y <= self._pixels.shape[0]-1-source.radius_mm/sy)
+            if (inside
                     and all(math.hypot((x-r.column)*sx, (y-r.row)*sy) >= source.radius_mm+r.radius_mm
                             for r in self._result.rois)):
                 center = (x, y)
@@ -290,28 +370,26 @@ class WaterQaController(QObject):
         copy = replace(source, key=f"extra-{number}", label=f"ROI {number+5}",
                        column=center[0], row=center[1])
         try:
-            result = measure_water_phantom(self._pixels, self._frame.instance_meta.pixel_spacing,
-                phantom, self._settings, centers=[(r.column,r.row) for r in self._result.rois[:5]],
-                extra_rois=self._result.rois[5:] + (copy,))
+            result = self._remeasure(self._result.rois + (copy,))
         except ValueError as exc:
             self._error = error_message(exc)
             self.stateChanged.emit()
             return False
         self._result, self._selected_key, self._error = result, copy.key, ""
         self._cache[self._cache_key()] = (result, "")
-        self._remember_result()
+        self._remember_result(user_edit=True)
         self.stateChanged.emit()
         return True
 
     @Slot(str, result=bool)
     def deleteRoi(self, key):
         if (self._closed or self._status != "ready" or self.dragging
-                or not key.startswith("extra-") or not any(r.key == key for r in self._result.rois)):
+                or not any(r.key == key for r in self._result.rois)):
             return False
-        self._result = replace(self._result, rois=tuple(r for r in self._result.rois if r.key != key))
+        self._result = self._remeasure(tuple(r for r in self._result.rois if r.key != key))
         self._selected_key = self._hover_key = self._error = ""
         self._cache[self._cache_key()] = (self._result, "")
-        self._remember_result()
+        self._remember_result(user_edit=True)
         self.stateChanged.emit()
         return True
 
@@ -354,6 +432,8 @@ class WaterQaController(QObject):
 
     def _invalidate(self):
         self._token += 1
+        self._edit_request_token = None
+        self._fresh_request_token = None
         self._pending = None
         self._drag = self._draft_centers = None
         self._hover_key = ""
@@ -375,6 +455,17 @@ class WaterQaController(QObject):
         self._enabled = True
         self._cache.pop(self._cache_key(), None)
         self._invalidate()
+        self._analyze()
+
+    @Slot()
+    def regenerateRois(self):
+        """Explicitly replace this slice's edits with a fresh five-circle layout."""
+        if self._closed or not self.available or self._frame is None:
+            return
+        self._enabled = True
+        self._cache.pop(self._cache_key(), None)
+        self._invalidate()
+        self._edit_request_token = self._fresh_request_token = self._token
         self._analyze()
 
     def _cache_key(self):
@@ -406,6 +497,7 @@ class WaterQaController(QObject):
             self._pending = (token, key, pixels, spacing, settings)
             return
         task = _QaTask(token, key, pixels, spacing, settings,
+                       None if token == self._fresh_request_token else
                        self._records.get(repr(key[0]), {}).get("result"))
         self._tasks[token] = task
         task.signals.completed.connect(self._receive_result, Qt.QueuedConnection)
@@ -423,7 +515,9 @@ class WaterQaController(QObject):
         self._status = "error" if error else "ready"
         self._cache[key] = (result, error)
         if result is not None and not error:
-            self._remember_result()
+            self._remember_result(user_edit=self._edit_request_token == token)
+        self._edit_request_token = None
+        self._fresh_request_token = None
         while len(self._cache) > 16:
             self._cache.popitem(last=False)
         self.stateChanged.emit()
@@ -449,6 +543,7 @@ class WaterQaController(QObject):
         self._invalidate()
         if self._enabled:
             self._analyze()
+            self._edit_request_token = self._token
         else:
             self.stateChanged.emit()
 
@@ -456,11 +551,15 @@ class WaterQaController(QObject):
     def reset(self):
         self._restored = False
         self._enabled = False
+        self._history_overrides.update({key: None for key in self._records})
         self._records.clear()
         self.recordsChanged.emit()
         self._cache.clear()
         self._invalidate()
         self._settings = WaterQaSettings()
+        self._history_settings, self._history_enabled = self._settings, False
+        if not self._closed:
+            self.historyChanged.emit()
         self.settingsChanged.emit()
         self.stateChanged.emit()
 

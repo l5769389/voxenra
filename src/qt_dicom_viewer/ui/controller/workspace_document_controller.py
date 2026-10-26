@@ -15,7 +15,7 @@ from qt_dicom_viewer import __version__
 from qt_dicom_viewer.core.local_import import LocalImportStore, ImportCancelled
 from qt_dicom_viewer.core.workspace_document import (
     FORMAT, VERSION, source_manifest, read_document, validate_document, load_referenced_series)
-from qt_dicom_viewer.core.workspace_state import atomic_write, dumps
+from qt_dicom_viewer.core.workspace_state import atomic_write, dumps, loads
 from qt_dicom_viewer.model import TabType
 from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot, apply_fusion_source
 from qt_dicom_viewer.ui.file_location import reveal_path
@@ -31,6 +31,7 @@ class WorkspaceDocumentController(QObject):
     completed = Signal(object)
     progress = Signal(object)
     restored = Signal()
+    newWorkspaceCreated = Signal()
     recentWorkspacesChanged = Signal()
 
     def __init__(self, app, *, settings_path=None):
@@ -41,6 +42,7 @@ class WorkspaceDocumentController(QObject):
         self._recovery_dirty = False
         self._pending = None
         self._load_queue = []
+        self._reopening_key = None
         self._loading_tab = None
         self._cancel = Event()
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="workspace-files")
@@ -51,6 +53,7 @@ class WorkspaceDocumentController(QObject):
         self._remember_exit_after_save = False
         self._close_prompt_active = False
         self._open_after_save = None
+        self._new_after_save = False
         self._quit_approved = False
         if QCoreApplication.instance() is not None:
             QCoreApplication.instance().installEventFilter(self)
@@ -70,6 +73,8 @@ class WorkspaceDocumentController(QObject):
         self.progress.connect(self._set_message)
         self.workspace.tabsChanged.connect(self._tabs_changed)
         self.workspace.activeTabChanged.connect(self.mark_dirty)
+        self.panel.scanningChanged.connect(self.changed)
+        self.app.pacsController.stateChanged.connect(self.changed)
         self.panel.seriesItemsChanged.connect(self.mark_dirty)
         self.panel.selectionChanged.connect(self.mark_dirty)
         self.panel.patientSearchChanged.connect(self.mark_dirty)
@@ -94,7 +99,7 @@ class WorkspaceDocumentController(QObject):
     def hasContent(self):
         # Layout initialization and utility tabs can mark the workspace dirty
         # without any image work to save. The registry includes detached tabs.
-        return bool(self.panel._scan_series_record) or any(
+        return bool(self.panel._scan_series_record or self.workspace._closed_tab_snapshots) or any(
             tab.tab_config.series_metas for tab in self.workspace._tab_dict.values())
 
     @Property(str, notify=changed)
@@ -300,7 +305,10 @@ class WorkspaceDocumentController(QObject):
     def _capture(self, path):
         tabs = self.app.windowManager.ordered_tabs()
         sidebar = list(self.panel._scan_series_record)
+        retained = [dict(loads(value), closedId=key)
+                    for key, value in self.workspace._closed_tab_snapshots.items()]
         ids = set(sidebar)
+        ids.update(uid for record in retained for uid in record["series"])
         ids.update(m.series_uid for tab in tabs for m in tab.tab_config.series_metas)
         records = [self.app._series_catalog.get_series(uid) for uid in sorted(ids)]
         records = [record for record in records if record is not None]
@@ -308,7 +316,7 @@ class WorkspaceDocumentController(QObject):
             raise ValueError(_msg('text.0410'))
         document = {"format": FORMAT, "version": VERSION, "applicationVersion": __version__,
                     "savedAt": datetime.now(timezone.utc).isoformat(),
-                    "tabs": [tab_snapshot(tab) for tab in tabs],
+                    "tabs": [tab_snapshot(tab) for tab in tabs] + retained,
                     "activeTab": next((i for i, tab in enumerate(tabs) if tab is self.workspace.activeTab), 0),
                     "sidebar": sidebar, "selected": list(self.panel._selected_series_uids),
                     "activeSeries": self.panel._active_series_uid,
@@ -386,6 +394,86 @@ class WorkspaceDocumentController(QObject):
             path += ".voxworkspace"
         return self.save_to(path)
 
+    @Property(bool, notify=changed)
+    def canCreateNew(self):
+        return not (self._closed or self._busy or self._close_prompt_active
+                    or self.panel.scanning or self.app.pacsController.busy)
+
+    def _ask_new_workspace(self):
+        from qt_dicom_viewer.ui.dialogs.workspace_exit_dialog import WorkspaceExitDialog
+        dialog = WorkspaceExitDialog(self.app.appearanceController, new_workspace=True)
+        try:
+            return dialog.exec()
+        finally:
+            dialog.deleteLater()
+
+    @Slot(result=bool)
+    def newWorkspace(self):
+        if not self.canCreateNew:
+            return False
+        if self._dirty and self.hasContent:
+            self._close_prompt_active = True
+            self.changed.emit()
+            try:
+                answer = self._ask_new_workspace()
+            finally:
+                self._close_prompt_active = False
+                self.changed.emit()
+            if answer == QMessageBox.Save:
+                self._new_after_save = True
+                if not self.save():
+                    self._new_after_save = False
+                return False
+            if answer != QMessageBox.Discard:
+                return False
+        return self._start_new_workspace()
+
+    def _start_new_workspace(self):
+        # Recheck after a modal prompt or asynchronous save: imports may have started.
+        if not self.canCreateNew:
+            return False
+        if self._owns_recovery:
+            try:
+                self._recovery_path.unlink(missing_ok=True)
+            except OSError as error:
+                self._message, self._error = error_message(error), True
+                self.changed.emit()
+                return False
+        self._busy = self._restoring = True
+        try:
+            self._restore_timer.stop()
+            if self._pending is not None:
+                self._pending["store"].cleanup()
+            self._pending = None
+            self._load_queue.clear()
+            self._loading_tab = None
+            self._extra_paths.clear()
+            self._cancel.clear()
+            for tab_id in list(self.workspace._tab_dict):
+                self.workspace._close_tab(tab_id)
+            self.app.windowManager.restore_to_main()
+            self._wired.clear()
+            self.workspace._closed_tab_snapshots.clear()
+            self.app._series_catalog.replace(None)
+            self.panel.reset_workspace_session()
+            old_store = self.panel._import_store
+            self.panel._import_store = LocalImportStore()
+            # Cancelled render jobs may still reference extracted source files.
+            self._retired_stores = getattr(self, "_retired_stores", []) + [old_store]
+            self._path = ""
+            self._message, self._error = _msg('workspace.new.ready'), False
+            self._dirty = self._recovery_dirty = False
+            self._owns_recovery = False
+            self._last_recovery_at = self._recovery_error = ""
+            self._new_after_save = self._close_after_save = False
+            self._remember_exit_after_save = self._quit_approved = False
+            self._open_after_save = None
+        finally:
+            self._busy = self._restoring = False
+            self.changed.emit()
+        self.newWorkspaceCreated.emit()
+        return True
+
     def _confirm_replace(self, path):
         if not self._dirty or not self.hasContent:
             return True
@@ -456,6 +544,7 @@ class WorkspaceDocumentController(QObject):
             self._close_after_save = False
             self._remember_exit_after_save = False
             self._open_after_save = None
+            self._new_after_save = False
         elif payload["kind"] == "save":
             self._busy = False
             if not payload["recovery"]:
@@ -466,7 +555,11 @@ class WorkspaceDocumentController(QObject):
                     self._close_after_save = False
                     self._remember_exit_after_save = False
                     self._open_after_save = None
+                    self._new_after_save = False
                     self._message = _msg('text.0423')
+                if self._new_after_save and not self._dirty:
+                    self._new_after_save = False
+                    self._start_new_workspace()
                 if self._close_after_save and not self._dirty:
                     remember = self._remember_exit_after_save
                     self._close_after_save = self._remember_exit_after_save = False
@@ -564,12 +657,54 @@ class WorkspaceDocumentController(QObject):
         self.panel._thumbnail_timer.start()
         for key, value in doc.get("layout", {}).items():
             self.app.settingsController.setValue("layout", key, value)
+        self.workspace._closed_tab_snapshots = {
+            tab["closedId"]: dumps({k: v for k, v in tab.items() if k != "closedId"})
+            for tab in doc["tabs"] if "closedId" in tab
+            and all(uid in available for uid in tab["series"])}
         self._load_queue = [(index, tab) for index, tab in enumerate(doc["tabs"])
-                            if all(uid in available for uid in tab["series"])]
+                            if "closedId" not in tab and all(uid in available for uid in tab["series"])]
         self._load_queue.sort(key=lambda item: 0 if "fusionSource" in item[1] else 1)
         self._restored_ids = {}
         self._loading_tab = None
         self._restore_timer.start()
+
+    @Property(int, notify=changed)
+    def closedTabCount(self):
+        return len(self.workspace._closed_tab_snapshots)
+
+    @Property(bool, notify=changed)
+    def canReopenClosed(self):
+        return self.canCreateNew and self.closedTabCount > 0
+
+    @Slot(result=bool)
+    def reopenLastClosed(self):
+        if not self.canReopenClosed:
+            return False
+        return self.reopen_closed(next(reversed(self.workspace._closed_tab_snapshots)))
+
+    def reopen_closed(self, key):
+        if not self.canReopenClosed or key not in self.workspace._closed_tab_snapshots:
+            return False
+        try:
+            record = loads(self.workspace._closed_tab_snapshots[key])
+        except Exception as error:
+            self._message, self._error = error_message(error), True
+            self.changed.emit()
+            return False
+        if self._pending is not None:
+            self._pending["store"].cleanup()
+        self._reopening_key = key
+        self._busy = self._restoring = True
+        self._error = False
+        self._cancel.clear()
+        self._pending = dict(kind="reopen", document={"tabs": [record]}, missing=[],
+                             path=self._path, store=LocalImportStore())
+        self._load_queue = [(0, record)]
+        self._loading_tab = None
+        self._restored_ids = {}
+        self._restore_timer.start()
+        self.changed.emit()
+        return True
 
     def _advance_restore(self):
         if self._closed:
@@ -594,7 +729,7 @@ class WorkspaceDocumentController(QObject):
                         apply_fusion_source(tab, record["fusionSource"])
                         self._loading_tab = (index, record, tab, started, True, True)
                         return
-                    self.workspace.createFusionVolumeTab(tab)
+                    self.workspace.createFusionVolumeTab(tab, target_id=self._reopening_key)
                     volume_tab = self.workspace.activeTab
                     self.workspace._close_tab(tab.tab_config.tab_id)
                     self._loading_tab = (index, record, volume_tab, time.monotonic(), False, False)
@@ -628,7 +763,7 @@ class WorkspaceDocumentController(QObject):
             elif kind == "compare2d":
                 self.workspace.createMultiCompareTab(uids)
             elif kind == "petctfusion" or fusion_volume:
-                self.workspace.createFusionTab(*uids)
+                self.workspace.createFusionTab(*uids, isolated=bool(fusion_volume and self._reopening_key))
             else:
                 self.workspace.createTab(uids[0], record["label"], kind,
                                          phase_identifiers=record.get("phaseIdentifiers"))
@@ -640,6 +775,23 @@ class WorkspaceDocumentController(QObject):
             self._finish_restore(_msg('text.0431', value1=error), error=True)
 
     def _finish_restore(self, message, *, error=False):
+        if self._reopening_key is not None:
+            self._restore_timer.stop()
+            key, self._reopening_key = self._reopening_key, None
+            if error:
+                # The retained snapshot remains the authoritative copy on failure.
+                if self._loading_tab is not None:
+                    self.workspace._close_tab(self._loading_tab[2].tab_config.tab_id)
+            else:
+                self.workspace._closed_tab_snapshots.pop(key, None)
+            self._pending["store"].cleanup()
+            self._pending = self._loading_tab = None
+            self._load_queue.clear()
+            self._busy = self._restoring = False
+            self._message, self._error = message, error
+            self.mark_dirty()
+            self.restored.emit()
+            return
         self._restore_timer.stop()
         self._loading_tab = None
         payload = self._pending

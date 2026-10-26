@@ -762,6 +762,22 @@ class PanelController(QObject):
         if not self._scan_series_record:
             self._refresh_sidebar_model()
 
+    def reset_workspace_session(self):
+        """Clear image-session state once replacement has been confirmed."""
+        self.clearSeries()
+        self.cancelFusion()
+        self._compare_controller.cancel()
+        self._removed_series_uids.clear()
+        self._local_import_restorable_uids.clear()
+        self._pacs_import_source_uids = None
+        self._last_import_snapshot = None
+        self._last_import_paths = []
+        self._import_task_open = False
+        self._import_progress = -1.0
+        self._import_clean_success = False
+        self._set_status("")
+        self.importTaskChanged.emit()
+
     def _remove_series(self, series_uids) -> None:
         removed = set(series_uids).intersection(self._scan_series_record)
         if not removed:

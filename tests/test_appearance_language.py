@@ -44,7 +44,7 @@ def test_builtin_languages_are_complete_and_parameters_match():
         for key in re.findall(r'qsTrId\("([^"]+)"\)', path.read_text()): assert key in zh, (path, key)
 
 
-def test_portuguese_pack_is_selectable_and_new_strings_fall_back_to_english(qt_app, tmp_path):
+def test_portuguese_pack_is_selectable_and_workspace_prompt_is_localized(qt_app, tmp_path):
     settings = SettingsController(path=tmp_path / 'settings.json')
     language = LanguageController(settings, root=tmp_path / 'languages')
     try:
@@ -52,7 +52,7 @@ def test_portuguese_pack_is_selectable_and_new_strings_fall_back_to_english(qt_a
         assert language.selectLanguage('pt-BR')
         assert language.locale == 'pt-BR'
         assert localize(message('text.0414')) == builtin('pt-BR')['messages']['text.0414']
-        assert localize(message('workspace.exit.updateQuestion')) == builtin('en-US')['messages']['workspace.exit.updateQuestion']
+        assert localize(message('workspace.exit.updateQuestion')) == builtin('pt-BR')['messages']['workspace.exit.updateQuestion']
         assert settings.section('appearance')['language'] == 'pt-BR'
     finally:
         language.shutdown()

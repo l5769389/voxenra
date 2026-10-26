@@ -261,7 +261,9 @@
         <file>src/qt_dicom_viewer/qml/assets/help/roi.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/volume.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/water-qa.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/water-qa-2.1.3.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/workspace.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/workspace-2.1.3.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/measurement.png</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/manual.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/feedback.svg</file>
@@ -315,7 +317,9 @@
         <file>src/qt_dicom_viewer/qml/assets/help/en/voi-pt.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/volume.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/water-qa.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/water-qa-2.1.3.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/workspace.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/workspace-2.1.3.png</file>
       <file>src/qt_dicom_viewer/qml/sections/right/panels/TwoDLayoutPanel.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/TwoDViewportLayout.qml</file>
     <file>src/qt_dicom_viewer/qml/assets/icons/nav-compare-mpr.svg</file>

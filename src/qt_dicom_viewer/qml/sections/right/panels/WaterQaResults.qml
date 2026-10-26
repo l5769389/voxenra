@@ -9,6 +9,7 @@ ColumnLayout {
     id: panel
     objectName: "waterQaResults"
     property var controller: null
+    property var historyController: null
     readonly property var settingsController: controller?.settingsController ?? null
     readonly property int decimalPlaces: settingsController?.values.measurement.decimalPlaces ?? 2
     readonly property var result: controller ? controller.currentResult : ({})
@@ -19,38 +20,34 @@ ColumnLayout {
         && controller.frameToken.length > 0 && !["waiting", "calculating"].includes(controller.status)
     spacing: 10
 
+    Components.AppButton {
+        objectName: "recalculateQa"
+        Layout.fillWidth: true
+        text: qsTrId("analysis.recalculate")
+        enabled: !!panel.controller && panel.controller.status !== "calculating" && !panel.editing
+        onClicked: panel.controller.analyze()
+    }
     RowLayout {
         Layout.fillWidth: true
         Components.AppButton {
-            objectName: "recalculateQa"
+            objectName: "qaUndo"
             Layout.fillWidth: true
-            text: qsTrId("analysis.recalculate")
-            enabled: !!panel.controller && panel.controller.status !== "calculating" && !panel.editing
-            onClicked: panel.controller.analyze()
+            text: qsTrId("seg.undo")
+            iconName: "undo"
+            enabled: (panel.historyController?.canUndo ?? false) && !panel.editing
+            onClicked: panel.historyController.undo()
         }
         Components.AppButton {
-            id: provenanceButton
-            objectName: "qaInfoButton"
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
-            minimumButtonWidth: 28
-            compact: true
-            iconName: "info"
-            iconSize: 18
-            Accessible.name: qsTrId("mtf.details")
-            Accessible.description: qsTrId("mtf.details")
-            onClicked: provenancePopup.visible ? provenancePopup.close() : provenancePopup.open()
+            objectName: "qaRedo"
+            Layout.fillWidth: true
+            text: qsTrId("seg.redo")
+            iconName: "redo"
+            enabled: (panel.historyController?.canRedo ?? false) && !panel.editing
+            onClicked: panel.historyController.redo()
         }
     }
-    AnalysisInfoPopup {
-        id: provenancePopup
-        anchorItem: provenanceButton
-        explanation: [qsTrId("qa.copyHelp"), panel.controller?.provenance ?? "", qsTrId("analysis.savedHint")]
-            .filter(part => part.trim().length > 0).join("\n\n")
-        warnings: []
-    }
-
     function metric(value) {
+        if (value === null || value === undefined) return "—"
         return settingsController ? settingsController.formatMeasurement(value, decimalPlaces) : "—"
     }
 
@@ -66,8 +63,9 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 4
         Text {
+            objectName: "waterQaModeTitle"
             Layout.fillWidth: true
-            text: qsTrId("text.1072")
+            text: panel.ready && !panel.result.phantom ? qsTrId("qa.circularRois") : qsTrId("text.1072")
             color: Theme.textPrimary
             font.pixelSize: 14
             font.weight: Font.DemiBold
@@ -83,8 +81,8 @@ ColumnLayout {
         }
         Text {
             objectName: "waterQaPhantomSize"
-            visible: panel.ready
-            text: panel.ready ? "Ø " + panel.metric(panel.result.phantom.radius_mm*2) + " mm" : ""
+            visible: panel.ready && !!panel.result.phantom
+            text: panel.ready && panel.result.phantom ? "Ø " + panel.metric(panel.result.phantom.radius_mm*2) + " mm" : ""
             color: Theme.textMuted
             font.pixelSize: 11
         }
@@ -125,7 +123,8 @@ ColumnLayout {
                 from: setting.modelData.minimum
                 to: 100
                 value: panel.controller ? panel.controller[setting.modelData.field] : 20
-                enabled: panel.inputReady
+                enabled: panel.inputReady && (setting.modelData.field !== "edgeClearanceMm"
+                    || !panel.ready || !!panel.result.phantom)
                 editable: true
                 live: false
                 readonly property var editContext: [panel.controller, panel.inputContext]
@@ -185,9 +184,9 @@ ColumnLayout {
     ActionButton {
         objectName: "waterQa-analyze"
         Layout.fillWidth: true
-        text: panel.ready ? qsTrId("text.1077") : qsTrId("text.1078")
-        enabled: !!panel.controller && panel.controller.available && panel.controller.status !== "calculating"
-        onClicked: panel.controller.analyze()
+        text: panel.ready ? qsTrId("qa.regenerate") : qsTrId("text.1078")
+        enabled: !!panel.controller && panel.controller.available && panel.controller.status !== "calculating" && !panel.editing
+        onClicked: panel.controller.regenerateRois()
     }
     Text {
         objectName: "waterQaError"
@@ -201,7 +200,7 @@ ColumnLayout {
     GridLayout {
         objectName: "waterQaMetrics"
         Layout.fillWidth: true
-        visible: panel.ready
+        visible: panel.ready && panel.result.water_ct_hu !== null && panel.result.water_ct_hu !== undefined
         columns: 2
         uniformCellWidths: true
         columnSpacing: 8
@@ -331,7 +330,6 @@ ColumnLayout {
                     iconSize: 15
                     enabled: !panel.editing && row.modelData.removable
                     Accessible.name: qsTrId("qa.deleteRoi") + " " + row.modelData.label
-                    Accessible.description: row.modelData.removable ? "" : qsTrId("qa.protectedRoi")
                     onClicked: panel.controller.deleteRoi(row.modelData.key)
                     Components.AppToolTip { text: qsTrId("qa.deleteRoi"); visible: deleteButton.hovered }
                 }

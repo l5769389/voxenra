@@ -27,6 +27,10 @@ from qt_dicom_viewer.ui.controller.tab_loading_controller import TabLoadingContr
 from qt_dicom_viewer.ui.controller.utility_tab_controller import UtilityTabController
 from qt_dicom_viewer.ui.controller.manual_tab_controller import ManualTabController
 
+from qt_dicom_viewer.core.workspace_state import dumps
+from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
+from qt_dicom_viewer.i18n.messages import error_message
+
 logger = logging.getLogger(__name__)
 
 class WorkspaceController(QObject):
@@ -57,7 +61,7 @@ class WorkspaceController(QObject):
         self._image_provider = image_provider
         self._tag_read_service = TagReadService(self)
         self._window_manager = None
-        self._close_prompt_active = False
+        self._closed_tab_snapshots = {}
 
     @Slot()
     def openSettings(self):
@@ -103,19 +107,34 @@ class WorkspaceController(QObject):
         return self.close_tabs([tab_id])
 
     def close_tabs(self, tab_ids):
-        """Confirm the entire operation before changing any tab or recovery state."""
-        if self._close_prompt_active:
+        """Retain committed results before releasing any of the requested views."""
+        document = getattr(self.parent(), "workspaceDocumentController", None)
+        if document is not None and document.busy:
             return False
         tab_ids = list(dict.fromkeys(key for key in tab_ids if key in self._tab_dict))
-        if any(self._has_editing_work(self._tab_dict[key]) for key in tab_ids):
-            self._close_prompt_active = True
-            try:
-                if not self._confirm_close_edits(tab_ids[0]):
-                    return False
-            finally:
-                self._close_prompt_active = False
+        snapshots = {}
+        try:
+            for key in tab_ids:
+                tab = self._tab_dict[key]
+                if any(getattr(v, "editBusy", False) for v in tab.viewports_by_id.values()):
+                    raise ValueError(_msg('text.0410'))
+                if self._has_editing_work(tab):
+                    snapshots[key] = dumps(tab_snapshot(tab))
+        except Exception as error:
+            if document is not None:
+                document._message, document._error = error_message(error), True
+                document.changed.emit()
+            return False
+        self._closed_tab_snapshots.update(snapshots)
         for key in tab_ids:
             self._close_tab(key)
+        return True
+
+    def _reopen_retained(self, tab_id):
+        document = getattr(self.parent(), "workspaceDocumentController", None)
+        if tab_id not in self._closed_tab_snapshots or document is None or document.restoring:
+            return False
+        document.reopen_closed(tab_id)
         return True
 
     @staticmethod
@@ -124,7 +143,7 @@ class WorkspaceController(QObject):
         if tab.tab_config.tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL, TabType.TAG):
             return False
         # Restoring or saving resets history, so committed content is the primary
-        # check. History also protects deleted work which can still be undone.
+        # check. History also identifies tabs whose last result was deleted.
         history = getattr(tab, "_edit_history", None)
         if history is not None and (history.canUndo or history.canRedo):
             return True
@@ -145,18 +164,6 @@ class WorkspaceController(QObject):
         return any(view.get("measurements") or view.get("annotations")
                    or view.get("crop") is not None or view.get("bed") is not None
                    for view in state["views"].values())
-
-    def _confirm_close_edits(self, tab_id):
-        from qt_dicom_viewer.ui.dialogs.tab_close_dialog import TabCloseDialog
-        appearance = getattr(self.parent(), "appearanceController", None)
-        manager = self._window_manager
-        session = manager.owner(tab_id) if manager is not None else None
-        owner = manager.windows.get(session.windowId) if session is not None else None
-        dialog = TabCloseDialog(appearance, owner)
-        try:
-            return dialog.exec() == TabCloseDialog.Close
-        finally:
-            dialog.deleteLater()
 
     def _close_tab(self, tab_id: str):
         """Dispose an approved close, or internal restore cleanup, without prompting."""
@@ -304,6 +311,8 @@ class WorkspaceController(QObject):
             logger.warning("Unsupported tab type: %s", tab_type)
             return
         if tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL, TabType.COMPARE_2D, TabType.COMPARE_MPR):
+            return
+        if self._reopen_retained(f'{series_uid}_{tab_type}'):
             return
         tab, created = self._create_or_activate_tab(
             series_uid,
@@ -495,6 +504,8 @@ class WorkspaceController(QObject):
                                               for uid in (first_uid, second_uid)):
             return
         tab_id = "comparempr:" + ":".join(sorted((first_uid, second_uid)))
+        if self._reopen_retained(tab_id):
+            return
         if tab_id in self._tab_dict:
             self.activateTabId(tab_id)
             return
@@ -520,6 +531,8 @@ class WorkspaceController(QObject):
             return
         # Opening the same pair in reverse order activates its existing window.
         tab_id = "compare2d:" + ":".join(sorted(series_uids))
+        if self._reopen_retained(tab_id):
+            return
         if tab_id in self._tab_dict:
             self.activateTabId(tab_id)
             return
@@ -533,15 +546,20 @@ class WorkspaceController(QObject):
         tab.init_render()
 
     @Slot(str, str)
-    def createFusionTab(self, ct_uid, pet_uid):
+    def createFusionTab(self, ct_uid, pet_uid, *, isolated=False):
         ct = self._series_catalog.get_series(ct_uid)
         pet = self._series_catalog.get_series(pet_uid)
         if ct is None or pet is None or ct.modality.upper() != "CT" or pet.modality.upper() != "PT":
             return
         tab_id = f"petct:{ct_uid}:{pet_uid}"
-        if tab_id in self._tab_dict:
+        if not isolated and self._reopen_retained(tab_id):
+            return
+        if not isolated and tab_id in self._tab_dict:
             self.activateTabId(tab_id)
             return
+        if isolated:
+            from uuid import uuid4
+            tab_id = "restore-source:" + uuid4().hex
         config = TabConfig(tab_id=tab_id, tab_label=f"{ct.patient_name} · PET/CT",
             tab_type=TabType.PETCT_FUSION, series_metas=(
                 self._series_catalog.get_series_display_meta(ct_uid),
@@ -570,11 +588,13 @@ class WorkspaceController(QObject):
             state.accept_failure(failure)
         tab.handleRenderFailure(failure)
 
-    def createFusionVolumeTab(self, source):
+    def createFusionVolumeTab(self, source, *, target_id=None):
         from qt_dicom_viewer.ui.controller.tab.pet_volume_tab_controller import PetVolumeTabController
         if source._closed or not source.ready or not source.isFusion:
             return
-        tab_id = source._tab_config.tab_id + ":volume"
+        tab_id = target_id or source._tab_config.tab_id + ":volume"
+        if self._reopen_retained(tab_id):
+            return
         if tab_id not in self._tab_dict:
             config = TabConfig(tab_id=tab_id, tab_label=source._tab_config.tab_label + " · 3D", tab_type=TabType.THREE_D,
                                series_metas=source._tab_config.series_metas)

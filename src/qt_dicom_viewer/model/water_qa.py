@@ -29,18 +29,19 @@ class WaterQaRoi:
     std_hu: float
     minimum_hu: float
     maximum_hu: float
-    delta_center_hu: float
+    delta_center_hu: float | None
 
 
 @dataclass(frozen=True, slots=True)
 class WaterQaResult:
-    phantom: WaterPhantom
+    phantom: WaterPhantom | None
     settings: WaterQaSettings
     rois: tuple[WaterQaRoi, ...]
-    water_ct_hu: float
-    noise_hu: float
-    uniformity_hu: float
-    consistency_range_hu: float
-    horizontal_difference_hu: float
-    vertical_difference_hu: float
-    noise_range_hu: float
+    water_ct_hu: float | None
+    noise_hu: float | None
+    uniformity_hu: float | None
+    consistency_range_hu: float | None
+    horizontal_difference_hu: float | None
+    vertical_difference_hu: float | None
+    noise_range_hu: float | None
+    detection_issue: str = ""

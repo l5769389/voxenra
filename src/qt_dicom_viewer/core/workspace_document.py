@@ -136,6 +136,9 @@ def validate_document(document):
         _validate_phase_manifest(record)
     if count > 100000:
         raise ValueError(_msg('text.0216'))
+    closed_ids = [tab.get("closedId") for tab in tabs if isinstance(tab, dict) and "closedId" in tab]
+    if any(not isinstance(key, str) for key in closed_ids) or len(set(closed_ids)) != len(closed_ids):
+        raise ValueError(_msg('text.0217'))
     for tab in tabs:
         if (not isinstance(tab, dict) or not isinstance(tab.get("series"), list)
                 or any(uid not in known for uid in tab["series"])
@@ -160,6 +163,9 @@ def _validate_tab(tab):
     from qt_dicom_viewer.model import ViewportState, MprState, MprProjectionSettings, WindowLevelChange
     from qt_dicom_viewer.model.measure import LengthMeasurement, AngleMeasurement, RoiMeasurement
     from qt_dicom_viewer.ui.controller.viewport.controller.text_annotation_controller import TextAnnotation
+    if "closedId" in tab and (not isinstance(tab["closedId"], str)
+                               or not 1 <= len(tab["closedId"]) <= 4096):
+        raise ValueError(_msg('text.0221'))
     utility = tab["type"] in ("settings", "pacs", "manual")
     if (not isinstance(tab.get("label"), str) or len(tab["series"]) not in ((0,) if utility else range(1, 37) if tab["type"] == "2d" else (2, 3, 4) if tab["type"] == "compare2d" else (1, 2))):
         raise ValueError(_msg('text.0221'))

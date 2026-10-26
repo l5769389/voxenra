@@ -83,6 +83,68 @@ def test_service_activation_runs_worker_and_returns_five_rois_on_gui_thread(qa_v
     assert not {"passed", "failed", "grade", "tolerance"} & qa.currentResult.keys()
 
 
+def test_non_water_image_creates_editable_circles_and_keeps_them_in_image(qa_view, qt_app):
+    view, _ = qa_view
+    y, x = np.indices((320, 400))
+    pixels = np.full((320, 400), -1000, dtype=np.float32)
+    pixels[((x-200)/120)**2 + ((y-160)/65)**2 < 1] = 40
+    frame = water_render(view, pixels=pixels, spacing=(.8, .6))
+    deliver_frame(view, frame)
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    assert len(qa.roiItems) == 5 and qa.currentResult['phantom'] is None
+    assert '未识别' in qa.notice and '普通' in qa.notice
+    assert qa.currentResult['water_ct_hu'] is None
+    assert all(roi['removable'] for roi in qa.roiItems)
+    drag_qa(view, index=2, dx=10000, dy=10000)
+    assert not qa.error
+    moved = qa.currentResult['rois'][2]
+    assert moved['column'] + moved['radius_mm']/.6 <= 399 + 1e-6
+    assert moved['row'] + moved['radius_mm']/.8 <= 319 + 1e-6
+    assert qa.copyRoi('center')
+    assert qa.deleteRoi('center')
+    assert all(r['delta_center_hu'] is None for r in qa.currentResult['rois'])
+
+
+@pytest.mark.parametrize('fallback', [False, True])
+def test_delete_baseline_remeasure_and_workspace_roundtrip(qa_view, qt_app, fallback):
+    from qt_dicom_viewer.core.workspace_state import encode, decode
+    view, first = qa_view
+    if fallback:
+        first = water_render(view, pixels=np.zeros((320, 400), dtype=np.float32))
+        deliver_frame(view, first)
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    assert qa.deleteRoi('left')
+    assert [r['key'] for r in qa.roiItems] == ['center', 'right', 'top', 'bottom']
+    assert qa.currentResult['uniformity_hu'] is None
+    drag_qa(view, index=1, dx=3, dy=2)
+    assert not qa.error
+    assert qa.copyRoi('right')
+    saved = qa.currentResult
+    view.setSliceIndex(1)
+    deliver_frame(view, water_render(view, 1))
+    wait_qa(qt_app, qa)
+    view.setSliceIndex(0)
+    deliver_frame(view, first)
+    assert qa.currentResult == saved
+    qa.restore_state(decode(encode(qa.persistent_state())))
+    assert qa.currentResult == saved
+    qa.analyze()
+    wait_qa(qt_app, qa)
+    assert qa.currentResult == saved
+    for roi in list(qa.roiItems):
+        assert qa.deleteRoi(roi['key'])
+    qa.analyze()
+    wait_qa(qt_app, qa)
+    assert qa.roiItems == [] and qa.currentResult['noise_hu'] is None
+    qa.regenerateRois()
+    wait_qa(qt_app, qa)
+    assert len(qa.roiItems) == 5
+
+
 def test_display_changes_reuse_result_and_resets_are_scoped(qa_view, qt_app):
     view, frame = qa_view
     tools, qa = view._tool_controller, view.qaController
@@ -313,7 +375,7 @@ def test_drag_preview_cancel_overlap_and_bounds_keep_complete_results(qa_view, q
     assert qa.currentResult == moved
 
 
-def test_copies_are_independent_protected_baselines_and_slice_cached(qa_view, qt_app):
+def test_copies_are_independent_and_slice_cached(qa_view, qt_app):
     view, frame = qa_view
     qa = view.qaController
     view._tool_controller.selectService('service:qa')
@@ -321,8 +383,7 @@ def test_copies_are_independent_protected_baselines_and_slice_cached(qa_view, qt
     baseline = qa.currentResult
     summary = {k: v for k, v in baseline.items() if k != 'rois'}
     for roi in baseline['rois']:
-        assert not roi['removable']
-        assert not qa.deleteRoi(roi['key'])
+        assert roi['removable']
     assert qa.copyRoi('center')
     assert qa.copyRoi('extra-1')
     assert len(qa.roiItems) == 7
@@ -344,10 +405,6 @@ def test_copies_are_independent_protected_baselines_and_slice_cached(qa_view, qt
     view.setSliceIndex(0)
     deliver_frame(view, frame)
     assert qa.currentResult == saved
-    # Controller and keyboard paths both enforce protection.
-    qa._selected_key = 'center'
-    view.deleteSelectedMeasurement()
-    assert len(qa.roiItems) == 7
     qa._selected_key = 'extra-1'
     view.deleteSelectedMeasurement()
     assert len(qa.roiItems) == 6
@@ -355,3 +412,40 @@ def test_copies_are_independent_protected_baselines_and_slice_cached(qa_view, qt
     assert qa.currentResult == baseline
     assert not qa.deleteRoi('extra-2')
     assert not qa.copyRoi('missing')
+    qa._selected_key = 'center'
+    view.deleteSelectedMeasurement()
+    assert len(qa.roiItems) == 4
+    assert qa.currentResult['water_ct_hu'] is None
+
+
+def test_legacy_water_result_can_still_be_decoded():
+    from qt_dicom_viewer.core.workspace_state import encode, decode
+    result = analyze_water_phantom(water_image(), (1, 1))
+    encoded = encode(result)
+    encoded['fields'].pop('detection_issue')
+    assert decode(encoded) == result
+
+
+def test_unexpected_detector_failure_remains_an_error(qa_view, qt_app, monkeypatch):
+    view, _ = qa_view
+    def fail(*args):
+        raise RuntimeError('detector failed')
+    monkeypatch.setattr('qt_dicom_viewer.ui.controller.viewport.controller.water_qa_controller.analyze_water_phantom', fail)
+    qa = view.qaController
+    qa.activate()
+    pump_until(qt_app, lambda: qa.status != 'calculating')
+    assert qa.status == 'error' and 'detector failed' in qa.error
+    assert not qa.roiItems and not qa.currentResult
+
+
+def test_near_edge_round_phantom_falls_back_without_relaxing_detection(qa_view, qt_app):
+    view, _ = qa_view
+    spacing = (.3906, .3906)
+    pixels = water_image((512, 512), spacing, (254.5, 254.5), radius=99.5, mean=-1)
+    deliver_frame(view, water_render(view, pixels=pixels, spacing=spacing))
+    qa = view.qaController
+    qa.activate()
+    wait_qa(qt_app, qa)
+    assert qa.currentResult['phantom'] is None
+    assert len(qa.roiItems) == 5
+    assert all(abs(roi['mean_hu']+1) < .3 for roi in qa.currentResult['rois'])

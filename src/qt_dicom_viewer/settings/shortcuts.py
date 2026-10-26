@@ -9,7 +9,7 @@ DEFAULT_BINDINGS = {'window': 'W', 'scroll': 'S', 'pan': 'P', 'zoom': 'Z',
 ACTION_LABELS = {'window': 'text.0285', 'scroll': 'input.action.scroll', 'pan': 'input.action.pan',
                  'zoom': 'input.action.zoom', 'measure': 'text.0292', 'paint': 'seg.paint',
                  'erase': 'seg.erase', 'play': 'input.action.play'}
-FIXED = {'open': ('input.action.open', 'Ctrl+O'), 'save': ('input.action.save', 'Ctrl+S'),
+FIXED = {'reopenClosedTab': ('workspace.reopenClosed', 'Ctrl+Shift+T'), 'newWorkspace': ('workspace.new.action', 'Ctrl+N'), 'open': ('input.action.open', 'Ctrl+O'), 'save': ('input.action.save', 'Ctrl+S'),
          'saveAs': ('input.action.saveAs', 'Ctrl+Shift+S'), 'openWorkspace': ('input.action.openWorkspace', 'Ctrl+Shift+O'),
          'undo': ('seg.undo', 'Ctrl+Z'), 'redo': ('seg.redo', 'Ctrl+Shift+Z' if sys.platform == 'darwin' else 'Ctrl+Y'),
          'copy': ('input.action.copy', 'Ctrl+C'), 'paste': ('input.action.paste', 'Ctrl+V'),

@@ -141,6 +141,8 @@ def decode(value, depth=0, *, budget=None):
             payload = dict(payload, perimeter_mm=None)  # Read workspaces saved before freehand ROI.
         if cls.__name__ == "RoiMeasurement" and isinstance(payload, dict) and "smooth" not in payload:
             payload = dict(payload, smooth=False)  # Old polygons keep their original metrics and contour.
+        if cls.__name__ == "WaterQaResult" and isinstance(payload, dict) and "detection_issue" not in payload:
+            payload = dict(payload, detection_issue="")  # Earlier QA records always describe detected water.
         if not isinstance(payload, dict) or set(payload) != {f.name for f in fields(cls)}:
             raise ValueError(_msg('text.0117'))
         decoded = {k: descend(v) for k, v in payload.items()}

@@ -6,28 +6,33 @@ from qt_dicom_viewer.i18n.widgets import QCheckBox, QMessageBox
 
 
 class WorkspaceExitDialog(QMessageBox):
-    def __init__(self, appearance, *, workspace_name=""):
+    def __init__(self, appearance, *, workspace_name="", new_workspace=False):
         self._workspace_name = workspace_name
-        super().__init__(QMessageBox.NoIcon, _msg('workspace.exit.title'),
-                         _msg('workspace.exit.updateQuestion')
-                         if workspace_name else _msg('text.0433'),
+        self._new_workspace = new_workspace
+        title = 'workspace.new.action' if new_workspace else 'workspace.exit.title'
+        question = ('workspace.new.question' if new_workspace else
+                    'workspace.exit.updateQuestion' if workspace_name else 'text.0433')
+        super().__init__(QMessageBox.NoIcon, _msg(title), _msg(question),
                          QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-        self.setObjectName("workspaceExitConfirmation")
+        self.setObjectName("workspaceNewConfirmation" if new_workspace else "workspaceExitConfirmation")
         self._button_text_timer = QTimer(self)
         self._button_text_timer.setSingleShot(True)
         self._button_text_timer.timeout.connect(self._translate_buttons)
         # A platform-native alert can ignore the application's selected palette.
         self.setOption(QMessageBox.Option.DontUseNativeDialog, True)
         self.setTextFormat(Qt.PlainText)
-        if not workspace_name:
+        if new_workspace:
+            self.setInformativeText(_msg('workspace.new.details'))
+        elif not workspace_name:
             self.setInformativeText(_msg('workspace.exit.saveDetails'))
         self.button(QMessageBox.Save).setObjectName("workspaceExitSave")
         self.setDefaultButton(QMessageBox.Save)
         self.setEscapeButton(QMessageBox.Cancel)
-        remember = QCheckBox(_msg('text.0435'), self)
-        remember.setObjectName("rememberWorkspaceExit")
-        remember.setToolTip(_msg('text.0434'))
-        self.setCheckBox(remember)
+        if not new_workspace:
+            remember = QCheckBox(_msg('text.0435'), self)
+            remember.setObjectName("rememberWorkspaceExit")
+            remember.setToolTip(_msg('text.0434'))
+            self.setCheckBox(remember)
         self._appearance = appearance
         appearance.changed.connect(self._apply_theme)
         self._apply_theme()
@@ -40,11 +45,14 @@ class WorkspaceExitDialog(QMessageBox):
 
     def _translate_buttons(self):
         super()._translate_buttons()
-        for role, key in (
-            (QMessageBox.Save, 'workspace.exit.update' if self._workspace_name else 'workspace.exit.save'),
-            (QMessageBox.Discard, 'workspace.exit.dontUpdate' if self._workspace_name else 'common.dontSave'),
-            (QMessageBox.Cancel, 'workspace.exit.cancel'),
-        ):
+        if self._new_workspace:
+            save, discard = 'workspace.new.save', 'workspace.new.discard'
+        elif self._workspace_name:
+            save, discard = 'workspace.exit.update', 'workspace.exit.dontUpdate'
+        else:
+            save, discard = 'workspace.exit.save', 'common.dontSave'
+        for role, key in ((QMessageBox.Save, save), (QMessageBox.Discard, discard),
+                          (QMessageBox.Cancel, 'workspace.exit.cancel')):
             button = self.button(role)
             if button is not None:
                 button.setText(localize(_msg(key)))

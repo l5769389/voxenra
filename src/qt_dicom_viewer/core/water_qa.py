@@ -12,6 +12,13 @@ import numpy as np
 from qt_dicom_viewer.model.water_qa import WaterPhantom, WaterQaSettings, WaterQaRoi, WaterQaResult
 
 
+class WaterPhantomDetectionError(ValueError):
+    """No unique water boundary; valid images can still be sampled manually."""
+    def __init__(self, message_key):
+        self.message_key = message_key
+        super().__init__(_msg(message_key))
+
+
 def _validate_input(pixels, spacing):
     array = np.asarray(pixels)
     if array.ndim != 2 or min(array.shape) < 16:
@@ -133,16 +140,16 @@ def detect_water_phantom(pixels, spacing):
             continue
         candidates.append(phantom)
     if not candidates:
-        raise ValueError(_msg('text.0080'))
+        raise WaterPhantomDetectionError('text.0080')
     candidates.sort(key=lambda p: p.radius_mm, reverse=True)
     if len(candidates) > 1 and candidates[1].radius_mm > candidates[0].radius_mm*0.85:
-        raise ValueError(_msg('text.0081'))
+        raise WaterPhantomDetectionError('text.0081')
     return candidates[0]
 
 
 def _measure_roi(array, spacing, phantom, key, label, column, row, radius):
     if (not all(math.isfinite(v) for v in (column, row, radius)) or radius <= 0
-            or math.hypot((column-phantom.column)*spacing[1], (row-phantom.row)*spacing[0]) + radius > phantom.radius_mm + 1e-6):
+            or (phantom is not None and math.hypot((column-phantom.column)*spacing[1], (row-phantom.row)*spacing[0]) + radius > phantom.radius_mm + 1e-6)):
         raise ValueError(_msg('text.0090'))
     # QML QVariant maps need Python floats, not NumPy scalar wrappers.
     column, row = float(column), float(row)
@@ -209,3 +216,55 @@ def measure_water_phantom(pixels, spacing, phantom, settings=WaterQaSettings(), 
 def analyze_water_phantom(pixels, spacing, settings=WaterQaSettings()):
     phantom = detect_water_phantom(pixels, spacing)
     return measure_water_phantom(pixels, spacing, phantom, settings)
+
+
+BASELINE_KEYS = ("center", "left", "right", "top", "bottom")
+
+
+def measure_qa_rois(pixels, spacing, phantom, settings, rois, *, detection_issue=""):
+    """Remeasure an editable collection by identity, including missing baselines."""
+    array, spacing = _validate_input(pixels, spacing)
+    baseline = [r for r in rois if r.key in BASELINE_KEYS]
+    # Retain the five-point protocol's non-overlap rule for detected water only.
+    if phantom is not None:
+        for index, roi in enumerate(baseline):
+            if any(math.hypot((roi.column-other.column)*spacing[1],
+                              (roi.row-other.row)*spacing[0]) < roi.radius_mm+other.radius_mm-1e-6
+                   for other in baseline[index+1:]):
+                raise ValueError(_msg('text.0091'))
+    measured = tuple(_measure_roi(array, spacing, phantom, r.key, r.label,
+                                 r.column, r.row, r.radius_mm) for r in rois)
+    by_key = {r.key: r for r in measured}
+    center = by_key.get("center")
+    measured = tuple(replace(r, delta_center_hu=r.mean_hu-center.mean_hu if center else None)
+                     for r in measured)
+    # A partial protocol or an unidentified object is not a water QA result.
+    metrics = (None,) * 7
+    if phantom is not None and all(key in by_key for key in BASELINE_KEYS):
+        c, left, right, top, bottom = (by_key[key] for key in BASELINE_KEYS)
+        means = [by_key[key].mean_hu for key in BASELINE_KEYS]
+        noise = [by_key[key].std_hu for key in BASELINE_KEYS]
+        metrics = (c.mean_hu, c.std_hu, max(abs(m-c.mean_hu) for m in means[1:]),
+                   max(means)-min(means), abs(left.mean_hu-right.mean_hu),
+                   abs(top.mean_hu-bottom.mean_hu), max(noise)-min(noise))
+    return WaterQaResult(phantom, settings, measured, *metrics, detection_issue=detection_issue)
+
+
+def create_fallback_rois(pixels, spacing, settings=WaterQaSettings(), *, detection_issue="text.0080"):
+    """Seed five physical circles within the image, without claiming a phantom."""
+    array, spacing = _validate_input(pixels, spacing)
+    diameter, clearance = settings.roi_diameter_mm, settings.edge_clearance_mm
+    if not (math.isfinite(diameter) and 2 <= diameter <= 100
+            and math.isfinite(clearance) and 0 <= clearance <= 100):
+        raise ValueError(_msg('text.0082'))
+    radius = diameter/2
+    height, width = ((array.shape[i]-1)*spacing[i] for i in range(2))
+    offset = min(min(width, height)/4, min(width, height)/2-radius)
+    if offset < diameter:
+        raise ValueError(_msg('qa.fallbackTooSmall'))
+    column, row = (array.shape[1]-1)/2, (array.shape[0]-1)/2
+    centers = ((0, 0), (-offset, 0), (offset, 0), (0, -offset), (0, offset))
+    rois = tuple(_measure_roi(array, spacing, None, key, _msg(f'text.{84+index:04d}'),
+                             column+dx/spacing[1], row+dy/spacing[0], radius)
+                 for index, (key, (dx, dy)) in enumerate(zip(BASELINE_KEYS, centers)))
+    return measure_qa_rois(array, spacing, None, settings, rois, detection_issue=detection_issue)

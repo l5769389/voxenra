@@ -24,15 +24,15 @@ on:
       - "docs/screenshots/26-theme-light.png"
       - "docs/screenshots/03-4d-playback.gif"
       - "docs/screenshots/16-pacs-browser.png"
-      - "docs/screenshots/17-workspace.png"
+      - "docs/screenshots/17-workspace-2.1.3.png"
       - "docs/screenshots/35-zip-drop.png"
       - "docs/screenshots/06-zip-drag.gif"
       - "docs/screenshots/01-freehand-measurement.gif"
       - "docs/screenshots/33-curve-measurement.gif"
       - "docs/screenshots/11-mpr-layouts.gif"
       - "docs/screenshots/04-volume-presets.gif"
-      - "docs/screenshots/36-workspace-full.png"
-      - "docs/screenshots/19-water-qa.png"
+      - "docs/screenshots/45-workspace-home-2.1.3.png"
+      - "docs/screenshots/19-water-qa-2.1.3.png"
       - "docs/screenshots/28-mtf-analysis.png"
   workflow_dispatch:
 

@@ -267,6 +267,29 @@ Basic.Dialog {
                     enabled: !dialog.working
                     onClicked: dialog.manualRequested()
                 }
+                Components.AppButton {
+                    objectName: "reopenClosedTab"
+                    anchors.right: newWorkspaceButton.left
+                    anchors.rightMargin: 8
+                    height: parent.height
+                    text: qsTrId("workspace.reopenClosed")
+                    compact: true
+                    visible: !dialog.missing && !dialog.recovery && (dialog.controller?.closedTabCount ?? 0) > 0
+                    enabled: dialog.controller?.canReopenClosed ?? false
+                    onClicked: dialog.controller.reopenLastClosed()
+                }
+                Components.AppButton {
+                    id: newWorkspaceButton
+                    objectName: "newWorkspace"
+                    anchors.right: parent.right
+                    height: parent.height
+                    text: qsTrId("workspace.new.action")
+                    iconName: "add"
+                    compact: true
+                    visible: !dialog.missing && !dialog.recovery
+                    enabled: dialog.controller?.canCreateNew ?? false
+                    onClicked: dialog.controller.newWorkspace()
+                }
                 RowLayout {
                     anchors.fill: parent
                     spacing: 8

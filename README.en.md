@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.2/Voxenra-2.1.2-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.2/Voxenra-2.1.2-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.2/Voxenra-2.1.2-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.3/Voxenra-2.1.3-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.3/Voxenra-2.1.3-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.3/Voxenra-2.1.3-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 ## Features
 
@@ -112,7 +112,7 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 <td width="50%"><b>Segmentation and report export</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG, SR and NRRD export controls" width="100%"></a></td>
 </tr>
 <tr>
-<td><b>CT water phantom QA</b><br><a href="docs/screenshots/19-water-qa.png"><img src="docs/screenshots/19-water-qa.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
+<td><b>CT water phantom QA</b><br><a href="docs/screenshots/en/19-water-qa-2.1.3.png"><img src="docs/screenshots/en/19-water-qa-2.1.3.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
 <td><b>Point-source MTF</b><br><a href="docs/screenshots/28-mtf-analysis.png"><img src="docs/screenshots/28-mtf-analysis.png" alt="Independent MTF curve and spatial resolution analysis" width="100%"></a></td>
 </tr>
 </table>
@@ -121,18 +121,18 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 Import source images on the left and associated SEG / NRRD segments on the right. Mix files, folders, and archives, drag in images, query PACS, inspect DICOM tags, and export PNG or source DICOM.
 
-Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
+Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Start a blank workspace in the current window; closing a tab retains its editing results for reopening, and exiting prompts to save workspace changes. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
 
 ![Offline manual and workflow demos](docs/screenshots/en/50-offline-manual-2.1.2.png)
 
 <table>
 <tr>
-<td width="50%"><b>Imported workspace</b><br><a href="docs/screenshots/en/45-imported-home-2.1.1.png"><img src="docs/screenshots/en/45-imported-home-2.1.1.png" alt="Open selected series or import more images" width="100%"></a></td>
+<td width="50%"><b>Imported workspace</b><br><a href="docs/screenshots/en/45-workspace-home-2.1.3.png"><img src="docs/screenshots/en/45-workspace-home-2.1.3.png" alt="Open selected series or import more images" width="100%"></a></td>
 <td width="50%"><b>PACS browser</b><br><a href="docs/screenshots/16-pacs-browser.png"><img src="docs/screenshots/16-pacs-browser.png" alt="PACS study query and series download" width="100%"></a></td>
 </tr>
 <tr>
 <td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="Detach a tab into another window" width="100%"></a></td>
-<td><b>Workspace recovery</b><br><a href="docs/screenshots/36-workspace-overview.png"><img src="docs/screenshots/36-workspace-overview.png" alt="Workspace controls with an MR study open" width="100%"></a></td>
+<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/17-workspace-2.1.3.png"><img src="docs/screenshots/en/17-workspace-2.1.3.png" alt="Create, reopen, and save a workspace" width="100%"></a></td>
 </tr>
 </table>
 
