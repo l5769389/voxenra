@@ -261,6 +261,10 @@ def apply_tab_snapshot(tab, record):
             saved = state["image"]
             view._state = replace(saved, width=view._state.width, height=view._state.height,
                                   slice_count=view._state.slice_count)
+            # A reopened view can already be visible before restoration. The
+            # ensuing render has the same index, so it will not emit this signal.
+            if hasattr(view, "sliceChanged"):
+                view.sliceChanged.emit()
             view.transformChanged.emit()
             if hasattr(view, "viewportSettingsChanged"):
                 view.viewportSettingsChanged.emit()

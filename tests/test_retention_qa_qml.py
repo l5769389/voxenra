@@ -85,3 +85,38 @@ def test_qa_actual_buttons_keyboard_and_noop_drag(sidebar_scene, tmp_path, theme
     assert qa.currentResult == original
     assert window.grabWindow().save(str(tmp_path/f'qa-history-{theme}.png'))
     assert not warnings, warnings
+
+
+def test_reopened_tab_keeps_slice_slider_and_image_in_sync(sidebar_scene, monkeypatch):
+    window, app, records, warnings = sidebar_scene
+    ws, doc = app.workspaceController, app.workspaceDocumentController
+    doc._autosave.stop()
+    ws.createTab(records[0].series_instance_uid, 'Image', '2d')
+    wait_until(lambda: ws.activeLoadState.status == 'ready')
+    ws.activeViewport.apply_slice_index(2)
+    wait_until(lambda: ws.activeViewport._frame_meta.slice_index == 2)
+    draw_length(ws.activeViewport)
+    wait_until(lambda: find(window, 'sliceControl').property('value') == 3)
+    assert ws.closeTab(ws.activeTabId)
+    # The installed app can display the new view before its saved state arrives.
+    # Ensure that ordering rather than relying on the fixture's fast rendering.
+    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
+    apply_snapshot = module.apply_tab_snapshot
+    def restore_after_slider_is_visible(tab, record):
+        doc._restore_timer.stop()
+        try:
+            wait_until(lambda: find(window, 'sliceControl') is not None)
+            QTest.qWait(60)
+            assert find(window, 'sliceControl').property('value') == 1
+            apply_snapshot(tab, record)
+        finally:
+            doc._restore_timer.start()
+    monkeypatch.setattr(module, 'apply_tab_snapshot', restore_after_slider_is_visible)
+    click(window, find(window, 'homeReopenClosedTab'))
+    wait_until(lambda: not doc.busy and ws.activeLoadState.status == 'ready')
+    assert ws.activeViewport.sliceIndex == 2
+    assert ws.activeViewport._frame_meta.slice_index == 2
+    assert len(ws.activeViewport._measure_controller._measurements) == 1
+    assert find(window, 'sliceControl').property('value') == 3
+    assert find(window, 'sliceJumpButton').property('text') == '3'
+    assert not warnings, warnings
