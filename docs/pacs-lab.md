@@ -128,3 +128,7 @@ docker --context orbstack compose -f docker/pacs/compose.yaml up -d
 服务配置参考：[Orthanc 官方 Docker 镜像](https://orthanc.uclouvain.be/book/users/docker-orthancteam.html)、
 [DICOMweb 插件](https://orthanc.uclouvain.be/book/plugins/dicomweb.html)、
 [dcm4chee 官方最小部署](https://github.com/dcm4che/dcm4chee-arc-light/wiki/Run-minimum-set-of-archive-services-on-a-single-host)。
+## 传统 DIMSE 环境
+
+传统 DICOM 的隔离环境、AE/回传配置与验证命令见 [DIMSE 联调](pacs-dimse-lab.md)。
+本页保留原 DICOMweb 环境说明。

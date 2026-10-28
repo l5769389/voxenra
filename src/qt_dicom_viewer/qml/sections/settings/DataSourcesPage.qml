@@ -115,14 +115,18 @@ Basic.ScrollView {
                     }
                     Text {
                         Layout.fillWidth: true
-                        text: card.modelData.url
+                        text: card.modelData.protocol === "dimse"
+                            ? card.modelData.called_ae + " @ " + card.modelData.host + ":" + card.modelData.port
+                            : card.modelData.url
                         color: Theme.textMuted
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
                     Text {
                         Layout.fillWidth: true
-                        text: "DICOMweb  ·  " + (card.modelData.auth === "none" ? qsTrId("text.0756") : card.modelData.auth === "basic" ? "Basic" : "Bearer") + (card.modelData.needsSecret ? qsTrId("text.0757") : "")
+                        text: card.modelData.protocol === "dimse"
+                            ? "DIMSE · " + card.modelData.calling_ae + " ← " + card.modelData.listen_host + ":" + card.modelData.listen_port
+                            : "DICOMweb  ·  " + (card.modelData.auth === "none" ? qsTrId("text.0756") : card.modelData.auth === "basic" ? "Basic" : "Bearer") + (card.modelData.needsSecret ? qsTrId("text.0757") : "")
                         color: card.modelData.needsSecret ? Theme.warningColor : Theme.textSubtle
                         font.pixelSize: 11
                         wrapMode: Text.Wrap

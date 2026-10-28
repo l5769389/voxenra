@@ -25,6 +25,7 @@ def importing_app(qt_app, tmp_path, monkeypatch):
     class Client:
         def __init__(self, profile, cancel):
             self.cancel = cancel
+            self.profile = profile
 
         def instance_uids(self, study, uid):
             entered.set()
@@ -42,7 +43,7 @@ def importing_app(qt_app, tmp_path, monkeypatch):
         def studies(self, filters, offset, limit):
             return [{'uid': records[0].study_instance_uid}]
 
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.pacs_controller.DicomWebClient', Client)
+    monkeypatch.setattr('qt_dicom_viewer.pacs.transport.DicomWebClient', Client)
     app = AppController(DicomImageProvider(), settings_path=False,
                         pacs_config_path=tmp_path / 'pacs.json', pacs_import_root=tmp_path / 'downloads')
     pacs = app.pacsController
