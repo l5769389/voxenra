@@ -308,55 +308,58 @@ Basic.TabBar {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     spacing: 0
-                    Item {
-                        id: titleRow
+                    Text {
+                        id: descriptionLabel
+                        objectName: "tabPrimary-" + tabButton.modelData.tabId
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        implicitHeight: Math.max(patientLabel.implicitHeight, descriptionLabel.implicitHeight)
+                        text: tabButton.modelData.tabPrimary ?? tabButton.modelData.tabLabel
+                        textFormat: Text.PlainText
+                        color: tabButton.checked ? Theme.textPrimary : Theme.textMuted
+                        font.pixelSize: 12
+                        font.weight: tabButton.checked ? Font.DemiBold : Font.Normal
+                        elide: Text.ElideRight
+                    }
+                    Item {
+                        id: contextRow
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        visible: patientLabel.text !== "" || contextLabel.text !== ""
+                        implicitHeight: Math.max(patientLabel.implicitHeight, contextLabel.implicitHeight)
                         Text {
                             id: patientLabel
                             objectName: "tabPatient-" + tabButton.modelData.tabId
                             visible: text !== ""
-                            width: visible ? Math.min(implicitWidth, titleRow.width * 0.4) : 0
+                            width: !visible ? 0 : contextLabel.text === "" ? contextRow.width
+                                : Math.min(implicitWidth, contextRow.width * 0.4,
+                                    Math.max(0, contextRow.width - contextLabel.implicitWidth - contextSeparator.implicitWidth))
                             text: tabButton.modelData.tabPatient ?? ""
                             textFormat: Text.PlainText
-                            color: tabButton.checked ? Theme.textPrimary : Theme.textMuted
-                            font.pixelSize: 12
-                            font.weight: tabButton.checked ? Font.DemiBold : Font.Normal
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            id: titleSeparator
-                            x: patientLabel.width + 3
-                            visible: patientLabel.visible
-                            text: "·"
                             color: Theme.textMuted
-                            font.pixelSize: 12
-                        }
-                        Text {
-                            id: descriptionLabel
-                            objectName: "tabPrimary-" + tabButton.modelData.tabId
-                            x: patientLabel.visible ? titleSeparator.x + titleSeparator.width + 3 : 0
-                            width: Math.max(0, titleRow.width - x)
-                            text: tabButton.modelData.tabDescription ?? tabButton.modelData.tabLabel
-                            textFormat: Text.PlainText
-                            color: tabButton.checked ? Theme.textPrimary : Theme.textMuted
-                            font.pixelSize: 12
-                            font.weight: tabButton.checked ? Font.DemiBold : Font.Normal
+                            font.pixelSize: 10
                             elide: Text.ElideRight
                         }
-                    }
-                    Text {
-                        objectName: "tabSecondary-" + tabButton.modelData.tabId
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        visible: text !== ""
-                        text: tabButton.modelData.tabSecondary ?? ""
-                        textFormat: Text.PlainText
-                        color: tabButton.checked ? Theme.textPrimary : Theme.textMuted
-                        font.pixelSize: 10
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
+                        Text {
+                            id: contextSeparator
+                            x: patientLabel.width
+                            visible: patientLabel.width > 0 && contextLabel.text !== ""
+                            width: visible ? implicitWidth : 0
+                            text: " · "
+                            color: Theme.textMuted
+                            font.pixelSize: 10
+                        }
+                        Text {
+                            id: contextLabel
+                            objectName: "tabSecondary-" + tabButton.modelData.tabId
+                            x: patientLabel.width + contextSeparator.width
+                            width: Math.max(0, contextRow.width - x)
+                            visible: text !== ""
+                            text: tabButton.modelData.tabSecondary ?? ""
+                            textFormat: Text.PlainText
+                            color: Theme.textMuted
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
+                        }
                     }
                 }
 

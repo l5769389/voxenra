@@ -44,7 +44,8 @@ def test_tabs_derive_full_source_identity_without_changing_keys(identity_app):
     for row, record, tab in zip(rows, records, tabs):
         assert record.patient_name in row['tabLabel']
         assert record.series_description in row['tabLabel']
-        assert record.patient_name in row['tabPrimary'] and record.series_description in row['tabPrimary']
+        assert row['tabPrimary'] == record.series_description
+        assert row['tabPatient'] == record.patient_name
         assert 'Series 7' in row['tabSecondary']
         assert record.series_description in row['tabTooltip']
         assert record.patient_id in row['tabTooltip']
@@ -62,8 +63,9 @@ def test_missing_values_and_duplicate_identity_have_stable_source_distinction(id
     tabs = open_tabs(app, records)
     rows = app.workspaceController.tabs
     assert rows[0]['tabLabel'] != rows[1]['tabLabel']
-    assert '[No study date]' in rows[0]['tabLabel']
-    assert '[No series number]' in rows[0]['tabLabel']
+    assert '[No study date]' not in rows[0]['tabLabel']
+    assert '[No series number]' not in rows[0]['tabLabel']
+    assert rows[0]['tabSecondary'] == ''
     assert '[No description]' in rows[0]['tabLabel']
     assert '[No study date]' in rows[0]['tabTooltip']
     before = {row['tabId']: row for row in rows}
@@ -73,6 +75,25 @@ def test_missing_values_and_duplicate_identity_have_stable_source_distinction(id
     app.workspaceController.closeTab(tabs[1].tab_config.tab_id)
     assert app.workspaceController.tabs[0] == before[tabs[0].tab_config.tab_id]
 
+
+
+def test_tab_without_patient_date_or_number_has_no_placeholder_second_row(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    app.languageController.selectLanguage('en-US')
+    record = replace(records[0], patient_name='', study_date='', series_number=None)
+    app._series_catalog.replace(DicomFolderScanSnapshot(Path('.'), 3, 3, 0, [record]))
+    tab = open_tabs(app, [record])[0]
+    row = app.workspaceController.tabs[0]
+    assert row['tabPatient'] == row['tabSecondary'] == ''
+    assert row['tabLabel'] == record.series_description
+    assert '[No study date]' in row['tabTooltip']
+    assert '[No series number]' in row['tabTooltip']
+    key = tab.tab_config.tab_id
+    assert find(window, 'tabPrimary-' + key).isVisible()
+    for name in ('tabPatient-', 'tabSecondary-'):
+        label = next(item for item in descendants(window.contentItem()) if item.objectName() == name + key)
+        assert not label.isVisible()
+    assert not warnings, warnings
 
 def test_comparison_lists_each_source_and_privacy_hides_all_new_identity(identity_app):
     app, records = identity_app
@@ -163,6 +184,8 @@ def test_visible_tab_dates_full_tooltip_detach_and_privacy(sidebar_scene):
         patient = find(window, 'tabPatient-' + key)
         assert patient.property('text') == records[0].patient_name
         assert patient.width() > 30
+        assert patient.mapToScene(QPointF()).y() > label.mapToScene(QPointF()).y()
+        assert label.width() > patient.width() + secondary.width()
         button = find(window, 'workspaceTab-' + key)
         QTest.mouseMove(window, button.mapToScene(QPointF(40, 15)).toPoint())
         wait_until(lambda: button.findChild(QObject, 'tabTooltip-' + key).property('visible'))
@@ -220,7 +243,8 @@ def test_invalid_study_date_is_not_presented_as_a_calendar_date(identity_app, ra
     app._series_catalog.replace(DicomFolderScanSnapshot(Path('.'), 3, 3, 0, [record]))
     tab = open_tabs(app, [record])[0]
     row = app.workspaceController.tabs[0]
-    assert '[Invalid study date]' in row['tabSecondary']
+    assert '[Invalid study date]' not in row['tabSecondary']
+    assert raw not in row['tabSecondary']
     assert raw in row['tabTooltip']
     assert tab.activeViewport.overlayInfo['studyDate'] == '--'
 

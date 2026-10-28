@@ -58,7 +58,7 @@ def tab_presentation(tab, *, sources=(), hide_identity=False):
     if hide_identity:
         hidden = _msg('reading.hiddenIdentity')
         return dict(row, tabLabel=hidden, tabPrimary=hidden, tabSecondary='', tabTooltip=hidden, tabPatient='', tabDescription=hidden)
-    primary, secondary, details, patients, descriptions = [], [], [], [], []
+    primary, secondary, details, patients = [], [], [], []
     for meta in metas:
         patient = meta.patient_name or _msg('text.0258')
         description = meta.series_description or _msg('text.0259')
@@ -69,19 +69,25 @@ def tab_presentation(tab, *, sources=(), hide_identity=False):
                       for other in sources if _visible_identity(other) == _visible_identity(meta)}
         if len(duplicates) > 1:
             description = _join(('[' + _source_code(meta.series_uid) + ']', description))
-        title = _join((patient, description))
-        patients.append(patient)
-        descriptions.append(description)
-        primary.append(title)
-        secondary.append(_join((study_date, number)))
+        if meta.patient_name.strip():
+            patients.append(meta.patient_name)
+        primary.append(description)
+        context = []
+        if format_study_date(meta.study_date):
+            context.append(format_study_date(meta.study_date))
+        if meta.series_number is not None:
+            context.append(number)
+        if context:
+            secondary.append(_join(context))
         details.append(_msg('reading.sourceDetails', patient=patient, patientId=meta.patient_id or '—', time=format_study_time(meta.study_time) or '—',
                             date=format_study_date(meta.study_date) or meta.study_date or study_date, study=meta.study_description or _msg('text.0259'),
                             number=meta.series_number if meta.series_number is not None else _msg('reading.missingNumber'),
                             description=meta.series_description or _msg('text.0259'), source=_source_code(meta.series_uid)))
-    return dict(row, tabLabel=_join((_join(primary, ' ↔ '), _join(secondary, ' ↔ '))),
+    label_parts = [_join(values, ' ↔ ') for values in (primary, patients, secondary) if values]
+    return dict(row, tabLabel=_join(label_parts),
                 tabPrimary=_join(primary, ' ↔ '), tabSecondary=_join(secondary, ' ↔ '),
                 tabTooltip=_join(details, '\n\n'), tabPatient=_join(patients, ' ↔ '),
-                tabDescription=_join(descriptions, ' ↔ '))
+                tabDescription=_join(primary, ' ↔ '))
 
 
 def tab_hides_identity(tab, *, default=False):

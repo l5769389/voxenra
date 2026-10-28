@@ -68,7 +68,7 @@ Switch each viewport between original slices and axial/coronal/sagittal reconstr
 
 ### Identify images, favorite presets, and focus on viewing
 
-Tabs show study dates, series numbers, and original series descriptions, with full source details on hover. Identity-hiding settings also cover the new reading labels. Window values consistently use **WW → WL**. Star CT presets to place favorites first; starring does not apply window values, and the preset list scrolls independently.
+Tabs prioritize the original series description on the first line, with patient and available study information below. Missing fields are omitted; hover for full source details. Identity-hiding settings also cover the new reading labels. Window values consistently use **WW → WL**. Star CT presets to place favorites first; starring does not apply window values, and the preset list scrolls independently.
 
 ![CT preset favorites and the independently scrolling list](docs/screenshots/en/55-window-favorites.png)
 
