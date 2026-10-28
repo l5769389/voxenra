@@ -51,7 +51,7 @@
       },
       {
         "title": "NRRD / Slicer 交换",
-        "body": "在原始 DICOM 的 MPR / 4D 中选择 **导出 → 导出 NRRD / Slicer**，输出当前时相体数据 source.nrrd 和分割 segmentation.seg.nrrd（含隐藏项和重叠区域）。在 Slicer 中分别加载，编辑并保存 .seg.nrrd；回到原 DICOM 的同一时相，通过右侧 **导入 → 导入分割 · SEG / NRRD** 导入。也支持三维整数标签 NRRD。文件须使用毫米单位及 LPS/RAS 坐标；不一致网格会拒绝导入，不自动重采样。NRRD 通常没有可靠的患者/序列身份信息，请确认参考影像和时相。",
+        "body": "在原始 DICOM 的 MPR / 4D 中选择 **导出 → 导出 NRRD / Slicer**，输出当前时相体数据 source.nrrd 和分割 segmentation.seg.nrrd（含隐藏项和重叠区域）。在 Slicer 中分别加载，编辑并保存 .seg.nrrd；回到原 DICOM 的同一时相，通过右侧 **导入分割 → 导入分割 · SEG / NRRD** 导入。也支持三维整数标签 NRRD。文件须使用毫米单位及 LPS/RAS 坐标；不一致网格会拒绝导入，不自动重采样。NRRD 通常没有可靠的患者/序列身份信息，请确认参考影像和时相。",
         "messageId": "manual.segmentation.section8"
       },
       {

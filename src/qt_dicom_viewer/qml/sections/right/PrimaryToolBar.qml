@@ -15,7 +15,7 @@ Rectangle {
     property var tabController: null
     readonly property bool showToolLabels: toolController?.settingsController?.values.appearance.toolLabels ?? false
     readonly property real toolHeight: showToolLabels ? 54 : 36
-    readonly property var tools: (toolController?.tools ?? []).filter(t =>
+    readonly property var tools: (toolController?.orderedToolbarTools ?? []).filter(t =>
         t.toolType !== "service" || !viewportController?.workspaceTab?.twoDLayout || viewportController.viewportType === "stack")
     // Resolve by explicit priority order; catalog insertion must not reshuffle these rows.
     function orderedTools(keys) {
@@ -23,8 +23,10 @@ Rectangle {
     }
     readonly property var commonTools: orderedTools(toolController?.toolbarGroups?.common)
     readonly property var featureTools: orderedTools(toolController?.toolbarGroups?.primary)
-    readonly property var extraTools: tools.filter(t => !commonTools.includes(t) && !featureTools.includes(t) && !["import", "export", "reset"].includes(t.toolType))
-    readonly property var documentTools: tools.filter(t => ["import", "export", "reset"].includes(t.toolType))
+    readonly property var moreTools: orderedTools(toolController?.toolbarGroups?.more)
+    readonly property bool customized: toolController?.toolbarGroups?.customized ?? false
+    readonly property var extraTools: customized ? moreTools : moreTools.filter(t => !["import", "export", "reset"].includes(t.toolType))
+    readonly property var documentTools: customized ? [] : moreTools.filter(t => ["import", "export", "reset"].includes(t.toolType))
     property bool moreExpanded: false
     property string feedbackTool: ""
     signal toolTriggered(var toolDefinition)
@@ -130,7 +132,7 @@ Rectangle {
             visible: toolBar.moreExpanded
             Layout.fillWidth: true
             spacing: 4
-            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.dividerColor }
+            Rectangle { visible: toolBar.extraTools.length > 0; Layout.fillWidth: true; implicitHeight: 1; color: Theme.dividerColor }
             GridLayout {
                 Layout.fillWidth: true
                 columns: 3
@@ -146,8 +148,9 @@ Rectangle {
                     }
                 }
             }
-            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.dividerColor }
+            Rectangle { visible: toolBar.documentTools.length > 0; Layout.fillWidth: true; implicitHeight: 1; color: Theme.dividerColor }
             RowLayout {
+                visible: toolBar.documentTools.length > 0
                 Layout.fillWidth: true
                 Repeater {
                     model: toolBar.documentTools

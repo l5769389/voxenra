@@ -32,6 +32,11 @@ ApplicationWindow {
             && !window.documentController?.busy && window.activeFocusItem?.checkable === undefined
     }
     readonly property bool hasTabs: workspaceController.tabs.length > 0
+    // Temporary presentation state belongs to this window, not the document/preferences.
+    property bool viewportMaximized: false
+    readonly property bool canMaximizeViewport: ["2d", "compare2d", "comparempr", "mpr", "3d", "montage", "4d", "petctfusion"].includes(workspaceController.activeTabType)
+    readonly property bool maximizedReadingArea: viewportMaximized && canMaximizeViewport
+    onHasTabsChanged: if (!hasTabs) viewportMaximized = false
     readonly property var viewportController:
         workspaceController.activeViewport
     readonly property var currentTabAllViewports: workspaceController.currentTabAllViewports
@@ -66,6 +71,14 @@ ApplicationWindow {
         context: Qt.WindowShortcut
         sequence: window.shortcuts?.fixedSequence("fullscreen") ?? ""
         onActivated: window.toggleFullScreen()
+    }
+    Shortcut {
+        objectName: "maximizeViewportShortcut"
+        enabled: window.standardShortcutsAllowed && !window.editingText
+            && window.canMaximizeViewport && !window.documentController?.busy
+        context: Qt.WindowShortcut
+        sequence: window.shortcuts?.fixedSequence("maximizeViewport") ?? ""
+        onActivated: window.viewportMaximized = !window.viewportMaximized
     }
     Component.onCompleted: {
         if (typeof appController.configureNativeWindow === "function")
@@ -276,7 +289,7 @@ ApplicationWindow {
 
         Sections.SidebarContainer {
             id: seriesSidebar
-            visible: !window.detached
+            visible: !window.detached && !window.maximizedReadingArea
             compactRequired: window.compactSidebarRequired
             availableExpandedWidth: workspaceRow.width + 20 - workspaceRow.horizontalOverhead
                 - window.minimumReadingWidth - (rightPanel.visible ? (rightPanel.collapsed ? 44 : 240) : 0)
@@ -311,6 +324,9 @@ ApplicationWindow {
             settingsController: appController.settingsController ?? null
             currentTabAllViewports: window.currentTabAllViewports
             viewportController: window.viewportController
+            canMaximizeViewport: window.canMaximizeViewport
+            viewportMaximized: window.maximizedReadingArea
+            onToggleViewportMaximize: window.viewportMaximized = !window.viewportMaximized
         }
 
         Components.WidthResizeHandle {
@@ -344,7 +360,8 @@ ApplicationWindow {
             onManualRequested: chapter => window.workspaceController.openManual(chapter)
             exportController: window.exportController
             exportItem: centerView.exportItem
-            visible: window.hasTabs && ["tag", "settings", "pacs", "manual"].indexOf(window.workspaceController.activeTabType) < 0
+            visible: window.hasTabs && !window.maximizedReadingArea
+                && ["tag", "settings", "pacs", "manual"].indexOf(window.workspaceController.activeTabType) < 0
             Layout.minimumWidth: visible ? actualWidth : 0
             Layout.preferredWidth: visible ? actualWidth : 0
             Layout.maximumWidth: visible ? actualWidth : 0

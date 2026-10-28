@@ -9,6 +9,7 @@ from qt_dicom_viewer.model import (
     ViewportState,
 )
 from qt_dicom_viewer.utils.utils import _display_text, _display_number
+from qt_dicom_viewer.ui.reading_identity import format_study_date
 
 
 _PLANE_NAMES_BY_AXIS = ("Sagittal", "Coronal", "Axial")
@@ -106,6 +107,7 @@ class OverlayPresenter:
             "patientName": _display_text(series.patient_name),
             "patientId": _display_text(series.patient_id),
             "studyDescription": _display_text(series.study_description),
+            "studyDate": format_study_date(series.study_date) or "--",
             "seriesDescription": _display_text(series.series_description),
             "modality": _display_text(series.modality),
             "manufacturer": _display_text(

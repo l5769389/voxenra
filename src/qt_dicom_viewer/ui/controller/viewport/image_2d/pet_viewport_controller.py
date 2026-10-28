@@ -168,6 +168,9 @@ class LinkedPetViewport(MprViewportController):
     @_TextProperty('QVariantMap', notify=MprViewportController._i18n_overlayInfo, notify_name='_i18n_overlayInfo', source_notify='linkedOverlayChanged')
     def overlayInfo(self):
         info = Image2DViewportController.overlayInfo.fget(self)
+        from qt_dicom_viewer.ui.reading_identity import format_study_date
+        info.update(ctStudyDate=format_study_date(self.owner.ct_series.study_date) or "--" if self.owner.ct_series else "",
+                    petStudyDate=format_study_date(self.owner.pet_series.study_date) or "--")
         info.update(viewRole=self.viewportRole,
                     fusionWarning=self.owner.warning,
                     ctSeries=self.owner.ct_series.series_description if self.owner.ct_series else "",

@@ -147,11 +147,16 @@ def test_numeric_window_apply_template_validation_persistence_and_delete(display
     _click(view, _find(root, "quickSaveWindowTemplate"))
     assert "重复" in _find(root, "windowInputError").property("text")
     assert len(settings.values["window"]["custom"]) == 1
-    # Scroll the shared outer area to the last template before clicking delete.
-    flick = _find(root, "toolDetailFlickable")
-    flick.setProperty("contentY", max(0, flick.property("contentHeight") - flick.height()))
+    # Templates have their own scroll area; the editing controls stay fixed.
+    flick = _find(root, "windowPresetList")
+    fixed_position = width.mapToScene(QPointF())
+    flick.setProperty("contentY", flick.property("originY") + max(0, flick.property("contentHeight") - flick.height()))
     QTest.qWait(40)
-    _click(view, _find(root, "quickDeleteWindowTemplate-" + identifier))
+    delete_button = _find(root, "quickDeleteWindowTemplate-" + identifier)
+    point = delete_button.mapToItem(flick, QPointF())
+    assert 0 <= point.y() and point.y() + delete_button.height() <= flick.height()
+    assert width.mapToScene(QPointF()) == fixed_position
+    _click(view, delete_button)
     assert settings.values["window"]["custom"] == []
     assert controller.windowWidth == 999.8 and controller.windowCenter == -123.2
     assert SettingsController(path=settings._path).values["window"]["custom"] == []

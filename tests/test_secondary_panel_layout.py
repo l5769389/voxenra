@@ -11,6 +11,46 @@ from test_four_d_qml import four_d_panel
 from test_pet_fusion import paired_series
 
 
+def scroll_content_extent(item, panel):
+    """Use the nearest scrolling content surface for vertical containment."""
+    child = item
+    while child.parentItem() is not None and child is not panel:
+        ancestor = child.parentItem()
+        height = ancestor.property('contentHeight')
+        if height is not None and ancestor.property('contentItem') == child:
+            width = ancestor.property('contentWidth')
+            # Vertical ListView leaves the unused content dimension at -1.
+            width = ancestor.width() if width is None or width < 0 else width
+            return child, width, height, ancestor.property('originY') or 0
+        child = ancestor
+    return panel, panel.width(), panel.height(), 0
+
+
+def check_preset_edges(panel, context):
+    for listing in descendants(panel):
+        if listing.objectName() != 'windowPresetList' or not listing.isVisible():
+            continue
+        model = listing.property('model')
+        if hasattr(model, 'toVariant'):
+            model = model.toVariant()
+        if not model:
+            continue
+        original = listing.property('contentY')
+        for index in (0, len(model) - 1):
+            offset = 0 if index == 0 else max(0, listing.property('contentHeight') - listing.height())
+            listing.setProperty('contentY', listing.property('originY') + offset)
+            name = 'windowPreset-' + model[index]['presetId']
+            def edge_item():
+                return next((i for i in descendants(listing) if i.objectName() == name), None)
+            wait_until(lambda: edge_item() is not None)
+            QTest.qWait(10)
+            item = edge_item()
+            pos = item.mapToItem(listing, QPointF())
+            assert -1 <= pos.y() and pos.y() + item.height() <= listing.height() + 1, (context, name, pos.y(), listing.height())
+        listing.setProperty('contentY', original)
+        QTest.qWait(10)
+
+
 def check_controls(root, context):
     details = [i for i in descendants(root) if i.isVisible()
                and i.metaObject().indexOfProperty('loadedPanel') >= 0]
@@ -19,12 +59,16 @@ def check_controls(root, context):
         content = detail.property('loadedPanel')
         if content is None:
             continue
+        check_preset_edges(content, context)
         for item in descendants(content):
             if not item.isVisible() or item.metaObject().indexOfProperty('checkable') < 0:
                 continue
             pos = item.mapToItem(content, QPointF())
             assert pos.x() >= -1 and pos.x() + item.width() <= content.width() + 1, (context, item.objectName(), pos.x(), item.width(), content.width())
-            assert pos.y() >= -1 and pos.y() + item.height() <= content.height() + 1, (context, item.objectName(), pos.y(), item.height(), content.height())
+            surface, width, height, origin = scroll_content_extent(item, content)
+            pos = item.mapToItem(surface, QPointF())
+            assert pos.x() >= -1 and pos.x() + item.width() <= width + 1, (context, item.objectName(), pos.x(), item.width(), width)
+            assert pos.y() >= origin - 1 and pos.y() + item.height() <= origin + height + 1, (context, item.objectName(), pos.y(), item.height(), height)
 
 
 @pytest.mark.parametrize('kind', ['2d', 'mpr'])

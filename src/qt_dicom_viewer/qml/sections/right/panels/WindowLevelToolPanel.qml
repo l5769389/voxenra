@@ -11,6 +11,7 @@ ColumnLayout {
     id: windowPanel
 
     required property var presets
+    property real maximumPanelHeight: Infinity
     property real currentCenter: NaN
     property real currentWidth: NaN
     property var settingsController: null
@@ -94,228 +95,256 @@ ColumnLayout {
     )
 
 
-    Components.PanelHeading {
-        objectName: "windowLevelHeading"
-        visible: windowPanel.description.length > 0
-        title: qsTrId("text.0285")
-        explanation: windowPanel.description
-    }
-
     ColumnLayout {
-        visible: windowPanel.allowEditing
+        id: fixedControls
         Layout.fillWidth: true
-        spacing: 8
-        RowLayout {
-            Layout.fillWidth: true
-            uniformCellSizes: true
-            spacing: 8
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Text { text: qsTrId("text.1088"); color: Theme.textMuted; font.pixelSize: 12 }
-                Components.AppTextField {
-                    id: widthInput
-                    objectName: windowPanel.widthObjectName
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    implicitWidth: 0
-                    Layout.minimumHeight: Theme.controlHeight
-                    Layout.maximumHeight: Theme.controlHeight
-                    Layout.preferredHeight: Theme.controlHeight
-                    enabled: windowPanel.ready
-                    Accessible.name: qsTrId("text.0780")
-                    selectByMouse: true
-                    Accessible.description: qsTrId("numeric.applyHint")
-                    onTextEdited: windowPanel.dirty = true
-                    onAccepted: windowPanel.applyInput()
-                    Keys.onEscapePressed: windowPanel.discardDraft()
-                }
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Text { text: qsTrId("text.1089"); color: Theme.textMuted; font.pixelSize: 12 }
-                Components.AppTextField {
-                    id: centerInput
-                    objectName: windowPanel.centerObjectName
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    implicitWidth: 0
-                    Layout.minimumHeight: Theme.controlHeight
-                    Layout.maximumHeight: Theme.controlHeight
-                    Layout.preferredHeight: Theme.controlHeight
-                    enabled: windowPanel.ready
-                    Accessible.name: qsTrId("text.0781")
-                    selectByMouse: true
-                    Accessible.description: qsTrId("numeric.applyHint")
-                    onTextEdited: windowPanel.dirty = true
-                    onAccepted: windowPanel.applyInput()
-                    Keys.onEscapePressed: windowPanel.discardDraft()
-                }
-            }
+        spacing: windowPanel.spacing
+
+        Components.PanelHeading {
+            objectName: "windowLevelHeading"
+            visible: windowPanel.description.length > 0
+            title: qsTrId("text.0285")
+            explanation: windowPanel.description
         }
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("numeric.applyHint")
-            color: Theme.textMuted
-            font.pixelSize: 11
-            wrapMode: Text.Wrap
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-            Components.AppButton {
-                objectName: "applyWindowValues"
-                normalColor: Theme.primaryButtonBackground
-                hoverColor: Theme.primaryButtonHover
-                pressedColor: Theme.primaryButtonPressed
-                disabledColor: Theme.primaryButtonDisabled
-                textColor: Theme.textOnPrimary
-                fontWeight: Font.DemiBold
-                text: qsTrId("text.1090")
-                compact: true
-                Layout.fillWidth: true
-                enabled: windowPanel.ready
-                onClicked: windowPanel.applyInput()
-            }
-            Components.AppButton {
-                objectName: "beginSaveWindowTemplate"
-                visible: windowPanel.allowTemplates
-                normalColor: "transparent"
-                baseBorderWidth: 1
-                baseBorderColor: Theme.controlBorder
-                textColor: Theme.textSecondary
-                text: qsTrId("text.1091")
-                compact: true
-                Layout.fillWidth: true
-                enabled: windowPanel.ready && !!windowPanel.settingsController
-                onClicked: {
-                    if (!windowPanel.values()) return
-                    windowPanel.namingTemplate = true
-                    templateName.forceActiveFocus()
-                }
-            }
-        }
+
         ColumnLayout {
-            visible: windowPanel.namingTemplate
+            visible: windowPanel.allowEditing
             Layout.fillWidth: true
-            Components.AppTextField {
-                id: templateName
-                objectName: "quickWindowTemplateName"
+            spacing: 8
+            RowLayout {
                 Layout.fillWidth: true
-                placeholderText: qsTrId("text.0786")
-                maximumLength: 40
-                onAccepted: windowPanel.saveTemplate()
+                uniformCellSizes: true
+                spacing: 8
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Text { text: qsTrId("text.1088"); color: Theme.textMuted; font.pixelSize: 12 }
+                    Components.AppTextField {
+                        id: widthInput
+                        objectName: windowPanel.widthObjectName
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        implicitWidth: 0
+                        Layout.minimumHeight: Theme.controlHeight
+                        Layout.maximumHeight: Theme.controlHeight
+                        Layout.preferredHeight: Theme.controlHeight
+                        enabled: windowPanel.ready
+                        Accessible.name: qsTrId("text.0780")
+                        selectByMouse: true
+                        Accessible.description: qsTrId("numeric.applyHint")
+                        onTextEdited: windowPanel.dirty = true
+                        onAccepted: windowPanel.applyInput()
+                        Keys.onEscapePressed: windowPanel.discardDraft()
+                    }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Text { text: qsTrId("text.1089"); color: Theme.textMuted; font.pixelSize: 12 }
+                    Components.AppTextField {
+                        id: centerInput
+                        objectName: windowPanel.centerObjectName
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        implicitWidth: 0
+                        Layout.minimumHeight: Theme.controlHeight
+                        Layout.maximumHeight: Theme.controlHeight
+                        Layout.preferredHeight: Theme.controlHeight
+                        enabled: windowPanel.ready
+                        Accessible.name: qsTrId("text.0781")
+                        selectByMouse: true
+                        Accessible.description: qsTrId("numeric.applyHint")
+                        onTextEdited: windowPanel.dirty = true
+                        onAccepted: windowPanel.applyInput()
+                        Keys.onEscapePressed: windowPanel.discardDraft()
+                    }
+                }
+            }
+            Text {
+                Layout.fillWidth: true
+                text: qsTrId("numeric.applyHint")
+                color: Theme.textMuted
+                font.pixelSize: 11
+                wrapMode: Text.Wrap
             }
             RowLayout {
                 Layout.fillWidth: true
+                spacing: 6
                 Components.AppButton {
-                    objectName: "cancelSaveWindowTemplate"
-                    text: qsTrId("text.0539"); compact: true; Layout.fillWidth: true
-                    onClicked: { windowPanel.namingTemplate = false; windowPanel.errorText = "" }
+                    objectName: "applyWindowValues"
+                    normalColor: Theme.primaryButtonBackground
+                    hoverColor: Theme.primaryButtonHover
+                    pressedColor: Theme.primaryButtonPressed
+                    disabledColor: Theme.primaryButtonDisabled
+                    textColor: Theme.textOnPrimary
+                    fontWeight: Font.DemiBold
+                    text: qsTrId("text.1090")
+                    compact: true
+                    Layout.fillWidth: true
+                    enabled: windowPanel.ready
+                    onClicked: windowPanel.applyInput()
                 }
                 Components.AppButton {
-                    objectName: "quickSaveWindowTemplate"
-                    actionRole: "primary"
-                    text: qsTrId("text.1092"); compact: true; Layout.fillWidth: true
-                    onClicked: windowPanel.saveTemplate()
+                    objectName: "beginSaveWindowTemplate"
+                    visible: windowPanel.allowTemplates
+                    normalColor: "transparent"
+                    baseBorderWidth: 1
+                    baseBorderColor: Theme.controlBorder
+                    textColor: Theme.textSecondary
+                    text: qsTrId("text.1091")
+                    compact: true
+                    Layout.fillWidth: true
+                    enabled: windowPanel.ready && !!windowPanel.settingsController
+                    onClicked: {
+                        if (!windowPanel.values()) return
+                        windowPanel.namingTemplate = true
+                        templateName.forceActiveFocus()
+                    }
                 }
             }
-        }
-        Text {
-            objectName: "windowInputError"
-            Layout.fillWidth: true
-            visible: text !== ""
-            text: windowPanel.errorText
-            color: Theme.dangerColor
-            font.pixelSize: 11
-            wrapMode: Text.Wrap
-        }
-    }
-
-    Components.AppButton {
-        objectName: "autoWindowButton"
-        Layout.fillWidth: true
-        visible: windowPanel.supportsAutoWindow
-        enabled: windowPanel.ready
-        compact: true
-        text: qsTrId("mr.autoWindow")
-        onClicked: {
-            windowPanel.dirty = false
-            windowPanel.autoWindowRequested()
-            windowPanel.syncInputs()
-        }
-    }
-
-    Components.AppButton {
-        objectName: "invertWindowButton"
-        Layout.fillWidth: true
-        visible: windowPanel.supportsInversion
-        enabled: windowPanel.ready
-        compact: true
-        iconName: "invert"
-        text: qsTrId("text.1093")
-        checked: windowPanel.inverted
-        normalColor: "transparent"
-        baseBorderWidth: 1
-        baseBorderColor: Theme.controlBorder
-        Accessible.name: qsTrId("text.1093")
-        Accessible.description: qsTrId("text.1094")
-        onClicked: windowPanel.inversionRequested()
-    }
-
-    Rectangle {
-        visible: windowPanel.presets.length > 0
-        Layout.fillWidth: true
-        Layout.preferredHeight: 28
-        Layout.maximumHeight: 28
-        color: Theme.secondarySoft
-        radius: 4
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            spacing: 8
-
-            Text {
-                font.pixelSize: Theme.bodyFontSize
+            ColumnLayout {
+                visible: windowPanel.namingTemplate
                 Layout.fillWidth: true
-                text: qsTrId("text.1095")
-                color: Theme.textMuted
+                Components.AppTextField {
+                    id: templateName
+                    objectName: "quickWindowTemplateName"
+                    Layout.fillWidth: true
+                    placeholderText: qsTrId("text.0786")
+                    maximumLength: 40
+                    onAccepted: windowPanel.saveTemplate()
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Components.AppButton {
+                        objectName: "cancelSaveWindowTemplate"
+                        text: qsTrId("text.0539"); compact: true; Layout.fillWidth: true
+                        onClicked: { windowPanel.namingTemplate = false; windowPanel.errorText = "" }
+                    }
+                    Components.AppButton {
+                        objectName: "quickSaveWindowTemplate"
+                        actionRole: "primary"
+                        text: qsTrId("text.1092"); compact: true; Layout.fillWidth: true
+                        onClicked: windowPanel.saveTemplate()
+                    }
+                }
             }
-
             Text {
-                font.pixelSize: Theme.bodyFontSize
-                Layout.preferredWidth: 44
-                text: "WL"
-                color: Theme.textMuted
-                horizontalAlignment: Text.AlignRight
+                objectName: "windowInputError"
+                Layout.fillWidth: true
+                visible: text !== ""
+                text: windowPanel.errorText
+                color: Theme.dangerColor
+                font.pixelSize: 11
+                wrapMode: Text.Wrap
             }
+        }
 
-            Text {
-                font.pixelSize: Theme.bodyFontSize
-                Layout.preferredWidth: 44
-                text: "WW"
-                color: Theme.textMuted
-                horizontalAlignment: Text.AlignRight
+        Components.AppButton {
+            objectName: "autoWindowButton"
+            Layout.fillWidth: true
+            visible: windowPanel.supportsAutoWindow
+            enabled: windowPanel.ready
+            compact: true
+            text: qsTrId("mr.autoWindow")
+            onClicked: {
+                windowPanel.dirty = false
+                windowPanel.autoWindowRequested()
+                windowPanel.syncInputs()
             }
-            Item { Layout.preferredWidth: 22; visible: windowPanel.allowEditing }
+        }
+
+        Components.AppButton {
+            objectName: "invertWindowButton"
+            Layout.fillWidth: true
+            visible: windowPanel.supportsInversion
+            enabled: windowPanel.ready
+            compact: true
+            iconName: "invert"
+            text: qsTrId("text.1093")
+            checked: windowPanel.inverted
+            normalColor: "transparent"
+            baseBorderWidth: 1
+            baseBorderColor: Theme.controlBorder
+            Accessible.name: qsTrId("text.1093")
+            Accessible.description: qsTrId("text.1094")
+            onClicked: windowPanel.inversionRequested()
+        }
+
+        Rectangle {
+            visible: windowPanel.presets.length > 0
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            Layout.maximumHeight: 28
+            color: Theme.secondarySoft
+            radius: 4
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 8
+
+                Item { Layout.preferredWidth: 22; visible: !!windowPanel.settingsController && windowPanel.allowTemplates }
+
+                Text {
+                    font.pixelSize: Theme.bodyFontSize
+                    Layout.fillWidth: true
+                    text: qsTrId("text.1095")
+                    color: Theme.textMuted
+                }
+
+                Text {
+                    font.pixelSize: Theme.bodyFontSize
+                    Layout.preferredWidth: 44
+                    text: "WW"
+                    color: Theme.textMuted
+                    horizontalAlignment: Text.AlignRight
+                }
+
+                Text {
+                    font.pixelSize: Theme.bodyFontSize
+                    Layout.preferredWidth: 44
+                    text: "WL"
+                    color: Theme.textMuted
+                    horizontalAlignment: Text.AlignRight
+                }
+                Item { Layout.preferredWidth: 22; visible: windowPanel.allowEditing }
+            }
         }
     }
 
     ListView {
         id: presetList
+        objectName: "windowPresetList"
         visible: windowPanel.presets.length > 0
 
         Layout.fillWidth: true
-        Layout.preferredHeight: contentHeight
-        Layout.maximumHeight: contentHeight
-        implicitHeight: contentHeight
+        Layout.preferredHeight: Math.min(contentHeight,
+            Math.max(36, windowPanel.maximumPanelHeight - fixedControls.implicitHeight - windowPanel.spacing))
+        Layout.maximumHeight: Layout.preferredHeight
+        implicitHeight: Layout.preferredHeight
         spacing: 4
         clip: true
-        interactive: false
+        // Cached offscreen delegates incubate asynchronously and can outlive
+        // this panel when the active tool changes. Create visible rows only.
+        cacheBuffer: 0
+        boundsBehavior: Flickable.StopAtBounds
+        boundsMovement: Flickable.StopAtBounds
+        flickableDirection: Flickable.VerticalFlick
         model: windowPanel.presets
+        WheelHandler {
+            target: null
+            onWheel: event => {
+                presetList.cancelFlick()
+                const delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y / 3
+                const start = presetList.originY
+                const end = start + Math.max(0, presetList.contentHeight - presetList.height)
+                presetList.contentY = Math.max(start, Math.min(end, presetList.contentY - delta))
+                event.accepted = true
+            }
+        }
+        Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
 
         delegate: Components.AppButton
         {
@@ -357,6 +386,27 @@ ColumnLayout {
                     anchors.fill: parent
                     spacing: 8
 
+                    Components.AppButton {
+                        objectName: "windowFavorite-" + presetItem.modelData.presetId
+                        visible: !!windowPanel.settingsController && windowPanel.allowTemplates
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 28
+                        minimumButtonWidth: 22
+                        compact: true
+                        text: checked ? "★" : "☆"
+                        textColor: checked ? Theme.primaryColor : Theme.textMuted
+                        normalColor: "transparent"
+                        checked: presetItem.modelData.favorite === true
+                        Accessible.checkable: true
+                        Accessible.checked: checked
+                        Accessible.name: qsTrId(checked ? "window.favoriteRemove" : "window.favoriteAdd") + " · " + presetItem.modelData.label
+                        onClicked: {
+                            windowPanel.errorText = windowPanel.settingsController.setWindowTemplateFavorite(presetItem.modelData.presetId, !presetItem.modelData.favorite)
+                                ? "" : windowPanel.settingsController.message
+                        }
+                        Components.AppToolTip { visible: parent.hovered; text: parent.Accessible.name }
+                    }
+
                     Text {
                         Layout.fillHeight: true
                         verticalAlignment: Text.AlignVCenter
@@ -372,7 +422,8 @@ ColumnLayout {
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: Theme.bodyFontSize
                         Layout.preferredWidth: 44
-                        text: presetItem.modelData.center
+                        objectName: "windowPresetWW-" + presetItem.modelData.presetId
+                        text: presetItem.modelData.width
                         color: Theme.textSecondary
                         horizontalAlignment: Text.AlignRight
                     }
@@ -382,7 +433,8 @@ ColumnLayout {
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: Theme.bodyFontSize
                         Layout.preferredWidth: 44
-                        text: presetItem.modelData.width
+                        objectName: "windowPresetWL-" + presetItem.modelData.presetId
+                        text: presetItem.modelData.center
                         color: Theme.textSecondary
                         horizontalAlignment: Text.AlignRight
                     }
@@ -414,6 +466,7 @@ ColumnLayout {
         }
     }
     Item {
+        visible: !presetList.visible
         Layout.fillHeight: true
     }
 }

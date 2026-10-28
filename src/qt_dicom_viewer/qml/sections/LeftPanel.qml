@@ -21,6 +21,9 @@ Rectangle {
     readonly property real navigationButtonHeight: Theme.toolbarButtonHeight + (showNavigationLabels ? 8 : 0)
     readonly property string activeSeriesUid: panelController.activeSeriesUid
     readonly property string activeSeriesModality: panelController.activeSeriesModality
+    readonly property var navigationOrder: ["file", "pacs"].concat(typeof appController !== "undefined"
+        ? (appController.settingsController?.navigationViewOrder ?? ["2d", "mpr", "3d", "montage", "4d", "tag", "fusion"])
+        : ["2d", "mpr", "3d", "montage", "4d", "tag", "fusion"])
     readonly property var navigationActions: [
         {label: qsTrId("text.0532"), shortLabel: qsTrId("sidebar.short.images"), type: "file", icon: "nav-load-file", supported: true},
         {label: qsTrId("text.0494"), shortLabel: "PACS", type: "pacs", icon: "nav-pacs", supported: true},
@@ -31,7 +34,7 @@ Rectangle {
         {label: qsTrId("text.0683"), shortLabel: "4D", type: "4d", icon: "nav-view-4d", supported: true},
         {label: qsTrId("text.0684"), shortLabel: qsTrId("sidebar.short.tag"), type: "tag", icon: "nav-view-tag", supported: true},
         {label: qsTrId("text.0685"), shortLabel: qsTrId("sidebar.short.fusion"), type: "fusion", icon: "fusion", supported: true}
-    ].filter(action => action.type === "file"
+    ].sort((a, b) => navigationOrder.indexOf(a.type) - navigationOrder.indexOf(b.type)).filter(action => action.type === "file"
         ? !leftPanel.pacsController || leftPanel.pacsController.localEnabled
         : action.type !== "pacs" || (leftPanel.pacsController && leftPanel.pacsController.pacsEnabled))
     readonly property var primaryActions: navigationActions.slice(0, 4)

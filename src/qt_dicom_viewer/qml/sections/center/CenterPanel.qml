@@ -16,6 +16,9 @@ Rectangle {
     property var settingsController: null
     required property var viewportController
     required property var currentTabAllViewports
+    property bool canMaximizeViewport: false
+    property bool viewportMaximized: false
+    signal toggleViewportMaximize()
     readonly property var windowManager: workspaceController.windowManager ?? null
 
     readonly property var opening: workspaceController.activeLoadState
@@ -49,6 +52,25 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 workspaceController: centerPanel.workspaceController
+            }
+            Components.AppButton {
+                id: maximizeButton
+                objectName: "toggleViewportMaximize"
+                visible: centerPanel.canMaximizeViewport
+                Layout.preferredWidth: 36
+                Layout.preferredHeight: 32
+                minimumButtonWidth: 32
+                compact: true
+                iconName: "fullscreen"
+                checked: centerPanel.viewportMaximized
+                Accessible.name: qsTrId(centerPanel.viewportMaximized ? "reading.restoreViewport" : "reading.maximizeViewport")
+                Accessible.description: Accessible.name + " (" + (typeof appController !== "undefined"
+                    ? appController.shortcutController?.fixedBindings.find(item => item.action === "maximizeViewport")?.display ?? "" : "") + ")"
+                onClicked: centerPanel.toggleViewportMaximize()
+                Components.AppToolTip {
+                    visible: maximizeButton.hovered || maximizeButton.visualFocus
+                    text: maximizeButton.Accessible.description
+                }
             }
             Components.AppButton {
                 objectName: "showMainWindow"

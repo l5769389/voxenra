@@ -1,5 +1,7 @@
 """Regression coverage for narrow panels and compact settings, using real QML."""
-from PySide6.QtCore import QPointF, Qt
+import time
+from PySide6.QtCore import QCoreApplication, QPoint, QPointF, Qt
+from PySide6.QtGui import QWheelEvent
 from PySide6.QtTest import QTest
 import pytest
 
@@ -7,6 +9,7 @@ from test_display_tools_qml import display_panel, _find, _click
 from test_measurement_qml import qt_app, _visual_children
 from test_pacs_qml import scene
 from test_tag_qml import find, click, descendants
+from test_dicom_tags import wait_until
 
 
 def inside_width(item, container):
@@ -45,16 +48,15 @@ def test_annotation_controls_fit_narrow_pane_and_long_text(display_panel, tmp_pa
 
 
 @pytest.mark.parametrize('category', ['sources', 'colormap', 'window', 'crosshair', 'corners', 'scale', 'measurement', 'roi', 'services'])
-def test_compact_settings_fit_and_navigation_is_fully_visible(scene, category, tmp_path):
+def test_compact_settings_fit_and_navigation_is_reachable(scene, category, tmp_path):
     window, app, warnings = scene
     window.resize(1280, 720)
     app.workspaceController.openSettings()
     QTest.qWait(60)
-    for key in ['sources', 'colormap', 'window', 'crosshair', 'corners', 'scale', 'measurement', 'roi', 'services']:
-        button = find(window, 'settingsCategory-' + key)
-        pos = button.mapToScene(QPointF())
-        assert 0 <= pos.y() and pos.y() + button.height() <= window.height() - 10
-    click(window, find(window, 'settingsCategory-' + category))
+    button = reveal_settings_category(window, category)
+    click(window, button)
+    assert app.settingsController.activeCategory == category
+    assert button.property('checked')
     QTest.qWait(60)
     page = find(window, 'settingsPage')
     for item in descendants(page):
@@ -62,7 +64,58 @@ def test_compact_settings_fit_and_navigation_is_fully_visible(scene, category, t
             continue
         if item.objectName().startswith(('setting-', 'crosshairPreview-', 'colorMap-', 'windowTemplate', 'saveWindow')):
             inside_width(item, page)
-    assert window.grabWindow().save(str(tmp_path / f'settings-{category}-1000.png'))
+    assert window.grabWindow().save(str(tmp_path / f'settings-{category}-1280.png'))
+    assert not warnings, warnings
+
+
+def reveal_settings_category(window, category):
+    """Reach a clipped category with real wheel input before clicking it."""
+    scroll = find(window, 'settingsCategoryScroll')
+    flick = scroll.property('contentItem')
+    button = find(window, 'settingsCategory-' + category)
+    for _ in range(30):
+        position = button.mapToItem(scroll, QPointF())
+        if 0 <= position.y() and position.y() + button.height() <= scroll.height():
+            wait_until(lambda: not flick.property('moving'))
+            position = button.mapToItem(scroll, QPointF())
+            if not 0 <= position.y() or position.y() + button.height() > scroll.height():
+                continue
+            inside_width(button, scroll)
+            return button
+        delta = 120 if position.y() < 0 else -120
+        point = scroll.mapToScene(QPointF(scroll.width() / 2, scroll.height() / 2))
+        event = QWheelEvent(point, QPointF(window.mapToGlobal(point.toPoint())),
+                            QPoint(), QPoint(0, delta), Qt.NoButton, Qt.NoModifier,
+                            Qt.NoScrollPhase, False)
+        event.setTimestamp(int(time.monotonic() * 1000))
+        QCoreApplication.sendEvent(window, event)
+        QTest.qWait(80)
+    pytest.fail(f'Settings category {category} remained clipped after scrolling')
+
+
+def test_compact_settings_all_categories_scroll_and_activate(scene):
+    window, app, warnings = scene
+    window.resize(1280, 720)
+    app.workspaceController.openSettings()
+    QTest.qWait(100)
+    # The navigation is intentionally scrollable. Every destination must become
+    # fully visible and respond to actual input, including entries at the end.
+    categories = ['appearance', 'toolbar', 'input', 'privacy', 'workspace', 'updates',
+                  'sources', 'export', 'colormap', 'window', 'crosshair', 'corners',
+                  'scale', 'measurement', 'roi', 'services', 'ai']
+    for index, category in enumerate(categories):
+        button = reveal_settings_category(window, category)
+        if index % 2:
+            button.forceActiveFocus(Qt.TabFocusReason)
+            QTest.keyClick(window, Qt.Key_Space)
+        else:
+            click(window, button)
+        wait_until(lambda: app.settingsController.activeCategory == category)
+        assert button.property('checked')
+    # Scrolling back to the first destination must work after visiting the last.
+    first = reveal_settings_category(window, 'appearance')
+    click(window, first)
+    assert app.settingsController.activeCategory == 'appearance'
     assert not warnings, warnings
 
 

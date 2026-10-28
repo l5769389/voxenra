@@ -1,5 +1,7 @@
 <RCC>
     <qresource>
+        <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarSettingsPage.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarOrderList.qml</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/copy.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/chevron-left.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/chevron-right.svg</file>

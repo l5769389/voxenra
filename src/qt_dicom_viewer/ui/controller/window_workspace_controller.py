@@ -18,8 +18,13 @@ class WindowWorkspaceController(QObject):
         self._window_id = window_id
         self._ids, self._mru, self._active = [], [], ""
         self._export = None
+        self.registry.tabPresentationChanged.connect(self._presentation_changed)
         self.registry.loadingStatesChanged.connect(self._loading_changed)
         self.registry.activeViewportChanged.connect(self._viewport_changed)
+
+    @Slot()
+    def _presentation_changed(self):
+        self._i18n_tabs.emit()
 
     @Slot()
     def _loading_changed(self):
@@ -50,7 +55,7 @@ class WindowWorkspaceController(QObject):
 
     @translated_property('QVariantList', notify=_i18n_tabs, notify_name='_i18n_tabs', source_notify='tabsChanged')
     def tabs(self):
-        return [dict(tabId=key, tabLabel=tab.tab_config.tab_label, tabType=tab.tab_config.tab_type)
+        return [self.registry.tab_presentation(tab)
                 for key in self._ids if (tab := self.registry._tab_dict.get(key)) is not None]
 
     @Property(str, notify=activeTabChanged)

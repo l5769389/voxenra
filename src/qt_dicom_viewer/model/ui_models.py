@@ -291,6 +291,8 @@ class SeriesDisplayMeta:
     supports_ct_analysis: bool = True
     is_color: bool = False
     color_calibrated: bool = False
+    study_date: str = ""
+    study_time: str = ""
 
 
 @dataclass(frozen=True, slots=True)

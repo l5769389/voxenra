@@ -14,6 +14,7 @@ Rectangle {
     property var tabController: null
     property var exportController: null
     property Item exportItem: null
+    property real availableHeight: Infinity
     signal manualRequested(string chapter)
     readonly property Item loadedPanel: contentLoader.item as Item
     readonly property string activeToolLabel:
@@ -223,6 +224,7 @@ Rectangle {
     Component {
         id: ctWindowComponent
         Panels.FusionCtWindowPanel {
+            maximumPanelHeight: Math.max(0, detailPanel.availableHeight - 24)
             controller: detailPanel.viewportController?.reconstructionController ?? null
         }
     }
@@ -249,6 +251,7 @@ Rectangle {
     Component {
         id: windowLevelComponent
         Panels.WindowLevelToolPanel {
+            maximumPanelHeight: Math.max(0, detailPanel.availableHeight - 24)
             readonly property bool volumeWindow: detailPanel.viewportController?.viewportType === "volume"
             description: volumeWindow ? qsTrId("volume.windowHint") : detailPanel.viewportController?.overlayInfo?.supplementalColor ? qsTrId("ct.paletteHint") : ""
             settingsController: detailPanel.toolController?.settingsController ?? null

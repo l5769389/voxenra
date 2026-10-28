@@ -12,6 +12,7 @@ Item {
     required property string buttonObjectName
     property bool showLabel: false
     property string shortLabel: label
+    property int labelMaximumLines: 1
     property bool actionEnabled: true
     property bool placeholder: false
     property bool checked: false
@@ -138,6 +139,8 @@ Item {
                         : action.resetAction && button.hovered ? Theme.resetActionColor
                         : button.checked ? Theme.textPrimary : Theme.textSecondary
                     font.pixelSize: Theme.toolbarLabelSize
+                    wrapMode: action.labelMaximumLines > 1 ? Text.Wrap : Text.NoWrap
+                    maximumLineCount: action.labelMaximumLines
                     elide: Text.ElideRight
                 }
             }

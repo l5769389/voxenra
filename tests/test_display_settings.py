@@ -93,13 +93,14 @@ def test_window_templates_crud_validation_and_enabled_list(tmp_path):
 def test_corner_fields_reorder_remove_and_capacity():
     settings = SettingsController(path=False)
     assert settings.addCornerField('topRight', 'zoom')
-    assert settings.moveCornerField('topRight', 2, -1)
-    assert settings.values['corners']['topRight'] == ['patientName', 'zoom', 'patientId']
+    assert settings.moveCornerField('topRight', 3, -1)
+    assert settings.values['corners']['topRight'] == ['patientName', 'patientId', 'zoom', 'studyDate']
     assert settings.removeCornerField('topRight', 0)
     assert not settings.addCornerField('topRight', 'zoom')
     assert not settings.setValue('corners', 'topLeft', ['missing'])
-    for field in ('manufacturer', 'modality', 'window', 'cursor', 'matrix', 'spacing'):
+    for field in ('manufacturer', 'modality', 'window', 'cursor', 'matrix'):
         assert settings.addCornerField('topRight', field)
+    assert len(settings.values['corners']['topRight']) == 8
     assert not settings.addCornerField('topRight', 'slice')
 
 
@@ -197,7 +198,8 @@ def test_every_preference_survives_process_restart(tmp_path):
         'export': {'directory': str(tmp_path)},
         'colormap': {'gray': 'bwInverse', 'pet': 'hotIron'},
         'window': {'hidden': ['ct-lung'], 'custom': [dict(presetId='custom-restart', label='Restart',
-                                                       width=900.0, center=-400.0, enabled=False)]},
+                                                       width=900.0, center=-400.0, enabled=False)],
+                   'favorites': ['ct-brain', 'custom-restart']},
         'crosshair': {'axialColor': '#123456', 'coronalColor': '#234567', 'sagittalColor': '#345678',
                       'axialWidth': 2.0, 'coronalWidth': 3.0, 'sagittalWidth': 4.0},
         'corners': {'enabled': False, 'fontSize': 17, 'lineHeight': 1.5, 'colorMode': 'custom',
@@ -213,6 +215,8 @@ def test_every_preference_survives_process_restart(tmp_path):
                      'segmentationDevice': 'cpu', 'segmentationOrgans': ['liver']},
         'roi': {key: False for key in DEFAULTS['roi']},
     }
+    expected['toolbar'] = {'leftViews': ['3d', 'mpr', '2d'],
+                           'rightProfiles': {'mpr:ct': {'common': ['zoom', 'window'], 'more': ['import', 'export']}}}
     assert expected.keys() == DEFAULTS.keys()
     path = tmp_path / 'restart-settings.json'
     settings = SettingsController(path=path)

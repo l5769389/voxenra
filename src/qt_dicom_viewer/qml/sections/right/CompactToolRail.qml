@@ -19,8 +19,10 @@ Flickable {
     signal panelRequested(string tool, bool closeOnly)
     readonly property var directTools: ["window", "ct-window", "pet-window", "scroll", "pan", "zoom", "volume-rotate", "mpr-rotate-3d"]
     readonly property var groupedTools: ["rotate", "measure", "annotate", "pseudocolor", "volume-direction"]
-    readonly property var panelTools: viewportController?.viewportType === "volume"
-        ? ["volume-preset", "mpr-layout", "viewport-settings"] : ["mpr-layout", "viewport-settings", "service"]
+    readonly property var tools: (toolController?.orderedToolbarTools ?? []).filter(t => t.available !== false &&
+        (t.toolType !== "service" || !viewportController?.workspaceTab?.twoDLayout || viewportController.viewportType === "stack"))
+    readonly property var panelTools: tools.filter(t => ["panel", "interactionPanel"].includes(t.behavior)
+        && !directTools.includes(t.toolType) && !groupedTools.includes(t.toolType)).map(t => t.toolType)
     contentWidth: width
     contentHeight: entries.height + 8
     clip: true
@@ -95,7 +97,8 @@ Flickable {
             expandedTool = close ? "" : tool
         } else {
             expandedTool = ""
-            toolController.activateDirectTool(tool)
+            if (directTools.includes(tool)) toolController.activateDirectTool(tool)
+            else toolController.activateTool(tool)
         }
     }
     function activateChild(tool, action) {
@@ -149,14 +152,13 @@ Flickable {
         width: rail.width
         spacing: 4
         Repeater {
-            model: (rail.toolController?.tools ?? []).filter(t => t.available !== false &&
-                (["play", "slice-play"].includes(t.toolType) || rail.directTools.includes(t.toolType) || rail.groupedTools.includes(t.toolType)
-                    || rail.panelTools.includes(t.toolType)))
+            model: rail.tools
             delegate: Column {
                 id: group
                 required property var modelData
                 property bool closePopupOnRelease: false
                 readonly property bool playback: ["play", "slice-play"].includes(modelData.toolType)
+                readonly property bool bedAction: modelData.toolType === "volume-bed"
                 readonly property string playMode: modelData.toolType === "slice-play" || !rail.tabController?.temporalPlayback ? "slice" : "phase"
                 readonly property bool running: playback && !!rail.tabController?.playing && rail.tabController.playbackMode === playMode
                 width: entries.width
@@ -165,8 +167,9 @@ Flickable {
                 Components.ToolbarAction {
                     id: primaryButton
                     width: rail.showToolLabels ? group.width : 40
-                    height: rail.showToolLabels ? 54 : 38
+                    height: rail.showToolLabels ? (group.modelData.toolType === "import" ? 68 : 54) : 38
                     showLabel: rail.showToolLabels
+                    labelMaximumLines: group.modelData.toolType === "import" ? 2 : 1
                     shortLabel: group.running ? qsTrId("tools.short.stop")
                         : ToolLabels.label(group.modelData, rail.viewportController?.displayMappingEditor, true)
                     x: (group.width - width) / 2
@@ -179,10 +182,11 @@ Flickable {
                     iconSize: 22
                     directionFace: group.modelData.toolType === "volume-direction" ? rail.viewportController?.currentFace ?? "A" : ""
                     directionColor: rail.viewportController?.currentFaceColor ?? Theme.iconDefault
-                    checked: group.playback ? group.running
+                    checked: group.playback ? group.running : group.bedAction ? !!rail.viewportController?.bedRemovalEnabled
                         : rail.toolController?.activeTool === group.modelData.toolType
                     actionEnabled: !!rail.viewportController && group.modelData.enabled !== false
                         && (!rail.tabController?.playing || group.running)
+                        && (!group.bedAction || (!!rail.viewportController?.bedRemovalAvailable && !rail.viewportController?.editBusy))
                         && (!group.playback || group.running || (group.playMode === "phase" ? !!rail.tabController?.phasePlaybackAvailable : !!rail.tabController?.slicePlaybackAvailable))
                     onPressed: {
                         const tool = group.modelData.toolType

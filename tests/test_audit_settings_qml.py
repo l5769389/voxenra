@@ -74,7 +74,7 @@ def test_settings_navigation_exposes_scroll_and_reaches_last_category(sidebar_sc
     assert not warnings, warnings
 
 
-@pytest.mark.parametrize('theme,locale', [('dark', 'zh-CN'), ('graphite', 'en-US'), ('light', 'zh-CN')])
+@pytest.mark.parametrize('theme,locale', [('dark', 'zh-CN'), ('graphite', 'en-US'), ('light', 'zh-CN'), ('dark', 'pt-BR')])
 def test_optional_tool_labels_update_live_and_preserve_tool_actions(sidebar_scene, theme, locale, tmp_path):
     window, app, records, warnings = sidebar_scene
     window.resize(1600, 900)

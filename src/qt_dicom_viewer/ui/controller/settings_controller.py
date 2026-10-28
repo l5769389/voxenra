@@ -64,8 +64,44 @@ class SettingsController(QObject):
                 self._window_file_valid = False
                 self._message = _msg("windowFile.invalid", value1=str(exc))
 
-        self._data["window"] = preset_file.legacy_view(self._window_entries)
+        self._data["window"] = self._window_settings(self._window_entries)
         self._message_is_error = bool(self._message)
+
+    @Slot(QObject, result=QObject)
+    def createToolbarEditor(self, owner):
+        from .toolbar_settings_controller import ToolbarSettingsController
+        return ToolbarSettingsController(self, owner)
+
+    @Property('QStringList', notify=changed)
+    def navigationViewOrder(self):
+        from qt_dicom_viewer.settings.toolbar import navigation_order
+        return navigation_order(self._data['toolbar']['leftViews'])
+
+    def save_toolbar_preferences(self, draft, baseline):
+        """Merge edited fields into current preferences; each profile is atomic.
+
+        The last save wins for the same left order or complete tool profile.
+        Untouched profiles and unrelated settings keep their latest values.
+        """
+        candidate = deepcopy(self._data)
+        try:
+            validated = {key: validate_value('toolbar', key, draft[key]) for key in DEFAULTS['toolbar']}
+            previous = {key: validate_value('toolbar', key, baseline[key]) for key in DEFAULTS['toolbar']}
+            if validated['leftViews'] != previous['leftViews']:
+                candidate['toolbar']['leftViews'] = validated['leftViews']
+            profiles, old_profiles = validated['rightProfiles'], previous['rightProfiles']
+            for key in profiles.keys() | old_profiles.keys():
+                if profiles.get(key) == old_profiles.get(key):
+                    continue
+                if key in profiles:
+                    candidate['toolbar']['rightProfiles'][key] = profiles[key]
+                else:
+                    candidate['toolbar']['rightProfiles'].pop(key, None)
+            candidate['toolbar']['rightProfiles'] = validate_value(
+                'toolbar', 'rightProfiles', candidate['toolbar']['rightProfiles'])
+        except (ValueError, TypeError, KeyError) as exc:
+            return self._error(error_message(exc))
+        return self._commit('toolbar', candidate)
 
     @Property(str, constant=True)
     def applicationVersion(self):
@@ -125,8 +161,17 @@ class SettingsController(QObject):
     @_TextProperty('QVariantList', notify=_i18n_windowTemplates, notify_name='_i18n_windowTemplates', source_notify='changed')
     def windowTemplates(self):
         labels = {p.preset_id: p.label for p in CT_WINDOW_PRESETS}
-        return [dict(p, label=p["label"] or labels.get(p["presetId"], p["presetId"]),
-                     builtin=p["presetId"] in preset_file.BUILTIN_IDS) for p in self._window_entries]
+        favorites = set(self._data["window"]["favorites"])
+        entries = [dict(p, label=p["label"] or labels.get(p["presetId"], p["presetId"]),
+                        favorite=p["presetId"] in favorites,
+                        builtin=p["presetId"] in preset_file.BUILTIN_IDS) for p in self._window_entries]
+        return sorted(entries, key=lambda p: not p["favorite"])
+
+    def _window_settings(self, entries, favorites=None):
+        identifiers = {p["presetId"] for p in entries}
+        favorites = self._data["window"]["favorites"] if favorites is None else favorites
+        return dict(preset_file.legacy_view(entries),
+                    favorites=[identifier for identifier in favorites if identifier in identifiers])
 
     @Property(str, constant=True)
     def windowPresetsPath(self):
@@ -149,13 +194,13 @@ class SettingsController(QObject):
             return self._error(_msg("windowFile.invalid", value1=str(exc)))
         self._window_entries, self._window_revision = entries, revision
         self._window_file_valid = True
-        self._data["window"] = preset_file.legacy_view(entries)
+        self._data["window"] = self._window_settings(entries)
         self._error(_msg("windowFile.loaded"), is_error=False)
         self.changed.emit()
         self.sectionChanged.emit("window")
         return True
 
-    def _save_window_entries(self, entries):
+    def _save_window_entries(self, entries, *, favorites=None):
         try:
             entries = preset_file.validate_document(dict(schemaVersion=1, presets=entries))
             if self._window_path:
@@ -168,11 +213,17 @@ class SettingsController(QObject):
         except (OSError, ValueError) as exc:
             return self._error(_msg("windowFile.invalid", value1=str(exc)))
         self._window_entries = entries
-        self._data["window"] = preset_file.legacy_view(entries)
-        self._error("")
+        state = self._window_settings(entries, favorites)
+        favorites_changed = state["favorites"] != self._data["window"]["favorites"]
+        self._data["window"] = state
+        # Presets are already saved atomically. Persist pruned favorites too;
+        # startup also prunes stale IDs if this separate settings write fails.
+        saved = not favorites_changed or self._persist_settings(self._data)
+        if saved:
+            self._error("")
         self.changed.emit()
         self.sectionChanged.emit("window")
-        return True
+        return saved
 
     @property
     def window_presets(self):
@@ -192,11 +243,21 @@ class SettingsController(QObject):
         return False
 
     def _commit(self, section, candidate):
-        if section == "window":
+        if section == "window" and any(candidate["window"][key] != self._data["window"][key]
+                                       for key in ("hidden", "custom")):
             state = candidate["window"]
             entries = [dict(p, enabled=p["presetId"] not in state["hidden"])
                        for p in self._window_entries if p["presetId"] in preset_file.BUILTIN_IDS]
-            return self._save_window_entries(entries + state["custom"])
+            return self._save_window_entries(entries + state["custom"], favorites=state["favorites"])
+        if not self._persist_settings(candidate):
+            return False
+        self._data = candidate
+        self._error("")
+        self.changed.emit()
+        self.sectionChanged.emit(section)
+        return True
+
+    def _persist_settings(self, candidate):
         if self._path:
             try:
                 self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -205,15 +266,13 @@ class SettingsController(QObject):
                 # A failed first migration must survive saving unrelated settings.
                 saved = {key: value for key, value in candidate.items()
                          if key != "window" or not self._window_file_valid}
-                payload = json.dumps({"schemaVersion": 1, **saved}, ensure_ascii=False, indent=2).encode("utf-8")
+                if self._window_file_valid and candidate["window"]["favorites"]:
+                    saved["window"] = {"favorites": candidate["window"]["favorites"]}
+                payload = json.dumps({"schemaVersion": 2, **saved}, ensure_ascii=False, indent=2).encode("utf-8")
                 if not target.open(QIODevice.WriteOnly) or target.write(payload) != len(payload) or not target.commit():
                     raise OSError("Cannot save settings")
             except OSError:
                 return self._error(_msg('text.0523'))
-        self._data = candidate
-        self._error("")
-        self.changed.emit()
-        self.sectionChanged.emit(section)
         return True
 
     @Slot(str, str, "QVariant", result=bool)
@@ -225,6 +284,10 @@ class SettingsController(QObject):
             value = value.toVariant()
         try:
             value = validate_value(section, key, value)
+            if section == "window" and key == "favorites":
+                identifiers = {p["presetId"] for p in self._window_entries}
+                if any(identifier not in identifiers for identifier in value):
+                    raise ValueError(_msg('text.0057'))
         except (ValueError, TypeError) as exc:
             return self._error(error_message(exc))
         if value == self._data[section][key]:
@@ -246,7 +309,7 @@ class SettingsController(QObject):
                     candidate["services"][key] = deepcopy(value)
             return self._commit("services", candidate)
         if section == "window":
-            return self._save_window_entries(preset_file.from_legacy(DEFAULTS["window"]))
+            return self._save_window_entries(preset_file.from_legacy(DEFAULTS["window"]), favorites=[])
         if section not in DEFAULTS:
             return self._error(_msg('text.0524'))
         candidate = deepcopy(self._data)
@@ -276,6 +339,15 @@ class SettingsController(QObject):
     @Slot(str, bool, result=bool)
     def enableWindowTemplate(self, identifier, enabled):
         return self._save_window_entries([dict(p, enabled=enabled) if p["presetId"] == identifier else p for p in self._window_entries])
+
+    @Slot(str, bool, result=bool)
+    def setWindowTemplateFavorite(self, identifier, favorite):
+        if not any(p["presetId"] == identifier for p in self._window_entries):
+            return self._error(_msg('text.0525'))
+        favorites = [key for key in self._data["window"]["favorites"] if key != identifier]
+        if favorite:
+            favorites.append(identifier)
+        return self.setValue("window", "favorites", favorites)
 
     @Slot(str, str, result=bool)
     def addCornerField(self, corner, field):

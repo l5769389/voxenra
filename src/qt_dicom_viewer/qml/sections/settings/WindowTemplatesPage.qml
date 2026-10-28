@@ -49,6 +49,7 @@ ColumnLayout {
         description: qsTrId("text.0779")
         RowLayout {
             Layout.fillWidth: true; spacing: 12
+            Item { Layout.preferredWidth: 28 }
             Text { Layout.fillWidth: true; text: qsTrId("text.0528"); color: Theme.textSubtle; font.pixelSize: 11 }
             Text { Layout.minimumWidth: 78; Layout.maximumWidth: 78; Layout.fillWidth: true; objectName: "windowHeaderWW"; wrapMode: Text.Wrap; text: qsTrId("text.0780"); horizontalAlignment: Text.AlignRight; color: Theme.textSubtle; font.pixelSize: 11 }
             Text { Layout.minimumWidth: 78; Layout.maximumWidth: 78; Layout.fillWidth: true; objectName: "windowHeaderWL"; wrapMode: Text.Wrap; text: qsTrId("text.0781"); horizontalAlignment: Text.AlignRight; color: Theme.textSubtle; font.pixelSize: 11 }
@@ -62,6 +63,20 @@ ColumnLayout {
                 Layout.fillWidth: true; spacing: 2
                 RowLayout {
                     Layout.fillWidth: true; spacing: 12
+                    Components.AppButton {
+                        objectName: "settingWindowFavorite-" + entry.modelData.presetId
+                        Layout.preferredWidth: 28; Layout.preferredHeight: 28
+                        minimumButtonWidth: 28; compact: true
+                        text: checked ? "★" : "☆"
+                        normalColor: "transparent"
+                        textColor: checked ? Theme.primaryColor : Theme.textMuted
+                        checked: entry.modelData.favorite === true
+                        Accessible.checkable: true
+                        Accessible.checked: checked
+                        Accessible.name: qsTrId(checked ? "window.favoriteRemove" : "window.favoriteAdd") + " · " + entry.modelData.label
+                        onClicked: root.settingsController.setWindowTemplateFavorite(entry.modelData.presetId, !entry.modelData.favorite)
+                        Components.AppToolTip { visible: parent.hovered; text: parent.Accessible.name }
+                    }
                     Components.AppCheckBox {
                         id: enabledBox
                         objectName: "windowEnabled-" + entry.modelData.presetId

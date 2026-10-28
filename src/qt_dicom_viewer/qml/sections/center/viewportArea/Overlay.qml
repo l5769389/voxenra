@@ -83,6 +83,9 @@ Item {
                     + " (" + (value("viewRole") === "ct" ? "CT" : "PET") + ")") : ""
             return label("sliceIndex", "Slice: ") + (value("sliceCount") ? " / " + value("sliceCount") : "")
         }
+        case "studyDate": return hideSensitiveInfo ? "" : value("viewRole") === "fusion"
+            ? [label("ctStudyDate", "CT study date: "), label("petStudyDate", "PET study date: ")].filter(Boolean).join("\n")
+            : label("studyDate", "Study date: ")
         case "patientName": return hideSensitiveInfo ? "" : label("patientName", "Patient: ")
         case "patientId": return hideSensitiveInfo || overlay.suppressIdentifiers ? "" : label("patientId", "ID: ")
         case "seriesDescription": return value("viewRole") === "fusion"
@@ -108,10 +111,10 @@ Item {
                     lines.push(label("petUnits", petWorkspace ? "DICOM units: " : "Source Units: "),
                                label("suvType", petWorkspace ? "SUV type: " : "SUV Type: "))
                 if (value("viewRole") === "fusion")
-                    lines.push([label("ctWindowCenter", "CT WL: "), label("ctWindowWidth", "WW: ")].filter(Boolean).join("  "))
+                    lines.push([label("ctWindowWidth", "CT WW: "), label("ctWindowCenter", "WL: ")].filter(Boolean).join("  "))
                 return lines.filter(Boolean).join("\n")
             }
-            return [label("windowCenter", "WL: "), label("windowWidth", "WW: ")].filter(Boolean).join("   ")
+            return [label("windowWidth", "WW: "), label("windowCenter", "WL: ")].filter(Boolean).join("   ")
         }
         case "cursor": if (overlay.registrationPreview) return "Preview MIP · Release to refine"
             return (petWorkspace ? "Col: " : "X: ") + (cursorInfo.x ?? "--") + (petWorkspace ? "   Row: " : "   Y: ") + (cursorInfo.y ?? "--")
@@ -126,7 +129,7 @@ Item {
         }
     }
     function lines(corner) {
-        const compactFields = ["viewPosition", "slice", "patientName", "patientId", "window", "transform", "cursor"]
+        const compactFields = ["viewPosition", "slice", "patientName", "patientId", "studyDate", "window", "transform", "cursor"]
         return (options[corner] ?? []).filter((key, index) => !(corner === "topLeft" && inlineViewPosition && index === 0))
             .filter(key => !overlay.compactOverlay || compactFields.includes(key))
             .map(key => field(key)).filter(Boolean).join("\n")

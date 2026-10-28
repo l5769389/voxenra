@@ -46,6 +46,8 @@ class SeriesCatalog:
             initial_phase_identifier=series.initial_phase_identifier,
             slice_count=series.dicom_file_count,
             study_uid=series.study_instance_uid,
+            study_date=series.study_date,
+            study_time=series.study_time,
             frame_of_reference_uid=series.frame_of_reference_uid,
             slice_geometries=tuple((i.image_position_patient, i.image_orientation_patient,
                                     i.pixel_spacing, i.rows, i.columns) for i in series.instances),

@@ -14,6 +14,7 @@ Rectangle {
     readonly property string selectedCategory: settingsController.activeCategory
     readonly property var categories: [
         {key: "appearance", title: qsTrId("appearance.title"), shortTitle: qsTrId("appearance.navigation"), subtitle: qsTrId("appearance.keywords"), group: qsTrId("text.0814")},
+        {key: "toolbar", title: qsTrId("toolbar.title"), subtitle: qsTrId("toolbar.keywords")},
         {key: "input", title: qsTrId("input.title"), subtitle: qsTrId("input.shortcuts")},
         {key: "privacy", title: qsTrId("privacy.title"), subtitle: qsTrId("privacy.hideIdentity")},
         {key: "workspace", title: qsTrId("text.0622"), subtitle: qsTrId("text.0813")},
@@ -243,10 +244,12 @@ Rectangle {
             Layout.minimumWidth: 360
             Layout.fillWidth: true
             Layout.fillHeight: true
-            sourceComponent: page.selectedCategory === "sources" ? sourcesComponent : displayComponent
+            sourceComponent: page.selectedCategory === "sources" ? sourcesComponent
+                : page.selectedCategory === "toolbar" ? toolbarComponent : displayComponent
         }
     }
     Component { id: sourcesComponent; DataSourcesPage { pacsController: page.pacsController } }
+    Component { id: toolbarComponent; ToolbarSettingsPage { settingsController: page.settingsController } }
     Component {
         id: displayComponent
         DisplaySettingsPage {

@@ -19,9 +19,9 @@ Basic.TabBar {
     readonly property int tabCount:
         workspaceTabs.workspaceController.tabs.length
     readonly property real tabWidth: Math.min(
-        200,
+        280,
         Math.max(
-            136,
+            224,
             (workspaceTabs.width - 8
                 - Math.max(0, workspaceTabs.tabCount - 1)
                     * workspaceTabs.spacing)
@@ -169,16 +169,39 @@ Basic.TabBar {
             id: tabButton
             objectName: "workspaceTab-" + tabButton.modelData.tabId
             Accessible.name: String(tabButton.modelData.tabType).toUpperCase() + " · " + tabButton.modelData.tabLabel
+            Accessible.description: tabButton.modelData.tabTooltip ?? tabButton.modelData.tabLabel
             Accessible.selected: checked
             Accessible.onPressAction: tabButton.click()
             width: workspaceTabs.tabWidth
             implicitWidth: workspaceTabs.tabWidth
             leftPadding: 10
             rightPadding: 6
-            topPadding: 6
-            bottomPadding: 6
+            topPadding: 3
+            bottomPadding: 3
             checked: tabButton.modelData.tabId
                 === workspaceTabs.workspaceController.activeTabId
+
+            HoverHandler { id: tabHover }
+            Basic.ToolTip {
+                id: identityTooltip
+                objectName: "tabTooltip-" + tabButton.modelData.tabId
+                visible: tabHover.hovered && !tabDragArea.pressed && !closeButton.hovered
+                delay: 550
+                text: tabButton.modelData.tabTooltip ?? tabButton.modelData.tabLabel
+                width: Math.min(560, Math.max(240, workspaceTabs.width - 24))
+                contentItem: Text {
+                    text: identityTooltip.text
+                    textFormat: Text.PlainText
+                    color: Theme.textPrimary
+                    font.pixelSize: 12
+                    wrapMode: Text.Wrap
+                }
+                background: Rectangle {
+                    radius: 5
+                    color: Theme.panelBackground
+                    border.color: Theme.controlBorder
+                }
+            }
 
             onClicked: {
                 workspaceTabs.workspaceController.activateTabId(
@@ -281,17 +304,60 @@ Basic.TabBar {
                     }
                 }
 
-                Text {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    text: tabButton.modelData.tabLabel
-                    color: tabButton.checked
-                        ? Theme.textPrimary
-                        : Theme.textMuted
-                    font.pixelSize: 12
-                    font.weight: tabButton.checked
-                        ? Font.DemiBold : Font.Normal
-                    elide: Text.ElideRight
-                    verticalAlignment: Text.AlignVCenter
+                    Layout.minimumWidth: 0
+                    spacing: 0
+                    Item {
+                        id: titleRow
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        implicitHeight: Math.max(patientLabel.implicitHeight, descriptionLabel.implicitHeight)
+                        Text {
+                            id: patientLabel
+                            objectName: "tabPatient-" + tabButton.modelData.tabId
+                            visible: text !== ""
+                            width: visible ? Math.min(implicitWidth, titleRow.width * 0.4) : 0
+                            text: tabButton.modelData.tabPatient ?? ""
+                            textFormat: Text.PlainText
+                            color: tabButton.checked ? Theme.textPrimary : Theme.textMuted
+                            font.pixelSize: 12
+                            font.weight: tabButton.checked ? Font.DemiBold : Font.Normal
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            id: titleSeparator
+                            x: patientLabel.width + 3
+                            visible: patientLabel.visible
+                            text: "·"
+                            color: Theme.textMuted
+                            font.pixelSize: 12
+                        }
+                        Text {
+                            id: descriptionLabel
+                            objectName: "tabPrimary-" + tabButton.modelData.tabId
+                            x: patientLabel.visible ? titleSeparator.x + titleSeparator.width + 3 : 0
+                            width: Math.max(0, titleRow.width - x)
+                            text: tabButton.modelData.tabDescription ?? tabButton.modelData.tabLabel
+                            textFormat: Text.PlainText
+                            color: tabButton.checked ? Theme.textPrimary : Theme.textMuted
+                            font.pixelSize: 12
+                            font.weight: tabButton.checked ? Font.DemiBold : Font.Normal
+                            elide: Text.ElideRight
+                        }
+                    }
+                    Text {
+                        objectName: "tabSecondary-" + tabButton.modelData.tabId
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        visible: text !== ""
+                        text: tabButton.modelData.tabSecondary ?? ""
+                        textFormat: Text.PlainText
+                        color: tabButton.checked ? Theme.textPrimary : Theme.textMuted
+                        font.pixelSize: 10
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
 
                 Basic.ToolButton {

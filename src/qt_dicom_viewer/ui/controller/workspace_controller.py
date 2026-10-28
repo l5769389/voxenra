@@ -2,6 +2,7 @@ from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 import logging
 from dataclasses import replace
+from weakref import WeakKeyDictionary
 
 from PySide6.QtCore import QObject, Slot, Property, Signal
 
@@ -39,6 +40,7 @@ class WorkspaceController(QObject):
 
 
     tabsChanged = Signal()
+    tabPresentationChanged = Signal()
     activeTabChanged = Signal()
     activeViewportChanged = Signal()
     loadingStatesChanged = Signal()
@@ -62,6 +64,11 @@ class WorkspaceController(QObject):
         self._tag_read_service = TagReadService(self)
         self._window_manager = None
         self._closed_tab_snapshots = {}
+        self._identity_views = WeakKeyDictionary()
+        self.tabPresentationChanged.connect(self._i18n_tabs.emit)
+        settings = getattr(parent, "_settings_controller", None)
+        if settings is not None:
+            settings.sectionChanged.connect(self._identity_preferences_changed)
 
     @Slot()
     def openSettings(self):
@@ -255,11 +262,48 @@ class WorkspaceController(QObject):
 
     @_TextProperty('QVariantList', notify=_i18n_tabs, notify_name='_i18n_tabs', source_notify='tabsChanged')
     def tabs(self):
-        return [{
-            "tabId": each_tab.tab_config.tab_id,
-            "tabLabel": each_tab.tab_config.tab_label,
-            "tabType": each_tab.tab_config.tab_type,
-        } for each_tab in self._tab_dict.values()]
+        sources = list(self._series_catalog.snapshot().values())
+        sources.extend(meta for tab in self._tab_dict.values() for meta in tab.tab_config.series_metas)
+        return [self.tab_presentation(tab, sources=sources) for tab in self._tab_dict.values()]
+
+    def tab_presentation(self, tab, *, sources=None):
+        from qt_dicom_viewer.ui.reading_identity import tab_presentation, tab_hides_identity
+        if sources is None:
+            sources = list(self._series_catalog.snapshot().values())
+            sources.extend(meta for current in self._tab_dict.values() for meta in current.tab_config.series_metas)
+        settings = getattr(self.parent(), "_settings_controller", None)
+        hidden = tab_hides_identity(tab, default=bool(settings and settings.section("privacy")["hideIdentity"]))
+        return tab_presentation(tab, sources=sources, hide_identity=hidden)
+
+    @Slot(str)
+    def _identity_preferences_changed(self, section):
+        if section == "privacy":
+            self.tabPresentationChanged.emit()
+
+    @Slot()
+    def _refresh_identity(self):
+        # New 2D cells can introduce sources and per-cell privacy after opening.
+        self._watch_identity_views()
+        self.tabPresentationChanged.emit()
+
+    def _watch_identity_views(self, tab=None):
+        tabs = (tab,) if tab is not None else self._tab_dict.values()
+        for current in tabs:
+            for view in current.viewports_by_id.values():
+                if view in self._identity_views:
+                    continue
+                signal = getattr(view, "viewportSettingsChanged", None)
+                if signal is not None:
+                    signal.connect(self._viewport_identity_changed)
+                    self._identity_views[view] = view.hideSensitiveInfo
+
+    @Slot()
+    def _viewport_identity_changed(self):
+        view = self.sender()
+        if view is not None and self._identity_views.get(view) != view.hideSensitiveInfo:
+            self._identity_views[view] = view.hideSensitiveInfo
+            self.tabPresentationChanged.emit()
+
 
     @Property(str, notify=activeTabChanged)
     def activeTabId(self) -> str | None:
@@ -419,6 +463,10 @@ class WorkspaceController(QObject):
             self.closeTab(tab.tab_config.tab_id)
 
     def connect_signal(self, tab: TabController):
+        self._watch_identity_views(tab)
+        layout = getattr(tab, "twoDLayout", None)
+        if layout is not None:
+            layout.cellsChanged.connect(self._refresh_identity)
         tab.closeRequested.connect(self._close_requested_tab)
         tab.imageUpdateRequested.connect(self._image_provider.set_array)
         from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController

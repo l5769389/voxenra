@@ -64,7 +64,7 @@ class WindowManager(QObject):
     def dragLabel(self):
         from qt_dicom_viewer.i18n.messages import localize
         tab = self.registry._tab_dict.get(self.dragTabId)
-        return localize(tab.tab_config.tab_label) if tab else ""
+        return localize(self.registry.tab_presentation(tab)["tabLabel"]) if tab else ""
 
     @Property(float, notify=dragChanged)
     def dragX(self):
@@ -100,10 +100,18 @@ class WindowManager(QObject):
                 if key not in self.registry._tab_dict:
                     session._remove(key)
         target = self.sessions.get(self._opening, self.mainWorkspace)
+        added = False
         for key in self.registry._tab_dict:
             if self.owner(key) is None:
+                added = True
                 target._ids.append(key)
                 target.tabsChanged.emit()
+        if added:
+            # A new source may disambiguate an existing tab in another window.
+            # Notify after ownership has settled, without rebuilding the target twice.
+            for session in self.sessions.values():
+                if session is not target:
+                    session._i18n_tabs.emit()
         self.focusWindow(self._focused)
         if not self._changing:
             QTimer.singleShot(0, self._close_empty_windows)

@@ -138,7 +138,7 @@ def test_corner_default_migration_and_explicit_removal_survive_restart(qt_app, t
     assert settings.removeCornerField("bottomRight", 0)
     restored = SettingsController(path=path)
     assert restored.values["corners"]["bottomRight"] == ["cursor"]
-    assert json.loads(path.read_text())["schemaVersion"] == 1
+    assert json.loads(path.read_text())["schemaVersion"] == 2
     old["corners"]["bottomRight"] = ["zoom", "cursor"]
     assert normalize_settings(old)["corners"]["bottomRight"] == ["zoom", "cursor"]
 

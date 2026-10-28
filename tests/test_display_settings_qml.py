@@ -229,13 +229,23 @@ def test_added_presets_apply_from_scrollable_window_panel(scene, tmp_path, theme
     wait_until(lambda: app.workspaceController.activeViewport is not None and bool(app.workspaceController.activeViewport.imageSource))
     view = app.workspaceController.activeViewport
     QTest.qWait(100)
-    scroll = find(window, 'toolDetailFlickable')
+    scroll = find(window, 'windowPresetList')
     for identifier, width, center in [('ct-liver', 150, 30), ('ct-spine-bone', 1800, 400)]:
-        item = find(window, 'windowPreset-' + identifier)
-        point = item.mapToItem(scroll, QPointF(0, 0))
-        maximum = max(0, scroll.property('contentHeight') - scroll.height())
-        scroll.setProperty('contentY', min(maximum, max(0, scroll.property('contentY') + point.y() - scroll.height()/2)))
-        QTest.qWait(70)
+        # Virtualized rows exist only when reached. Reveal each target through
+        # the list, then verify a complete clickable row before applying it.
+        for _ in range(100):
+            item = next((i for i in descendants(scroll) if i.objectName() == 'windowPreset-' + identifier), None)
+            if item is not None:
+                point = item.mapToItem(scroll, QPointF())
+                if 0 <= point.y() and point.y() + item.height() <= scroll.height():
+                    break
+            maximum = max(0, scroll.property('contentHeight') - scroll.height())
+            current = scroll.property('contentY')
+            assert current < maximum, identifier
+            scroll.setProperty('contentY', min(maximum, current + scroll.height() / 2))
+            QTest.qWait(25)
+        else:
+            pytest.fail('Preset could not be reached: ' + identifier)
         click(window, item)
         wait_until(lambda: view.current_window.width == width and view.current_window.center == center)
         assert item.property('checked')

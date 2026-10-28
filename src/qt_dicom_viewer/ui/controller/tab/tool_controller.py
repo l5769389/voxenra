@@ -23,7 +23,7 @@ from qt_dicom_viewer.model.tool_catalog import (
     TOOL_CATALOG,
     TOOL_DEFINITIONS,
 )
-from qt_dicom_viewer.model.toolbar_priorities import toolbar_groups
+from qt_dicom_viewer.settings.toolbar import resolved_groups
 from qt_dicom_viewer.preset import CT_WINDOW_PRESETS
 from qt_dicom_viewer.ui.controller.settings_controller import resolve_settings
 
@@ -129,6 +129,7 @@ class ToolController(QObject):
         # A QObject receiver disconnects when its tab is destroyed; a bound
         # SignalInstance.emit callable can outlive it in the shared settings.
         self.windowPresetsChanged.emit()
+        self._i18n_tools.emit()
 
     @Property(str, notify=activeToolChanged)
     def activeTool(self) -> str:
@@ -490,7 +491,14 @@ class ToolController(QObject):
 
     @Property('QVariantMap', notify=_i18n_tools)
     def toolbarGroups(self) -> dict:
-        return toolbar_groups(self._tab_type, self._modality, self._is_color, self.tools)
+        return resolved_groups(self._tab_type, self._modality, self._is_color, self.tools,
+                               self._settings_controller.section('toolbar')['rightProfiles'])
+
+    @_TextProperty(list, notify=_i18n_tools, notify_name='_i18n_tools')
+    def orderedToolbarTools(self) -> list[dict]:
+        groups = self.toolbarGroups
+        tools = {item['toolType']: item for item in self.tools}
+        return [tools[key] for key in groups['common'] + groups['primary'] + groups['more']]
 
     @_TextProperty(list, notify=_i18n_rotateActions, notify_name='_i18n_rotateActions')
     def rotateActions(self) -> list[dict]:

@@ -44,8 +44,11 @@ Rectangle {
     radius: 8
     clip: true
 
-    onCollapsedChanged: { compactPanel.close(); syncCompactTool(); revealRegionError() }
-    onToolControllerChanged: { compactPanel.close(); syncCompactTool() }
+    // Window limits can briefly collapse this panel while a tool component is
+    // still being constructed. Apply the final compact state after layout;
+    // changing the active tool here would destroy its own Loader context.
+    onCollapsedChanged: { compactPanel.close(); Qt.callLater(syncCompactTool); revealRegionError() }
+    onToolControllerChanged: { compactPanel.close(); Qt.callLater(syncCompactTool) }
     onViewportControllerChanged: compactPanel.close()
     onVisibleChanged: if (!visible) compactPanel.close()
     function syncCompactTool() {
@@ -138,6 +141,7 @@ Rectangle {
 
             Right.ToolDetailPanel {
                 id: toolDetailPanel
+                availableHeight: detailFlickable.height
 
                 // Reserve the gutter even before overflow. Otherwise wrapped
                 // text changes the height, which changes this width again and
@@ -209,6 +213,7 @@ Rectangle {
         closeButtonName: "compactVolumePanelClose"
         Flickable {
             id: compactDetailFlickable
+            objectName: "compactToolDetailFlickable"
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -217,6 +222,7 @@ Rectangle {
             boundsBehavior: Flickable.StopAtBounds
             Right.ToolDetailPanel {
                 id: compactDetails
+                availableHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48) - compactPanel.chromeHeight
                 width: parent.width - 8
                 height: implicitHeight
                 activePanel: compactPanel.visible ? compactPanel.panelTool : ""
@@ -224,6 +230,8 @@ Rectangle {
                 viewportController: rightPanel.viewportController
                 toolController: rightPanel.toolController
                 tabController: rightPanel.tabController
+                exportController: rightPanel.exportController
+                exportItem: rightPanel.exportItem
             }
             Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
         }

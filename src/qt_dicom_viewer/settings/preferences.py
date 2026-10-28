@@ -12,6 +12,7 @@ from qt_dicom_viewer.core.mpr_layout import MPR_LAYOUTS
 from qt_dicom_viewer.preset import CT_WINDOW_PRESETS
 
 CORNER_FIELDS = {
+    "studyDate": _msg('reading.studyDate'),
     "viewPosition": _msg('text.0022'), "manufacturer": _msg('text.0023'), "seriesDescription": _msg('text.0024'),
     "studyDescription": _msg('text.0025'), "modality": _msg('text.0026'), "slice": _msg('text.0027'),
     "patientName": _msg('text.0028'), "patientId": _msg('text.0029'), "exposure": _msg("mr.acquisitionParameters"),
@@ -28,6 +29,7 @@ DEFAULTS = {
     "input": {"reverseWheel": False, "rightButton": "zoom", "middleButton": "selected",
               "windowSensitivity": 1.0, "zoomSensitivity": 1.0},
     "shortcuts": {"bindings": dict(DEFAULT_BINDINGS)},
+    "toolbar": {"leftViews": [], "rightProfiles": {}},
     "privacy": {"hideIdentity": False},
     "updates": {"enabled": True, "dismissedVersion": ""},
     "workspace": {"automaticRecovery": True, "exitBehavior": "ask"},
@@ -35,13 +37,13 @@ DEFAULTS = {
                "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []},
     "export": {"directory": ""},
     "colormap": {"gray": "grayscale", "pet": "grayscale"},
-    "window": {"hidden": [], "custom": []},
+    "window": {"hidden": [], "custom": [], "favorites": []},
     "crosshair": {"axialColor": "#ff0000", "coronalColor": "#008000", "sagittalColor": "#0000ff",
                   "axialWidth": 1.0, "coronalWidth": 1.0, "sagittalWidth": 1.0},
     "corners": {"enabled": True, "fontSize": 12, "lineHeight": 1.2,
                 "colorMode": "auto", "color": "#f8fafc",
                 "topLeft": ["viewPosition", "manufacturer", "seriesDescription", "slice"],
-                "topRight": ["patientName", "patientId"],
+                "topRight": ["patientName", "patientId", "studyDate"],
                 "bottomLeft": ["exposure", "sliceThickness", "window"], "bottomRight": ["transform", "cursor"]},
     "scale": {"enabled": True, "color": "#f8fafc", "lengthMm": 100},
     "measurement": {"editingColor": "#66d0ff", "completedColor": "#ffd45c", "lineWidth": 1.5,
@@ -60,7 +62,10 @@ def validate_value(section, key, value):
     if section not in DEFAULTS or key not in DEFAULTS[section]:
         raise ValueError(_msg('text.0046'))
     default = DEFAULTS[section][key]
-    if section == "shortcuts":
+    if section == "toolbar":
+        from qt_dicom_viewer.settings.toolbar import validate_toolbar
+        value = validate_toolbar(key, value)
+    elif section == "shortcuts":
         from qt_dicom_viewer.settings.shortcuts import validate_bindings
         value = validate_bindings(value)
     elif section == "input" and key in ("rightButton", "middleButton"):
@@ -153,6 +158,11 @@ def validate_value(section, key, value):
     elif section == "corners" and key in CORNERS:
         if not isinstance(value, list) or len(value) > 8 or any(v not in CORNER_FIELDS for v in value) or len(set(value)) != len(value):
             raise ValueError(_msg('text.0056'))
+    elif section == "window" and key == "favorites":
+        if (not isinstance(value, list) or len(value) > 100
+                or any(not isinstance(v, str) or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}", v) for v in value)):
+            raise ValueError(_msg('text.0057'))
+        value = list(dict.fromkeys(value))
     elif section == "window" and key == "hidden":
         ids = {p.preset_id for p in CT_WINDOW_PRESETS}
         if not isinstance(value, list) or any(v not in ids for v in value):
@@ -210,6 +220,11 @@ def normalize_settings(raw):
         if (isinstance(corners, dict) and corners.get("bottomRight") == ["cursor"]
                 and not any("transform" in data["corners"][corner] for corner in CORNERS)):
             data["corners"]["bottomRight"] = ["transform", "cursor"]
+    if raw.get("schemaVersion", 0) in (0, 1):
+        corners = raw.get("corners", {})
+        if (isinstance(corners, dict) and corners.get("topRight") == ["patientName", "patientId"]
+                and not any("studyDate" in data["corners"][corner] for corner in CORNERS)):
+            data["corners"]["topRight"].append("studyDate")
     # Migrate the former independent flags without turning a hidden size back on.
     legacy_roi = raw.get("roi", {})
     if isinstance(legacy_roi, dict) and "dimensions" not in legacy_roi:

@@ -16,6 +16,7 @@ FIXED = {'reopenClosedTab': ('workspace.reopenClosed', 'Ctrl+Shift+T'), 'newWork
          'delete': ('input.action.delete', 'Delete'), 'cancel': ('input.action.cancel', 'Esc'),
          'finish': ('input.action.finish', 'Return'), 'close': ('input.action.close', 'Ctrl+W'),
          'compare': ('input.action.compare', 'Ctrl+D'),
+         'maximizeViewport': ('reading.maximizeViewport', 'F12'),
          'nextTab': ('input.action.nextTab', 'Meta+Tab' if sys.platform == 'darwin' else 'Ctrl+Tab'),
          'previousTab': ('input.action.previousTab', 'Meta+Shift+Tab' if sys.platform == 'darwin' else 'Ctrl+Shift+Tab'),
          'fullscreen': ('input.action.fullscreen', 'Ctrl+Meta+F' if sys.platform == 'darwin' else 'F11')}
