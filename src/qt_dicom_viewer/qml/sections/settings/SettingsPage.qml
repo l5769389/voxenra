@@ -10,6 +10,7 @@ Rectangle {
     objectName: "settingsPage"
     required property var pacsController
     required property var settingsController
+    property var workspaceController: null
     color: Theme.panelBackgroundStrong
     readonly property string selectedCategory: settingsController.activeCategory
     readonly property var categories: [
@@ -249,7 +250,13 @@ Rectangle {
         }
     }
     Component { id: sourcesComponent; DataSourcesPage { pacsController: page.pacsController } }
-    Component { id: toolbarComponent; ToolbarSettingsPage { settingsController: page.settingsController } }
+    Component {
+        id: toolbarComponent
+        ToolbarSettingsPage {
+            settingsController: page.settingsController
+            initialProfile: page.workspaceController?.toolbarProfileForEditing?.() ?? ""
+        }
+    }
     Component {
         id: displayComponent
         DisplaySettingsPage {

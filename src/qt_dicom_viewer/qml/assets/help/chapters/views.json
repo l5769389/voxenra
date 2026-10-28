@@ -74,8 +74,8 @@
         "mac": "Esc"
       }
     ],
-    "example": "overview.png",
-    "caption": "2D 阅片与右侧调窗工具。",
+    "example": "window-favorites.png",
+    "caption": "2D 阅片与收藏窗模板。星标只改变排序，点击模板名称才应用窗值。",
     "icon": "nav-view-2d"
   },
   {

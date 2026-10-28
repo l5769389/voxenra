@@ -160,5 +160,59 @@
       "en": "After adding a language pack, reload it and select the language."
     },
     "chinese_ui": false
+  },
+  {
+    "chapter": "pacs",
+    "section": "manual.pacs.section2",
+    "name": "pacs-dimse",
+    "sources": {
+      "zh": "tutorials/pacs-dimse.gif",
+      "en": "tutorials/en-pacs-dimse.gif"
+    },
+    "posters": {
+      "zh": "tutorials/pacs-dimse.png",
+      "en": "tutorials/en-pacs-dimse.png"
+    },
+    "captions": {
+      "zh": "使用本机合成数据实际完成 DIMSE 查询、选择和导入。",
+      "en": "Real DIMSE query, selection and import using synthetic data on a local peer."
+    },
+    "chinese_ui": false
+  },
+  {
+    "chapter": "settings",
+    "section": "manual.toolbar.customize",
+    "name": "toolbar-customization",
+    "sources": {
+      "zh": "tutorials/toolbar-customization.gif",
+      "en": "tutorials/en-toolbar-customization.gif"
+    },
+    "posters": {
+      "zh": "tutorials/toolbar-customization.png",
+      "en": "tutorials/en-toolbar-customization.png"
+    },
+    "captions": {
+      "zh": "选择配置，拖动工具查看插入位置，保存后应用。",
+      "en": "Choose a configuration, drag a tool to its insertion point, then save."
+    },
+    "chinese_ui": false
+  },
+  {
+    "chapter": "2d",
+    "section": "manual.reading.maximize",
+    "name": "focus-view",
+    "sources": {
+      "zh": "tutorials/focus-view.gif",
+      "en": "tutorials/en-focus-view.gif"
+    },
+    "posters": {
+      "zh": "tutorials/focus-view.png",
+      "en": "tutorials/en-focus-view.png"
+    },
+    "captions": {
+      "zh": "最大化视图区收起两侧工具，再还原到原布局。",
+      "en": "Maximize the image area to hide both sidebars, then restore the layout."
+    },
+    "chinese_ui": false
   }
 ]

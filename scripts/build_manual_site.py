@@ -9,8 +9,12 @@ import json
 import re
 import shutil
 import struct
+from functools import lru_cache
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
+
+from PIL import Image, ImageSequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +40,25 @@ PRODUCT_SCREENSHOTS = {
     "feature-water-qa.png": "19-water-qa-2.1.3.png",
     "feature-mtf.png": "28-mtf-analysis.png",
 }
+for media, source in {
+    'feature-dimse-settings.png': '51-dimse-settings.png',
+    'feature-dimse-import.gif': '52-dimse-import.gif',
+    'feature-dimse-import.png': '52-dimse-import.png',
+    'feature-toolbar.gif': '53-toolbar-customization.gif',
+    'feature-toolbar.png': '53-toolbar-customization.png',
+    'feature-focus.gif': '54-focus-view.gif',
+    'feature-focus.png': '54-focus-view.png',
+    'feature-window-favorites.png': '55-window-favorites.png',
+}.items():
+    PRODUCT_SCREENSHOTS[media] = source
+    PRODUCT_SCREENSHOTS['en-' + media] = 'en/' + source
+PRODUCT_IMAGE_WIDTHS = (640, 960, 1600)
+PRODUCT_IMAGE_SIZES = {
+    "hero": "(max-width: 940px) calc(100vw - 48px), (max-width: 1536px) 54vw, 800px",
+    "half": "(max-width: 620px) calc(100vw - 48px), (max-width: 1536px) 44vw, 700px",
+    "third": "(max-width: 620px) calc(100vw - 48px), (max-width: 1536px) 28vw, 450px",
+    "wide": "(max-width: 1536px) calc(100vw - 48px), 1400px",
+}
 LANGUAGES = {
     "zh": {"pack": "zh-CN", "name": "简体中文", "search": "搜索章节与正文", "menu": "目录", "site": "操作手册", "home": "手册首页", "related": "相关章节", "shortcuts": "快捷键", "figure": "示意图", "examples": ("CT 示例", "PET 示例"), "repo": "GitHub 仓库"},
     "en": {"pack": "en-US", "name": "English", "search": "Search chapters and content", "menu": "Contents", "site": "Manual", "home": "Manual home", "related": "Related chapters", "shortcuts": "Shortcuts", "figure": "Diagram", "examples": ("CT example", "PET example"), "repo": "GitHub repository"},
@@ -58,6 +81,50 @@ def product_image_asset(prefix: str, name: str) -> str:
 def product_image_size(name: str) -> str:
     """Reserve screenshot space before lazy loading, keeping section anchors stable."""
     return image_size(ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name])
+
+
+@lru_cache(maxsize=128)
+def encode_webp(source: Path, source_digest: str, width: int) -> bytes:
+    """Cache by source content, preserving GIF timing and composited frames.
+
+    These are website previews only; full-resolution source files stay unchanged.
+    """
+    with Image.open(source) as image:
+        color_profile = image.info.get("icc_profile")
+        target_width = min(width, image.width)
+        size = (target_width, max(1, round(image.height * target_width / image.width)))
+        frames, durations = [], []
+        for frame in ImageSequence.Iterator(image):
+            frames.append(frame.convert("RGBA").resize(size, Image.Resampling.LANCZOS))
+            durations.append(frame.info.get("duration", 100))
+        output = BytesIO()
+        animation = dict(save_all=True, append_images=frames[1:], duration=durations,
+                         loop=image.info.get("loop", 0)) if len(frames) > 1 else {}
+        color_options = {"icc_profile": color_profile} if color_profile else {}
+        frames[0].save(output, format="WEBP", quality=82, method=6, **animation, **color_options)
+        return output.getvalue()
+
+
+def product_image_variants(name: str) -> list[tuple[int, str, bytes]]:
+    source = ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name]
+    source_digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    with Image.open(source) as image:
+        widths = sorted({min(width, image.width) for width in PRODUCT_IMAGE_WIDTHS})
+    stem = Path(name).stem + ("-animated" if name.endswith(".gif") else "")
+    return [(width, f"{stem}-{width}.webp", encode_webp(source, source_digest, width))
+            for width in widths]
+
+
+def product_image_sources(prefix: str, name: str) -> list[tuple[int, str]]:
+    return [(width, f"{prefix}assets/{filename}?v={hashlib.sha256(data).hexdigest()[:12]}")
+            for width, filename, data in product_image_variants(name)]
+
+
+def product_image_attributes(prefix: str, name: str, layout: str = "half") -> str:
+    sources = product_image_sources(prefix, name)
+    srcset = ", ".join(f"{url} {width}w" for width, url in sources)
+    return (f'src="{sources[-1][1]}" srcset="{srcset}" '
+            f'sizes="{PRODUCT_IMAGE_SIZES[layout]}" decoding="async"')
 
 
 def image_size(path: Path) -> str:
@@ -296,13 +363,23 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 <link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
 <body class="home">{header}
-<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img src="{product_image_asset('../', 'hero-mpr.png')}" alt="{'Voxenra 多平面重建与三维视图' if code == 'zh' else 'Voxenra multiplanar and 3D views'}" loading="eager"></figure></div>
+<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img {product_image_attributes('../', 'hero-mpr.png', 'hero')} {product_image_size('hero-mpr.png')} fetchpriority="high" alt="{'Voxenra 多平面重建与三维视图' if code == 'zh' else 'Voxenra multiplanar and 3D views'}" loading="eager"></figure></div>
 {start}<div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
 <footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main><script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
 
 
 PRODUCT_COPY = {
     "zh": {
+        'development_note': '本页包含当前开发版新增功能：DIMSE、工具栏自定义、窗模板收藏与视图区最大化。下方下载仍为正式版 v{version}，这些新增功能将在后续版本提供。',
+        'pacs_title': '连接 DICOMweb 或传统 DICOM PACS',
+        'pacs_body': '按服务器选择连接方式，查询检查、勾选序列并导入。DIMSE 使用 C-ECHO 测试连接、C-FIND 查询、C-MOVE 回传；请管理员先登记本机接收 AE、IP 和端口。连接测试成功后，仍需实际导入一个序列验证回传。',
+        'pacs_captions': ('DIMSE 连接配置 · 合成数据演示', '本机 DIMSE 实际查询、选择与导入'),
+        'pacs_link': '查看 PACS 配置与故障排查',
+        'controls_title': '让常用工具更顺手',
+        'controls_body': '按六类视图选择配置，直接拖动图标调整顺序或移入“更多”，保存后在重启时保留；对比模式与图像类型保持独立配置。收藏窗模板可优先显示，列表单独滚动。点击页签栏的最大化按钮或按 F12，收起两侧工具，专注影像。',
+        'controls_captions': ('可视化拖拽工具栏 · 选择、拖动与保存', '最大化视图区 · 隐藏两侧并恢复原布局'),
+        'controls_link': '查看工具栏设置教程',
+        'favorites_link': '查看窗模板收藏示例',
         "lang": "zh-CN", "title": "Voxenra · DICOM 医学影像工作台",
         "description": "跨平台 DICOM 影像工作台：CT/MR/PET 阅片、MPR 与 3D、融合、测量分割和导出。支持基于 TotalSegmentator 的本地 AI 自动分割。",
         "features": "功能", "manual": "操作手册", "language": "English",
@@ -311,13 +388,13 @@ PRODUCT_COPY = {
         "ai_highlight": "本地 AI 自动分割 · TotalSegmentator",
         "ai_caption": "合成模体流程演示：失败重试与成功导入；模拟推理输出，不表示模型精度或耗时。",
         "ai_scope": "需另行安装 TotalSegmentator 与 CT 快速模型；自动结果可核查和精修。",
-        "topics": (("导入与工作区", "workflow"), ("AI 自动分割", "ai"), ("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量与导出", "analysis"), ("图像质量分析", "quality")),
+        "topics": (("导入与工作区", "workflow"), ("PACS 连接", "pacs"), ("AI 自动分割", "ai"), ("阅片与重建", "viewing"), ("PET/CT 融合", "fusion"), ("测量与导出", "analysis"), ("阅片效率", "controls"), ("图像质量分析", "quality")),
         "workflow_title": "导入与工作区",
         "workflow_intro": "从获取影像到恢复工作状态，常用流程都在同一工作台中完成。",
         "workflow_cards": (
             ("本地导入", "文件、文件夹和压缩包可混合选择，也可拖入窗口。"),
-            ("PACS 查询", "连接 DICOMweb PACS，查询检查并选择序列导入。"),
-            ("工作区", "保存布局、测量与分析结果。工作区引用原始影像，请同时保留源文件。"),
+            ("PACS 查询", "支持 DICOMweb 与传统 DICOM（DIMSE），查询检查并选择序列导入。"),
+            ("工作区", "新建、保存与恢复工作区；关闭页签保留结果，重新打开可继续编辑。请同时保留原始影像。"),
         ),
         "workflow_images": (("拖拽 ZIP 压缩包导入", "feature-zip-drag.gif"), ("PACS 检索与序列选择", "feature-pacs.png"), ("保存与恢复工作区", "feature-workspace-overview.png")),
         "viewing_title": "从二维切片到三维重建",
@@ -332,7 +409,7 @@ PRODUCT_COPY = {
         "viewing_caption": "MR 原始切片阅片", "viewing_4d_caption": "CT 多时相 4D 播放",
         "fusion_caption": "PET/CT 联动融合", "analysis_caption": "画笔、橡皮与撤销重做",
         "quality_title": "CT 图像质量分析",
-        "quality_body": "水模 QA、点源 MTF 和斜坡线 FWHM 各自独立分析；曲线、层厚与统计指标随工作区保存，重新打开后保留原值，可主动重新计算。",
+        "quality_body": "水模 QA、点源 MTF 和斜坡线 FWHM 独立分析。QA 未识别水模时自动创建普通圆形 ROI，支持移动、复制、删除和撤销重做；曲线、层厚与统计结果随工作区保存。",
         "quality_captions": ("水模 QA · CT 值与均匀性", "点源 MTF · 曲线与指标"),
         "closing_title": "开始使用 Voxenra", "closing_body": "适用于 macOS Apple Silicon 与 Windows。",
         "mac_download": "下载 DMG", "win_setup": "下载安装版", "win_portable": "下载便携版",
@@ -348,6 +425,16 @@ PRODUCT_COPY = {
         "appearance_captions": ("深色", "中性深灰", "浅色"),
     },
     "en": {
+        'development_note': 'This page includes current development features: DIMSE, customizable toolbars, favorite window presets and image-area maximization. Downloads below are still the stable v{version}; these additions will arrive in a later release.',
+        'pacs_title': 'Connect to DICOMweb or traditional DICOM PACS',
+        'pacs_body': 'Choose the server protocol, find a study, select series and import them. DIMSE uses C-ECHO to test the connection, C-FIND to query and C-MOVE for retrieval. Ask the administrator to register your receiver AE, IP and port. Import a small series after testing to verify the return route.',
+        'pacs_captions': ('DIMSE connection settings · synthetic-data demonstration', 'Real query, selection and import with a local DIMSE peer'),
+        'pacs_link': 'PACS setup and troubleshooting',
+        'controls_title': 'Keep your reading tools within reach',
+        'controls_body': 'Choose one of six view categories, drag icons to reorder or move them into More, and save the arrangement for future sessions. Comparison modes and image types retain independent configurations. Favorite window presets appear first and their list scrolls independently. Use the tab-bar maximize button or F12 to hide both sidebars and focus on the images.',
+        'controls_captions': ('Visual toolbar editing · choose, drag and save', 'Maximize the image area and restore the previous layout'),
+        'controls_link': 'Toolbar settings guide',
+        'favorites_link': 'View favorite window presets',
         "lang": "en-US", "title": "Voxenra · DICOM imaging workspace",
         "description": "A cross-platform DICOM workspace for CT/MR/PET, MPR, 3D, fusion, segmentation and export. Supports local AI auto-segmentation with TotalSegmentator.",
         "features": "Features", "manual": "Manual", "language": "简体中文",
@@ -356,13 +443,13 @@ PRODUCT_COPY = {
         "ai_highlight": "Local AI segmentation · TotalSegmentator",
         "ai_caption": "Synthetic phantom workflow demo (Chinese UI): failure, retry and successful import. Simulated inference output; not model accuracy or runtime.",
         "ai_scope": "Requires a separate TotalSegmentator environment and CT fast model. Review and refine automatic results.",
-        "topics": (("Import & workspace", "workflow"), ("AI segmentation", "ai"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis"), ("Image-quality analysis", "quality")),
+        "topics": (("Import & workspace", "workflow"), ("PACS connections", "pacs"), ("AI segmentation", "ai"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis"), ("Reading controls", "controls"), ("Image-quality analysis", "quality")),
         "workflow_title": "Import and workspace",
         "workflow_intro": "Bring images in, then pick up your work where you left off.",
         "workflow_cards": (
             ("Local import", "Select files, folders, and archives together, or drag them into the window."),
-            ("PACS query", "Connect to a DICOMweb PACS, find studies, and import selected series."),
-            ("Workspace", "Preserve layouts, measurements, segmentation, and analysis. Workspaces reference the original images, so keep the source files."),
+            ("PACS query", "Use DICOMweb or traditional DICOM (DIMSE) to find studies and import selected series."),
+            ("Workspace", "Create, save and restore workspaces; reopen closed tabs with their results. Keep the original image files alongside the workspace."),
         ),
         "workflow_images": (("Drag a ZIP archive to import", "feature-zip-drag.gif"), ("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace-overview.png")),
         "viewing_title": "From 2D slices to 3D reconstruction",
@@ -377,7 +464,7 @@ PRODUCT_COPY = {
         "viewing_caption": "MR original-slice viewing", "viewing_4d_caption": "Multi-phase CT 4D playback",
         "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "Paint, erase, undo and redo",
         "quality_title": "CT image-quality analysis",
-        "quality_body": "Analyze water-phantom QA, point-source MTF, and ramp FWHM separately. Save curves, slice thickness, and metrics in the workspace. Restore recorded results and recalculate when needed.",
+        "quality_body": "Analyze water-phantom QA, point-source MTF and ramp FWHM separately. When no phantom is detected, QA creates ordinary circular ROIs that you can move, duplicate, delete, undo and redo. Save curves, slice thickness and statistics in the workspace.",
         "quality_captions": ("Water-phantom QA · CT values and uniformity", "Point-source MTF · curve and metrics"),
         "closing_title": "Get started with Voxenra", "closing_body": "Available for macOS Apple Silicon and Windows.",
         "mac_download": "Download DMG", "win_setup": "Download installer", "win_portable": "Download portable",
@@ -407,12 +494,37 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     win_setup_url = escape(download_base + quote(release["windows_installer"], safe=""))
     win_portable_url = escape(download_base + quote(release["windows_portable"], safe=""))
     version = escape('v' + release["version"])
+    development_notice = (f'<p class="development-note product-container">{escape(copy["development_note"].format(version=release["version"]))}</p>'
+                          if release["version"] == "2.1.3" else "")
     ai_image = product_image_asset(prefix, "feature-ai-segmentation.gif")
-    ai_still = product_image_asset(prefix, "feature-ai-segmentation.png")
+    ai_still = ", ".join(f"{url} {width}w" for width, url in product_image_sources(prefix, "feature-ai-segmentation.png"))
     feature_rows = [f'''<section class="product-feature product-feature-wide" id="ai">
 <div class="product-feature-copy"><h2>{escape(copy["ai_title"])}</h2><p>{escape(copy["ai_body"])}</p></div>
-<figure><a href="{ai_image}" target="_blank" rel="noopener"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{ai_still}"><img src="{ai_image}" {product_image_size("feature-ai-segmentation.gif")} alt="{escape(copy["ai_caption"])}" loading="lazy"></picture></a><figcaption>{escape(copy["ai_caption"])}</figcaption></figure>
+<figure><a href="{ai_image}" target="_blank" rel="noopener"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{ai_still}" sizes="{PRODUCT_IMAGE_SIZES["wide"]}"><img {product_image_attributes(prefix, "feature-ai-segmentation.gif", "wide")} {product_image_size("feature-ai-segmentation.gif")} alt="{escape(copy["ai_caption"])}" loading="lazy"></picture></a><figcaption>{escape(copy["ai_caption"])}</figcaption></figure>
 <div class="ai-details"><p>{escape(copy["ai_scope"])}</p><a href="{prefix}{code}/segmentation.html#step-11">{escape(copy["ai_link"])}</a></div></section>''']
+    # New workflow captures have real, separately recorded English interfaces.
+    media_prefix = 'en-' if code == 'en' else ''
+    workflow_features = {}
+    for key, media, guide in (
+        ('pacs', ('feature-dimse-settings.png', 'feature-dimse-import.gif'), 'pacs.html'),
+        ('controls', ('feature-toolbar.gif', 'feature-focus.gif'), 'settings.html'),
+    ):
+        figures = []
+        for name, caption in zip(media, copy[key + '_captions'], strict=True):
+            name = media_prefix + name
+            still = ''
+            if name.endswith('.gif'):
+                poster = ', '.join(f'{url} {width}w' for width, url in product_image_sources(prefix, name[:-4] + '.png'))
+                still = f'<source media="(prefers-reduced-motion: reduce)" srcset="{poster}" sizes="{PRODUCT_IMAGE_SIZES["half"]}">'
+            figures.append(f'<figure><a href="{product_image_asset(prefix, name)}" target="_blank" rel="noopener">'
+                           f'<picture>{still}<img {product_image_attributes(prefix, name)} {product_image_size(name)} '
+                           f'alt="{escape(caption)}" loading="lazy"></picture></a><figcaption>{escape(caption)}</figcaption></figure>')
+        extra = (f'<a href="{product_image_asset(prefix, media_prefix + "feature-window-favorites.png")}" target="_blank" rel="noopener">'
+                 f'{escape(copy["favorites_link"])}</a> · ' if key == 'controls' else '')
+        workflow_features[key] = (f'<section class="product-feature product-feature-wide" id="{key}">'
+                            f'<div class="product-feature-copy"><h2>{escape(copy[key + "_title"])}</h2><p>{escape(copy[key + "_body"])}</p></div>'
+                            f'<div class="feature-media-grid">{"".join(figures)}</div><div class="ai-details">{extra}'
+                                 f'<a href="{prefix}{code}/{guide}">{escape(copy[key + "_link"])}</a></div></section>')
     for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
         title = escape(copy[key + "_title"])
         image_url = product_image_asset(prefix, image)
@@ -427,14 +539,16 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
             figures = []
             for asset, caption in media:
                 url = product_image_asset(prefix, asset)
-                figures.append(f'<figure><a href="{url}" target="_blank" rel="noopener"><img src="{url}" {product_image_size(asset)} alt="{escape(caption)}" loading="lazy"></a><figcaption>{escape(caption)}</figcaption></figure>')
+                figures.append(f'<figure><a href="{url}" target="_blank" rel="noopener"><img {product_image_attributes(prefix, asset)} {product_image_size(asset)} alt="{escape(caption)}" loading="lazy"></a><figcaption>{escape(caption)}</figcaption></figure>')
             feature_rows.append(f'''<section class="product-feature product-feature-wide" id="{key}">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
 <div class="feature-media-grid">{"".join(figures)}</div></section>''')
             continue
         feature_rows.append(f'''<section class="product-feature" id="{key}">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
-<figure><a href="{image_url}" target="_blank" rel="noopener"><img src="{image_url}" {product_image_size(image)} alt="{escape(copy["alt_" + key])}" loading="lazy"></a><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
+<figure><a href="{image_url}" target="_blank" rel="noopener"><img {product_image_attributes(prefix, image, "hero")} {product_image_size(image)} alt="{escape(copy["alt_" + key])}" loading="lazy"></a><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
+    feature_rows.insert(0, workflow_features['pacs'])
+    feature_rows.append(workflow_features['controls'])
     topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
     workflow_cards = []
     for (title, body), (caption, image) in zip(copy["workflow_cards"], copy["workflow_images"], strict=True):
@@ -445,7 +559,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
             f'<article class="workflow-card"><h3>{escape(title)}</h3><p>{escape(body)}</p>'
             f'<figure class="workflow-image"><a href="{full_image_url}" target="_blank" rel="noopener" '
             f'aria-label="{escape(full_image_label)}"><span class="workflow-image-frame">'
-            f'<img src="{image_url}" {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<img {product_image_attributes(prefix, image, "third")} {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure></article>'
         )
     quality_images = []
@@ -455,7 +569,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
         quality_images.append(
             f'<figure class="quality-image"><a href="{image_url}" target="_blank" rel="noopener" '
             f'aria-label="{escape(full_image_label)}"><span class="quality-image-frame">'
-            f'<img src="{image_url}" {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<img {product_image_attributes(prefix, image)} {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure>'
         )
     theme_images = []
@@ -465,7 +579,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
         image_url = product_image_asset(prefix, image)
         theme_images.append(
             f'<figure><a href="{image_url}" target="_blank" rel="noopener">'
-            f'<img src="{image_url}" {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></a>'
+            f'<img {product_image_attributes(prefix, image, "third")} {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure>'
         )
     return f'''<!doctype html><html lang="{copy["lang"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -474,8 +588,9 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <link rel="alternate" hreflang="zh-CN" href="{prefix}index.html"><link rel="alternate" hreflang="en-US" href="{prefix}en-us/index.html"></head>
 <body><a class="skip-link" href="#main">{'跳转到正文' if code == 'zh' else 'Skip to content'}</a>{header}
 <main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><a class="ai-highlight" href="#ai">{escape(copy["ai_highlight"])}</a><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
-<figure class="hero-visual"><img src="{product_image_asset(prefix, 'hero-mpr.png')}" {product_image_size("hero-mpr.png")} alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
+<figure class="hero-visual"><img {product_image_attributes(prefix, 'hero-mpr.png', 'hero')} {product_image_size("hero-mpr.png")} alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
+{development_notice}
 <div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{"".join(workflow_cards)}</div></section>
 <div class="product-features product-container">{"".join(feature_rows)}</div>
 <section class="product-quality product-container" id="quality"><div class="product-feature-copy"><h2>{escape(copy["quality_title"])}</h2><p>{escape(copy["quality_body"])}</p></div><div class="feature-media-grid">{"".join(quality_images)}</div></section>
@@ -511,6 +626,8 @@ def build(output: Path) -> None:
     shutil.copy2(ASSETS / "brand/voxenra-mark.svg", asset_output / "voxenra-mark.svg")
     for target, source in PRODUCT_SCREENSHOTS.items():
         shutil.copy2(ROOT / "docs/screenshots" / source, asset_output / target)
+        for _, filename, data in product_image_variants(target):
+            (asset_output / filename).write_bytes(data)
     for name in ("site-shell.css", "manual.css", "manual.js"):
         shutil.copy2(SITE / name, asset_output / name)
     shutil.copy2(SITE / "product.css", asset_output / "product.css")

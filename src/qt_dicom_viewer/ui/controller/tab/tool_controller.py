@@ -494,6 +494,11 @@ class ToolController(QObject):
         return resolved_groups(self._tab_type, self._modality, self._is_color, self.tools,
                                self._settings_controller.section('toolbar')['rightProfiles'])
 
+    @Property(str, notify=_i18n_tools)
+    def toolbarProfile(self) -> str:
+        from qt_dicom_viewer.settings.toolbar import profile_key
+        return profile_key(self._tab_type, self._modality, self._is_color)
+
     @_TextProperty(list, notify=_i18n_tools, notify_name='_i18n_tools')
     def orderedToolbarTools(self) -> list[dict]:
         groups = self.toolbarGroups

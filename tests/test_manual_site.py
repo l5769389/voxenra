@@ -5,6 +5,9 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from urllib.parse import urlsplit
 import json
+from io import BytesIO
+
+from PIL import Image, ImageCms
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,12 +20,38 @@ class Links(HTMLParser):
     def __init__(self):
         super().__init__()
         self.references = []
+        self.images = []
+        self.classes = set()
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
+        self.classes.update(attributes.get('class', '').split())
+        if tag == 'img':
+            self.images.append(attributes)
         for name in ("href", "src"):
             if name in attributes:
                 self.references.append(attributes[name])
+        if 'srcset' in attributes:
+            self.references.extend(candidate.strip().split()[0] for candidate in attributes['srcset'].split(','))
+
+
+def test_new_workflow_media_are_localized_and_have_reduced_motion_stills(tmp_path):
+    SITE.build(tmp_path)
+    for page, media_prefix in ((tmp_path / 'index.html', ''), (tmp_path / 'en-us/index.html', 'en-')):
+        source = page.read_text(encoding='utf-8')
+        assert 'id="pacs"' in source and 'href="#pacs"' in source
+        assert 'id="controls"' in source and 'href="#controls"' in source
+        for name in ('feature-dimse-import', 'feature-toolbar', 'feature-focus'):
+            assert f'{media_prefix}{name}-animated-' in source
+            assert f'{media_prefix}{name}-640.webp' in source
+        assert source.count('media="(prefers-reduced-motion: reduce)"') >= 4
+        links = Links()
+        links.feed(source)
+        release = json.loads((SITE.SITE / 'release.json').read_text())
+        assert ('development-note' in links.classes) == (release['version'] == '2.1.3')
+        for ref in links.references:
+            if not urlsplit(ref).scheme and not ref.startswith('#'):
+                assert (page.parent / urlsplit(ref).path).exists(), ref
 
 
 def test_generated_manual_has_all_chapters_and_local_assets(tmp_path):
@@ -39,7 +68,7 @@ def test_generated_manual_has_all_chapters_and_local_assets(tmp_path):
         assert 'class="site-header"' in landing
         assert 'class="site-nav"' in landing
         assert 'class="home-visual"' in landing
-        assert 'hero-mpr.png' in landing
+        assert 'hero-mpr-' in landing
         assert ('入门与导入' if language == 'zh' else 'Getting started &amp; importing') in landing
         assert landing.count('href="quick-start.html"') == 1
         assert landing.count('data-search=') == len(chapter_ids)
@@ -80,10 +109,10 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert manual in source
         assert 'class="site-brand"' in source
         assert ('产品主页' if page.parent == tmp_path else 'Product home') not in source
-        assert "hero-mpr.png" in source
+        assert "hero-mpr-" in source
         assert "feature-fusion.png" in source
         assert "feature-pacs.png?v=" in source
-        assert "feature-zip-drag.gif?v=" in source
+        assert "feature-zip-drag-" in source
         assert "feature-zip-drop.png?v=" in source
         assert "feature-workspace-overview.png?v=" in source
         assert "feature-workspace.png" not in source
@@ -92,8 +121,6 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert 'id="ai"' in source and 'href="#ai"' in source
         assert "TotalSegmentator" in source
         assert "feature-ai-segmentation.gif?v=" in source
-        assert "尚不包含" not in source
-        assert "In development" not in source
         assert ("需另行安装 TotalSegmentator" if page.parent == tmp_path else "Requires a separate TotalSegmentator") in source
         assert "feature-water-qa.png" in source
         assert "feature-mtf.png" in source
@@ -102,7 +129,7 @@ def test_product_home_is_bilingual_and_keeps_manual_urls(tmp_path):
         assert source.count('href="#quality"') == 1
         assert ('图像质量分析</a>' if page.parent == tmp_path else 'Image-quality analysis</a>') in source
         assert source.count('class="product-topics product-container"') == 1
-        assert source.count('class="feature-media-grid"') == 3
+        assert source.count('class="feature-media-grid"') >= 3
         assert 'feature-measurements.png?v=' in source
         for theme in ("dark", "graphite", "light"):
             assert f'feature-theme-{theme}.png?v=' in source
@@ -147,7 +174,7 @@ def test_manual_paragraphs_keep_emphasis_and_escape_html():
 def test_tutorials_are_opt_in_and_all_assets_and_section_targets_exist(tmp_path):
     SITE.build(tmp_path)
     for code in ('zh', 'en'):
-        for chapter in ('local-import', 'measurement', 'mpr', '4d', 'volume', 'segmentation'):
+        for chapter in ('local-import', 'measurement', 'mpr', '4d', 'volume', 'segmentation', 'pacs', 'settings', '2d'):
             page = tmp_path / code / f'{chapter}.html'
             source = page.read_text(encoding='utf-8')
             assert 'class="tutorial"' in source
@@ -172,3 +199,58 @@ def test_chapter_search_includes_shortcuts_and_section_titles(tmp_path):
             source = (tmp_path / code / f'{page}.html').read_text(encoding='utf-8')
             assert 'ctrl+shift+o' in source
             assert '⇧⌘o' in source
+
+
+def test_home_loads_responsive_compressed_images_and_preserves_full_size_links(tmp_path):
+    SITE.build(tmp_path)
+    for page in (tmp_path / 'index.html', tmp_path / 'en-us/index.html'):
+        parsed = Links()
+        parsed.feed(page.read_text())
+        screenshots = [img for img in parsed.images if 'hero-mpr' in img['src'] or 'feature-' in img['src']]
+        assert len(screenshots) >= 14
+        for img in screenshots:
+            assert urlsplit(img['src']).path.endswith('.webp')
+            assert img['decoding'] == 'async'
+            assert int(img['width']) > 0 and int(img['height']) > 0
+            candidates = [part.strip().split() for part in img['srcset'].split(',')]
+            assert len(candidates) >= 2
+            assert img['sizes']
+            for url, width in candidates:
+                with Image.open(page.parent / urlsplit(url).path) as decoded:
+                    assert decoded.width == int(width.removesuffix('w'))
+                    assert decoded.width <= 1600
+                    if 'feature-ai-segmentation' in img['src']:
+                        assert decoded.n_frames == 3, 'Animation and its still poster must not overwrite each other'
+            if 'hero-mpr' in img['src']:
+                assert img['fetchpriority'] == 'high' and img.get('loading') != 'lazy'
+                assert (page.parent / urlsplit(img['src']).path).stat().st_size < 400_000
+            else:
+                assert img['loading'] == 'lazy'
+        # Full-size image links remain available, but are not requested as inline images.
+        assert any(urlsplit(link).path.endswith('feature-mtf.png') for link in parsed.references)
+
+
+def test_webp_animation_preserves_frames_timing_and_loop(tmp_path):
+    source = tmp_path / 'demo.gif'
+    frames = [Image.new('RGB', (120, 80), color) for color in ('red', 'green', 'blue')]
+    frames[0].save(source, save_all=True, append_images=frames[1:], duration=[100, 240, 380], loop=2)
+    assert hasattr(SITE, 'encode_webp'), 'Site images need a frame-preserving encoder'
+    encoded = SITE.encode_webp(source, 'fixture-v1', 60)
+    with Image.open(BytesIO(encoded)) as result:
+        assert result.size == (60, 40)
+        assert result.n_frames == 3 and result.info['loop'] == 2
+        durations = []
+        for index in range(result.n_frames):
+            result.seek(index)
+            result.load()
+            durations.append(result.info['duration'])
+        assert durations == [100, 240, 380]
+
+
+def test_webp_keeps_screenshot_color_profile_and_transparency(tmp_path):
+    source = tmp_path / 'profile.png'
+    profile = ImageCms.ImageCmsProfile(ImageCms.createProfile('sRGB')).tobytes()
+    Image.new('RGBA', (80, 40), (20, 120, 200, 120)).save(source, icc_profile=profile)
+    with Image.open(BytesIO(SITE.encode_webp(source, 'profile-v1', 40))) as decoded:
+        assert decoded.info.get('icc_profile') == profile
+        assert decoded.getpixel((20, 10))[3] == 120

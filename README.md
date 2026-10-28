@@ -10,20 +10,34 @@
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.3/Voxenra-2.1.3-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.3/Voxenra-2.1.3-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.3/Voxenra-2.1.3-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+
 
 ## 功能概览
 
 | 模块 | 功能 |
 | --- | --- |
-| 影像管理 | 本地文件、文件夹与压缩包导入；PACS 查询下载；DICOM 标签查看。 |
-| 二维阅片 | 调窗、伪彩、缩放、旋转、翻转、切片播放；平铺、多视口与多序列联动对比。 |
-| 重建与三维 | 三平面 MPR、斜面重建、厚层投影；3D 体绘制、显示模板、裁剪；CT 多时相 4D。 |
-| PET/CT 融合 | CT、PET、融合与 MIP 联动；手动刚性配准、融合比例调整、融合 3D。 |
-| 测量与分割 | 长度、角度、曲线、矩形／椭圆／自由形状 ROI；阈值分割、画笔／橡皮精修、VOI 与区域统计。 |
-| 本地 AI 自动分割 | 接入 TotalSegmentator，CT 多器官快速分割；器官搜索与选择、结果叠加、画笔精修、撤销和工作区保存。 |
-| 分析与报告 | CT 水模 QA、点源 MTF、斜坡线 FWHM 与层厚；PNG、DICOM、CSV / PDF、SEG / SR 与 NRRD 导出。 |
-| 工作区 | 多页签、独立窗口、灵活布局、保存恢复；深色／中性深灰／浅色主题、语言包与离线手册。 |
+| 本地影像 | 文件、文件夹与 ZIP / RAR / 7z / TAR 等压缩包混选、拖入、后台导入；DICOM 标签查看。 |
+| PACS | DICOMweb 查询下载；支持传统 DICOM（DIMSE）的连接测试、查询与回传导入。 |
+| 二维与对比 | 调窗、反白、伪彩、播放、平铺、自定义多视口；2–4 序列对比、患者空间／相对进度联动。 |
+| 重建与三维 | 三平面与斜面 MPR、厚层投影、双序列 MPR 对比；体绘制、模板、裁剪、CT 去床板与 CT 多时相 4D。 |
+| PET/CT 融合 | CT、PET、融合与 MIP 联动；SUV／源单位显示、手动刚性配准、融合比例与融合 3D。 |
+| 测量与标注 | 长度、角度、曲线、矩形／椭圆／自由形状 ROI；文字和箭头、列表管理、复制粘贴、撤销重做。 |
+| 分割与 VOI | CT/PET 阈值分割、球形／椭球 VOI；CT/MR/PET 掩膜管理、画笔／橡皮、连通区域编辑与统计。 |
+| 本地 AI | TotalSegmentator CT 多器官快速分割；器官搜索与选择、结果叠加、精修、撤销与保存。 |
+| 分析与导出 | CT 水模 QA／圆形 ROI、点源 MTF、斜坡线 FWHM 与层厚；PNG、DICOM、CSV / PDF、SEG / SR、NRRD。 |
+| 工作区与偏好 | 多页签、独立窗口、新建／保存／恢复、关闭页签结果保留；主题、语言、输入与显示设置、离线手册。支持工具栏排序、窗模板收藏与视图区最大化。 |
+
+## 从 PACS 查询到阅片
+
+在 **设置 → 数据源** 管理多个 PACS 连接，按患者、检查号、模态或日期查询，选择序列后后台导入并打开 2D；可继续进入 MPR、3D 或查看 Tag。导入支持进度、取消与重复序列合并，完整校验后才加入工作区。
+
+- **DICOMweb**：QIDO-RS 查询与 WADO-RS 下载，支持无认证、Basic 和 Bearer。
+- **传统 DICOM（DIMSE）**：C-ECHO 测试、Study Root C-FIND 查询、C-MOVE 回传，导入期间临时接收 C-STORE。填写 PACS 地址及远端 AE、本机接收 AE、监听 IPv4 与端口；PACS 端也需登记可回传的接收节点。
+
+[![传统 DICOM 设置、查询与序列导入演示](docs/screenshots/52-dimse-import.gif)](docs/screenshots/51-dimse-settings.png)
+
+原生界面演示，使用本机真实 DIMSE 服务和合成 DICOM 数据。C-ECHO 成功只代表连接测试通过；查询权限与回传链路需通过实际序列导入验证。当前 DIMSE 不含 C-GET、DICOM TLS、上传或常驻接收服务，具体部署条件见 [PACS 配置](docs/pacs.md) 与 [实际联调范围](docs/validation/dicom-dimse.md)。
 
 ## 本地 AI 自动分割 · TotalSegmentator
 
@@ -41,7 +55,9 @@
 
 ## 二维阅片与序列对比
 
-原始切片与标准切面重建清晰区分；支持 CT / MR 调窗、PET 定量范围、伪彩与切片播放。多视口可独立阅片，也可按位置或进度联动。
+原始切片与轴位／冠状位／矢状位重建可在视口内切换，各自保留位置和显示状态。CT / MR 支持调窗与反白，PET 使用定量显示范围；布局支持序列拖放、最多 6 × 6 网格和双击放大。
+
+**2–4 序列对比**可逐项同步翻页、调窗、缩放等操作，重新开启同步时以当前选中视口为准。兼容的患者空间支持位置联动、定位线及 Alt＋单击定位；也可按相对进度比较不同层数。MR 默认独立调窗／反白。空间联动与进度对应均不执行自动配准。
 
 <table>
 <tr>
@@ -50,11 +66,23 @@
 </tr>
 </table>
 
+### 辨识影像、收藏窗模板与专注阅片
+
+页签显示检查日期、序列号与原始序列描述，悬停查看完整来源；身份隐藏设置同时覆盖新增的阅片身份信息。窗值统一按 **WW → WL** 显示；CT 模板可星标收藏并优先排列，点击星标不改变当前窗值，模板列表独立滚动。
+
+![CT 窗模板收藏与独立滚动列表](docs/screenshots/55-window-favorites.png)
+
+点击页签栏右端的 **最大化视图区**，或按 **F12**（部分 Mac 键盘需 Fn+F12），同时隐藏左右面板和按钮栏；再次操作恢复原宽度与展开状态。此状态仅作用于当前窗口，与双击放大单个视口、系统全屏各自独立。
+
+![最大化与还原视图区](docs/screenshots/54-focus-view.gif)
+
 ## MPR、3D 与 4D
 
-- **MPR**：轴位、冠状位、矢状位联动，支持斜面重建、双序列对比及 MIP / MinIP / Mean / Sum 厚层投影。
-- **3D**：CT、MR、PET 体绘制，支持模板、调窗、旋转和圈选裁剪；CT 提供 20 个模板。
-- **4D**：CT 多时相同步播放，分割和 VOI 按时相保存。
+- **MPR**：轴位、冠状位、矢状位联动，支持斜面重建、七种布局及 MIP / MinIP / Mean / Sum 厚层投影；四宫格可显示 3D 空间参考并联动旋转。
+- **3D**：CT、MR、PET 体绘制，支持模板、调窗、方向、旋转和圈选裁剪；CT 提供 20 个模板及去床板。
+- **4D**：CT 多时相同步播放，分割和 VOI 按时相保存；可独立播放当前时相切片。
+
+**双序列 MPR 对比**提供常驻的位置、旋转、CT 调窗与物理显示比例开关，默认独立操作。开启调窗／比例同步以当前组为准；位置／旋转同步保留原有偏移并同步后续操作。双击切面可并排放大对应平面，联动不执行自动配准。
 
 **MPR 布局切换**：三平面与 3D 同屏，可调整布局、放大单个视图并记住布局。
 
@@ -77,7 +105,7 @@
 
 ## PET/CT 融合
 
-CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、调整色表与融合比例，进行手动刚性配准。融合 3D 可分别控制 CT 与 PET 的显示。
+CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、调整色表与融合比例，进行手动刚性配准。PET 按元数据提供 SUV 或源活度单位；切面中的 VOI／阈值分割使用原始定量数据。融合 3D 可分别控制 CT 与 PET 的显示。
 
 ![PET/CT 切面与融合比例切换](docs/screenshots/05-pet-ct-fusion.gif)
 
@@ -90,8 +118,8 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 ## 测量、分割与报告
 
-- **测量**：长度、角度、曲线、矩形／椭圆／自由形状 ROI，提供面积、周长和强度统计；支持列表定位、重命名、显隐、锁定、复制粘贴与撤销重做。
-- **分割**：MPR 阈值分割、画笔／橡皮精修、连通区域保留或删除、自由形状 ROI 转单层分割；支持轮廓／填充与不透明度调节、独立区域管理、VOI 分析和撤销重做。
+- **测量与标注**：长度、角度、曲线、矩形／椭圆／自由形状 ROI，提供面积、周长和强度统计；支持文字／箭头、列表定位、重命名、显隐、锁定、复制粘贴与撤销重做。
+- **分割与 VOI**：CT/PET 阈值分割和球形／椭球 VOI；CT/MR/PET 掩膜可用画笔／橡皮精修、连通区域保留或删除。支持自由形状 ROI 转单层分割、轮廓／填充、不透明度、区域管理和撤销重做。
 - **结果**：测量导出 CSV / PDF 或 DICOM SR，PDF 自动匹配测量所在平面的参考图；分割支持 DICOM SEG 和 NRRD / Slicer 往返交换，保留重叠区域、名称与颜色。
 
 **自由形状测量**：逐点点击添加控制点，生成平滑闭合轮廓并统计。
@@ -111,17 +139,25 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 <td width="50%"><b>关联结果导入</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="右侧导入匹配影像的 SEG / NRRD" width="100%"></a></td>
 <td width="50%"><b>分割与报告导出</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG、SR 与 NRRD 导出" width="100%"></a></td>
 </tr>
+</table>
+
+### CT 质量分析
+
+- **QA**：水模 CT 值、噪声和均匀性；未识别到可用水模时提供五个可编辑圆形 ROI 及取样统计。初始 ROI 与副本均可移动、复制、删除、重新生成、撤销重做；仅在满足条件时显示水模五点汇总。
+- **MTF / FWHM**：点源 MTF 曲线与空间分辨率，斜坡线 FWHM 和层厚分析；正式结果、ROI 与参数可随工作区保存。
+
+<table>
 <tr>
-<td><b>CT 水模 QA</b><br><a href="docs/screenshots/19-water-qa-2.1.3.png"><img src="docs/screenshots/19-water-qa-2.1.3.png" alt="CT 值、噪声与均匀性分析" width="100%"></a></td>
-<td><b>点源 MTF</b><br><a href="docs/screenshots/28-mtf-analysis.png"><img src="docs/screenshots/28-mtf-analysis.png" alt="独立的点源 MTF 曲线与空间分辨率分析" width="100%"></a></td>
+<td width="50%"><b>CT 水模 QA</b><br><a href="docs/screenshots/19-water-qa-2.1.3.png"><img src="docs/screenshots/19-water-qa-2.1.3.png" alt="CT 值、噪声与均匀性分析" width="100%"></a></td>
+<td width="50%"><b>点源 MTF</b><br><a href="docs/screenshots/28-mtf-analysis.png"><img src="docs/screenshots/28-mtf-analysis.png" alt="独立的点源 MTF 曲线与空间分辨率分析" width="100%"></a></td>
 </tr>
 </table>
 
 ## 数据管理与工作区
 
-左侧导入原始影像，右侧导入关联 SEG / NRRD 分割。支持文件／文件夹／压缩包混选和拖入、PACS 查询下载、DICOM 标签查看，以及 PNG 和源 DICOM 导出。
+左侧导入原始 DICOM 影像，右侧 **导入分割** 导入关联 SEG / NRRD 掩膜（v2.1.3 中名为“导入”）。源序列可导出 PNG 或 DICOM，当前视图可保存 PNG 截图；整序列导出与视口截图的内容范围不同，见 [导出说明](docs/export.md)。
 
-多页签可拖出成为独立窗口；工作区保存影像引用、布局、测量、分割掩膜与分析结果，并恢复之前选择的工具和精修参数。可在当前窗口新建空白工作区；关闭页签保留编辑结果，支持重新打开，退出时统一确认保存。支持自动恢复、深色／中性深灰／浅色主题、本地 JSON 语言包与窗模板、离线手册、反馈和可关闭的启动更新检查。离线手册包含可播放、暂停和放大的操作动图。
+多页签可拖出成为独立窗口；工作区保存影像引用、布局、测量、分割掩膜与分析结果，并恢复之前选择的工具和精修参数。可新建空白工作区；关闭页签保留编辑结果，可从工作区入口或 Ctrl+Shift+T／⇧⌘T 重开，退出时统一确认保存。工作区保存影像引用和结果，仍需保留原始文件；未完成草稿与撤销历史不保存。支持自动恢复、深色／中性深灰／浅色主题、本地 JSON 语言包与窗模板、离线手册、反馈和可关闭的启动更新检查。离线手册包含可播放、暂停和放大的操作动图。
 
 ![离线操作手册与操作演示](docs/screenshots/50-offline-manual-2.1.2.png)
 
@@ -144,13 +180,21 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 [深色主题](docs/screenshots/25-theme-dark.png) · [浅色主题](docs/screenshots/26-theme-light.png)
 
-可设置界面大小、鼠标拖动、滚轮方向与工具快捷键，重复或保留按键会被拦截。左侧栏操作与右侧工具说明文字可独立开关。隐私设置支持新视图隐藏身份叠加、清除最近工作区记录。
+可设置界面大小、鼠标拖动、滚轮方向与工具快捷键，重复或保留按键会被拦截。四角字段及顺序、十字线、比例尺、测量样式和 ROI 指标也可配置。内置中文、英文与巴西葡萄牙语，并支持添加本地 JSON 语言包。左侧栏操作与右侧工具说明文字可独立开关。隐私设置支持新视图隐藏身份叠加、清除最近工作区记录。
 
 ![主题、语言与独立按钮说明文字设置](docs/screenshots/44-appearance-2.1.1.png)
 
 [鼠标操作与工具快捷键设置](docs/screenshots/40-input-settings.png)
 
-更新提示按界面语言显示简短摘要，可查看完整发布说明。[更新弹窗](docs/screenshots/43-update-summary.png)
+### 按阅片任务组织工具栏
+
+在 **设置 → 工具栏** 调整左侧视图入口，以及右侧的 **常用／更多** 工具。右侧以 **2D 阅片、MPR 重建、3D、平铺、4D、融合** 六类选择，展开细分选项后按单序列／对比模式和图像类型分别配置。
+
+直接拖动带图标的按钮排序或跨组放置，也可选中后前移、后移、转组。常用区最多 7 项；修改先保留为草稿，**保存** 后应用到所有窗口并持久保留，**取消** 放弃草稿，**恢复当前默认** 只调整当前配置。文件、PACS 与底部系统入口位置固定。
+
+![按视图分类拖动工具、调整常用与更多并保存](docs/screenshots/53-toolbar-customization.gif)
+
+已发布安装包支持下载校验与应用内更新。更新提示按界面语言显示简短摘要，可查看完整发布说明。[更新弹窗](docs/screenshots/43-update-summary.png)
 
 [整序列导出完成](docs/screenshots/46-export-complete-2.1.1.png) · [自动分割失败与重试](docs/screenshots/47-ai-error-2.1.1.png)
 
@@ -158,11 +202,11 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 ## 支持范围
 
-- 支持常规 CT / MR / PET、Enhanced CT / MR，以及 RLE、JPEG、JPEG-LS、JPEG 2000 像素解码。MPR / 3D 需要规则空间采样，PET 定量取决于影像元数据。
+- 支持常规 CT / MR、经典静态／全身 PET、Enhanced CT / MR，以及 RLE、JPEG、JPEG-LS、JPEG 2000 像素解码。MPR / 3D 需要规则空间采样，PET 定量取决于影像元数据；Enhanced CT 时相按组浏览，暂不接入 4D。
 - 常见 RGB、YBR 与 PALETTE COLOR DICOM 支持二维、平铺、多帧播放及 PNG 导出；物理尺寸测量需要有效像素间距，不开放彩色 MPR / 3D 或 HU 分析。
 - NRRD 支持当前时相体数据导出，以及匹配原始网格的分割导入导出；暂不提供独立 NRRD 影像浏览或自动重采样。
-- 暂不支持 NIfTI、动态／门控 PET、MR 4D、fMRI / DTI 分析，以及 SR / RTSTRUCT 导入。
-- SEG / SR 保留源身份与影像引用，不使用 PNG / 普通 DICOM 导出的匿名选项。
+- 暂不支持 NIfTI、动态／门控／Enhanced PET、MR 4D、fMRI / DTI 分析，以及 SR / RTSTRUCT 导入。
+- SEG / SR 保留源身份与影像引用，不使用 PNG / 普通 DICOM 导出的匿名选项；匿名导出也不会擦除像素内烧录文字。
 
 ## 文档与运行
 

@@ -93,6 +93,18 @@ class WindowWorkspaceController(QObject):
     def all_tabs(self):
         return self.manager.ordered_tabs()
 
+    @Slot(result=str)
+    def toolbarProfileForEditing(self):
+        """Use this window's latest image, even while a utility page is active."""
+        for key in self._mru:
+            tab = self.registry._tab_dict.get(key) if key in self._ids else None
+            if tab is None or tab.tab_config.tab_type.value not in (
+                    '2d', 'mpr', '3d', 'montage', '4d', 'compare2d', 'comparempr', 'petctfusion'):
+                continue
+            tool = getattr(tab, 'activeToolController', None) or tab.toolController
+            return tool.toolbarProfile
+        return ''
+
     def _select(self, tab_id):
         if tab_id == self._active:
             return

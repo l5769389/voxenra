@@ -128,7 +128,8 @@ Rectangle {
                     if (type === "settings") {
                         setSource(Qt.resolvedUrl("../settings/SettingsPage.qml"), {
                             pacsController: Qt.binding(() => centerPanel.pacsController),
-                            settingsController: Qt.binding(() => centerPanel.settingsController)
+                            settingsController: Qt.binding(() => centerPanel.settingsController),
+                            workspaceController: Qt.binding(() => centerPanel.workspaceController)
                         })
                     } else if (type === "pacs") {
                         setSource(Qt.resolvedUrl("../pacs/PacsBrowser.qml"), {

@@ -9,6 +9,21 @@
 两种协议共用查询、选择、导入和工作区浏览流程。旧配置自动按 DICOMweb 读取。
 不含 C-GET，也不提供向 PACS 上传或修改数据的入口。
 
+## 第一次连接
+
+1. **向管理员确认协议**：DICOMweb 使用 HTTP(S) 根地址；DIMSE 使用主机、DICOM 端口和 AE Title。
+2. **设置 → 数据源 → 新增配置**，按协议填写字段，测试并保存。DIMSE 还须完成下述接收节点登记。
+3. **PACS → 查询检查 → 选择检查 → 勾选序列 → 导入所选**。第一次先选择一个小序列。
+4. 导入成功后打开 2D，检查影像数量与内容；之后再进入 MPR、3D 等支持的视图。
+
+**DIMSE 的连接测试成功，不能代替实际导入测试。** 查询可以访问 PACS，但影像回传还需要 PACS 能连回本机。
+
+[![DIMSE 连接配置](screenshots/51-dimse-settings.png)](screenshots/51-dimse-settings.png)
+
+![DIMSE 查询与导入](screenshots/52-dimse-import.gif)
+
+演示使用本机真实 DIMSE 通信与三实例合成 CT 模体，无真实患者数据。回环地址与动态端口仅用于本机演示，部署时请使用管理员提供的实际配置。
+
 ## 传统 DICOM 配置
 
 设置 → 数据源 → 新增配置，将“连接协议”切换为“传统 DICOM（DIMSE）”：

@@ -56,7 +56,8 @@ def test_manual_content_and_bundled_resources(qt_app):
 def test_offline_tutorial_catalog_has_packaged_assets_and_localized_sections(qt_app):
     import json
     catalog = json.loads((QML / 'assets/help/tutorials.json').read_text())
-    assert len(catalog) == 9
+    assert {'pacs-dimse', 'toolbar-customization', 'focus-view'} <= {item['name'] for item in catalog}
+    assert len(catalog) == len({item['name'] for item in catalog})
     resources = {f.text for f in ET.parse(ROOT / 'Voxenra.qrc').iter('file')}
     controller = ManualTabController()
     for item in catalog:

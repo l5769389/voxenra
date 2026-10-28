@@ -2,6 +2,7 @@
     <qresource>
         <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarSettingsPage.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarOrderList.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarEditorTile.qml</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/copy.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/chevron-left.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/chevron-right.svg</file>
@@ -355,5 +356,21 @@
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/zip-import.gif</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/zip-import.png</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials.json</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/pacs-dimse-settings.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/window-favorites.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/pacs-dimse.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/pacs-dimse.gif</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/toolbar-customization.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/toolbar-customization.gif</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/focus-view.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/focus-view.gif</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/en/pacs-dimse-settings.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/en/window-favorites.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-pacs-dimse.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-pacs-dimse.gif</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-toolbar-customization.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-toolbar-customization.gif</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-focus-view.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-focus-view.gif</file>
 </qresource>
 </RCC>

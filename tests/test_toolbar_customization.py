@@ -133,6 +133,7 @@ def test_qml_toolbar_draft_arrows_drag_save_cancel(qt_app, tmp_path):
         QTest.qWait(30)
 
     try:
+        click('toolbarTile-common-scroll')
         click('toolbarUp-common-scroll')
         assert editor.commonTools[0]['toolType'] == 'scroll'
         assert settings.section('toolbar')['rightProfiles'] == {}
@@ -140,7 +141,8 @@ def test_qml_toolbar_draft_arrows_drag_save_cancel(qt_app, tmp_path):
         assert editor.commonTools[0]['toolType'] == 'window'
         handle = item('toolbarDrag-common-window')
         start = handle.mapToScene(QPointF(handle.width()/2, handle.height()/2)).toPoint()
-        end = start + QPointF(0, 126).toPoint()
+        destination = item('toolbarTile-common-pan')
+        end = destination.mapToScene(QPointF(destination.width() * .8, destination.height() / 2)).toPoint()
         QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
         for n in range(1, 9):
             QTest.mouseMove(window, start + (end-start)*n/8, 15)
@@ -236,8 +238,9 @@ def test_full_settings_toolbar_controls_remain_visible(sidebar_scene, tmp_path):
     app.settingsController.selectCategory('toolbar')
     window.resize(1280, 720)
     QTest.qWait(100)
+    click(window, find(window, 'toolbarTile-common-scroll'))
     click(window, find(window, 'toolbarUp-common-scroll'))
-    assert find(window, 'toolbarProfile').property('displayText') == '2D view · CT'
+    assert find(window, 'toolbarProfile').property('displayText') == '2D reading'
     for width in (1600, 1280):
         window.resize(width, 720)
         QTest.qWait(80)
@@ -246,8 +249,8 @@ def test_full_settings_toolbar_controls_remain_visible(sidebar_scene, tmp_path):
             position = control.mapToScene(QPointF())
             assert 0 <= position.x() and position.x() + control.width() <= window.width()
             assert 0 <= position.y() and position.y() + control.height() <= window.height()
-        assert find(window, 'toolbarPreview-scroll').width() >= 75
-        target = Path('build/reading-controls') / f'toolbar-settings-{width}.png'
+        assert find(window, 'toolbarTile-common-scroll').width() >= 75
+        target = Path('build/toolbar-visual') / f'toolbar-settings-{width}.png'
         target.parent.mkdir(parents=True, exist_ok=True)
         assert window.grabWindow().save(str(target))
     click(window, find(window, 'toolbarSave'))

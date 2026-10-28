@@ -2,6 +2,18 @@
 
 Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
 
+## 2.1.4 新增演示（2026-10-28）
+
+- [传统 DICOM（DIMSE）配置](51-dimse-settings.png) · [English](en/51-dimse-settings.png)
+- [DIMSE 查询、勾选与导入](52-dimse-import.gif) · [English](en/52-dimse-import.gif)
+- [六类视图与工具栏拖拽保存](53-toolbar-customization.gif) · [English](en/53-toolbar-customization.gif)
+- [最大化视图区与还原](54-focus-view.gif) · [English](en/54-focus-view.gif)
+- [收藏窗模板](55-window-favorites.png) · [English](en/55-window-favorites.png)
+
+这些素材均捕获自实际应用的中、英文界面，使用三实例合成 CT 模体和本机 DIMSE 演示对端。查询、回传和导入实际执行并核对像素；工具栏保存、收藏及侧栏恢复均核对了界面和结果状态。回环地址与临时端口只适用于本机演示。
+
+可通过 `tests/manual/capture_documentation_20261028.py` 重现。GIF 尺寸为 1280×820，提供同名 PNG 静态预览；网站另生成响应式 WebP，并在减少动态效果模式下使用静态图。上述功能随 v2.1.4 提供。
+
 ## 操作动画
 
 - [本地 AI 自动分割：器官选择、失败重试与成功导入](49-ai-workflow-2.1.1.gif)（合成模体流程演示，模拟推理输出）

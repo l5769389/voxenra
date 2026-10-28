@@ -11,29 +11,7 @@ on:
       - "src/qt_dicom_viewer/qml/assets/languages/**"
       - "src/qt_dicom_viewer/qml/assets/icons/**"
       - "src/qt_dicom_viewer/qml/assets/brand/voxenra-mark.svg"
-      - "docs/screenshots/11-mpr-3d-layout.png"
-      - "docs/screenshots/07-mr-reading.png"
-      - "docs/screenshots/05-pet-ct-fusion.png"
-      - "docs/screenshots/02-mpr-segmentation.png"
-      - "docs/screenshots/38-segmentation-refinement.gif"
-      - "docs/screenshots/39-ai-segmentation.gif"
-      - "docs/screenshots/39-ai-segmentation.png"
-      - "docs/screenshots/01-2d-measurement.png"
-      - "docs/screenshots/37-theme-graphite.png"
-      - "docs/screenshots/25-theme-dark.png"
-      - "docs/screenshots/26-theme-light.png"
-      - "docs/screenshots/03-4d-playback.gif"
-      - "docs/screenshots/16-pacs-browser.png"
-      - "docs/screenshots/17-workspace-2.1.3.png"
-      - "docs/screenshots/35-zip-drop.png"
-      - "docs/screenshots/06-zip-drag.gif"
-      - "docs/screenshots/01-freehand-measurement.gif"
-      - "docs/screenshots/33-curve-measurement.gif"
-      - "docs/screenshots/11-mpr-layouts.gif"
-      - "docs/screenshots/04-volume-presets.gif"
-      - "docs/screenshots/45-workspace-home-2.1.3.png"
-      - "docs/screenshots/19-water-qa-2.1.3.png"
-      - "docs/screenshots/28-mtf-analysis.png"
+      - "docs/screenshots/**"
   workflow_dispatch:
 
 permissions:
@@ -59,7 +37,9 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Build bilingual website and manual
-        run: python3 scripts/build_manual_site.py /tmp/voxenra-manual-site
+        run: |
+          python3 -m pip install "pillow==12.3.0"
+          python3 scripts/build_manual_site.py /tmp/voxenra-manual-site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:

@@ -12,9 +12,14 @@ VIEW_LABELS = dict(zip(LEFT_VIEWS, ('text.0679', 'text.0680', 'text.0681', 'text
 VIEW_ICONS = dict(zip(LEFT_VIEWS, ('nav-view-2d','nav-view-mpr','nav-view-3d','nav-view-tile','nav-view-4d','nav-view-tag','fusion')))
 PROFILE_MODES = {
     '2d': ('ct','mr','pt','other','color'), 'mpr': ('ct','mr','pt'),
-    '3d': ('ct','mr','pt','petct3d'), 'montage': ('ct','mr','other'),
+    '3d': ('ct','mr','pt','petct3d'), 'montage': ('ct','mr','other','color'),
     '4d': ('ct','mr'), 'compare2d': ('ct','mr','pt','other','color'),
     'comparempr': ('ct','mr','pt'), 'petctfusion': ('pt',),
+}
+PROFILE_CATEGORIES = {
+    '2d': ('2d', 'compare2d'), 'mpr': ('mpr', 'comparempr'),
+    '3d': ('3d',), 'montage': ('montage',), '4d': ('4d',),
+    'fusion': ('petctfusion',),
 }
 
 
@@ -25,11 +30,16 @@ class ToolbarSettingsController(QObject):
     _i18n_commonTools = Signal()
     _i18n_moreTools = Signal()
     _i18n_message = Signal()
+    _i18n_viewCategories = Signal()
+    _i18n_modes = Signal()
+    _i18n_capabilities = Signal()
+    _i18n_selectedProfileLabel = Signal()
 
     def __init__(self, settings, owner):
         super().__init__(owner)
         self._settings = settings
         self._profile = '2d:ct'
+        self._category_profiles = {}
         self._scope = 'right'
         self._message = ''
         self._draft = settings.section('toolbar')
@@ -57,10 +67,73 @@ class ToolbarSettingsController(QObject):
 
     @Slot(str)
     def selectProfile(self, value):
-        if value in [p['key'] for p in self.profiles]:
+        if value in {f'{mode}:{cap}' for mode, caps in PROFILE_MODES.items() for cap in caps}:
             self._profile = value
+            self._category_profiles[self.selectedCategory] = value
             self._message = ''
             self.changed.emit()
+
+    @Property(str, notify=changed)
+    def selectedCategory(self):
+        return next(key for key, modes in PROFILE_CATEGORIES.items() if self.selectedMode in modes)
+
+    @Property(str, notify=changed)
+    def selectedMode(self):
+        return self._profile.split(':')[0]
+
+    @Property(str, notify=changed)
+    def selectedCapability(self):
+        return self._profile.split(':')[1]
+
+    @Slot(str)
+    def selectCategory(self, category):
+        if category not in PROFILE_CATEGORIES or category == self.selectedCategory:
+            return
+        self._category_profiles[self.selectedCategory] = self._profile
+        if category in self._category_profiles:
+            self.selectProfile(self._category_profiles[category])
+        else:
+            mode = PROFILE_CATEGORIES[category][0]
+            capability = self.selectedCapability
+            if capability not in PROFILE_MODES[mode]:
+                capability = PROFILE_MODES[mode][0]
+            self.selectProfile(f'{mode}:{capability}')
+
+    @Slot(str)
+    def selectMode(self, mode):
+        if mode in PROFILE_CATEGORIES[self.selectedCategory]:
+            self.selectProfile(f'{mode}:{self.selectedCapability}')
+
+    @Slot(str)
+    def selectCapability(self, capability):
+        if capability in PROFILE_MODES[self.selectedMode]:
+            self.selectProfile(f'{self.selectedMode}:{capability}')
+
+    @TextProperty('QVariantList', notify=_i18n_viewCategories, notify_name='_i18n_viewCategories')
+    def viewCategories(self):
+        labels = {**VIEW_LABELS, '2d': 'toolbar.view2d', 'mpr': 'toolbar.viewMpr'}
+        return [dict(key=key, label=_msg(labels[key])) for key in PROFILE_CATEGORIES]
+
+    @TextProperty('QVariantList', notify=_i18n_modes, notify_name='_i18n_modes', source_notify='changed')
+    def modes(self):
+        return [dict(key=mode, label=_msg('toolbar.comparison' if mode.startswith('compare') else 'toolbar.single'))
+                for mode in PROFILE_CATEGORIES[self.selectedCategory]]
+
+    def _capability_label(self, capability):
+        return {'pt': 'PET', 'petct3d': 'PET/CT', 'other': _msg('toolbar.scalar'),
+                'color': _msg('toolbar.color')}.get(capability, capability.upper())
+
+    @TextProperty('QVariantList', notify=_i18n_capabilities, notify_name='_i18n_capabilities', source_notify='changed')
+    def capabilities(self):
+        return [dict(key=cap, label=self._capability_label(cap)) for cap in PROFILE_MODES[self.selectedMode]]
+
+    @TextProperty(str, notify=_i18n_selectedProfileLabel, notify_name='_i18n_selectedProfileLabel', source_notify='changed')
+    def selectedProfileLabel(self):
+        label = next(entry['label'] for entry in self.viewCategories if entry['key'] == self.selectedCategory)
+        label += ' · ' + self._capability_label(self.selectedCapability)
+        if len(self.modes) > 1:
+            label += ' · ' + next(entry['label'] for entry in self.modes if entry['key'] == self.selectedMode)
+        return label
 
     @TextProperty('QVariantList', notify=_i18n_profiles, notify_name='_i18n_profiles')
     def profiles(self):
@@ -161,6 +234,35 @@ class ToolbarSettingsController(QObject):
             return False
         entries.insert(destination, entries.pop(source))
         self._draft['rightProfiles'][self._profile] = groups
+        self._message = ''
+        self.changed.emit()
+        return True
+
+    @Slot(str, str, str, int, result=bool)
+    def placeEntry(self, key, source, destination, before_index):
+        """Insert at a pre-drop boundary, validating before changing either group."""
+        if source == destination == 'left':
+            groups = {'left': navigation_order(self._draft['leftViews'])}
+        elif source in ('common', 'more') and destination in ('common', 'more'):
+            groups = self._groups()
+        else:
+            return False
+        if key not in groups[source] or not 0 <= before_index <= len(groups[destination]):
+            return False
+        if source != destination and destination == 'common' and len(groups['common']) >= 7:
+            self._message = 'toolbar.limit'
+            self.changed.emit()
+            return False
+        source_index = groups[source].index(key)
+        target_index = before_index - int(source == destination and source_index < before_index)
+        if source == destination and target_index == source_index:
+            return False
+        groups[source].remove(key)
+        groups[destination].insert(target_index, key)
+        if source == 'left':
+            self._draft['leftViews'] = groups['left']
+        else:
+            self._draft['rightProfiles'][self._profile] = groups
         self._message = ''
         self.changed.emit()
         return True
