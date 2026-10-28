@@ -1,0 +1,72 @@
+name: qt-dicom-dimse-lab
+
+services:
+  orthanc:
+    image: orthancteam/orthanc:25.10.3
+    ports: ['127.0.0.1:18042:8042', '127.0.0.1:14242:4242']
+    environment:
+      ORTHANC__NAME: 'DIMSE Lab Orthanc'
+      ORTHANC__AUTHENTICATION_ENABLED: 'false'
+      ORTHANC__DICOM_AET: ORTHANC
+      ORTHANC__DICOM_CHECK_CALLED_AET: 'true'
+      ORTHANC__DEFAULT_ENCODING: Utf8
+      ORTHANC__DICOM_MODALITIES: '{"voxenra":["VOXENRA","host.docker.internal",11113]}'
+    volumes: [orthanc:/var/lib/orthanc/db]
+    logging:
+      options: {max-size: 10m, max-file: '2'}
+  ldap:
+    image: dcm4che/slapd-dcm4chee:2.6.13-35.0
+    platform: linux/amd64
+    environment:
+      STORAGE_DIR: /storage/fs1
+      STORESCP_DEVICE_NAME: voxenra
+      STORESCP_AE_TITLE: VOXENRA
+      STORESCP_HOST: host.docker.internal
+      STORESCP_PORT: '11113'
+    volumes:
+      - ldap-data:/var/lib/openldap/openldap-data
+      - ldap-config:/etc/openldap/slapd.d
+    logging:
+      options: {max-size: 10m, max-file: '2'}
+  db:
+    image: dcm4che/postgres-dcm4chee:17.9-35
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: pacsdb
+      POSTGRES_USER: pacs
+      POSTGRES_PASSWORD: '${PACS_LAB_DB_PASSWORD:?Run tests/manual/dimse_lab.py prepare}'
+    volumes: [postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U pacs -d pacsdb']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    logging:
+      options: {max-size: 10m, max-file: '2'}
+  dcm4chee:
+    image: dcm4che/dcm4chee-arc-psql:5.35.0
+    platform: linux/amd64
+    ports: ['127.0.0.1:18080:8080', '127.0.0.1:14243:11112']
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: pacsdb
+      POSTGRES_USER: pacs
+      POSTGRES_PASSWORD: '${PACS_LAB_DB_PASSWORD:?Run tests/manual/dimse_lab.py prepare}'
+      WILDFLY_CHOWN: /storage
+      WILDFLY_WAIT_FOR: 'ldap:389 db:5432'
+      JAVA_OPTS: '-Xms256m -Xmx1024m -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true'
+    depends_on:
+      ldap: {condition: service_started}
+      db: {condition: service_healthy}
+    volumes:
+      - wildfly:/opt/wildfly/standalone
+      - storage:/storage
+    logging:
+      options: {max-size: 10m, max-file: '2'}
+volumes:
+  orthanc:
+  ldap-data:
+  ldap-config:
+  postgres:
+  wildfly:
+  storage:

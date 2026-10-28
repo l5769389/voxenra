@@ -1,11 +1,51 @@
 # PACS 数据源与导入
 
-点击左侧栏底部 **设置**，在独立 Tab 中打开“数据源”。当前实现 **DICOMweb**：
-QIDO-RS 查询检查、序列与实例，WADO-RS 下载 DICOM 实例。适用于启用 DICOMweb 的
-Orthanc、dcm4chee 及兼容服务；当前不包含传统 DIMSE 的 AE Title、C-ECHO、C-FIND、
-C-MOVE 或 C-GET，也不向 PACS 上传或修改数据。
+点击左侧栏底部 **设置**，在独立 Tab 中打开“数据源”。支持两种连接：
 
-## 配置与使用
+- **DICOMweb**：QIDO-RS 查询检查、序列与实例，WADO-RS 下载 DICOM 实例。
+- **传统 DICOM（DIMSE）**：C-ECHO 连接测试、Study Root C-FIND 查询，
+  C-MOVE 请求 PACS 回传，通过仅在导入期间运行的 C-STORE 接收器接收影像。
+
+两种协议共用查询、选择、导入和工作区浏览流程。旧配置自动按 DICOMweb 读取。
+不含 C-GET，也不提供向 PACS 上传或修改数据的入口。
+
+## 传统 DICOM 配置
+
+设置 → 数据源 → 新增配置，将“连接协议”切换为“传统 DICOM（DIMSE）”：
+
+| 字段 | 含义 |
+| --- | --- |
+| PACS 主机 / IPv4、端口 | 远端 DICOM TCP 服务，端口通常由管理员提供 |
+| 远端 AE Title | PACS 的 Called AE；本版同时要求回传 C-STORE 的 Calling AE 与此一致 |
+| 本机 / 接收 AE Title | 请求的 Calling AE，也是 C-MOVE Destination |
+| 本机监听 IPv4、接收端口 | 在本机绑定的地址；仅在导入期间占用 |
+| 网络超时 | 3–120 秒的关联、DIMSE 响应和网络等待超时；TCP 建连最多 5 秒 |
+
+AE Title 为 1–16 个可打印 ASCII 字符，不含反斜杠，首尾空格会去掉。
+主机可填 DNS 名或 IPv4；本版监听地址只接受 IPv4。
+
+**还须在 PACS 端登记接收节点**：本机接收 AE → PACS 可访问的本机 IP → 接收端口。
+这里的“本机监听地址”与 PACS 中登记的目的地址不同：`0.0.0.0` 表示本机所有 IPv4 网卡，
+不能作为 PACS 的目的地址；`127.0.0.1` 只接受本机连接。
+医院网络中通常监听本机局域网 IP，并按网络策略放行该端口。
+如果 PACS 查询 AE 和存储发送 AE 分离，须在 PACS 端使用同一发送 AE，或使用 DICOMweb。
+
+“测试连接”只验证 C-ECHO，**不能证明查询权限和回传链路可用**。保存后查询一条检查，
+导入一个序列，才能验证 C-FIND、C-MOVE、回传和本地解码的完整链路。
+远端未登记 Destination AE 会显示相应提示；监听冲突、服务端失败、超时、
+缺失实例或身份不符均不会发布部分序列。
+
+传统 DICOM 使用普通 TCP，本版未实现 DICOM TLS 或用户身份协商。
+AE Title 是路由/准入标识，不是密码认证。应在可信内网或受保护的网络通道使用。
+接收器只接受配置的发送 AE 和本次请求清单中的 Study/Series/SOP 身份。
+未实现 Patient Root 查询、Modality Worklist、Storage Commitment 或永久接收服务。
+
+DIMSE 分页为完整 C-FIND 结果排序后的本地分页；每页重新查询，不依赖服务器 offset。
+单次检查/序列查询最多 10,000 条，实例清单最多 100,000 条，超限会提示缩小范围。
+PACS 必须支持 Study Root 的 STUDY、SERIES、IMAGE 层级及 SERIES 级 C-MOVE。
+完整响应前不会把失败查询显示成“无结果”。
+
+## DICOMweb 配置与共用浏览流程
 
 1. 设置 → 数据源 → 新增配置。填写名称和完整的 DICOMweb 根地址，
    例如 `http://127.0.0.1:8042/dicom-web`，不要在末尾附加 `/studies`。
@@ -42,14 +82,20 @@ C-MOVE 或 C-GET，也不向 PACS 上传或修改数据。
   以实际 Qt 返回目录为准。导入后可从 series 右键菜单“在资源管理器中打开”定位文件。
   完成的下载不会自动删除；关闭应用后可手动清理不再需要的导入目录。
 - 取消、数量不符、UID 不符、下载中断或扫描失败会删除本次导入目录，不把部分结果加入列表。
-  取消会在当前网络读取返回或达到配置的超时后生效。应用退出同样取消并等待工作线程结束。
+  DICOMweb 取消会在当前网络读取返回或达到配置的超时后生效；
+  DIMSE 取消会发送 C-CANCEL 并中止关联，随后关闭临时接收器。
+  应用退出同样取消并等待工作线程结束。
 - WADO 请求显式协商 Explicit VR Little Endian（未压缩），支持 `multipart/related` 和
   `application/dicom` 响应。若 PACS 不支持该传输语法，会显示下载错误；不静默退回未知压缩格式。
   现有解码器、多帧和几何限制继续适用。
+- DIMSE 接收器支持协商存储传输语法并保留其文件元信息，最终仍交给同一扫描器与解码器。
+  协议接收成功不等于所有压缩编码或非影像 SOP Class 都可显示。
 
 ## 实现与验证
 
 `pacs/config.py` 管理配置；`pacs/client.py` 实现 HTTP、QIDO 分页、流式 WADO 下载和 UID 校验；
+`pacs/transport.py` 按协议选择客户端；`pacs/dimse_client.py` 和 `dimse_receiver.py`
+实现 DIMSE 查询、回传和临时接收器；
 `pacs/importer.py` 将完整下载交给现有扫描器；`ui/controller/pacs_controller.py` 管理后台任务、
 选择与进度。设置分类数据与具体页面分离，未来可在 `SettingsPage.qml` 中添加其他设置分类。
 
@@ -63,6 +109,8 @@ QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software uv run --group dev pytest te
 另已在 OrbStack 中完成 Orthanc、dcm4chee 及 Basic/Bearer 入口的真实容器联调，覆盖
 配置、查询、导入、像素一致性和 2D/MPR/Tag/原生 3D；部署步骤与结果见
 [本地 PACS 联调环境](pacs-lab.md)。其他目标 PACS 仍需按实际地址、账号和影像格式验证。
+传统 DICOM 的独立 OrbStack 环境与复现命令见 [DIMSE 联调](pacs-dimse-lab.md)，
+实际结果见 [验证记录](validation/dicom-dimse.md)。
 
 协议依据：[DICOM PS3.18 Search Transaction](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_10.6.html)、
 [Retrieve Transaction](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_10.4.html)。
