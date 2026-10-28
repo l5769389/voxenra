@@ -19,6 +19,7 @@ dependencies = [
     "PySide6>=6.9.0",
     "unrar2-cffi==0.5.0",
     "vtk==9.5.2",
+    "pynetdicom==3.0.4",
 ]
 
 [project.scripts]

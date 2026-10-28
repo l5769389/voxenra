@@ -1215,6 +1215,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pynetdicom"
+version = "3.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydicom" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7f/f5/5a811322d57788b3e98b363ec99f90125c842c18bf891e8def95096fc4d8/pynetdicom-3.0.4.tar.gz", hash = "sha256:567ef761d73b34a380a4350e0d10ae549d749c66da4f1bdf8793cab9a6a326e4", size = 1816295, upload-time = "2025-08-02T02:12:27.176Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/63/77/9741d8bb92a44fefd080ee54017707609690cb848fca5fe89f6608e4df99/pynetdicom-3.0.4-py3-none-any.whl", hash = "sha256:bc3f8869db4c90634336dfb02d7b6c249771e8b167e841254997a315d8e16f72", size = 1650540, upload-time = "2025-08-02T02:12:24.936Z" },
+]
+
+[[package]]
 name = "pyparsing"
 version = "3.3.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1407,6 +1419,7 @@ dependencies = [
     { name = "pyjpegls" },
     { name = "pylibjpeg" },
     { name = "pylibjpeg-openjpeg" },
+    { name = "pynetdicom" },
     { name = "pyside6" },
     { name = "python-gdcm" },
     { name = "unrar2-cffi" },
@@ -1433,6 +1446,7 @@ requires-dist = [
     { name = "pyjpegls", specifier = "==1.5.1" },
     { name = "pylibjpeg", specifier = "==2.1.0" },
     { name = "pylibjpeg-openjpeg", specifier = "==2.5.0" },
+    { name = "pynetdicom", specifier = "==3.0.4" },
     { name = "pyside6", specifier = ">=6.9.0" },
     { name = "python-gdcm", specifier = "==3.2.1" },
     { name = "unrar2-cffi", specifier = "==0.5.0" },

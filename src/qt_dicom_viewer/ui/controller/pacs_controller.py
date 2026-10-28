@@ -10,6 +10,7 @@ from threading import Event
 from PySide6.QtCore import QObject, Property, QRunnable, QStandardPaths, QThreadPool, Signal, Slot
 
 from qt_dicom_viewer.pacs.client import DicomWebClient, PacsError
+from qt_dicom_viewer.pacs.transport import create_client
 from qt_dicom_viewer.pacs.config import PacsConfigStore, PacsProfile
 from qt_dicom_viewer.pacs.importer import PacsImportResult, import_series
 
@@ -375,7 +376,7 @@ class PacsController(QObject):
             self._test_feedback("success", message)
             self._notify(message)
         self._test_feedback("testing", _msg('text.0509'))
-        self._start("test", lambda cancel, progress: DicomWebClient(profile, cancel).test_connection(), done)
+        self._start("test", lambda cancel, progress: create_client(profile, cancel).test_connection(), done)
 
     @Slot(str)
     def testProfile(self, profile_id):
@@ -434,7 +435,7 @@ class PacsController(QObject):
             self._has_study_next = len(rows) >= self._limit
             self.studiesChanged.emit()
             self._notify(_msg('text.0515', value1=len(self._studies)) if rows else _msg('text.0516'))
-        self._start("studies", lambda cancel, progress: DicomWebClient(profile, cancel).studies(
+        self._start("studies", lambda cancel, progress: create_client(profile, cancel).studies(
             self._filters, offset, self._limit), done)
 
     @Slot(str)
@@ -459,7 +460,7 @@ class PacsController(QObject):
             self._has_series_next = len(rows) >= self._limit
             self.seriesChanged.emit()
             self._notify(_msg('text.0517', value1=len(self._series)) if rows else _msg('text.0518'))
-        self._start("series", lambda cancel, progress: DicomWebClient(profile, cancel).series(
+        self._start("series", lambda cancel, progress: create_client(profile, cancel).series(
             self._study_uid, offset, self._limit), done)
 
     @Slot(str, bool)
@@ -493,7 +494,7 @@ class PacsController(QObject):
             self._notify(_msg('text.0519', value1=len(rows), value2=result.snapshot.dicom_file_count))
             self._selected.clear()
         self._start("import", lambda cancel, progress: import_series(
-            DicomWebClient(profile, cancel), rows, self._import_root, progress,
+            create_client(profile, cancel), rows, self._import_root, progress,
             base_series=base_series), done)
 
     @Slot()
