@@ -361,7 +361,8 @@ class PacsController(QObject):
     @staticmethod
     def _connection_matches(left, right):
         return right is not None and all(getattr(left, key) == getattr(right, key)
-                                         for key in ("url", "auth", "username", "secret", "timeout"))
+                                         for key in ("protocol", "url", "auth", "username", "secret", "timeout",
+                                                     "host", "port", "called_ae", "calling_ae", "listen_host", "listen_port"))
 
     def _test(self, profile):
         self._tested_draft = profile

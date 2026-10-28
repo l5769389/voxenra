@@ -3,6 +3,7 @@
 "locale": "pt-BR",
 "name": "Português (Brasil)",
 "messages": {
+        "dimse.invalidProfile": "Campo de conexão DICOM inválido: {field}. Verifique o endereço, a porta e o AE Title (1–16 caracteres ASCII).",
         "manual.water-qa.history.body": "Mover, copiar, excluir ou gerar novamente círculos, alterar parâmetros com sucesso e redefinir QA pode ser desfeito ou refeito pelos botões **Desfazer / Refazer**. Use **Ctrl+Z / ⌘Z** e **Ctrl+Y / ⇧⌘Z**. Cada arraste concluído é uma etapa; navegar por cortes ou ajustar a janela não adiciona etapas. As edições de QA e medições seguem a ordem compartilhada da aba. O espaço salva resultados, não o histórico.",
         "manual.water-qa.history.title": "Desfazer e refazer",
         "workspace.exit.updateDetails": "Descartar estas alterações e manter a última versão salva.",

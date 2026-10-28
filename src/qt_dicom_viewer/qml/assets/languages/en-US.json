@@ -3,6 +3,7 @@
     "locale": "en-US",
     "name": "English",
     "messages": {
+        "dimse.invalidProfile": "Invalid DICOM connection field: {field}. Check the address, port and AE Title (1–16 ASCII characters).",
         "manual.water-qa.history.body": "Moving, copying, deleting or regenerating circles, successful parameter changes and resetting QA can be reversed with the QA **Undo / Redo** buttons. Use **Ctrl+Z / ⌘Z** to undo and **Ctrl+Y / ⇧⌘Z** to redo. A completed drag is one step; slice navigation and windowing add no steps. QA and measurement edits in the same tab follow their shared operation order. Workspaces save results, not undo history.",
         "manual.water-qa.history.title": "Undo and redo",
         "workspace.reopenClosed": "Reopen tab",

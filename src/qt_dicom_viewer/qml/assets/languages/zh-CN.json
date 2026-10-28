@@ -3,6 +3,7 @@
     "locale": "zh-CN",
     "name": "简体中文",
     "messages": {
+        "dimse.invalidProfile": "传统 DICOM 连接参数无效：{field}。请检查地址、端口与 AE Title（1–16 个 ASCII 字符）。",
         "manual.water-qa.history.body": "移动、复制、删除圆形 ROI、重新生成、成功的参数调整以及重置，都可通过 QA 面板的 **撤销／重做** 按钮回退或恢复。也可使用 **Ctrl+Z / ⌘Z** 撤销、**Ctrl+Y / ⇧⌘Z** 重做。一次完整拖动记为一步，切换切片与调窗不增加撤销步骤；与同页签的测量编辑按操作顺序回退。工作区保存结果，不保存撤销历史。",
         "manual.water-qa.history.title": "撤销与重做",
         "workspace.reopenClosed": "重新打开页签",

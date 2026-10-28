@@ -5,6 +5,8 @@ import json
 import os
 import tempfile
 import uuid
+import ipaddress
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -21,6 +23,13 @@ class PacsProfile:
     timeout: int = 15
     # Credentials belong to this session; never serialize them or include in repr.
     secret: str = field(default="", repr=False)
+    protocol: str = "dicomweb"
+    host: str = ""
+    port: int = 104
+    called_ae: str = ""
+    calling_ae: str = "VOXENRA"
+    listen_host: str = "127.0.0.1"
+    listen_port: int = 11112
 
     @classmethod
     def from_dict(cls, data: dict) -> PacsProfile:
@@ -28,6 +37,11 @@ class PacsProfile:
         url = str(data.get("url", "")).strip().rstrip("/")
         if not name:
             raise ValueError(_msg('text.0325'))
+        protocol = str(data.get("protocol", "dicomweb"))
+        if protocol not in ("dicomweb", "dimse"):
+            raise ValueError(_msg('dimse.invalidProfile', field="protocol"))
+        if protocol == "dimse":
+            return cls._from_dimse(data, name)
         try:
             parts = urlsplit(url)
             port = parts.port
@@ -60,6 +74,42 @@ class PacsProfile:
             raise ValueError(_msg('text.0332')) from None
         return cls(profile_id, name, url, bool(data.get("enabled", True)), auth,
                    username, timeout, secret if auth != "none" else "")
+
+    @classmethod
+    def _from_dimse(cls, data, name):
+        def integer(key, default, low, high):
+            raw = data.get(key, default)
+            if isinstance(raw, bool) or not re.fullmatch(r"[0-9]+", str(raw)):
+                raise ValueError(_msg('dimse.invalidProfile', field=key))
+            result = int(raw)
+            if not low <= result <= high:
+                raise ValueError(_msg('dimse.invalidProfile', field=key))
+            return result
+
+        def aet(key, default):
+            result = str(data.get(key, default)).strip()
+            if not 1 <= len(result) <= 16 or any(ord(c) < 32 or ord(c) > 126 or c == "\\" for c in result):
+                raise ValueError(_msg('dimse.invalidProfile', field=key))
+            return result
+
+        host = str(data.get("host", "")).strip()
+        if not host or len(host) > 253 or not re.fullmatch(r"[A-Za-z0-9_.-]+", host):
+            raise ValueError(_msg('dimse.invalidProfile', field="host"))
+        listen_host = str(data.get("listen_host", "127.0.0.1")).strip()
+        try:
+            ipaddress.IPv4Address(listen_host)
+        except ValueError:
+            raise ValueError(_msg('dimse.invalidProfile', field="listen_host")) from None
+        identifier = str(data.get("id") or uuid.uuid4())
+        try:
+            uuid.UUID(identifier)
+        except ValueError:
+            raise ValueError(_msg('text.0332')) from None
+        return cls(id=identifier, name=name, url="", enabled=bool(data.get("enabled", True)),
+                   protocol="dimse", host=host, port=integer("port", 104, 1, 65535),
+                   called_ae=aet("called_ae", ""), calling_ae=aet("calling_ae", "VOXENRA"),
+                   listen_host=listen_host, listen_port=integer("listen_port", 11112, 1, 65535),
+                   timeout=integer("timeout", 15, 3, 120))
 
     def public_dict(self) -> dict:
         data = asdict(self)
