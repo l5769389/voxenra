@@ -3,7 +3,7 @@ from copy import deepcopy
 from io import BytesIO
 import importlib
 import socket
-from threading import Event, Timer
+from threading import Event, Thread, Timer
 import time
 
 import numpy as np
@@ -11,6 +11,7 @@ import pydicom
 from pydicom.dataset import Dataset
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian
 from pynetdicom import AE, evt
+from pynetdicom.pdu import A_RELEASE_RQ
 from pynetdicom.sop_class import Verification, StudyRootQueryRetrieveInformationModelFind as FIND, StudyRootQueryRetrieveInformationModelMove as MOVE
 import pytest
 
@@ -36,6 +37,8 @@ class DimsePeer:
         self.duplicate = False
         self.conflict = False
         self.delay = 0
+        self.release_delay = 0
+        self.releasing = Event()
         self.entered = Event()
         self.requests = []
         self.destination = free_port()
@@ -46,13 +49,19 @@ class DimsePeer:
         self.ae.add_supported_context(MOVE)
         self.ae.add_requested_context(CTImageStorage, ExplicitVRLittleEndian)
         self.server = self.ae.start_server(('127.0.0.1', 0), block=False,
-            evt_handlers=[(evt.EVT_C_FIND, self.find), (evt.EVT_C_MOVE, self.move)])
+            evt_handlers=[(evt.EVT_C_FIND, self.find), (evt.EVT_C_MOVE, self.move),
+                          (evt.EVT_PDU_RECV, self.receive_pdu)])
         self.port = self.server.server_address[1]
 
     def profile(self, **changes):
         return PacsProfile.from_dict(dict(name='DIMSE lab', protocol='dimse', host='127.0.0.1',
             port=self.port, called_ae='LABPACS', calling_ae='VOXENRA',
             listen_host='127.0.0.1', listen_port=self.destination, timeout=3) | changes)
+
+    def receive_pdu(self, event):
+        if isinstance(event.pdu, A_RELEASE_RQ) and self.release_delay:
+            self.releasing.set()
+            time.sleep(self.release_delay)
 
     def find(self, event):
         q = event.identifier; self.requests.append(deepcopy(q))
@@ -232,3 +241,45 @@ def test_receive_rejects_unrelated_sender_and_instance(peer, tmp_path):
         ae.shutdown()
         with pytest.raises(PacsError): receiver.verify()
     assert not list(tmp_path.iterdir())
+
+
+def test_cancel_during_association_handshake_is_bounded(peer):
+    cancel, accepted, stop = Event(), Event(), Event()
+    with socket.socket() as listener:
+        listener.bind(('127.0.0.1', 0))
+        listener.listen()
+        listener.settimeout(5)
+        def blackhole():
+            connection, _ = listener.accept()
+            with connection:
+                accepted.set()
+                stop.wait(5)
+        worker = Thread(target=blackhole, daemon=True)
+        worker.start()
+        c = client(peer, cancel, port=listener.getsockname()[1])
+        timer = Timer(.25, cancel.set)
+        timer.start()
+        started = time.monotonic()
+        try:
+            with pytest.raises(Cancelled): c.test_connection()
+            assert accepted.is_set()
+            assert time.monotonic() - started < 1.5
+        finally:
+            stop.set()
+            timer.cancel()
+            worker.join(2)
+
+
+def test_cancel_during_association_release_is_bounded(peer):
+    cancel = Event()
+    peer.release_delay = 2
+    def cancel_release():
+        if peer.releasing.wait(5): cancel.set()
+    worker = Thread(target=cancel_release, daemon=True)
+    worker.start()
+    started = time.monotonic()
+    try:
+        with pytest.raises(Cancelled): client(peer, cancel).test_connection()
+        assert time.monotonic() - started < 1.5
+    finally:
+        worker.join(3)

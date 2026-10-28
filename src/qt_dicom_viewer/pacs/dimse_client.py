@@ -3,7 +3,8 @@ from contextlib import contextmanager
 from threading import Event, Thread
 
 from pydicom.dataset import Dataset
-from pynetdicom import AE
+from pynetdicom import AE, evt
+from pynetdicom.pdu_primitives import A_ABORT
 from pynetdicom.sop_class import (
     Verification, StudyRootQueryRetrieveInformationModelFind as FIND,
     StudyRootQueryRetrieveInformationModelMove as MOVE,
@@ -26,41 +27,60 @@ class DimseClient:
         ae.acse_timeout = ae.dimse_timeout = ae.network_timeout = self.profile.timeout
         ae.connection_timeout = min(self.profile.timeout, 5)
         stopped = Event()
+        releasing = Event()
         association = None
+
+        def remember_connection(event):
+            nonlocal association
+            # EVT_REQUESTED fires before synchronous association negotiation.
+            # AE.active_associations only lists already-started threads.
+            association = event.assoc
 
         def watch_cancel():
             while not stopped.wait(.05):
                 if self.cancel.is_set():
-                    for connection in ae.active_associations:
-                        if connection.is_established and model in (FIND, MOVE):
+                    connection = association
+                    if connection is None:
+                        continue
+                    if connection is not None:
+                        if connection.is_established and not releasing.is_set() and model in (FIND, MOVE):
                             try:
                                 connection.send_c_cancel(1, query_model=model)
                             except (ValueError, RuntimeError):
                                 pass
-                        connection.abort()
+                        connection.abort(block=True)
                         # pynetdicom 3.0.4's blocking get_msg() waits on this
                         # queue even after abort. Wake it so our cancellation
                         # check runs without waiting the full DIMSE timeout.
                         connection.dimse.msg_queue.put((None, None))
+                        # ACSE establishment/release waits on a separate queue.
+                        # Use its normal abort primitive to wake either phase.
+                        connection.dul.to_user_queue.put(A_ABORT())
                     return
 
         watcher = Thread(target=watch_cancel, daemon=True)
         watcher.start()
         try:
-            association = ae.associate(self.profile.host, self.profile.port, ae_title=self.profile.called_ae)
+            association = ae.associate(self.profile.host, self.profile.port,
+                ae_title=self.profile.called_ae, evt_handlers=[(evt.EVT_REQUESTED, remember_connection)])
             check_cancel(self.cancel)
             if not association.is_established:
                 raise PacsError(_msg('dimse.associationFailed'))
             yield association
             check_cancel(self.cancel)
         finally:
-            stopped.set()
-            watcher.join(timeout=1)
-            if association is not None:
-                if association.is_established:
-                    if self.cancel.is_set(): association.abort()
-                    else: association.release()
-            ae.shutdown()
+            try:
+                if association is not None and association.is_established:
+                    if self.cancel.is_set():
+                        association.abort()
+                    else:
+                        releasing.set()
+                        association.release()
+            finally:
+                stopped.set()
+                watcher.join()
+                ae.shutdown()
+        check_cancel(self.cancel)
 
     def _status(self, status, operation):
         check_cancel(self.cancel)
