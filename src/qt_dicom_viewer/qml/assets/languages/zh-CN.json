@@ -2765,6 +2765,12 @@
         "cpr.rangeEnd": "区间终点 mm",
         "cpr.interval": "中心线区间长度：%1 mm",
         "tools.short.open-cpr": "CPR",
-        "tools.short.cpr-path": "CPR"
+        "tools.short.cpr-path": "CPR",
+        "cpr.missingSource": "源文件不可用，CPR 路径与测量记录已保留。请导入原始序列后重新打开，或打开工作区并定位源文件。",
+        "cpr.historicalDescription": "历史路径 r{revision} · 位置 {distance} mm",
+        "cpr.exportTitle": "CPR 图像导出",
+        "cpr.exportHint": "导出已完成的重建图像。匿名导出会隐藏患者信息和文字标注。",
+        "cpr.combined": "四视图组合",
+        "cpr.advanced": "高级采样设置"
     }
 }

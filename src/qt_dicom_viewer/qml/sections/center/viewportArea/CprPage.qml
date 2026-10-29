@@ -10,9 +10,10 @@ Item {
     required property var controller
     property bool anonymousExport: false
     function activeExportItem() {
+        if (controller.exportScope === "combined") return page
         for (let i = 0; i < cells.count; i++) {
             const cell = cells.itemAt(i)
-            if (cell.modelData === controller.activeViewport) return cell.imageItem
+            if (cell.modelData.viewportRole === controller.exportScope) return cell.imageItem
         }
         return null
     }
@@ -106,7 +107,8 @@ Item {
                         Layout.leftMargin: 6
                         Layout.bottomMargin: 3
                         visible: cell.index >= 2
-                        text: page.controller.busy ? qsTrId("cpr.computing")
+                        text: cell.modelData.historicalPlane ? cell.modelData.historicalDescription
+                            : page.controller.busy ? qsTrId("cpr.computing")
                             : !page.controller.ready ? qsTrId("cpr.empty")
                             : qsTrId("cpr.distance").arg(page.controller.positionMm.toFixed(1)).arg(page.controller.totalLength.toFixed(1))
                         color: Theme.textSecondary

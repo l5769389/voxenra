@@ -166,7 +166,8 @@ class WorkspaceController(QObject):
                     if saved.get("records") or saved.get("roi", {}).get("measurements"):
                         return True
         state = editable_state(tab)
-        if state.get("voi") or getattr(tab, "_registration_changed", False):
+        if (state.get("voi") or getattr(tab, "_registration_changed", False)
+                or state.get("cpr", {}).get("paths") or state.get("cpr", {}).get("draft")):
             return True
         return any(view.get("measurements") or view.get("annotations")
                    or view.get("crop") is not None or view.get("bed") is not None

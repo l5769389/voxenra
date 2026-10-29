@@ -2154,6 +2154,12 @@
         "cpr.rangeEnd": "Fim do intervalo mm",
         "cpr.interval": "Intervalo na linha central: %1 mm",
         "tools.short.open-cpr": "CPR",
-        "tools.short.cpr-path": "CPR"
+        "tools.short.cpr-path": "CPR",
+        "cpr.missingSource": "Os arquivos de origem não estão disponíveis. Os caminhos e medições CPR foram preservados. Importe a série original e reabra a aba, ou abra o espaço de trabalho e localize as fontes.",
+        "cpr.historicalDescription": "Caminho salvo r{revision} · posição {distance} mm",
+        "cpr.exportTitle": "Exportar imagens CPR",
+        "cpr.exportHint": "Exporte reconstruções concluídas. A exportação anônima oculta informações do paciente e anotações de texto.",
+        "cpr.combined": "Quatro vistas combinadas",
+        "cpr.advanced": "Amostragem avançada"
 }
 }

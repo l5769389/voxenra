@@ -8,6 +8,7 @@ ColumnLayout {
     id: panel
     objectName: "cprPanel"
     required property var controller
+    property bool advanced: false
     spacing: 8
     Components.PanelHeading { title: qsTrId("cpr.title"); explanation: panel.controller?.message ?? "" }
     GridLayout {
@@ -17,7 +18,7 @@ ColumnLayout {
             objectName: "cprNewPath"
             Layout.fillWidth: true
             text: qsTrId("cpr.new")
-            enabled: panel.controller?.referencesReady ?? false
+            enabled: (panel.controller?.referencesReady ?? false) && !panel.controller.drawing
             onClicked: panel.controller.startPath()
         }
         Components.AppButton {
@@ -56,7 +57,7 @@ ColumnLayout {
         objectName: "cprPathName"
         Layout.fillWidth: true
         placeholderText: qsTrId("cpr.rename")
-        enabled: (panel.controller?.selectedPathId ?? "") !== ""
+        enabled: (panel.controller?.selectedPathId ?? "") !== "" && !panel.controller.drawing
         maximumLength: 256
         function sync() {
             if (!activeFocus) text = panel.controller?.paths.find(item => item.selected)?.name ?? ""
@@ -119,6 +120,7 @@ ColumnLayout {
         delegate: RowLayout {
             id: row
             required property string modelData
+            visible: panel.advanced || !["width", "crossWidth", "step"].includes(modelData)
             Layout.fillWidth: true
             Text {
                 Layout.fillWidth: true
@@ -130,7 +132,7 @@ ColumnLayout {
                 id: input
                 objectName: "cprParameter-" + row.modelData
                 Layout.preferredWidth: 82
-                enabled: (panel.controller?.selectedPathId ?? "") !== ""
+                enabled: (panel.controller?.selectedPathId ?? "") !== "" && !panel.controller.drawing
                 validator: DoubleValidator { locale: "C"; decimals: 2; bottom: row.modelData === "angle" ? -360 : 0; top: 10000 }
                 function sync() {
                     if (!activeFocus) text = Number(panel.controller?.parameters[row.modelData] ?? 0).toFixed(row.modelData === "step" ? 2 : 1)
@@ -149,5 +151,13 @@ ColumnLayout {
         text: qsTrId("cpr.interval").arg(((panel.controller?.parameters.rangeEnd ?? 0) - (panel.controller?.parameters.rangeStart ?? 0)).toFixed(1))
         color: Theme.textSecondary
         font.pixelSize: 12
+    }
+    Components.AppButton {
+        Layout.fillWidth: true
+        objectName: "cprAdvanced"
+        checkable: true
+        checked: panel.advanced
+        text: qsTrId("cpr.advanced")
+        onClicked: panel.advanced = !panel.advanced
     }
 }

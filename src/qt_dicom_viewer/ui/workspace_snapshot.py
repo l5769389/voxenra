@@ -48,7 +48,7 @@ def edit_signature(state):
     from qt_dicom_viewer.core.workspace_state import fingerprint
     state = dict(state, views={k: dict(v) for k, v in state["views"].items()})
     if "cpr" in state:
-        state["cpr"] = {key: state["cpr"][key] for key in ("paths", "crossWidthMm", "rangeMm")}
+        state["cpr"] = {key: state["cpr"][key] for key in ("paths", "crossWidthMm", "pathRanges")}
     for view in state["views"].values():
         if "qa" in view:
             qa = view["qa"]
@@ -298,6 +298,8 @@ def apply_tab_snapshot(tab, record):
     # Restore geometry before submitting new renders; frame-bound metrics will
     # refresh only after their matching plane has been accepted.
     apply_edits(tab, record["edits"], restore_qa=False)
+    if tab.tab_config.tab_type == TabType.CPR:
+        tab.restore_measurement_planes(record["views"])
     if record.get("linkedWindow") is not None:
         tab._set_mpr_window(record["linkedWindow"], render=False)
     if hasattr(tab, "pet_display"):

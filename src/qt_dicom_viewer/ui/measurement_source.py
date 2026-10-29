@@ -1,10 +1,46 @@
 """Data-only sampling records shared by navigation and independent report rendering."""
 from dataclasses import fields, replace
 from uuid import uuid4
+import math
+import re
 
 from qt_dicom_viewer.model.render_models import StackRenderRequest, MprRenderRequest
 
 REQUESTS = {"stack": StackRenderRequest, "mpr": MprRenderRequest}
+
+
+def validate_cpr_source(source):
+    """CPR sources are real planes with bounded, data-only provenance."""
+    from qt_dicom_viewer.model.dicom_core import MprFrame, MprGridSpec
+    metadata = source.get("cpr")
+    if metadata is None:
+        return None
+    if not isinstance(metadata, dict) or source.get("kind") != "mpr":
+        raise ValueError("Invalid CPR measurement source")
+    role = metadata.get("role")
+    index, count = metadata.get("frameIndex"), metadata.get("frameCount")
+    if (role not in ("reference-a", "reference-b", "cross") or type(index) is not int
+            or type(count) is not int or not 0 <= index < count <= 4097
+            or not isinstance(metadata.get("fingerprint"), str)
+            or re.fullmatch(r"[a-f0-9]{64}", metadata["fingerprint"]) is None):
+        raise ValueError("Invalid CPR plane provenance")
+    parameters = source.get("parameters", {})
+    if not isinstance(parameters, dict):
+        raise ValueError("Invalid CPR measurement parameters")
+    grid = parameters.get("mpr_grid")
+    if (not isinstance(parameters.get("mpr_frame"), MprFrame) or not isinstance(grid, MprGridSpec)
+            or not 1 <= grid.rows <= 4097 or not 1 <= grid.columns <= 4097
+            or grid.rows*grid.columns > 4_194_304):
+        raise ValueError("Invalid CPR measurement plane")
+    if role == "cross":
+        distance = metadata.get("distanceMm")
+        if (not isinstance(metadata.get("pathId"), str) or not 1 <= len(metadata["pathId"]) <= 128
+                or type(metadata.get("pathRevision")) is not int or metadata["pathRevision"] < 1
+                or type(metadata.get("algorithmVersion")) is not int or metadata["algorithmVersion"] != 1
+                or type(distance) not in (int, float) or not math.isfinite(distance) or not 0 <= distance <= 10000
+                or not isinstance(metadata.get("pathName", ""), str) or len(metadata.get("pathName", "")) > 256):
+            raise ValueError("Invalid CPR path provenance")
+    return metadata
 
 
 def capture_request(request):

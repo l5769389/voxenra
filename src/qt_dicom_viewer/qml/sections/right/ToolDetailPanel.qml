@@ -69,7 +69,7 @@ Rectangle {
                     'scroll': scrollComponent,
                     'mpr-layout': detailPanel.tabController?.mprCompare ? compareMprComponent : detailPanel.tabController?.twoDLayout ? twoDLayoutComponent : mprLayoutComponent,
                     'zoom': zoomComponent,
-                    'export': exportComponent,
+                    'export': detailPanel.tabController?.cprController ? cprExportComponent : exportComponent,
                     'import': importComponent,
                     'segmentation': voiComponent,
                     'voi': voiComponent,
@@ -121,6 +121,14 @@ Rectangle {
         Panels.ZoomToolPanel { viewportController: detailPanel.viewportController }
     }
 
+    Component {
+        id: cprExportComponent
+        Panels.CprExportPanel {
+            controller: detailPanel.tabController.cprController
+            exportController: detailPanel.exportController
+            exportItem: detailPanel.exportItem
+        }
+    }
     Component {
         id: exportComponent
         Panels.ExportPanel {

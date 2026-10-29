@@ -3,6 +3,7 @@
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPage.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPathOverlay.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/right/panels/CprExportPanel.qml</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/star.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/star-filled.svg</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/CornerLayoutEditor.qml</file>

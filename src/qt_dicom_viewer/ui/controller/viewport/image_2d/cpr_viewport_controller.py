@@ -15,12 +15,22 @@ from .image_2d_viewport_controller import Image2DViewportController
 
 class CprViewportController(Image2DViewportController):
     cprChanged = Signal()
+    exportReadinessChanged = Signal()
 
     def __init__(self, config, tools, parent):
         self._cpr = parent
         self.plane_geometry = None
         self._historical = False
         super().__init__(config, tools, parent=parent)
+        parent.cprChanged.connect(self.exportReadinessChanged)
+
+    @Property(bool, notify=exportReadinessChanged)
+    def exportReady(self):
+        return self._cpr.export_ready()
+
+    @Property(str, notify=exportReadinessChanged)
+    def exportRevision(self):
+        return self._cpr.export_revision()
 
     @Property(bool, constant=True)
     def isCprViewport(self):
@@ -37,6 +47,17 @@ class CprViewportController(Image2DViewportController):
     @Property(bool, notify=cprChanged)
     def historicalPlane(self):
         return self._historical
+
+    @Property(str, notify=cprChanged)
+    def historicalDescription(self):
+        if not self._historical:
+            return ""
+        from qt_dicom_viewer.i18n import message
+        source = self._measure_controller.current_source.get("cpr", {})
+        if source.get("role") == "cross":
+            return str(message("cpr.historicalDescription", revision=source["pathRevision"],
+                               distance=f'{source["distanceMm"]:.1f}'))
+        return str(message("cpr.historical"))
 
     @Property(bool, notify=cprChanged)
     def cprEditing(self):
@@ -79,7 +100,7 @@ class CprViewportController(Image2DViewportController):
                 **display_parameters(self))
             source = capture_request(request)
             source["cpr"] = dict(provenance or {}, frameIndex=index, frameCount=count,
-                                  role=self.viewportRole, fingerprint=volume.fingerprint)
+                                  role=self.viewportRole, fingerprint=self._cpr._fingerprint)
         self._measurement_requests = {request_id: source}
         result = StackRenderResult(response_id=request_id, viewport_id=self.viewportId,
             series_uid=volume.series_uid, view_type=self.viewport_config.viewport_type,

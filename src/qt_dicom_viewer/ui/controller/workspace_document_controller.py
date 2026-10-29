@@ -54,6 +54,7 @@ class WorkspaceDocumentController(QObject):
         self._close_prompt_active = False
         self._open_after_save = None
         self._new_after_save = False
+        self._retained_source_manifests = {}
         self._quit_approved = False
         if QCoreApplication.instance() is not None:
             QCoreApplication.instance().installEventFilter(self)
@@ -323,6 +324,10 @@ class WorkspaceDocumentController(QObject):
                     "search": self.panel._patient_search, "collapsed": list(self.panel._collapsed_groups),
                     "layout": dict(self.app.settingsController.values["layout"]),
                     "sidebarLayout": dict(self._sidebar_layout)}
+        available = {record.series_instance_uid for record in records}
+        document["series"] = [dict(self._retained_source_manifests[uid], sources=[
+            dict(source, relative="") for source in self._retained_source_manifests[uid]["sources"]])
+            for uid in sorted(ids-available) if uid in self._retained_source_manifests]
         # No live QObject crosses the worker boundary; source records and value
         # dataclasses are immutable, and source provenance gets its own index.
         resolver = LocalImportStore()
@@ -355,7 +360,7 @@ class WorkspaceDocumentController(QObject):
         self.changed.emit()
 
         def save():
-            document["series"] = [source_manifest(record, resolver, path) for record in records]
+            document["series"] += [source_manifest(record, resolver, path) for record in records]
             validate_document(document)
             atomic_write(path, dumps(document))
             return {"kind": "save", "path": str(path), "recovery": recovery}
@@ -454,6 +459,7 @@ class WorkspaceDocumentController(QObject):
             self.app.windowManager.restore_to_main()
             self._wired.clear()
             self.workspace._closed_tab_snapshots.clear()
+            self._retained_source_manifests.clear()
             self.app._series_catalog.replace(None)
             self.panel.reset_workspace_session()
             old_store = self.panel._import_store
@@ -637,6 +643,7 @@ class WorkspaceDocumentController(QObject):
         self._retired_stores = getattr(self, "_retired_stores", []) + [old_store]
         available = {s.series_instance_uid: s for s in snapshot.series} if snapshot else {}
         doc = payload["document"]
+        self._retained_source_manifests = {record["uid"]: record for record in doc["series"]}
         self._sidebar_layout = doc.get("sidebarLayout", {"width": 300., "collapsed": False})
         if self.panel._thumbnail_service is not None:
             for uid in self.panel._scan_series_record:
@@ -660,7 +667,10 @@ class WorkspaceDocumentController(QObject):
         self.workspace._closed_tab_snapshots = {
             tab["closedId"]: dumps({k: v for k, v in tab.items() if k != "closedId"})
             for tab in doc["tabs"] if "closedId" in tab
-            and all(uid in available for uid in tab["series"])}
+            and (tab["type"] == "cpr" or all(uid in available for uid in tab["series"]))}
+        for tab in doc["tabs"]:
+            if tab["type"] == "cpr" and "closedId" not in tab and any(uid not in available for uid in tab["series"]):
+                self.workspace._closed_tab_snapshots[f'{tab["series"][0]}_cpr'] = dumps(tab)
         self._load_queue = [(index, tab) for index, tab in enumerate(doc["tabs"])
                             if "closedId" not in tab and all(uid in available for uid in tab["series"])]
         self._load_queue.sort(key=lambda item: 0 if "fusionSource" in item[1] else 1)
@@ -689,6 +699,10 @@ class WorkspaceDocumentController(QObject):
             record = loads(self.workspace._closed_tab_snapshots[key])
         except Exception as error:
             self._message, self._error = error_message(error), True
+            self.changed.emit()
+            return False
+        if record["type"] == "cpr" and any(self.app._series_catalog.get_series(uid) is None for uid in record["series"]):
+            self._message, self._error = _msg("cpr.missingSource"), True
             self.changed.emit()
             return False
         if self._pending is not None:

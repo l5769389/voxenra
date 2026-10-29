@@ -10,6 +10,7 @@ import numpy as np
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot
 
 from qt_dicom_viewer.core.cpr_reslicer import CprReslicer
+from qt_dicom_viewer.core.cpr_session import volume_content_fingerprint
 from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
 from qt_dicom_viewer.core.render_cancellation import check_render_cancelled, render_cancellation
 from qt_dicom_viewer.model import MprPlane
@@ -36,6 +37,7 @@ class CprRenderInput:
     cross_width_mm: float = 40.
     preview: bool = False
     cache: CprCurveCache | None = None
+    source_fingerprint: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,11 +48,13 @@ class CprRenderOutput:
     section: CprCrossSection | None
     preview: bool
     cache: CprCurveCache | None
+    source_fingerprint: str
 
 
 def compute_cpr(request: CprRenderInput) -> CprRenderOutput:
     check_render_cancelled()
     volume, references = request.volume, []
+    fingerprint = request.source_fingerprint or volume_content_fingerprint(volume)
     centers = request.reference_centers or (volume.geometry.center_patient,) * 2
     mpr = MprReslicer(max_output_dimension=512 if request.preview else 1024)
     for plane, position in zip(request.reference_planes, centers):
@@ -71,13 +75,14 @@ def compute_cpr(request: CprRenderInput) -> CprRenderOutput:
                 and cached.result.settings == settings):
             curve = cached.result
         else:
-            curve = CprReslicer().reslice(volume, request.path, settings)
+            curve = replace(CprReslicer().reslice(volume, request.path, settings), source_fingerprint=fingerprint)
         index = int(np.argmin(np.abs(curve.centerline.distances_mm - request.position_mm)))
         section = CprReslicer().cross_section(volume, curve.centerline, index,
                     width_mm=request.cross_width_mm, step_mm=settings.step_mm)
+        section = replace(section, source_fingerprint=fingerprint)
         cache = CprCurveCache(volume, request.path, curve)
     check_render_cancelled()
-    return CprRenderOutput(request.generation, tuple(references), curve, section, request.preview, cache)
+    return CprRenderOutput(request.generation, tuple(references), curve, section, request.preview, cache, fingerprint)
 
 
 _pool = None

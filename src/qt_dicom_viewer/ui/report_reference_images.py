@@ -1,6 +1,7 @@
 """Render frozen measurement sources without driving any on-screen viewport."""
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage
+from dataclasses import replace
 import numpy as np
 from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.messages import error_message
@@ -29,12 +30,24 @@ def render_references(pictures, catalog, cancelled, progress):
             if not received:
                 raise ValueError(_msg("report.imageUnavailable"))
             result = received[0]
+            from qt_dicom_viewer.ui.measurement_source import validate_cpr_source
+            cpr = validate_cpr_source(picture["source"])
+            if cpr is not None:
+                from qt_dicom_viewer.core.cpr_session import volume_content_fingerprint
+                from qt_dicom_viewer.core.render_cancellation import render_cancellation
+                with render_cancellation(cancelled):
+                    if result.volume is None or volume_content_fingerprint(result.volume) != cpr["fingerprint"]:
+                        raise ValueError(_msg("analysis.sourceMismatch"))
+                # CPR's navigation index is along its path; the stored affine,
+                # dimensions and spacing still have to match the real plane.
+                result = replace(result, frame_meta=replace(result.frame_meta,
+                    slice_index=cpr["frameIndex"], slice_count=cpr["frameCount"]))
             actual = frame_identity(result.series_uid, result.frame_meta,
                 getattr(result, "projection_mode", None), getattr(result, "slab_thickness_mm", 0.),
                 phase=getattr(result, "phase_identifier", None))
             if actual != picture["frame"]:
                 raise ValueError(_msg("analysis.sourceMismatch"))
-            if picture["source"].get("pixelFingerprint"):
+            if cpr is None and picture["source"].get("pixelFingerprint"):
                 import hashlib
                 pixels = result.image if result.frame_meta.pixel_value_meta.quantification == "color" else result.modality_pixel
                 actual_hash = hashlib.blake2b(np.ascontiguousarray(pixels).view(np.uint8), digest_size=16).hexdigest()

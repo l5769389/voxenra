@@ -8,7 +8,7 @@ from qt_dicom_viewer.core.workspace_state import loads, MAX_DOCUMENT_BYTES
 from qt_dicom_viewer.model import DicomFolderScanSnapshot, DicomPhaseRecord
 
 FORMAT = "VoxenraWorkspace"
-VERSION = 1
+VERSION = 2
 MAX_TABS = 64
 
 
@@ -100,7 +100,15 @@ def read_document(path):
 
 def validate_document(document):
     """Apply the same manifest contract before saving and after decoding."""
-    if not isinstance(document, dict) or document.get("format") != FORMAT or document.get("version") != VERSION:
+    if (isinstance(document, dict) and document.get("format") == FORMAT
+            and type(document.get("version")) is int and document["version"] == 1):
+        # v1 has no CPR tab; keep the original caller's decoded values untouched.
+        legacy_tabs = document.get("tabs")
+        if not isinstance(legacy_tabs, list) or any(isinstance(tab, dict) and tab.get("type") == "cpr" for tab in legacy_tabs):
+            raise ValueError(_msg('text.0210'))
+        document = dict(document, version=VERSION)
+    if (not isinstance(document, dict) or document.get("format") != FORMAT
+            or type(document.get("version")) is not int or document.get("version") != VERSION):
         raise ValueError(_msg('text.0210'))
     series, tabs = document.get("series"), document.get("tabs")
     if (not isinstance(series, list) or not isinstance(tabs, list)
@@ -142,7 +150,7 @@ def validate_document(document):
     for tab in tabs:
         if (not isinstance(tab, dict) or not isinstance(tab.get("series"), list)
                 or any(uid not in known for uid in tab["series"])
-                or tab.get("type") not in ("2d", "compare2d", "comparempr", "mpr", "3d", "4d", "montage", "tag", "petctfusion", "settings", "pacs", "manual")):
+                or tab.get("type") not in ("2d", "compare2d", "comparempr", "mpr", "cpr", "3d", "4d", "montage", "tag", "petctfusion", "settings", "pacs", "manual")):
             raise ValueError(_msg('text.0217'))
         _validate_tab(tab)
     for key in ("sidebar", "selected", "collapsed"):
@@ -167,6 +175,11 @@ def _validate_tab(tab):
                                or not 1 <= len(tab["closedId"]) <= 4096):
         raise ValueError(_msg('text.0221'))
     utility = tab["type"] in ("settings", "pacs", "manual")
+    if tab["type"] == "cpr":
+        from qt_dicom_viewer.core.cpr_session import validate_cpr_session
+        session = validate_cpr_session(tab.get("edits", {}).get("cpr"))
+        if len(tab["series"]) != 1 or session["source"]["seriesUid"] != tab["series"][0]:
+            raise ValueError(_msg('text.0221'))
     if (not isinstance(tab.get("label"), str) or len(tab["series"]) not in ((0,) if utility else range(1, 37) if tab["type"] == "2d" else (2, 3, 4) if tab["type"] == "compare2d" else (1, 2))):
         raise ValueError(_msg('text.0221'))
     if "twoDLayout" in tab:
@@ -221,11 +234,12 @@ def _validate_tab(tab):
         if not isinstance(state, dict): raise ValueError(_msg('text.0222'))
         source = state.get("independentSource")
         if source is not None:
-            from qt_dicom_viewer.ui.measurement_source import restore_request
+            from qt_dicom_viewer.ui.measurement_source import restore_request, validate_cpr_source
             try:
                 if not isinstance(source, dict) or source.get("kind") != "mpr":
                     raise ValueError("Invalid independent plane")
                 request = restore_request(source, "validate")
+                validate_cpr_source(source)
                 if (request.series_uid not in tab["series"] or not isinstance(request.mpr_frame, MprFrame)
                         or source.get("navigation") is not None and not isinstance(source["navigation"], MprState)):
                     raise ValueError("Invalid independent source")
@@ -252,6 +266,10 @@ def _validate_tab(tab):
         sources = state.get("sources", {})
         if not isinstance(sources, dict) or any(not isinstance(v, dict) for v in sources.values()):
             raise ValueError(_msg('text.0225'))
+        from qt_dicom_viewer.ui.measurement_source import validate_cpr_source
+        for source in sources.values():
+            if validate_cpr_source(source) is not None and source["parameters"].get("series_uid") not in tab["series"]:
+                raise ValueError(_msg('text.0225'))
         for field, classes in (("measurements", (LengthMeasurement, AngleMeasurement, RoiMeasurement)),
                                ("annotations", (TextAnnotation,))):
             items = state.get(field, {})

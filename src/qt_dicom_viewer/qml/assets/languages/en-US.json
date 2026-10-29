@@ -2765,6 +2765,12 @@
         "cpr.rangeEnd": "Interval end mm",
         "cpr.interval": "Centerline interval: %1 mm",
         "tools.short.open-cpr": "CPR",
-        "tools.short.cpr-path": "CPR"
+        "tools.short.cpr-path": "CPR",
+        "cpr.missingSource": "Source files are unavailable. CPR paths and measurements are retained. Import the original series and reopen the tab, or open the workspace and locate its sources.",
+        "cpr.historicalDescription": "Saved path r{revision} · position {distance} mm",
+        "cpr.exportTitle": "Export CPR images",
+        "cpr.exportHint": "Export completed reconstructions. Anonymous export hides patient information and text annotations.",
+        "cpr.combined": "Combined four views",
+        "cpr.advanced": "Advanced sampling"
     }
 }

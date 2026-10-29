@@ -137,6 +137,7 @@ class ExportController(QObject):
         self._png_context = None
         self._anonymous_item = None
         self._png_anonymous = True
+        self._png_revision = None
         from .measurement_report_controller import MeasurementReportController
         self._measurement_report = MeasurementReportController(workspace, catalog, self)
         from .dicom_results_controller import DicomResultsController
@@ -285,6 +286,7 @@ class ExportController(QObject):
         self._cancel = Event()
         self._png_anonymous = anonymous
         self._png_context = (viewport, item, pixel_ratio, path)
+        self._png_revision = getattr(viewport, "exportRevision", None)
         if anonymous:
             self._job = _PixelCheckJob(tuple(self.current_series()), self._cancel)
             self._job.signals.finished.connect(self._pixel_check_finished)
@@ -304,7 +306,8 @@ class ExportController(QObject):
         viewport, item, _pixel_ratio, path = self._png_context
         try:
             if (not isValid(viewport) or self.workspace.activeViewport is not viewport
-                    or not self._png_ready_to_capture()):
+                    or not self._png_ready_to_capture()
+                    or getattr(viewport, "exportRevision", None) != self._png_revision):
                 raise ValueError(_msg('text.0464'))
             if viewport.viewportType == "volume":
                 self._save_png(viewport.snapshot_image(), path)
@@ -332,7 +335,8 @@ class ExportController(QObject):
         if self._grab is not None and grab_id == self._grab_id:
             if (self._png_context is None
                     or self.workspace.activeViewport is not self._png_context[0]
-                    or not self._png_ready_to_capture()):
+                    or not self._png_ready_to_capture()
+                    or getattr(self._png_context[0], "exportRevision", None) != self._png_revision):
                 self._finish(_msg('text.0464'), True)
                 return
             image = self._grab.image()
