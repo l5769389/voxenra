@@ -364,6 +364,9 @@ def test_roi_edit_updates_after_first_pixel_of_drag(viewport, kind):
 
 
 def _move_pointer(view, position):
+    # Qt caches the last synthetic position across recreated windows. Ensure
+    # a real move is delivered even when consecutive cases use the same point.
+    QTest.mouseMove(view, position + QPoint(1, 0), 1)
     QTest.mouseMove(view, position, 20)
     QTest.qWait(30)
 
