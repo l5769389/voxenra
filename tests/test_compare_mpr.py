@@ -162,7 +162,7 @@ def test_picker_six_cells_pair_zoom_and_active_tools(sidebar_scene, tmp_path, th
     wait_until(lambda: ws.activeLoadState.status in ('ready','error'))
     assert ws.activeLoadState.status == 'ready', ws.activeLoadState.message
     tab = ws.activeTab
-    assert find(window, 'tabType-' + tab.tab_config.tab_id).property('text') == 'MPR Compare'
+    assert find(window, 'tabType-' + tab.tab_config.tab_id).property('text') == ('MPR 对比' if language == 'zh-CN' else 'MPR ↔')
     def cells():
         return [i for i in descendants(window.contentItem()) if i.objectName().startswith('compareMprCell-') and i.isVisible()]
     wait_until(lambda: len(cells()) == 6)

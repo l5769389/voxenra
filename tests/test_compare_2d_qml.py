@@ -30,7 +30,7 @@ def test_compare_picker_layout_shared_slider_and_tools(sidebar_scene, tmp_path, 
     registry = app.workspaceController
     wait_until(lambda: registry.activeLoadState and registry.activeLoadState.status == 'ready')
     tab = registry.activeTab
-    assert find(window, 'tabType-' + tab.tab_config.tab_id).property('text') == '2D Compare'
+    assert find(window, 'tabType-' + tab.tab_config.tab_id).property('text') == ('2D 对比' if language == 'zh-CN' else '2D ↔')
     assert registry.activeTabType == 'compare2d'
     left, right = tab.viewports_by_id.values()
     canvases = [find(window, 'imageViewport-' + v.viewportId) for v in (left, right)]
