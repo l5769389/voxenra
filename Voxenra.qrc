@@ -1,5 +1,9 @@
 <RCC>
     <qresource>
+        <file>src/qt_dicom_viewer/qml/assets/icons/star.svg</file>
+        <file>src/qt_dicom_viewer/qml/assets/icons/star-filled.svg</file>
+        <file>src/qt_dicom_viewer/qml/sections/settings/CornerLayoutEditor.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/settings/SettingsSearchIndex.js</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarSettingsPage.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarOrderList.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/settings/ToolbarEditorTile.qml</file>
