@@ -11,13 +11,13 @@ from qt_dicom_viewer.settings.toolbar import LEFT_VIEWS, navigation_order, resol
 VIEW_LABELS = dict(zip(LEFT_VIEWS, ('text.0679', 'text.0680', 'text.0681', 'text.0682', 'text.0683', 'text.0684', 'text.0685')))
 VIEW_ICONS = dict(zip(LEFT_VIEWS, ('nav-view-2d','nav-view-mpr','nav-view-3d','nav-view-tile','nav-view-4d','nav-view-tag','fusion')))
 PROFILE_MODES = {
-    '2d': ('ct','mr','pt','other','color'), 'mpr': ('ct','mr','pt'),
+    '2d': ('ct','mr','pt','other','color'), 'mpr': ('ct','mr','pt'), 'cpr': ('ct','mr'),
     '3d': ('ct','mr','pt','petct3d'), 'montage': ('ct','mr','other','color'),
     '4d': ('ct','mr'), 'compare2d': ('ct','mr','pt','other','color'),
     'comparempr': ('ct','mr','pt'), 'petctfusion': ('pt',),
 }
 PROFILE_CATEGORIES = {
-    '2d': ('2d', 'compare2d'), 'mpr': ('mpr', 'comparempr'),
+    '2d': ('2d', 'compare2d'), 'mpr': ('mpr', 'comparempr', 'cpr'),
     '3d': ('3d',), 'montage': ('montage',), '4d': ('4d',),
     'fusion': ('petctfusion',),
 }
@@ -102,7 +102,10 @@ class ToolbarSettingsController(QObject):
     @Slot(str)
     def selectMode(self, mode):
         if mode in PROFILE_CATEGORIES[self.selectedCategory]:
-            self.selectProfile(f'{mode}:{self.selectedCapability}')
+            capability = self.selectedCapability
+            if capability not in PROFILE_MODES[mode]:
+                capability = PROFILE_MODES[mode][0]
+            self.selectProfile(f'{mode}:{capability}')
 
     @Slot(str)
     def selectCapability(self, capability):
@@ -116,7 +119,7 @@ class ToolbarSettingsController(QObject):
 
     @TextProperty('QVariantList', notify=_i18n_modes, notify_name='_i18n_modes', source_notify='changed')
     def modes(self):
-        return [dict(key=mode, label=_msg('toolbar.comparison' if mode.startswith('compare') else 'toolbar.single'))
+        return [dict(key=mode, label=_msg('cpr.title' if mode == 'cpr' else 'toolbar.comparison' if mode.startswith('compare') else 'toolbar.single'))
                 for mode in PROFILE_CATEGORIES[self.selectedCategory]]
 
     def _capability_label(self, capability):
@@ -139,7 +142,7 @@ class ToolbarSettingsController(QObject):
     def profiles(self):
         mode_labels = {**{key: _msg(value) for key, value in VIEW_LABELS.items()},
                        'compare2d': _msg('compare.title'), 'comparempr': _msg('compare.mpr.title'),
-                       'petctfusion': _msg('text.0685')}
+                       'petctfusion': _msg('text.0685'), 'cpr': _msg('cpr.title')}
         labels = {'other': _msg('toolbar.scalar'), 'color': _msg('toolbar.color'), 'petct3d': 'PET/CT'}
         return [dict(key=f'{mode}:{capability}', label=mode_labels[mode] + ' · ' + labels.get(capability, capability.upper()))
                 for mode, capabilities in PROFILE_MODES.items() for capability in capabilities]

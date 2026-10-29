@@ -8,6 +8,7 @@ from qt_dicom_viewer.model.toolbar_priorities import toolbar_groups
 @pytest.mark.parametrize('kind,modality,common,primary', [
     (TabType.TWO_D, 'CT', ['window','scroll','pan','zoom'], ['measure','mpr-layout','play']),
     (TabType.MPR, 'MR', ['window','scroll','pan','zoom'], ['measure','segmentation','mip']),
+    (TabType.CPR, 'CT', ['window','scroll','pan','zoom'], ['cpr-path','measure','pseudocolor']),
     (TabType.FOUR_D, 'CT', ['window','play','pan','zoom'], ['measure','segmentation','mip']),
     (TabType.TWO_D, 'PT', ['window','scroll','pan','zoom'], ['pseudocolor','measure','mpr-layout']),
     (TabType.MPR, 'PT', ['window','scroll','pan','zoom'], ['pseudocolor','measure','segmentation']),

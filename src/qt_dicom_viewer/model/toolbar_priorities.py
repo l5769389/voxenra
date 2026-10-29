@@ -9,6 +9,8 @@ def toolbar_groups(tab_type, modality, is_color, tools):
     if tab_type == TabType.THREE_D:
         common = ['volume-rotate', 'pan', 'zoom', 'play' if 'play' in available else 'window']
         primary = ['volume-preset', 'volume-direction', 'mpr-layout' if 'mpr-layout' in available else 'volume-crop']
+    elif tab_type == TabType.CPR:
+        primary = ['cpr-path', 'measure', 'pseudocolor']
     elif tab_type == TabType.PETCT_FUSION:
         common = ['ct-window', 'pet-window', 'pan', 'zoom']
         primary = ['pseudocolor', 'fusion-blend', 'measure']

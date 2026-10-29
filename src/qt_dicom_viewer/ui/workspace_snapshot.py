@@ -38,6 +38,8 @@ def editable_state(tab, *, include_qa=True):
                          for r in voi.records]
     if hasattr(tab, "matrix"):
         result["registration"] = {"matrix": tab.matrix.copy(), "pivot": tab.pivot.copy()}
+    if hasattr(tab, "session_state"):
+        result["cpr"] = tab.session_state()
     return result
 
 
@@ -45,6 +47,8 @@ def edit_signature(state):
     """Recomputed ROI statistics are not user edits and must not add undo steps."""
     from qt_dicom_viewer.core.workspace_state import fingerprint
     state = dict(state, views={k: dict(v) for k, v in state["views"].items()})
+    if "cpr" in state:
+        state["cpr"] = {key: state["cpr"][key] for key in ("paths", "crossWidthMm", "rangeMm")}
     for view in state["views"].values():
         if "qa" in view:
             qa = view["qa"]
@@ -63,6 +67,8 @@ def edit_signature(state):
 
 
 def apply_edits(tab, state, *, restore_qa=True):
+    if "cpr" in state and hasattr(tab, "restore_session"):
+        tab.restore_session(state["cpr"])
     for view in tab.viewports_by_id.values():
         record = state.get("views", {}).get(view_key(view), {})
         qa = getattr(view, "_qa_controller", None)

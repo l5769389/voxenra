@@ -435,6 +435,9 @@ class WorkspaceController(QObject):
             elif tab_type == TabType.TWO_D:
                 from .tab.two_d_tab_controller import TwoDTabController
                 new_tab = TwoDTabController(tab_config, parent=self)
+            elif tab_type == TabType.CPR:
+                from .tab.cpr_tab_controller import CprTabController
+                new_tab = CprTabController(tab_config, parent=self)
             else:
                 new_tab = TabController(tab_config, parent=self, tag_controller=tag_controller)
             self.connect_signal(new_tab)
@@ -472,6 +475,8 @@ class WorkspaceController(QObject):
         from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
         tab._edit_history = EditHistoryController(tab)
         state = TabLoadingController(tab)
+        if hasattr(tab, "cprLoaded"):
+            tab.cprLoaded.connect(state.finish)
         self._load_states[tab.tab_config.tab_id] = state
         state.changed.connect(self.loadingStatesChanged.emit)
         # Record request identity before forwarding: even synchronous test

@@ -6,7 +6,7 @@ from qt_dicom_viewer.model import TabType
 from qt_dicom_viewer.model.toolbar_priorities import toolbar_groups
 
 LEFT_VIEWS = ('2d', 'mpr', '3d', 'montage', '4d', 'tag', 'fusion')
-MODES = ('2d', 'mpr', '3d', 'montage', '4d', 'compare2d', 'comparempr', 'petctfusion')
+MODES = ('2d', 'mpr', 'cpr', '3d', 'montage', '4d', 'compare2d', 'comparempr', 'petctfusion')
 CAPABILITIES = ('ct', 'mr', 'pt', 'other', 'color', 'petct3d')
 
 

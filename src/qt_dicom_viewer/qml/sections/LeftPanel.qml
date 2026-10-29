@@ -721,7 +721,7 @@ Rectangle {
                 leftPanel.panelController.compareController.request(seriesUid)
             } else if (action === "fusion") {
                 leftPanel.panelController.requestFusionView()
-            } else if (["2d", "mpr", "tag", "3d", "4d", "montage"].includes(action)) {
+            } else if (["2d", "mpr", "cpr", "tag", "3d", "4d", "montage"].includes(action)) {
                 leftPanel.panelController.openSeriesView(seriesUid, action)
             } else if (action === "directory") {
                 if (!leftPanel.panelController.openSeriesDirectory(seriesUid))
@@ -768,6 +768,12 @@ Rectangle {
             actionCode: "mpr"
             iconName: "nav-view-mpr"
             text: qsTrId("text.0700")
+        }
+        SeriesMenuItem {
+            actionCode: "cpr"
+            iconName: "nav-view-mpr"
+            text: qsTrId("cpr.title")
+            actionEnabled: ["CT", "MR"].includes(leftPanel.panelController.seriesModality(seriesContextMenu.contextSeriesUid))
         }
         SeriesMenuItem {
             actionCode: "fusion"

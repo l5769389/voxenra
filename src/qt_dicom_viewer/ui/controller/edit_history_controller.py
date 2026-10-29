@@ -83,7 +83,8 @@ class EditHistoryController(QObject):
     @Slot()
     def capture(self):
         self._timer.stop()
-        if self._restoring or getattr(self.tab, "_registration_dragging", False):
+        if (self._restoring or getattr(self.tab, "_registration_dragging", False)
+                or getattr(self.tab, "_edit_transaction_active", False)):
             return False
         try:
             state = editable_state(self.tab)

@@ -23,7 +23,7 @@ Rectangle {
 
     readonly property var opening: workspaceController.activeLoadState
     readonly property int tabStripHeight: 40
-    readonly property bool imageWorkspace: ["2d", "compare2d", "comparempr", "mpr", "4d", "petctfusion"].includes(workspaceController.activeTabType)
+    readonly property bool imageWorkspace: ["2d", "compare2d", "comparempr", "mpr", "cpr", "4d", "petctfusion"].includes(workspaceController.activeTabType)
 
     readonly property Item exportItem: workspaceLoader.item
         ? (workspaceLoader.item.activeExportItem !== undefined ? workspaceLoader.item.activeExportItem() : workspaceLoader.item) : null
@@ -135,6 +135,10 @@ Rectangle {
                         setSource(Qt.resolvedUrl("../pacs/PacsBrowser.qml"), {
                             pacsController: Qt.binding(() => centerPanel.pacsController),
                             workspaceController: Qt.binding(() => centerPanel.workspaceController)
+                        })
+                    } else if (type === "cpr") {
+                        setSource(Qt.resolvedUrl("viewportArea/CprPage.qml"), {
+                            controller: centerPanel.workspaceController.activeTab
                         })
                     } else if (type === "manual") {
                         setSource(Qt.resolvedUrl("../manual/OperationManual.qml"), {

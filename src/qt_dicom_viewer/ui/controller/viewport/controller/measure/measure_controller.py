@@ -167,6 +167,15 @@ class MeasurementController(QObject):
         self.cancel_transaction()
         self._roi_operation = RoiMeasureOperation(physical_square=enabled)
 
+    def hide_frame(self):
+        """Hide the current plane while retaining its committed measurements."""
+        self.cancel_transaction()
+        self.clear_selection()
+        self._current_frame = None
+        self._frame_key = None
+        self.current_source = {}
+        self.measurementsChanged.emit()
+
     def set_frame(self, series_uid: str, frame: FrameDisplayMeta, *, source_context: tuple = ()) -> None:
         """MPR 的索引不足以识别切面；同时比较采样原点、方向、尺寸和间距。"""
         self._current_frame = frame

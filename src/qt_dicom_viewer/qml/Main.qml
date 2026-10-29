@@ -34,7 +34,7 @@ ApplicationWindow {
     readonly property bool hasTabs: workspaceController.tabs.length > 0
     // Temporary presentation state belongs to this window, not the document/preferences.
     property bool viewportMaximized: false
-    readonly property bool canMaximizeViewport: ["2d", "compare2d", "comparempr", "mpr", "3d", "montage", "4d", "petctfusion"].includes(workspaceController.activeTabType)
+    readonly property bool canMaximizeViewport: ["2d", "compare2d", "comparempr", "mpr", "cpr", "3d", "montage", "4d", "petctfusion"].includes(workspaceController.activeTabType)
     readonly property bool maximizedReadingArea: viewportMaximized && canMaximizeViewport
     onHasTabsChanged: if (!hasTabs) viewportMaximized = false
     readonly property var viewportController:

@@ -65,6 +65,7 @@ Rectangle {
                         ? petColorComponent : detailPanel.viewportController?.displayMappingEditor === "palette"
                         ? scalarMappingComponent : pseudoColorComponent
                 const map = {
+                    'cpr-path': cprComponent,
                     'scroll': scrollComponent,
                     'mpr-layout': detailPanel.tabController?.mprCompare ? compareMprComponent : detailPanel.tabController?.twoDLayout ? twoDLayoutComponent : mprLayoutComponent,
                     'zoom': zoomComponent,
@@ -94,6 +95,10 @@ Rectangle {
         }
     }
 
+    Component {
+        id: cprComponent
+        Panels.CprPanel { controller: detailPanel.tabController?.cprController ?? null }
+    }
     Component {
         id: compareMprComponent
         Panels.CompareMprPanel { controller: detailPanel.tabController }

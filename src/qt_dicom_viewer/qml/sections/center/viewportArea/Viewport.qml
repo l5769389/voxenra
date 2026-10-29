@@ -12,6 +12,7 @@ Item {
     property string twoDViewMode: ""
     readonly property alias cornerOverlay: metadataOverlay
     property bool outsideImageRange: false
+    property bool cprDragging: false
     readonly property real imageFitScale: imageCanvas.fitScale
     signal returnToVolumeRequested()
     required property var viewportController
@@ -26,6 +27,11 @@ Item {
         .arg(viewportController?.loadState ?? "")
         + (viewportController?.errorMessage ? " · " + viewportController.errorMessage : "")
     Keys.onEscapePressed: event => {
+        if (viewportRoot.viewportController?.cprCancel?.()) {
+            viewportRoot.cprDragging = false
+            event.accepted = true
+            return
+        }
         if (viewportRoot.viewportController && viewportRoot.viewportController.reconstructionController)
             viewportRoot.viewportController.reconstructionController.setRegistrationActive(false)
         if (viewportRoot.viewportController)
@@ -33,12 +39,14 @@ Item {
         event.accepted = true
     }
     Keys.onDeletePressed: event => {
+        if (viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
         if (viewportRoot.viewportController)
             viewportRoot.viewportController.deleteSelectedMeasurement()
         event.accepted = true
     }
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            if (viewportRoot.viewportController?.cprFinish?.()) { event.accepted = true; return }
             event.accepted = viewportRoot.viewportController?.finishMeasurement() ?? false
             return
         }
@@ -51,6 +59,7 @@ Item {
             return
         }
         if (event.key === Qt.Key_Backspace && viewportRoot.viewportController) {
+            if (viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
             viewportRoot.viewportController.deleteSelectedMeasurement()
             event.accepted = true
         }
@@ -96,6 +105,10 @@ Item {
     onHeightChanged: syncViewportSize()
     onViewportControllerChanged: syncViewportSize()
     onVisibleChanged: {
+        if (!visible && viewportRoot.cprDragging) {
+            viewportRoot.viewportController?.cprCancel?.()
+            viewportRoot.cprDragging = false
+        }
         // A tab's QObject can lose its slots before its visual delegate is hidden.
         const annotations = viewportRoot.viewportController?.activeAnnotationController
         if (!visible && typeof annotations?.clearHover === "function")
@@ -103,6 +116,12 @@ Item {
     }
 
     Component.onCompleted: syncViewportSize()
+    onActiveFocusChanged: {
+        if (!activeFocus && viewportRoot.cprDragging) {
+            viewportRoot.viewportController?.cprCancel?.()
+            viewportRoot.cprDragging = false
+        }
+    }
 
     // 显示影像
     ImageCanvas {
@@ -283,6 +302,15 @@ Item {
             ? viewportRoot.viewportController.displayRangeMaximum : 255
     }
 
+    CprPathOverlay {
+        anchors.fill: parent
+        z: 16
+        visible: viewportRoot.viewportController?.isCprViewport === true
+        controller: visible ? viewportRoot.viewportController : null
+        coordinateMapper: imageCanvas
+        transformState: imageCanvas.measurementTransformState
+    }
+
     InteractionLayer {
         id: interactionLayer
         mousePreferences: viewportRoot.viewportController?.settingsController?.values.input ?? null
@@ -328,7 +356,10 @@ Item {
             viewportRoot.viewportController?.clearInteractionHover()
         }
 
-        onFinishMeasurementRequested: viewportRoot.viewportController?.finishMeasurement()
+        onFinishMeasurementRequested: {
+            if (!viewportRoot.viewportController?.cprFinish?.())
+                viewportRoot.viewportController?.finishMeasurement()
+        }
         onTapped: position => {
             viewportRoot.forceActiveFocus()
             if (!viewportRoot.viewportController)
@@ -344,6 +375,7 @@ Item {
             const lineTolerance =
                 imageCanvas.lineHitToleranceInImagePixels
 
+            if (hit.valid && viewportRoot.viewportController?.cprTap?.(hit.column, hit.row, endpointTolerance)) return
             viewportRoot.viewportController.selectMeasurementAt(
                 hit.valid,
                 hit.column,
@@ -369,6 +401,10 @@ Item {
 
             const lineTolerance =
                 imageCanvas.lineHitToleranceInImagePixels
+
+            viewportRoot.cprDragging = hit.valid && buttons === Qt.LeftButton
+                && (viewportRoot.viewportController?.cprBeginDrag?.(hit.column, hit.row, endpointTolerance) ?? false)
+            if (viewportRoot.cprDragging) return
 
             // 按下前可能没有 move 事件，按本次拖动起点确认光标，再锁定到本次拖动。
             viewportRoot.viewportController.refreshInteractionHover(
@@ -400,6 +436,10 @@ Item {
                 interactionLayer,
                 currentPosition
             )
+            if (viewportRoot.cprDragging) {
+                if (hit.valid) viewportRoot.viewportController.cprMoveDrag(hit.column, hit.row)
+                return
+            }
             if (viewportRoot.viewportController.updateRegistrationDrag !== undefined
                     && viewportRoot.viewportController.updateRegistrationDrag(hit.column, hit.row))
                 return
@@ -425,6 +465,12 @@ Item {
                 interactionLayer,
                 endPosition
             )
+            if (viewportRoot.cprDragging) {
+                viewportRoot.cprDragging = false
+                if (hit.valid) viewportRoot.viewportController.cprEndDrag(hit.column, hit.row)
+                else viewportRoot.viewportController.cprCancel()
+                return
+            }
             viewportRoot.viewportController.endInteraction(
                 endPosition.x,
                 endPosition.y,

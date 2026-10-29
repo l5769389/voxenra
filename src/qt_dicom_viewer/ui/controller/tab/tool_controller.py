@@ -43,7 +43,7 @@ MONTAGE_TOOL_TYPES = frozenset((
 # Filter one common order for every view; specialised actions follow navigation
 # and everyday image tools. Export and reset form the stable final pair.
 TOOL_ORDER = (
-    "mpr-layout", "window", "ct-window", "pet-window", "scroll", "slice-play", "play", "pan", "zoom",
+    "mpr-layout", "open-cpr", "cpr-path", "window", "ct-window", "pet-window", "scroll", "slice-play", "play", "pan", "zoom",
     "rotate", "volume-rotate", "measure", "annotate",
     "pseudocolor", "volume-preset", "volume-direction", "viewport-settings", "invert",
     "fusion-blend", "mip", "mpr-rotate-3d", "segmentation", "voi", "volume-crop", "volume-bed",
@@ -613,6 +613,13 @@ def tool_available(
             allowed.add(ToolType.MEASURE)
         if tool not in allowed:
             return False
+    if tool == ToolType.OPEN_CPR and modality.upper() not in ("CT", "MR"):
+        return False
+    if tab_type == TabType.CPR:
+        return tool in (ToolType.CPR_PATH, ToolType.WINDOW, ToolType.PAN, ToolType.ZOOM,
+                        ToolType.SCROLL, ToolType.MEASURE, ToolType.ANNOTATE,
+                        ToolType.PSEUDOCOLOR, ToolType.VIEWPORT_SETTINGS,
+                        ToolType.EXPORT, ToolType.RESET)
     if tab_type in (TabType.COMPARE_MPR, TabType.COMPARE_2D) and tool == ToolType.PLAY:
         return False
     if tab_type == TabType.COMPARE_MPR:

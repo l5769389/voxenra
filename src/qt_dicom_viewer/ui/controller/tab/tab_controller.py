@@ -506,6 +506,11 @@ class TabController(QObject):
 
     @Slot(str)
     def _handle_tool_command(self, command: str) -> None:
+        if command == "workspace:open-cpr":
+            workspace = self.parent()
+            if workspace is not None and hasattr(workspace, "createTab"):
+                workspace.createTab(self._tab_config.series_metas[0].series_uid, "CPR", "cpr")
+            return
         if command == "volume:toggle-bed":
             viewport = self.activeViewport
             if isinstance(viewport, VolumeViewportController):

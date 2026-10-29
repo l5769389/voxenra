@@ -99,7 +99,7 @@ class WindowWorkspaceController(QObject):
         for key in self._mru:
             tab = self.registry._tab_dict.get(key) if key in self._ids else None
             if tab is None or tab.tab_config.tab_type.value not in (
-                    '2d', 'mpr', '3d', 'montage', '4d', 'compare2d', 'comparempr', 'petctfusion'):
+                    '2d', 'mpr', 'cpr', '3d', 'montage', '4d', 'compare2d', 'comparempr', 'petctfusion'):
                 continue
             tool = getattr(tab, 'activeToolController', None) or tab.toolController
             return tool.toolbarProfile

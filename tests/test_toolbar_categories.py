@@ -67,10 +67,10 @@ def test_grouped_choices_reach_every_profile_and_preserve_separate_saved_orders(
                 reached.add(editor.selectedProfile)
                 assert editor.moveTool('common', 0, 1)
     assert reached == {p['key'] for p in editor.profiles}
-    assert len(reached) == 27
+    assert len(reached) == 29
     assert editor.save()
     saved = SettingsController(path=settings._path).section('toolbar')['rightProfiles']
-    assert len(saved) == 27
+    assert len(saved) == 29
     editor.selectProfile('compare2d:color')
     editor.restoreCurrentDefault()
     assert editor.save()

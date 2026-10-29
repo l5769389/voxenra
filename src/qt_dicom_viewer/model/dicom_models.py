@@ -8,6 +8,7 @@ class TabType(StrEnum):
     COMPARE_MPR = "comparempr"
     MONTAGE = "montage"
     MPR = "mpr"
+    CPR = "cpr"
     THREE_D = "3d"
     FOUR_D = "4d"
     TAG = "tag"
@@ -21,6 +22,7 @@ class TwoDViewType(StrEnum):
     STACK = "stack"
     MONTAGE = "montage"
     PET_MIP = "pet-mip"
+    CPR = "cpr"
 
 
 class MprPlane(StrEnum):
@@ -63,6 +65,8 @@ class ToolType(StrEnum):
     INVERT = "invert"
     MPR_ROTATE_3D = "mpr-rotate-3d"
     MPR_LAYOUT = "mpr-layout"
+    OPEN_CPR = "open-cpr"
+    CPR_PATH = "cpr-path"
     VOLUME_ROTATE = "volume-rotate"
     VOLUME_DIRECTION = "volume-direction"
     VOLUME_PRESET = "volume-preset"
