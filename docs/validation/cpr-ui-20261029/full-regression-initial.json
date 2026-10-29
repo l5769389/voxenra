@@ -1,0 +1,2500 @@
+{
+  "files": [
+    {
+      "file": "tests/manual/test_display_mapping_samples.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    {
+      "file": "tests/manual/test_enhanced_ct_samples.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "file": "tests/manual/test_enhanced_mr_samples.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 8
+      }
+    },
+    {
+      "file": "tests/manual/test_mr_samples.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 10
+      }
+    },
+    {
+      "file": "tests/manual/test_public_compressed_samples.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/manual/test_spatial_compressed.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 5
+      }
+    },
+    {
+      "file": "tests/test_analysis_records.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_annotation_clipboard.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_anonymous_view_export.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_app_icon_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_app_updates.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_appearance_language.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_application_identity.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_audit_settings_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_bead_mtf.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 77,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_bulk_import.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_button_feedback.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_color_dicom.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_compact_series_rail.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_compare_2d.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_compare_2d_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_compare_mpr.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_conflicting_instance_uids.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_corner_transfer.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_export.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_geometry.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_measurement.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_persistence.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_render_task.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_reslicer.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_cpr_session.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_crosshair_layer_lifecycle.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_ct_perfusion.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_curve_measurement.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dialog_layout_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dialog_locations.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dicom_overlay.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dicom_results.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dicom_results_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 43,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dicom_scanner.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dicom_tags.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dimse.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dimse_config.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_dimse_live.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 10
+      }
+    },
+    {
+      "file": "tests/test_dimse_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_display_completion.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_display_mapping.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_display_settings.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_display_settings_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_display_tools.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_display_tools_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_edit_state_fingerprint.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_enhanced_ct.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_enhanced_mr.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_export.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_export_location.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_export_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_failed_view_actions.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_favorite_directories.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_favorite_directories_ui.py",
+      "exit_code": 1,
+      "counts": {
+        "tests": 5,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_feedback.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_feedback_attachments.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_feedback_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_four_d.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 45,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_four_d_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_four_d_tools.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_freehand_roi.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_geometry_2d.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_history_failures.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_import_dialog_chrome.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_import_phase_regressions.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_import_ui.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_input_preferences.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_input_settings_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_installers.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_interface_review.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_linked_ct_window.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_live_windowing.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_live_windowing_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_loading_responsiveness.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_local_import.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 38,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_bridge.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_completion_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 49,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_environment.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_four_d.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_process.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_process_ownership.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_local_segmentation_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_macos_signing.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_manual.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_manual_site.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_finish_style.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_geometry.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_hit_test.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_precision.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 54,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_report_pdf.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_measurement_report_phases.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_results.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_measurement_results_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mip_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_montage_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_montage_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_montage_qml_runtime.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_montage_rendering.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mouse_bindings.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 60,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_mpr_layout.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 34,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    {
+      "file": "tests/test_mpr_pointer_units_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_reslicer.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_rotation.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_rotation_operations.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_sampling_precision.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_state.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_voi.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_voi_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_voi_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mpr_volume_tools_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_mr.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mr_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mtf_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 40,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_mtf_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_navigation_shortcuts.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_new_workspace.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_new_workspace_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_nrrd_exchange.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_numeric_commit_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_p0_regressions.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_p0_regressions_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_packaging_qml_hook.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pacs.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 35,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pacs_accessibility_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pacs_cancellation.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pacs_import_catalog.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pacs_live.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 15
+      }
+    },
+    {
+      "file": "tests/test_pacs_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_patient_orientation.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pet_2d.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 36,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pet_fusion.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 26,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pet_locator_performance.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pet_navigation.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pet_render_transactions.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pet_volume.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pet_workspace_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_phase_identity_stability.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_pixel_codecs.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_playback_combinations.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_qa_edit_history.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_qml_controller_metatypes.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_qml_tab_metatypes.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_qml_viewport_metatypes.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_ramp_fwhm.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 31,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_rar_import.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_reading_identity.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_recent_workspaces.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_release_notes.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_remember_mpr_layout.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_resizable_view_layout.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    {
+      "file": "tests/test_retention_qa_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_review_boundaries_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_right_toolbar_groups.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_scroll_operation.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_secondary_panel_layout.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_display.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_edit_history.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_exchange.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_import.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_mask_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_organ_selection_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_refine.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_segmentation_render_cache.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_series_export.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_series_sidebar.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_series_tools_polish.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_service_panel_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_settings_effects.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_settings_help_layout.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_settings_keyboard_reset.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_settings_redesign.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_settings_style_audit.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_sidebar_keyboard_access.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_sidebar_style_polish.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_slice_playback.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_spatial_missing_calibration.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_spatial_numeric_audit.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_standalone_pet_volume.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_startup_loading.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_tab_close_protection.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_tab_windows.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_tag_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_text_annotation_frame_scope.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_theme_palette.py",
+      "exit_code": 1,
+      "counts": {
+        "tests": 4,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_theme_ui.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_tool_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_tool_cursors.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 106,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_toolbar_categories.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_toolbar_customization.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_toolbar_draft_merge.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_toolbar_priorities.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_toolbar_visual_editor.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_tooltip_edges.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_two_d_layout.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_two_d_selector.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_ui_audit_regressions.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_ui_polish.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_update_health.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_update_installer.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "file": "tests/test_update_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_update_summary_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_view_opening.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_viewport_controller_hierarchy.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_viewport_maximize.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_viewport_scope.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_viewport_selection_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_viewport_transform.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_voi_error_feedback.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_volume_display.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 50,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_volume_edit.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_volume_gpu_failures.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_volume_loading_memory.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_volume_panel_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_volume_sampling.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_volume_view.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 34,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_water_qa.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_water_qa_controller.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_water_qa_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_window_chrome.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "file": "tests/test_window_level_operation.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_window_preset_file.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_window_sizing.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_window_template_scroll.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_windows_packaging.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workflow_context_regressions.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_dialog_layout.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    {
+      "file": "tests/test_workspace_document_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_exit.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_home_qml.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_interactions.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_persistence.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_phase_identity.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_recovery_status.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_retained_tabs.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_save_restore_boundaries.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_workspace_tool_selection.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "file": "tests/test_worktree_integration.py",
+      "exit_code": 0,
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "totals": {
+    "tests": 3233,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 82
+  }
+}

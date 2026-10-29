@@ -1,0 +1,41 @@
+{
+  "viewportnative-curved.png": {
+    "size": [
+      710,
+      742
+    ],
+    "metadata": {
+      "dpi": [
+        72.009,
+        72.009
+      ]
+    },
+    "sha256": "2fe2f4aa7c00f432db4a9195a9b858cd399b331db2b8710c9c3ea017f5a623f5"
+  },
+  "native-cross.png": {
+    "size": [
+      710,
+      742
+    ],
+    "metadata": {
+      "dpi": [
+        72.009,
+        72.009
+      ]
+    },
+    "sha256": "cb94bf145064c47da37e5c922b1261a3decfd30da808618d8d57eedfe52153b9"
+  },
+  "native-combined.png": {
+    "size": [
+      1576,
+      1716
+    ],
+    "metadata": {
+      "dpi": [
+        72.009,
+        72.009
+      ]
+    },
+    "sha256": "fc090c4db0bc905b423eb0c589843d0ff3636d03b2dd4f1d2f9de0d0905d92cd"
+  }
+}

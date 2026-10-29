@@ -18,7 +18,7 @@ Canvas {
         const ctx = getContext("2d")
         ctx.clearRect(0, 0, width, height)
         if ((controller?.imageRows ?? 0) <= 0) return
-        ctx.strokeStyle = "#4ce0d0"
+        ctx.strokeStyle = Theme.crosshairPreview
         ctx.lineWidth = 2
         for (let i = 0; i < points.length; i++) {
             const p = coordinateMapper.mapDicomPixelToItem(overlay, points[i].column, points[i].row)
@@ -28,9 +28,9 @@ Canvas {
                 ctx.beginPath(); ctx.moveTo(before.x, before.y); ctx.lineTo(p.x, p.y); ctx.stroke()
             }
             ctx.globalAlpha = points[i].near ? 1 : .45
-            ctx.fillStyle = points[i].selected ? "#ffd05c" : "#4ce0d0"
+            ctx.fillStyle = points[i].selected ? Theme.measurementPrimary : Theme.crosshairPreview
             ctx.beginPath(); ctx.arc(p.x, p.y, points[i].selected ? 5 : 4, 0, Math.PI*2); ctx.fill()
-            ctx.fillStyle = "#ffffff"
+            ctx.fillStyle = Theme.overlayText
             ctx.font = "11px sans-serif"
             ctx.fillText(String(i+1), p.x+7, p.y-6)
         }
@@ -38,7 +38,7 @@ Canvas {
             ctx.globalAlpha = 1
             const a = coordinateMapper.mapDicomPixelToItem(overlay, marker, 0)
             const b = coordinateMapper.mapDicomPixelToItem(overlay, marker, controller.imageRows-1)
-            ctx.strokeStyle = "#ffd05c"
+            ctx.strokeStyle = Theme.measurementPrimary
             ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke()
         }
         ctx.globalAlpha = 1

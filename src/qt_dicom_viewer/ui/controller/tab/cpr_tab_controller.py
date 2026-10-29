@@ -128,6 +128,10 @@ class CprTabController(TabController):
     def sourceMismatch(self):
         return self._source_mismatch
 
+    @Property(bool, notify=cprChanged)
+    def hasError(self):
+        return bool(self._message)
+
     @Property(str, notify=cprChanged)
     def exportScope(self):
         return self._export_scope
@@ -400,11 +404,16 @@ class CprTabController(TabController):
         self._tool_controller.activateTool("cpr-path")
         self._drawing, self._selected_point, self._message = True, -1, ""
         self._session["draft"] = ()
+        self.persistenceChanged.emit()
         self._notify()
 
     @Slot(result=bool)
     def finishPath(self):
         if not self._drawing:
+            return False
+        if len(self._session["draft"]) < 2:
+            self._message = _msg("cpr.needTwoPoints")
+            self._notify()
             return False
         try:
             path = CprPath(str(uuid4()), _msg("cpr.pathName", number=len(self.paths)+1), self._session["draft"])
@@ -463,6 +472,7 @@ class CprTabController(TabController):
         if self._drawing:
             self._session["draft"] = self._session["draft"][:-1]
             self._selected_point = len(self._session["draft"])-1
+            self.persistenceChanged.emit()
             self._notify()
             return
         path = self.current_path
@@ -509,6 +519,8 @@ class CprTabController(TabController):
 
     def path_tap(self, view, column, row, tolerance):
         if view.viewportRole == "curved" and self._result and self._result.curve:
+            if view.activeInteraction.startswith("annotate:"):
+                return False
             self.setPositionMm(column*self._result.curve.centerline.spacing_mm)
             return True
         if not self.pathEditing or view.plane_geometry is None or not view.viewportRole.startswith("reference"):
@@ -520,6 +532,7 @@ class CprTabController(TabController):
                 self._session["draft"] = (*draft, point)
                 self._selected_point = len(draft)
                 self._message = ""
+                self.persistenceChanged.emit()
                 self._notify()
             return True
         hit = self._hit_point(view, column, row, tolerance)
@@ -598,6 +611,8 @@ class CprTabController(TabController):
             self._request_cpr()
         self._drawing, self._message = False, ""
         self._session["draft"] = ()
+        if claimed:
+            self.persistenceChanged.emit()
         self._notify()
         return claimed
 
@@ -648,6 +663,7 @@ class CprTabController(TabController):
         centers[ROLES.index(view.viewportRole)] = tuple(center)
         self._session["referenceCenters"] = tuple(centers)
         self._request_cpr()
+        self.persistenceChanged.emit()
 
     @Slot(int, str)
     def setReferencePlane(self, index, plane):
@@ -693,7 +709,12 @@ class CprTabController(TabController):
         self._commit()
 
     def session_state(self):
-        return validate_cpr_session(self._session)
+        state = deepcopy(self._session)
+        if self._drag is not None:
+            original, _, _, _, interval = self._drag
+            state["paths"] = [original if record["id"] == original["id"] else record for record in state["paths"]]
+            state["rangeMm"] = state["pathRanges"][original["id"]] = interval
+        return validate_cpr_session(state)
 
     def restore_session(self, state):
         state = validate_cpr_session(state)

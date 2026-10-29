@@ -11,6 +11,15 @@ ColumnLayout {
     property bool advanced: false
     spacing: 8
     Components.PanelHeading { title: qsTrId("cpr.title"); explanation: panel.controller?.message ?? "" }
+    Text {
+        objectName: "cprErrorMessage"
+        Layout.fillWidth: true
+        visible: panel.controller?.hasError ?? false
+        text: panel.controller?.message ?? ""
+        color: Theme.warningColor
+        wrapMode: Text.Wrap
+        font.pixelSize: Theme.bodyFontSize
+    }
     GridLayout {
         Layout.fillWidth: true
         columns: 2
@@ -59,12 +68,16 @@ ColumnLayout {
         placeholderText: qsTrId("cpr.rename")
         enabled: (panel.controller?.selectedPathId ?? "") !== "" && !panel.controller.drawing
         maximumLength: 256
+        readonly property string modelText: panel.controller?.paths.find(item => item.selected)?.name ?? ""
         function sync() {
-            if (!activeFocus) text = panel.controller?.paths.find(item => item.selected)?.name ?? ""
+            if (!activeFocus) text = modelText
         }
         Component.onCompleted: sync()
-        Connections { target: panel.controller; function onCprChanged() { nameField.sync() } }
-        onEditingFinished: panel.controller?.renamePath(text)
+        onModelTextChanged: sync()
+        onEditingFinished: {
+            panel.controller?.renamePath(text)
+            text = modelText
+        }
     }
     ListView {
         id: pointList
@@ -112,7 +125,7 @@ ColumnLayout {
         Layout.fillWidth: true
         model: [qsTrId("cpr.thin"), qsTrId("cpr.mip"), qsTrId("cpr.mean")]
         currentIndex: ["thin", "mip", "mean"].indexOf(panel.controller?.parameters.projection ?? "thin")
-        enabled: (panel.controller?.selectedPathId ?? "") !== ""
+        enabled: (panel.controller?.selectedPathId ?? "") !== "" && !panel.controller.drawing
         onActivated: panel.controller.setParameter("projection", ["thin", "mip", "mean"][currentIndex])
     }
     Repeater {
@@ -134,14 +147,15 @@ ColumnLayout {
                 Layout.preferredWidth: 82
                 enabled: (panel.controller?.selectedPathId ?? "") !== "" && !panel.controller.drawing
                 validator: DoubleValidator { locale: "C"; decimals: 2; bottom: row.modelData === "angle" ? -360 : 0; top: 10000 }
+                readonly property string modelText: Number(panel.controller?.parameters[row.modelData] ?? 0).toFixed(row.modelData === "step" ? 2 : 1)
                 function sync() {
-                    if (!activeFocus) text = Number(panel.controller?.parameters[row.modelData] ?? 0).toFixed(row.modelData === "step" ? 2 : 1)
+                    if (!activeFocus) text = modelText
                 }
                 Component.onCompleted: sync()
-                Connections { target: panel.controller; function onCprChanged() { input.sync() } }
+                onModelTextChanged: sync()
                 onEditingFinished: {
                     panel.controller?.setParameter(row.modelData, Number(text))
-                    text = Number(panel.controller?.parameters[row.modelData] ?? 0).toFixed(row.modelData === "step" ? 2 : 1)
+                    text = modelText
                 }
             }
         }

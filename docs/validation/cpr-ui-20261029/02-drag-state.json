@@ -1,0 +1,164 @@
+{
+  "platform": "cocoa",
+  "visible": true,
+  "active": true,
+  "accessible": true,
+  "dpr": 2.0,
+  "title": "Voxenra \u2014 CPR native validation",
+  "tab": "cpr",
+  "tabIds": [
+    "1.2.826.0.1.3680043.10.999.20261029.88_cpr"
+  ],
+  "scanning": false,
+  "document": {
+    "busy": false,
+    "error": false,
+    "message": "",
+    "closedTabs": 0
+  },
+  "export": {
+    "busy": false,
+    "message": ""
+  },
+  "session": {
+    "algorithmVersion": 1,
+    "source": {
+      "seriesUid": "1.2.826.0.1.3680043.10.999.20261029.88",
+      "frameOfReferenceUid": "1.2.826.0.1.3680043.10.999.20261029.88.300",
+      "fingerprint": "baa91e353b8175078b9a6c9399f1a5ee01afad58560c9ece188061f42a31f787"
+    },
+    "paths": [
+      {
+        "id": "63862c1d-3944-4bdf-9f19-eef643a9b927",
+        "name": "\u8def\u5f84 1",
+        "points": [
+          [
+            80.36619718309858,
+            63.6,
+            84.45774647887325
+          ],
+          [
+            79.46478873239437,
+            63.6,
+            69.13380281690141
+          ],
+          [
+            75.85915492957746,
+            63.6,
+            55.61267605633803
+          ],
+          [
+            59.633802816901394,
+            63.6,
+            37.58450704225352
+          ],
+          [
+            48.81690140845069,
+            63.6,
+            23.16197183098592
+          ]
+        ],
+        "revision": 2,
+        "settings": {
+          "step_mm": 0.5,
+          "width_mm": 40.0,
+          "angle_radians": 0.0,
+          "up_patient": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "projection": "thin",
+          "thickness_mm": 0.0
+        }
+      }
+    ],
+    "selected": "63862c1d-3944-4bdf-9f19-eef643a9b927",
+    "draft": [],
+    "referencePlanes": [
+      "axial",
+      "coronal"
+    ],
+    "referenceCenters": [
+      [
+        63.6,
+        63.6,
+        47.5
+      ],
+      [
+        63.6,
+        63.6,
+        47.5
+      ]
+    ],
+    "positionMm": 0.0,
+    "rangeMm": [
+      0.0,
+      0.0
+    ],
+    "pathRanges": {
+      "63862c1d-3944-4bdf-9f19-eef643a9b927": [
+        0.0,
+        0.0
+      ]
+    },
+    "crossWidthMm": 40.0,
+    "focusedRole": ""
+  },
+  "ready": true,
+  "busy": false,
+  "generation": 3,
+  "message": "\u62d6\u52a8\u63a7\u5236\u70b9\u4fee\u6539\u8def\u5f84\uff1b\u5355\u51fb\u7ebf\u6bb5\u63d2\u5165\u70b9\u3002\u6a2a\u622a\u9762\u652f\u6301\u6d4b\u91cf\uff0c\u66f2\u9762\u56fe\u4ec5\u663e\u793a\u4e2d\u5fc3\u7ebf\u8ddd\u79bb\u3002",
+  "drawing": false,
+  "history": {
+    "undo": 3,
+    "redo": 0
+  },
+  "activeRole": "reference-b",
+  "focused": "",
+  "activePanel": "cpr-path",
+  "interaction": "",
+  "exportScope": "curved",
+  "views": {
+    "reference-a": {
+      "state": "ViewportState(slice_index=48, slice_count=96, window=WindowLevel(center=300.0, width=1800.0), width=355.0, height=389.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "MprImageGeometry(rows=160, columns=160, row_spacing=0.8, column_spacing=0.8, navigation_spacing=1.0, frame=MprFrame(center_patient=(63.6, 63.6, 47.5), u_direction_patient=(1.0, 0.0, 0.0), v_direction_patient=(0.0, 1.0, 0.0), w_direction_patient=(0.0, 0.0, 1.0)), image_origin_mpr=(-63.6, -63.6, 0.0), row_direction_mpr=(0.0, 1.0, 0.0), column_direction_mpr=(1.0, 0.0, 0.0), navigation_direction_mpr=(0.0, 0.0, 1.0), navigation_origin_offset=-47.5)",
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": true,
+      "pixels": "6a96559b382aaae6036f23d9b4b96fc205c130ea109034794215b996571d5a9d",
+      "measurements": [],
+      "sources": {}
+    },
+    "reference-b": {
+      "state": "ViewportState(slice_index=80, slice_count=160, window=WindowLevel(center=300.0, width=1800.0), width=355.0, height=389.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "MprImageGeometry(rows=96, columns=160, row_spacing=1.0, column_spacing=0.8, navigation_spacing=0.8, frame=MprFrame(center_patient=(63.6, 63.6, 47.5), u_direction_patient=(1.0, 0.0, 0.0), v_direction_patient=(0.0, 1.0, 0.0), w_direction_patient=(0.0, 0.0, 1.0)), image_origin_mpr=(-63.6, 0.0, 47.5), row_direction_mpr=(0.0, 0.0, -1.0), column_direction_mpr=(1.0, 0.0, 0.0), navigation_direction_mpr=(0.0, 1.0, 0.0), navigation_origin_offset=-63.6)",
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": true,
+      "pixels": "8eee61dbe0613f2901de089f050334f41c95f9d2a20b11bb8f9630e55f28edfe",
+      "measurements": [],
+      "sources": {}
+    },
+    "curved": {
+      "state": "ViewportState(slice_index=0, slice_count=145, window=WindowLevel(center=300.0, width=1800.0), width=355.0, height=371.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "None",
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": false,
+      "pixels": "601867a8e047dc43f03747c09d706a61ceb585e4589c9f1050a234acce9c4a99",
+      "measurements": [],
+      "sources": {}
+    },
+    "cross": {
+      "state": "ViewportState(slice_index=0, slice_count=145, window=WindowLevel(center=300.0, width=1800.0), width=355.0, height=371.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "MprImageGeometry(rows=81, columns=81, row_spacing=0.5, column_spacing=0.5, navigation_spacing=0.4974072560646877, frame=MprFrame(center_patient=(np.float64(80.36619718309858), np.float64(63.6), np.float64(84.45774647887325)), u_direction_patient=(1.0, 0.0, 0.0), v_direction_patient=(0.0, 1.0, 0.0), w_direction_patient=(0.0, 0.0, 1.0)), image_origin_mpr=(np.float64(19.96548746349992), np.float64(-20.0), np.float64(-1.174440439029392)), row_direction_mpr=(np.float64(0.0), np.float64(1.0), np.float64(0.0)), column_direction_mpr=(np.float64(-0.998274373174996), np.float64(0.0), np.float64(0.05872202195146961)), navigation_direction_mpr=(np.float64(-0.05872202195146931), np.float64(0.0), np.float64(-0.998274373174996)), navigation_origin_offset=None)",
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": true,
+      "pixels": "8bd22116044c206aeaa8a2ee00e26a33ac815ca356e4d78c6e4f623e2a1c95ec",
+      "measurements": [],
+      "sources": {}
+    }
+  }
+}

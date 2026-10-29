@@ -5,6 +5,41 @@ from test_dicom_tags import wait_until
 from test_workspace_persistence import draw_length
 
 
+def test_curved_annotation_click_is_not_consumed_by_position_link(cpr_app):
+    _, tab, _ = cpr_app
+    view = tab.viewForRole('curved')
+    tab.activateViewport(view.viewportId)
+    tab.toolController.selectInteraction('annotate:text')
+    text = view.textAnnotationController
+    text.addAnnotation(2., 2., 8., 8.)
+    original = text.selectedAnnotationId
+    text.clearSelection()
+    assert not view.cprTap(5., 5., 3.)
+    view.selectMeasurementAt(True, 5., 5., 3., 3.)
+    assert text.selectedAnnotationId == original
+
+
+def test_curved_annotations_follow_path_geometry_and_settings_not_position(cpr_app):
+    from test_cpr_controller import draw
+    _, tab, _ = cpr_app
+    view = tab.viewForRole('curved')
+    text = view.textAnnotationController
+    text.addAnnotation(2., 2., 8., 8.)
+    original = text.selectedAnnotationId
+    first = tab.selectedPathId
+    tab.setPositionMm(8)
+    wait_until(lambda: tab.ready)
+    assert [a['annotationId'] for a in text.annotationItems] == [original]
+    draw(tab, ((20, 65), (45, 70), (65, 85)))
+    assert not text.annotationItems
+    tab.selectPath(first)
+    wait_until(lambda: tab.ready)
+    assert [a['annotationId'] for a in text.annotationItems] == [original]
+    tab.setParameter('angle', 35)
+    wait_until(lambda: tab.ready)
+    assert not text.annotationItems
+
+
 def test_old_cross_section_measurement_returns_to_exact_plane_after_path_edit(cpr_app):
     app, tab, _ = cpr_app
     cross = tab.viewForRole('cross')

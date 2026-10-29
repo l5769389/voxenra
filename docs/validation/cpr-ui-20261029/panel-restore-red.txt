@@ -1,0 +1,63 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_panel_syncs_saved_values_when_loader_assigns_controller_late _______
+
+cpr = <qt_dicom_viewer.ui.controller.tab.cpr_tab_controller.CprTabController(0x7c51dad9a0) at 0x116d50c40>
+
+    def test_panel_syncs_saved_values_when_loader_assigns_controller_late(cpr):
+        draw(cpr)
+        cpr.renamePath("Saved vessel")
+        cpr.setParameter("angle", 35)
+        cpr.setParameter("thickness", 12)
+        cpr.setParameter("step", .75)
+        wait_until(lambda: cpr.ready and not cpr.busy)
+        view = QQuickView()
+        view.engine().addImageProvider("navigation", SvgIconProvider())
+        view.setInitialProperties(dict(controller=None))
+        view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
+            "src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml")))
+        assert view.status() == QQuickView.Ready
+        try:
+            # ToolDetailPanel assigns its controller after Loader.onLoaded. Returning
+            # from Settings must not present defaults or overwrite saved parameters.
+            view.rootObject().setProperty("controller", cpr)
+            QCoreApplication.processEvents()
+            fields = {item.objectName(): item for item in _visual_children(view.rootObject())}
+>           assert fields["cprPathName"].property("text") == "Saved vessel"
+E           AssertionError: assert '' == 'Saved vessel'
+E
+E             - Saved vessel
+
+tests/test_cpr_qml.py:109: AssertionError
+----------------------------- Captured stderr call -----------------------------
+qt.qpa.fonts: Populating font family aliases took 54 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:17: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:17: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:17: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:17: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:17: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:17: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:17: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:75:9: QML Connections: Detected function "onCprChanged" in Connections element. This is probably intended to be a signal handler but no signal of the target matches the name.
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:31: Unable to assign [undefined] to QObject*
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:31: Unable to assign [undefined] to QObject*
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:31: Unable to assign [undefined] to QObject*
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:31: Unable to assign [undefined] to QObject*
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:31: Unable to assign [undefined] to QObject*
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:31: Unable to assign [undefined] to QObject*
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:150:31: Unable to assign [undefined] to QObject*
+file:///Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml:75:23: Unable to assign [undefined] to QObject*
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_cpr_qml.py::test_panel_syncs_saved_values_when_loader_assigns_controller_late
+1 failed, 3 warnings in 0.50s

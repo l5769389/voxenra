@@ -106,6 +106,14 @@ class CprViewportController(Image2DViewportController):
             series_uid=volume.series_uid, view_type=self.viewport_config.viewport_type,
             image=None, modality_pixel=pixels, frame_meta=frame)
         self.handleRenderResult(result)
+        if self.viewportRole == "curved" and self._cpr.current_path is not None:
+            from hashlib import blake2b
+            path = self._cpr.current_path
+            identity = blake2b(repr((path.path_id, path.revision, path.control_points,
+                                     self._cpr.current_settings)).encode(), digest_size=16).hexdigest()
+            # Section navigation leaves the full curved raster unchanged.
+            self._text_annotation_controller.set_frame(volume.series_uid,
+                replace(frame, slice_index=0), source_context=("cpr", identity))
         self.refresh_window_image()
         self.cprChanged.emit()
 

@@ -129,3 +129,28 @@ def test_centerline_intervals_belong_to_each_path(cpr_app):
     assert tab.parameters['rangeStart'] == 2 and tab.parameters['rangeEnd'] == 10
     tab.selectPath(second)
     assert tab.parameters['rangeStart'] == 0 and tab.parameters['rangeEnd'] == 8
+
+
+def test_draft_changes_mark_saved_workspace_dirty(cpr_app, tmp_path):
+    app, tab, _ = cpr_app
+    save(app, tmp_path/'draft.voxworkspace')
+    assert not app.workspaceDocumentController.dirty
+    tab.startPath()
+    tab.viewForRole('reference-a').cprTap(30, 30, 1)
+    assert app.workspaceDocumentController.dirty
+    document = save(app, tmp_path/'draft.voxworkspace')
+    assert next(t for t in document['tabs'] if t['type']=='cpr')['edits']['cpr']['draft']
+    tab.cancel_operation()
+    assert app.workspaceDocumentController.dirty
+
+
+def test_closing_during_drag_retains_committed_path(cpr_app):
+    app, tab, _ = cpr_app
+    before = tab.session_state()
+    view = tab.viewForRole('reference-a')
+    assert view.cprBeginDrag(20, 35, 1)
+    view.cprMoveDrag(30, 25)
+    assert tab.current_path.control_points != tuple(before['paths'][0]['points'])
+    app.workspaceController.closeTab(tab.tab_config.tab_id)
+    retained = loads(next(iter(app.workspaceController._closed_tab_snapshots.values())))
+    assert retained['edits']['cpr']['paths'] == before['paths']

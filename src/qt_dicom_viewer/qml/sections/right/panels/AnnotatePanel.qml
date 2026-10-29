@@ -11,10 +11,10 @@ ColumnLayout {
     objectName: "annotatePanel"
     required property var viewportController
     readonly property var controller: annotatePanel.viewportController ? annotatePanel.viewportController.textAnnotationController : null
-    readonly property var settingsController: viewportController.settingsController
+    readonly property var settingsController: viewportController?.settingsController ?? null
     readonly property var styleSettings: settingsController?.values.measurement ?? ({})
-    readonly property bool textMode: viewportController.activeInteraction === "annotate:text"
-    readonly property bool selectedArrow: (viewportController.measurementController?.measurementItems ?? []).some(
+    readonly property bool textMode: viewportController?.activeInteraction === "annotate:text"
+    readonly property bool selectedArrow: (viewportController?.measurementController?.measurementItems ?? []).some(
         item => item.type === "arrow" && item.measurementId === viewportController.measurementController.selectedMeasurementId)
     spacing: 12
 
@@ -28,8 +28,8 @@ ColumnLayout {
             label: qsTrId("text.0377")
             shortLabel: qsTrId("tools.action.annotate:arrow")
             iconName: "annotate-arrow"
-            checked: annotatePanel.viewportController.activeInteraction === "annotate:arrow"
-            onClicked: annotatePanel.viewportController.setAnnotationMode(false)
+            checked: annotatePanel.viewportController?.activeInteraction === "annotate:arrow"
+            onClicked: annotatePanel.viewportController?.setAnnotationMode(false)
         }
         Controls.ToolActionButton {
             objectName: "annotateTextMode"
@@ -39,8 +39,8 @@ ColumnLayout {
             label: qsTrId("text.0378")
             shortLabel: qsTrId("tools.action.annotate:text")
             iconName: "annotate-text"
-            checked: annotatePanel.viewportController.activeInteraction === "annotate:text"
-            onClicked: annotatePanel.viewportController.setAnnotationMode(true)
+            checked: annotatePanel.viewportController?.activeInteraction === "annotate:text"
+            onClicked: annotatePanel.viewportController?.setAnnotationMode(true)
         }
         Components.HelpButton {
             Layout.preferredWidth: 28
@@ -255,7 +255,7 @@ ColumnLayout {
         compact: true
         hoverColor: Theme.resetActionHover
         enabled: annotatePanel.textMode ? (annotatePanel.controller?.hasSelection ?? false) : annotatePanel.selectedArrow
-        onClicked: annotatePanel.viewportController.deleteSelectedMeasurement()
+        onClicked: annotatePanel.viewportController?.deleteSelectedMeasurement()
     }
 
     Item { Layout.fillHeight: true }

@@ -19,6 +19,15 @@ def inside_width(item, container):
         item.objectName(), item.property("text"), pos.x(), item.width(), container.width())
 
 
+def test_annotation_panel_handles_viewport_release(display_panel):
+    view, _, warnings = display_panel
+    _click(view, _find(view.rootObject(), 'primaryTool-annotate'))
+    panel = _find(view.rootObject(), 'annotatePanel')
+    panel.setProperty('viewportController', None)
+    QCoreApplication.processEvents()
+    assert not warnings, warnings
+
+
 @pytest.mark.parametrize('width', [220, 250, 280])
 def test_annotation_controls_fit_narrow_pane_and_long_text(display_panel, tmp_path, width):
     view, controller, warnings = display_panel

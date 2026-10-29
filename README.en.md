@@ -76,9 +76,10 @@ Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F1
 
 ![Maximize and restore the reading area](docs/screenshots/en/54-focus-view.gif)
 
-## MPR, 3D, and 4D
+## MPR, CPR, 3D, and 4D
 
 - **MPR:** linked axial, coronal, and sagittal planes, oblique reconstruction, seven layouts, and MIP / MinIP / Mean / Sum thick slabs; four-up layouts add 3D spatial references and linked rotation.
+- **CPR:** open from a CT / MR series context menu or MPR **More → CPR**. Draw and edit multiple manual 3D paths with undo, two linked reference planes, a curved image and a perpendicular cross-section. Thin / maximum / mean projections, workspace restoration and three anonymous PNG export scopes are available. Ordinary quantitative measurements use the physical reference planes and cross-section; the curved image provides 3D centerline distances. See **Operation manual → Curved planar reformation (CPR)** in the app.
 - **3D:** CT, MR, and PET volume rendering with presets, windowing, orientation, rotation, and region cropping; 20 CT presets and CT bed removal.
 - **4D:** synchronized multi-phase CT playback, with segmentation and VOI stored by phase; separate slice playback within the current phase.
 

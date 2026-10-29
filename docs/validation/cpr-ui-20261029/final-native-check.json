@@ -1,0 +1,12 @@
+{
+  "ready": true,
+  "busy": false,
+  "paths": 2,
+  "window": [
+    1280,
+    720
+  ],
+  "dpr": 2.0,
+  "nativeLog": "",
+  "checked": "Reopen saved workspace; activate annotation panel; close CPR; reopen CPR; activate CPR panel"
+}

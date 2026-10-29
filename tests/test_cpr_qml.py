@@ -46,6 +46,8 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr):
         wait_until(lambda: cpr.ready)
         assert len(cpr.paths) == 1
         assert len(cpr.current_path.control_points) == 3
+        view.rootObject().setProperty("controller", None)
+        QCoreApplication.processEvents()
         assert not warnings, "\n".join(warnings)
     finally:
         view.hide()
@@ -84,4 +86,31 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
         assert not warnings, "\n".join(warnings)
     finally:
         view.hide()
+        delete(view)
+
+
+def test_panel_syncs_saved_values_when_loader_assigns_controller_late(cpr):
+    draw(cpr)
+    cpr.renamePath("Saved vessel")
+    cpr.setParameter("angle", 35)
+    cpr.setParameter("thickness", 12)
+    cpr.setParameter("step", .75)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    view = QQuickView()
+    view.engine().addImageProvider("navigation", SvgIconProvider())
+    view.setInitialProperties(dict(controller=None))
+    view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
+        "src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml")))
+    assert view.status() == QQuickView.Ready
+    try:
+        # ToolDetailPanel assigns its controller after Loader.onLoaded. Returning
+        # from Settings must not present defaults or overwrite saved parameters.
+        view.rootObject().setProperty("controller", cpr)
+        QCoreApplication.processEvents()
+        fields = {item.objectName(): item for item in _visual_children(view.rootObject())}
+        assert fields["cprPathName"].property("text") == "Saved vessel"
+        assert fields["cprParameter-angle"].property("text") == "35.0"
+        assert fields["cprParameter-thickness"].property("text") == "12.0"
+        assert fields["cprParameter-step"].property("text") == "0.75"
+    finally:
         delete(view)

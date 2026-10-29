@@ -41,6 +41,7 @@ ColumnLayout {
             onClicked: measurePanel.manualRequested()
         }
         Widgets.HelpButton {
+            visible: measurePanel.maskConversionAvailable
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             explanation: qsTrId("seg.roiHelp")
@@ -55,7 +56,8 @@ ColumnLayout {
         visible: !!measurePanel.viewportController
             && measurePanel.viewportController.loadState === "ready"
             && !measurePanel.viewportController.hasPhysicalSpacing
-        text: qsTrId("measurement.noCalibration")
+        text: measurePanel.viewportController?.viewportRole === "curved"
+            ? qsTrId("cpr.measurementHint") : qsTrId("measurement.noCalibration")
         color: Theme.textSecondary
         font.pixelSize: 12
         wrapMode: Text.Wrap
@@ -63,6 +65,7 @@ ColumnLayout {
 
     GridLayout {
         Layout.fillWidth: true
+        enabled: measurePanel.viewportController?.viewportRole !== "curved"
         columns: 2
         columnSpacing: 6
         rowSpacing: 6

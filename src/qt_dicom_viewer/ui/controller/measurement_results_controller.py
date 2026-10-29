@@ -87,13 +87,22 @@ class MeasurementResultsController(QObject):
                 view_label = {"stack": _msg("layout.originalSlices"), "axial": _msg("plane.axial"),
                               "coronal": _msg("plane.coronal"), "sagittal": _msg("plane.sagittal")}.get(view_type, view_type)
                 role = view.viewportRole
+                if view_type == "cpr":
+                    view_label = "CPR"
                 group = (meta.series_description or meta.modality) + " · " + view_label
                 if role not in ("", "image", "axial", "coronal", "sagittal"):
-                    group += " · " + role
+                    group += " · " + (_msg({"cross": "cpr.cross", "reference-a": "cpr.reference-a",
+                        "reference-b": "cpr.reference-b"}[role]) if view_type == "cpr" and role in
+                        ("cross", "reference-a", "reference-b") else role)
+                location = _msg("results.slice", value1=item.slice_index+1)
+                if source.get("cpr", {}).get("role") == "cross":
+                    provenance = source["cpr"]
+                    location = _msg("cpr.measurementLocation", name=provenance.get("pathName", ""),
+                                    revision=provenance["pathRevision"], distance=f'{provenance["distanceMm"]:.1f}')
                 result.append(dict(key=view.viewportId+":"+item.measurement_id,
                     name=measure.measurement_name(item), value=value,
                     group=group,
-                    location=_msg("results.slice", value1=item.slice_index+1) +
+                    location=location +
                         (" · " + _msg("results.phase", value1=phase) if phase is not None else ""),
                     hidden=info["hidden"], locked=info["locked"],
                     selected=measure.selectedMeasurementId == item.measurement_id))

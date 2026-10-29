@@ -2771,6 +2771,23 @@
         "cpr.exportTitle": "Export CPR images",
         "cpr.exportHint": "Export completed reconstructions. Anonymous export hides patient information and text annotations.",
         "cpr.combined": "Combined four views",
-        "cpr.advanced": "Advanced sampling"
+        "cpr.advanced": "Advanced sampling",
+        "cpr.needTwoPoints": "Add at least two distinct control points to finish the path.",
+        "cpr.measurementHint": "The curved image is not a single physical plane. Measure in a reference view or perpendicular cross-section; read centerline lengths in the CPR panel.",
+        "cpr.measurementLocation": "{name} · r{revision} · {distance} mm",
+        "manual.cpr.title": "Curved planar reformation (CPR)",
+        "manual.cpr.section0.title": "Open CPR",
+        "manual.cpr.section0.body": "Right-click a CT / MR series and choose **CPR**, or open it from MPR **More**. Two reference views can use axial, coronal or sagittal planes, alongside the curved image and perpendicular cross-section.",
+        "manual.cpr.section1.title": "Draw a 3D path",
+        "manual.cpr.section1.body": "Choose **New path**, then click reference images to add points. Scroll slices or switch reference planes while drawing. At least two distinct points are required; press `Enter`, double-click, or choose **Finish path**. `Esc` cancels. Paths are manual polylines; automatic vessel extraction and smoothing are not included.",
+        "manual.cpr.section2.title": "Editing and multiple paths",
+        "manual.cpr.section2.body": "Drag a control point to move it within the displayed plane while preserving its depth. Click a segment to insert a point; select a point and use `Delete` / `Backspace` or **Delete selected point**. The point list locates points. One completed drag creates one undo step. Multiple paths retain their own reconstruction parameters and centerline intervals.",
+        "manual.cpr.section3.title": "Linked views and sampling",
+        "manual.cpr.section3.body": "Click the curved image or move **Position along path** to link the reference views and cross-section. Thin, maximum and mean projections support rotation and thickness controls. **Advanced sampling** exposes curved width, cross-section field width and sampling spacing. Windowing links all four views without recomputing CPR. Each view can be maximized.",
+        "manual.cpr.section4.title": "Measurement geometry",
+        "manual.cpr.section4.body": "Ordinary length, angle and ROI measurements use the reference planes and perpendicular cross-section. A curved image is not a single physical plane and does not support ordinary quantitative measurements. Total and interval centerline lengths use the 3D path. After path edits or deletion, stored measurements can return to their original physical plane and show their saved path revision and position.",
+        "manual.cpr.section5.title": "Saving, restoring and export",
+        "manual.cpr.section5.body": "Workspaces retain paths, measurements, parameters and source locations without embedding images. After closing a CPR tab, use **Workspace → Reopen tab**. Missing or changed sources retain the records with a clear message. **More → Export** saves a curved image, cross-section or four-view PNG, anonymously by default. Drafts, drag previews and unfinished reconstructions cannot be exported. CPR export currently uses PNG.",
+        "manual.cpr.summary": "Unfold images along manual 3D paths, link reference views and cross-sections, and retain physical measurements."
     }
 }
