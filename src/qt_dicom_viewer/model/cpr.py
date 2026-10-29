@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
+from numbers import Real
 
 import numpy as np
 
-from .dicom_core import Vector3
+from .dicom_core import Vector3, MprImageGeometry
 
 ALGORITHM_VERSION = 1
 MAX_AXIS_SAMPLES = 4097
@@ -20,7 +21,7 @@ class CprError(ValueError):
 
 
 def finite_number(value, name: str) -> float:
-    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float, np.number)):
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
         raise CprError(f"{name} must be a finite number")
     try:
         number = float(value)
@@ -39,7 +40,10 @@ def readonly_array(value) -> np.ndarray:
 
 def _points(value) -> np.ndarray:
     try:
-        points = np.asarray(value, dtype=np.float64)
+        raw = np.asarray(value)
+        if raw.dtype.kind not in "fiu":
+            raise CprError("Control points must be real numbers")
+        points = raw.astype(np.float64, copy=False)
     except (TypeError, ValueError, OverflowError) as error:
         raise CprError("Control points must contain three finite LPS coordinates") from error
     if (points.ndim != 2 or points.shape[1] != 3
@@ -106,8 +110,11 @@ class CprSettings:
         if self.projection not in ("thin", "mip", "mean"):
             raise CprError("Projection must be thin, mip or mean")
         try:
-            up = np.asarray(self.up_patient, dtype=np.float64)
-        except (TypeError, ValueError) as error:
+            raw = np.asarray(self.up_patient)
+            if raw.dtype.kind not in "fiu":
+                raise CprError("Initial direction must contain real numbers")
+            up = raw.astype(np.float64, copy=False)
+        except (TypeError, ValueError, OverflowError) as error:
             raise CprError("Initial direction must be a finite nonzero LPS vector") from error
         if up.shape != (3,) or not np.isfinite(up).all() or np.max(np.abs(up)) == 0:
             raise CprError("Initial direction must be a finite nonzero LPS vector")
@@ -135,3 +142,36 @@ class CprCenterline:
     @property
     def spacing_mm(self) -> float:
         return self.length_mm / (len(self.distances_mm) - 1)
+
+
+@dataclass(frozen=True, slots=True)
+class CprResult:
+    """A curved grid: columns are arc distance, rows are local lateral offsets.
+
+    This is deliberately not an MprImageGeometry. Only the central row's
+    longitudinal distances are centerline arc lengths; the grid has no global
+    patient-space affine or uniform Euclidean measurement calibration.
+    """
+    modality_pixels: np.ndarray
+    centerline: CprCenterline
+    offsets_mm: np.ndarray
+    settings: CprSettings
+    series_uid: str
+    source_fingerprint: str
+
+    @property
+    def row_spacing_mm(self) -> float:
+        return float(self.offsets_mm[1] - self.offsets_mm[0])
+
+
+@dataclass(frozen=True, slots=True)
+class CprCrossSection:
+    """A physical thin plane and the path/source identity at sampling time."""
+    modality_pixels: np.ndarray
+    geometry: MprImageGeometry
+    path_id: str
+    path_revision: int
+    algorithm_version: int
+    distance_mm: float
+    series_uid: str
+    source_fingerprint: str

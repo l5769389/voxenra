@@ -50,6 +50,19 @@ A 是可独立审查的开发里程碑，不代表完整 CPR 功能上线。B–
 - `ui/measurement_source.py`：增加 CPR 横截面来源及平面匹配；不能以普通 MPR 轴向枚举冒充曲面。
 - QML：四区域 CPR 页面、参考路径层、可折叠高级设置及导出面板；沿用主题、焦点/最大化和工具栏注册。
 
+### B–D 阶段的落地依赖
+
+1. 先增加 `CprSessionState`（来源序列、FrameOfReferenceUID、源指纹、路径集合、当前路径、参数、当前位置），再做控制器。它与 `CprCenterline`/像素缓存分离；保存草稿与已完成路径也必须可区分。
+2. 对每个编辑事务保存“开始前快照”和“最后有效预览”；松手提交一次。Esc、失焦或页签关闭取消当前事务。新建路径的双击最后一个点不得重复入列；两点完成有效，少于两点不可完成。
+3. 参考视图只负责屏幕→当前真实切面→LPS 的转换。拖动点保留该切面法向的原有分量，不能把离面点强行吸到当前层。实线/淡化判断使用点到切面的有符号毫米距离，阈值从该视图层距取得，不能使用屏幕像素。
+4. 调度桥接现有 `service/render_serivce.py` 与 `ui/workers/dicom_render_worker.py` 的体数据所有者。体数据载入和缓存变更仍串行；只读数值任务用一个专用 worker，最多一个运行项和一个最新待处理项。每次修改参数、路径、来源或生命周期都推进 request generation；取消事件显式进入 worker 的 `render_cancellation` 上下文。
+5. 用已有 `model/dicom_models.py` 的页签类型与 `model/tool_catalog.py` 注册扩展，并在 `workspace_controller` 的创建/复用/关闭/恢复分支接入专用控制器。工具栏排序还涉及 `model/toolbar_priorities.py` 和 `toolbar_settings_controller.py`；只改 QML 按钮会漏掉自定义配置。
+6. `LeftPanel.qml` 的序列菜单与 MPR 工具入口共用一个可用性判断：单个 CT/MR 体，空间几何校验通过。不能仅根据模态名称启用，不能把现有 PT MPR 路由误复用为 CPR。
+7. 在页面启用距离、角度和 ROI 之前，先完成横截面来源匹配测试。截面导航与历史测量定位分开；旧截面测量不可跟随新版路径的同一弧长“漂移”。曲面上仅允许中心线位置和区间长度，不能仅在显示层隐藏测量按钮而保留快捷键入口。
+8. 历史登记与 `workspace_snapshot`、`workspace_state`、`workspace_document` 迁移一起接入，再接退出保存。数据指纹变化、旧算法版本、未完成路径和已关闭页签分别有恢复测试。v1 文档先迁移到规范 v2 对象再校验，写出统一 v2；旧版无法读取时明确提示，不静默丢弃 CPR。
+9. PNG 导出复用 `export_controller.py` 的匿名化/覆盖选择流程，异步等待当前 generation 的完整结果；计算失败或预览尚未收敛时不给旧图套上新路径标签。只导出数值核心不能替代真实页面组合视图验收。
+10. 最后补资源清单、双语文案、手册、主题与缩放验收，再开放入口。发布仍独立遵循仓库 release checklist，不能以此开发里程碑替代发布验证。
+
 ## 参考
 
 - [CPR 原始研究](https://www.cg.tuwien.ac.at/research/publications/2002/kanitsar-2002-CPRX/)：区分多种 CPR 展开方法及 thick/rotating CPR。

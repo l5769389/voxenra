@@ -121,3 +121,13 @@ def test_cancelled_geometry_does_not_return_a_partial_path():
     cancelled.set()
     with render_cancellation(cancelled), pytest.raises(InterruptedError):
         centerline(((0, 0, 0), (10, 0, 0)))
+
+
+def test_complex_inputs_are_rejected_without_discarding_imaginary_coordinates():
+    Error, Path, Settings, _ = api()
+    with pytest.raises(Error):
+        Path("p", "Path", np.array([[0, 0, 0], [1 + 2j, 0, 0]]))
+    with pytest.raises(Error):
+        Settings(step_mm=np.complex128(.5 + 1j))
+    with pytest.raises(Error):
+        Settings(up_patient=np.array([0, 1 + 2j, 0]))
