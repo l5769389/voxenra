@@ -6,10 +6,49 @@ import os
 import queue
 import threading
 
-from PySide6.QtCore import QEvent, QDir, QFileInfo, QFileSystemWatcher, QTimer, QAbstractTableModel, QLocale, QModelIndex, QItemSelectionModel, QStandardPaths, Qt
+from PySide6.QtCore import QEvent, QDir, QFileInfo, QFileSystemWatcher, QTimer, QAbstractTableModel, QLocale, QModelIndex, QItemSelectionModel, QStandardPaths, QSize, Qt
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QTableView, QVBoxLayout, QApplication, QStyle
+from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QTableView, QVBoxLayout, QApplication, QStyle, QListWidget, QListWidgetItem, QListView
 from qt_dicom_viewer.i18n.widgets import QDialog, QLabel, QLineEdit, QPushButton
+
+
+def apply_import_dialog_theme(widget):
+    from qt_dicom_viewer.ui.controller.appearance_controller import current_colors
+    colors = current_colors()
+    style = """
+        QDialog { background: @panelBackground; color: @textPrimary; }
+        QLabel { color: @textSecondary; }
+        QLineEdit, QTableView { background: @controlBackground; color: @textPrimary;
+            border: 1px solid @inputBorder; border-radius: 4px; padding: 5px; }
+        QLineEdit:focus, QTableView:focus { border-color: @focusBorder; }
+        QTableView::item { height: 28px; }
+        QTableView::item:selected { background: @selectionBackground; color: @textPrimary; }
+        QListWidget#importFavorites { background: transparent; border: none; }
+        QListWidget#importFavorites::item { background: @controlBackground; color: @textPrimary;
+            border: 1px solid @controlBorder; border-radius: 4px; padding: 3px; }
+        QListWidget#importFavorites::item:hover { background: @controlHover; }
+        QListWidget#importFavorites::item:selected { background: @selectionBackground; border-color: @focusBorder; padding-right: 25px; }
+        QHeaderView { background: @panelBackgroundStrong; }
+        QHeaderView::section { background: @panelBackgroundStrong; color: @textSecondary;
+            padding: 6px; border: none; }
+        QPushButton { background: @controlBackground; color: @textPrimary; padding: 7px 12px;
+            border: 1px solid @controlBorder; border-radius: 4px; }
+        QPushButton:hover { background: @controlHover; border-color: @controlHoverBorder; }
+        QPushButton:pressed { background: @controlPressed; }
+        QPushButton:focus { border-color: @focusBorder; }
+        QPushButton:disabled { color: @textDisabled; }
+        QPushButton#importManageFavorites { background: transparent; border-color: transparent; padding: 4px 6px; }
+        QPushButton#importManageFavorites:hover { background: @controlHover; }
+        QPushButton#importFavoriteRemove { background: transparent; border: none; padding: 0; font-size: 16px; }
+        QPushButton#importFavoriteRemove:hover { background: @controlHover; }
+        QPushButton#importFavoriteRemove:focus { border: 1px solid @focusBorder; }
+        QPushButton#importOpen { background: @primaryButtonBackground; color: @textOnPrimary; border-color: @primaryButtonBorder; }
+        QPushButton#importOpen:hover { background: @primaryButtonHover; }
+        QPushButton#importOpen:pressed { background: @primaryButtonPressed; }
+        QPushButton#importOpen:disabled { background: @primaryButtonDisabled; color: @textDisabled; }
+    """
+    for key in sorted(colors, key=len, reverse=True): style = style.replace('@' + key, colors[key])
+    widget.setStyleSheet(style)
 
 
 class ImportFileModel(QAbstractTableModel):
@@ -86,14 +125,20 @@ class ImportFileModel(QAbstractTableModel):
 
 
 class LocalImportDialog(QDialog):
-    def __init__(self, directory="", parent=None):
+    def __init__(self, directory="", parent=None, *, favorites=None):
         super().__init__(parent)
         self.setObjectName("localImportDialog")
         self.setWindowTitle(_msg('text.0532'))
         self.resize(880, 560)
         self.setMinimumSize(620, 400)
         self.paths = []
+        self._favorites = favorites
+        self._favorite_position_timer = QTimer(self)
+        self._favorite_position_timer.setSingleShot(True)
+        self._favorite_position_timer.timeout.connect(self._position_favorite_remove)
         self._directory = ""
+        self._favorite_request = -1
+        self._favorite_path = ""
         self._navigation_id = 0
         self._accept_navigation = 0
         self._loading = False
@@ -128,7 +173,57 @@ class LocalImportDialog(QDialog):
         self.path_edit.setPlaceholderText(_msg('text.0537'))
         self.path_edit.installEventFilter(self)
         location.addWidget(self.path_edit, 1)
+        self.favorite_button = QPushButton(_msg('favorites.addCurrent'))
+        self.favorite_button.setObjectName("importFavoriteCurrent")
+        self.favorite_button.setAutoDefault(False)
+        self.favorite_button.setVisible(favorites is not None)
+        self.favorite_button.clicked.connect(self._favorite_current)
+        location.addWidget(self.favorite_button)
+        self.path_edit.textChanged.connect(self._update_favorite_button)
+        if favorites is not None:
+            favorites.changed.connect(self._update_favorite_button)
+            favorites.busyChanged.connect(self._update_favorite_button)
         layout.addLayout(location)
+        self.favorites_header = QHBoxLayout()
+        self.favorites_label = QLabel(_msg('favorites.menu'))
+        self.favorites_header.addWidget(self.favorites_label)
+        self.favorites_header.addStretch(1)
+        self.manage_favorites = QPushButton(_msg('favorites.manage'))
+        self.manage_favorites.setObjectName('importManageFavorites')
+        self.manage_favorites.setAutoDefault(False)
+        self.manage_favorites.clicked.connect(lambda: self._favorites.showManager())
+        self.favorites_header.addWidget(self.manage_favorites)
+        layout.addLayout(self.favorites_header)
+        self.favorite_list = QListWidget()
+        self.favorite_list.setObjectName('importFavorites')
+        self.favorite_list.setViewMode(QListView.ListMode)
+        self.favorite_list.setFlow(QListView.LeftToRight)
+        self.favorite_list.setWrapping(True)
+        self.favorite_list.setResizeMode(QListView.Adjust)
+        self.favorite_list.setMovement(QListView.Static)
+        self.favorite_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.favorite_list.setTextElideMode(Qt.ElideRight)
+        self.favorite_list.setWordWrap(False)
+        self.favorite_list.setGridSize(QSize(164, 36))
+        self.favorite_list.setIconSize(QSize(16, 16))
+        self.favorite_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.favorite_list.itemClicked.connect(self._open_favorite)
+        self.favorite_list.installEventFilter(self)
+        self.favorite_remove = QPushButton("×", self.favorite_list.viewport())
+        self.favorite_remove.setObjectName('importFavoriteRemove')
+        self.favorite_remove.setAutoDefault(False)
+        self.favorite_remove.setToolTip(_msg('favorites.remove'))
+        self.favorite_remove.setAccessibleName(localize(_msg('favorites.remove')))
+        self.favorite_remove.setFixedSize(22, 22)
+        self.favorite_remove.hide()
+        self.favorite_remove.clicked.connect(self._remove_active_favorite)
+        self.favorite_list.itemSelectionChanged.connect(self._position_favorite_remove)
+        self.favorite_list.verticalScrollBar().valueChanged.connect(self._position_favorite_remove)
+        self.favorite_list.viewport().installEventFilter(self)
+        layout.addWidget(self.favorite_list)
+        if favorites is not None:
+            favorites.changed.connect(self._refresh_favorites)
+        self._refresh_favorites()
         hint = QLabel(
             _msg('text.0538')
         )
@@ -157,6 +252,10 @@ class LocalImportDialog(QDialog):
         layout.addWidget(self.view, 1)
         self.selection_label = QLabel()
         self.selection_label.setObjectName("importSelectionSummary")
+        if favorites is not None:
+            favorites.messageChanged.connect(self._favorite_feedback)
+        self.selection_label.setWordWrap(True)
+        self.selection_label.setTextFormat(Qt.PlainText)
         layout.addWidget(self.selection_label)
         buttons = QHBoxLayout()
         buttons.setSpacing(8)
@@ -181,42 +280,139 @@ class LocalImportDialog(QDialog):
         )
         self.navigate(initial)
 
+    def _refresh_favorites(self):
+        scroll = self.favorite_list.verticalScrollBar().value()
+        current = self.favorite_list.currentItem()
+        focused_path = current.data(Qt.UserRole) if current else None
+        self.favorite_list.clear()
+        entries = self._favorites.items if self._favorites is not None else []
+        icon = QApplication.style().standardIcon(QStyle.SP_DirIcon)
+        for entry in entries:
+            label = entry['name']
+            if sum(other['name'] == label for other in entries) > 1:
+                label += ' · ' + Path(entry['path']).parent.name
+            item = QListWidgetItem(icon, label)
+            item.setData(Qt.UserRole, entry['path'])
+            item.setData(Qt.UserRole + 1, entry['id'])
+            item.setToolTip(entry['path'])
+            item.setSizeHint(QSize(156, 30))
+            self.favorite_list.addItem(item)
+            if entry['path'] == focused_path:
+                self.favorite_list.setCurrentItem(item)
+        self.favorites_label.setVisible(bool(entries))
+        self.manage_favorites.setVisible(bool(entries))
+        self.favorite_list.setVisible(bool(entries))
+        self._size_favorites()
+        self._update_favorite_button()
+        self.favorite_list.doItemsLayout()
+        self.favorite_list.verticalScrollBar().setValue(scroll)
+        self._position_favorite_remove()
+
+    def _position_favorite_remove(self, *_):
+        selected = self.favorite_list.selectedItems()
+        if not selected:
+            self.favorite_remove.hide()
+            return
+        rect = self.favorite_list.visualItemRect(selected[0])
+        self.favorite_remove.move(rect.right() - self.favorite_remove.width() - 2, rect.top() + 2)
+        self.favorite_remove.setVisible(self.favorite_list.viewport().rect().intersects(rect))
+        self.favorite_remove.raise_()
+
+    def _remove_active_favorite(self):
+        selected = self.favorite_list.selectedItems()
+        if not selected or self._favorites is None:
+            return
+        identifier = selected[0].data(Qt.UserRole + 1)
+        if not self._favorites.remove(identifier):
+            self.selection_label.setText(self._favorites.message)
+        else:
+            self.update_selection()
+
+    def _size_favorites(self):
+        available = max(1, self.width() - 48)
+        columns = max(1, available // 160)
+        cell_width = available // columns
+        rows = min(2, (self.favorite_list.count() + columns - 1) // columns)
+        self.favorite_list.setGridSize(QSize(cell_width, 36))
+        for index in range(self.favorite_list.count()):
+            self.favorite_list.item(index).setSizeHint(QSize(cell_width - 8, 30))
+        self.favorite_list.setFixedHeight(rows * 36 if rows else 0)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, 'favorite_list'):
+            self._size_favorites()
+            self._favorite_position_timer.start(0)
+
+    def hideEvent(self, event):
+        self._favorite_position_timer.stop()
+        if self._favorites is not None:
+            self._favorites.cancelValidation()
+        super().hideEvent(event)
+
+    def _open_favorite(self, item):
+        # The existing asynchronous navigator handles unavailable/offline paths.
+        target = item.data(Qt.UserRole)
+        # Clicking the folder already being shown must not clear file selection.
+        if not self._loading and target == self._directory:
+            return
+        if self._loading and self._favorite_request == self._navigation_id and target == self._favorite_path:
+            return
+        self.navigate(target, typed=True)
+        self._favorite_request = self._navigation_id
+        self._favorite_path = target
+
     def _apply_theme(self, *_):
-        from qt_dicom_viewer.ui.controller.appearance_controller import current_colors
-        colors = current_colors()
-        style = """
-            QDialog { background: @panelBackground; color: @textPrimary; }
-            QLabel { color: @textSecondary; }
-            QLineEdit, QTableView { background: @controlBackground; color: @textPrimary;
-                border: 1px solid @inputBorder; border-radius: 4px; padding: 5px; }
-            QLineEdit:focus, QTableView:focus { border-color: @focusBorder; }
-            QTableView::item { height: 28px; }
-            QTableView::item:selected { background: @selectionBackground; color: @textPrimary; }
-            QHeaderView::section { background: @panelBackgroundStrong; color: @textSecondary;
-                padding: 6px; border: none; }
-            QPushButton { background: @controlBackground; color: @textPrimary; padding: 7px 12px;
-                border: 1px solid @controlBorder; border-radius: 4px; }
-            QPushButton:hover { background: @controlHover; border-color: @controlHoverBorder; }
-            QPushButton:pressed { background: @controlPressed; }
-            QPushButton:focus { border-color: @focusBorder; }
-            QPushButton:disabled { color: @textDisabled; }
-            QPushButton#importOpen { background: @primaryButtonBackground; color: @textOnPrimary; border-color: @primaryButtonBorder; }
-            QPushButton#importOpen:hover { background: @primaryButtonHover; }
-            QPushButton#importOpen:pressed { background: @primaryButtonPressed; }
-            QPushButton#importOpen:disabled { background: @primaryButtonDisabled; color: @textDisabled; }
-        """
-        for key in sorted(colors, key=len, reverse=True): style = style.replace('@' + key, colors[key])
-        self.setStyleSheet(style)
+        apply_import_dialog_theme(self)
+
+    def _update_favorite_button(self):
+        key = os.path.normcase(os.path.normpath(self._directory))
+        saved = self._favorites is not None and any(
+            os.path.normcase(os.path.normpath(item['path'])) == key for item in self._favorites.items)
+        busy = self._favorites is not None and self._favorites.busy
+        self.favorite_button.setText(_msg('favorites.checking' if busy else 'favorites.saved' if saved else 'favorites.addCurrent'))
+        if hasattr(self, 'favorite_list'):
+            for index in range(self.favorite_list.count()):
+                item = self.favorite_list.item(index)
+                item.setSelected(os.path.normcase(os.path.normpath(item.data(Qt.UserRole))) == key)
+        displayed_key = os.path.normcase(os.path.normpath(self.path_edit.text()))
+        self.favorite_button.setEnabled(bool(self._directory) and displayed_key == key
+                                       and not self._loading and not saved and not busy)
+
+    def _favorite_current(self):
+        if self._favorites is None or not self.favorite_button.isEnabled():
+            return
+        self._favorites.requestAdd(self._directory)
+        self._update_favorite_button()
+        if self._favorites.message:
+            self.selection_label.setText(self._favorites.message)
+
+    def _favorite_feedback(self):
+        if self._favorites.message:
+            self.selection_label.setText(self._favorites.message)
+        else:
+            self.update_selection()
 
     def changeEvent(self, event):
         super().changeEvent(event)
         if event.type() == QEvent.ApplicationPaletteChange:
             self._apply_theme()
         if event.type() == QEvent.LanguageChange and hasattr(self, 'model'):
+            self.favorite_remove.setAccessibleName(localize(_msg('favorites.remove')))
             self.model.headerDataChanged.emit(Qt.Horizontal, 0, 3)
             self.view.viewport().update()
 
     def eventFilter(self, watched, event):
+        if (hasattr(self, 'favorite_remove') and watched is self.favorite_list.viewport()
+                and event.type() in (QEvent.Resize, QEvent.Show)):
+            self._favorite_position_timer.start(0)
+        if (watched is getattr(self, 'favorite_list', None)
+                and event.type() == QEvent.KeyPress
+                and event.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space)):
+            item = self.favorite_list.currentItem()
+            if item is not None:
+                self._open_favorite(item)
+            return True
         if (
             watched is self.path_edit
             and event.type() == QEvent.KeyPress
@@ -238,6 +434,7 @@ class LocalImportDialog(QDialog):
         self._accept_navigation = request if accept_after else 0
         results = self._directory_results
         self._loading = True
+        self._update_favorite_button()
         self.path_edit.setText(directory)
         self.path_edit.setEnabled(not accept_after)
         self.view.setEnabled(False)
@@ -291,7 +488,9 @@ class LocalImportDialog(QDialog):
                 if not accept_after:
                     self.path_edit.setText(self._directory)
                 self.update_selection()
-                self.selection_label.setText(_msg('import.directoryUnavailable'))
+                self.selection_label.setText(
+                    _msg('favorites.unavailable', path=self._favorite_path)
+                    if request == self._favorite_request else _msg('import.directoryUnavailable'))
                 continue
             self.model.set_files(files)
             self._directory = target
@@ -336,6 +535,7 @@ class LocalImportDialog(QDialog):
             self.accept()
 
     def update_selection(self, *_):
+        self._update_favorite_button()
         if self._loading:
             return
         paths = self.selected_paths()
@@ -366,13 +566,13 @@ class LocalImportDialog(QDialog):
         super().reject()
 
 
-def select_import_paths(directory=""):
+def select_import_paths(directory="", favorites=None):
     from qt_dicom_viewer.settings.dialog_locations import current_locations
     history = current_locations()
     if history is not None:
         directory = history.directory("images", directory)
     owner = QGuiApplication.focusWindow()
-    dialog = LocalImportDialog(directory)
+    dialog = LocalImportDialog(directory, favorites=favorites) if favorites is not None else LocalImportDialog(directory)
     if owner is not None:
         dialog.winId()
         dialog.windowHandle().setTransientParent(owner)

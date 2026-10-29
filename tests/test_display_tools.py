@@ -24,7 +24,7 @@ def test_all_reference_color_maps_have_renderable_luts() -> None:
     options = color_map_options()
 
     assert [option["label"] for option in options[:8]] == [
-        "BW", "BWInverse", "BlackBody", "Cardiac",
+        "BW", "BW Inverse (1)", "Black Body (1)", "Cardiac",
         "Flow", "French", "GrayRainbow", "HotGreen",
     ]
     assert {option["colorMap"] for option in options} == set(COLOR_MAP_SPECS)
@@ -185,3 +185,31 @@ def test_viewport_applies_color_map_settings_and_annotation_reset() -> None:
     assert viewport.activeColorMap == "grayscale"
     viewport.reset_tool_state(ToolType.VIEWPORT_SETTINGS)
     assert viewport.viewport_state.display_settings == ViewportDisplaySettings()
+
+
+def test_palette_display_changes_preserve_every_persisted_id_and_lut():
+    import hashlib
+    from qt_dicom_viewer.core.pseudocolor import color_lut
+    from qt_dicom_viewer.core.color_maps import COLOR_MAPS
+    expected = {'grayscale': '72432263dbfe17abc40ed269f24c7a344e077e3671007dfc8a2f3851f8193dc2',
+     'grayscale-inverted': '346f6a25ad11ec5b45a83392366f269058ba209d2877491634a2405f86beb3db',
+     'blackbody': 'ee5b6f9b99b522130653f800bb60c51f774172fd8efbf14a7f1853f635cc39ff',
+     'cardiac': '65b6e2d696dd640fa90ad83fdb61dc29395b53de3341041fb0ad6311d1355c92',
+     'flow': 'ed5006283adaf048886852342f318a21a3a5f07ee5a26a05b1856fd3dd3daef6',
+     'french': '16a315d3167716f0b74e7fb203c51979f0016affaf90781249e953623ad580e4',
+     'gray-rainbow': 'a90250d3756fdcd3e86fc55ef1f7fced907550f9269488114488ec1ec85f9475',
+     'hot-green': 'd11e6bd139463f91b73b9582165da0dbe0670ad8260c70b037cd0492081eabea',
+     'hot-iron': 'a36d6e35c477b59171f953a6783ff86e357b978f9e70a2fdc1855fae04ec5444',
+     'rainbow': 'a78ac3c0dd47659101c55c6be6d97e8f1010c014b323329aafb83bbd9c4ee49f',
+     'bwInverse': '346f6a25ad11ec5b45a83392366f269058ba209d2877491634a2405f86beb3db',
+     'blackBody': '43dd16b22a010a4c1c80c77cdb38145a31e4f4c4162f2cd9eec5ea7f67f69a53',
+     'hotIron': 'd0b49d2e7df508618025ff33d491a83767144b2368cd054a5b707834a12c016f',
+     'hotMetal': 'e97edba93c29700451f89c7f4e2ec36beba424bf9118d21ae77887738ae30ea8',
+     'pet': '1dedd9dbef666f0ff0435582b3493328d18ca93de17e28b67c9d3055071ca381'}
+    assert set(COLOR_MAP_SPECS) == set(expected)
+    assert {key: hashlib.sha256(color_lut(key).tobytes()).hexdigest()
+            for key in COLOR_MAP_SPECS} == expected
+    options = color_map_options()
+    assert len({option["label"] for option in options}) == len(options)
+    assert {option["colorMap"]: option["label"] for option in options} == {
+        key: label for key, (label, _) in COLOR_MAPS.items()}

@@ -528,3 +528,37 @@ def test_manual_roundtrip_preserves_3d_controller_state(sidebar_scene, monkeypat
     assert ws.activeViewport is viewport and viewport.state == state and viewport.display_state == display
     assert find(window, 'volumeViewport').isVisible()
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize('chapter_id,crop', [
+    ('pacs', (368, 76, 544, 668)),
+    ('export', (875, 435, 1130, 1130)),
+    ('measurement-report', (2260, 270, 590, 750)),
+])
+def test_manual_detail_crop_keeps_full_original_and_overview(scene, chapter_id, crop):
+    """Detail previews focus the controls; zoom and overview retain the context."""
+    window, app, warnings = scene
+    window.resize(1280, 820)
+    ws = app.workspaceController
+    ws.openManual(chapter_id)
+    wait_until(lambda: find(window, 'manualExample').property('sourceSize').width() > 0)
+    example = find(window, 'manualExample')
+    rect = example.property('sourceClipRect')
+    assert (rect.x(), rect.y(), rect.width(), rect.height()) == crop
+    assert example.property('paintedWidth') > 0
+    assert example.property('paintedWidth') / example.property('paintedHeight') == pytest.approx(crop[2] / crop[3])
+    click(window, find(window, 'manualScreenshotButton'))
+    preview = window.findChild(QObject, 'manualScreenshotPreview')
+    wait_until(lambda: preview.property('visible'))
+    full = preview.findChild(QObject, 'manualFullScreenshot')
+    wait_until(lambda: full.property('sourceSize').width() > 0)
+    assert full.property('sourceClipRect').isEmpty()
+    assert full.property('sourceSize').width() > crop[2]
+    assert full.property('sourceSize').height() > crop[3]
+    assert crop[0] + crop[2] <= full.property('sourceSize').width()
+    assert crop[1] + crop[3] <= full.property('sourceSize').height()
+    QTest.keyClick(full.window(), Qt.Key_Escape)
+    wait_until(lambda: not preview.property('visible'))
+    ws.manualController.selectChapter('quick-start')
+    wait_until(lambda: example.property('sourceClipRect').isEmpty())
+    assert not warnings

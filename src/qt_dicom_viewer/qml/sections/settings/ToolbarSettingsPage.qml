@@ -12,7 +12,7 @@ Item {
     required property var settingsController
     property string initialProfile: ""
     property bool detailsExpanded: false
-    readonly property var editor: settingsController.createToolbarEditor(page)
+    property var editor: settingsController.createToolbarEditor(page)
     readonly property string currentScope: editor.scope
     readonly property string currentProfile: editor.selectedProfile
     property string selectedKey: ""
@@ -37,8 +37,7 @@ Item {
         {iconName: "nav-load-file", label: qsTrId("sidebar.short.images"), show: typeof appController === "undefined" || appController.pacsController.localEnabled},
         {iconName: "nav-pacs", label: "PACS", show: typeof appController === "undefined" || appController.pacsController.pacsEnabled}
     ].filter(e => e.show)
-    Component.onCompleted: { editor.beginEdit(); editor.selectProfile(initialProfile) }
-    Component.onDestruction: editor.cancel()
+    Component.onCompleted: if (initialProfile) editor.selectProfile(initialProfile)
     onCurrentScopeChanged: resetInteraction()
     onCurrentProfileChanged: resetInteraction()
     onVisibleChanged: if (!visible) cancelDrag()

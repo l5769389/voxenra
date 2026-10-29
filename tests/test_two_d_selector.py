@@ -110,7 +110,7 @@ def test_controls_are_excluded_from_export_and_plain_mode_position_remain(sideba
     QTest.mouseMove(window, point)
     tooltip = help_area.findChild(QObject, 'twoDPositionToolTip-0')
     wait_until(lambda: tooltip.property('visible'))
-    assert '不是层厚或切片序号' in tooltip.property('text')
+    assert tooltip.property('text') == 'S/I：上/下；L/R：左/右；P/A：后/前。'
     # Keep the pointer stationary so the cursor-value overlay stays unchanged.
     before = capture(image)
     tooltip.setProperty('visible', False)

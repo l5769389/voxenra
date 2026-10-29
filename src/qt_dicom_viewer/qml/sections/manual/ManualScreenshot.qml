@@ -11,6 +11,9 @@ ColumnLayout {
     required property string file
     property string poster: ""
     property string caption: ""
+    // Source pixel coordinates affect only the inline example; enlargement
+    // keeps the complete original screenshot for orientation and inspection.
+    property rect sourceCrop: Qt.rect(0, 0, 0, 0)
     property real maximumPreviewHeight: 240
     property bool playing: false
     property bool pageActive: true
@@ -48,7 +51,9 @@ ColumnLayout {
         id: button
         objectName: "manualScreenshotButton"
         Layout.fillWidth: true
-        Layout.preferredHeight: example.sourceSize.width > 0
+        Layout.preferredHeight: shot.sourceCrop.width > 0 && shot.sourceCrop.height > 0
+            ? Math.min(shot.maximumPreviewHeight, width * shot.sourceCrop.height / shot.sourceCrop.width)
+            : example.sourceSize.width > 0
             ? Math.min(shot.maximumPreviewHeight, width * example.sourceSize.height / example.sourceSize.width) : 0
         padding: 0
         hoverEnabled: true
@@ -61,6 +66,7 @@ ColumnLayout {
                 objectName: "manualExample"
                 anchors.fill: parent
                 source: shot.stillUrl
+                sourceClipRect: shot.sourceCrop
                 visible: !inlineAnimation.active
                 fillMode: Image.PreserveAspectFit
                 smooth: true

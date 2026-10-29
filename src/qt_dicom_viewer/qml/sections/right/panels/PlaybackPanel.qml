@@ -48,7 +48,7 @@ ColumnLayout {
             spacing: 7
 
             Text {
-                text: "FPS"
+                text: qsTrId("playback.frameRate")
                 color: Theme.textSecondary
                 font.pixelSize: 12
                 font.weight: Font.DemiBold
@@ -116,10 +116,8 @@ ColumnLayout {
 
             Text {
                 objectName: "fpsValue"
-                Layout.preferredWidth: 20
-                text: playbackPanel.tabController
-                    ? playbackPanel.tabController.fps
-                    : 2
+                Layout.preferredWidth: 48
+                text: (playbackPanel.tabController?.fps ?? 2) + " FPS"
                 color: Theme.textPrimary
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
@@ -210,7 +208,7 @@ ColumnLayout {
                 Components.AppToolTip {
                     visible: (parent?.hovered ?? false) || (parent?.pressed ?? false)
                     delay: 250
-                    text: "Phase " + Math.round(parent.value)
+                    text: qsTrId("playback.phasePosition").arg(Math.round(parent.value))
                 }
 
                 background: Rectangle {

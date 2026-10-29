@@ -100,6 +100,13 @@ def test_mip_panel_updates_mode_enablement_and_live_thickness(
     assert _find(view, "mipMode-mip").property("checked")
     assert mip_icon.parentItem().property("iconColor") != inactive_color
 
+    assert not _find(view, "mipMode-mean").isEnabled()
+    assert not _find(view, "mipThicknessInput-axial").isEnabled()
+    assert not _find(view, "mipThickness-axial").isEnabled()
+    _click(view, _find(view, "mipMode-mean"))
+    assert controller.mprProjectionMode == "mip"
+    _click(view, _find(view, "mipEnabledSwitch"))
+    assert _find(view, "mipMode-mean").isEnabled()
     _click(view, _find(view, "mipMode-mean"))
     thickness_input = _find(view, "mipThicknessInput-axial")
     _click(view, thickness_input)
@@ -122,7 +129,6 @@ def test_mip_panel_updates_mode_enablement_and_live_thickness(
     assert _find(view, "mipThicknessInput-axial").property("text") == str(
         slider_value
     )
-    _click(view, _find(view, "mipEnabledSwitch"))
 
     assert controller.mprProjectionMode == "mean"
     assert controller.mprThicknesses["axial"] == pytest.approx(52, abs=2)

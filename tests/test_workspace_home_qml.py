@@ -73,3 +73,28 @@ def test_imported_home_opens_selected_series_and_keeps_import_separate(scene, tm
                and app.workspaceController.activeViewport.loadState == 'ready')
     assert app.workspaceController.activeViewport.viewport_config.series_uid == record.series_instance_uid
     assert not warnings, warnings
+
+
+def test_imported_home_scanning_action_is_explicit_cancel(scene, tmp_path, monkeypatch):
+    from test_series_sidebar import phantom_series
+    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    window, app, warnings = scene
+    app.languageController.selectLanguage('zh-CN')
+    panel = app.panelController
+    record = phantom_series(tmp_path, 1, 'HOME', '1.2.3.1', '20261014')
+    snapshot = DicomFolderScanSnapshot(tmp_path, 3, 3, 0, [record])
+    panel.update_series_session(snapshot)
+    panel._update_series_record(snapshot)
+    button = find(window, 'homeContinueImport')
+    assert button.property('text') == '继续导入'
+    calls = []
+    monkeypatch.setattr(panel, 'cancelImport', lambda: calls.append('cancel'))
+    panel._scanning = True
+    panel.scanningChanged.emit()
+    assert button.property('text') == '取消导入'
+    click(window, button)
+    assert calls == ['cancel']
+    panel._scanning = False
+    panel.scanningChanged.emit()
+    assert button.property('text') == '继续导入'
+    assert not warnings, warnings

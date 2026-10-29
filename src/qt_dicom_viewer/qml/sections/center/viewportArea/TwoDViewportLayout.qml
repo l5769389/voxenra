@@ -89,7 +89,7 @@ Item {
                         Components.AppToolTip {
                             objectName: "twoDPositionToolTip-" + cell.modelData.index
                             visible: positionHover.hovered && !plane.popup.visible
-                            text: (plane.overlay?.positionText ?? "") + "\n" + qsTrId("layout.positionHint")
+                            text: qsTrId("layout.positionHint")
                         }
                     }
                     Text {

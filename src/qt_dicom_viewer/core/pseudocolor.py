@@ -14,11 +14,11 @@ COLOR_MAP_SPECS: dict[str, tuple[str, tuple[ColorStop, ...]]] = {
         ((0.0, (0, 0, 0)), (1.0, (255, 255, 255))),
     ),
     "grayscale-inverted": (
-        "BWInverse",
+        "BW Inverse (1)",
         ((0.0, (255, 255, 255)), (1.0, (0, 0, 0))),
     ),
     "blackbody": (
-        "BlackBody",
+        "Black Body (1)",
         (
             (0.0, (0, 0, 0)),
             (0.28, (105, 0, 0)),
@@ -80,7 +80,7 @@ COLOR_MAP_SPECS: dict[str, tuple[str, tuple[ColorStop, ...]]] = {
         ),
     ),
     "hot-iron": (
-        "HotIron",
+        "Hot Iron (1)",
         (
             (0.0, (0, 0, 0)),
             (0.35, (125, 0, 0)),
@@ -108,9 +108,9 @@ def _hex(color: tuple[int, int, int]) -> str:
 
 
 # Preserve the persisted settings palette IDs alongside the viewport palettes.
-COLOR_MAP_SPECS['bwInverse'] = ('BW Inverse', ((0.0, (255, 255, 255)), (1.0, (0, 0, 0))))
-COLOR_MAP_SPECS['blackBody'] = ('Black Body', ((0.0, (0, 0, 0)), (0.25, (160, 0, 0)), (0.5, (255, 66, 0)), (0.75, (255, 229, 0)), (1.0, (255, 255, 255))))
-COLOR_MAP_SPECS['hotIron'] = ('Hot Iron', ((0.0, (0, 0, 0)), (0.25, (128, 0, 0)), (0.5, (255, 35, 0)), (0.75, (255, 173, 64)), (1.0, (255, 255, 255))))
+COLOR_MAP_SPECS['bwInverse'] = ('BW Inverse (2)', ((0.0, (255, 255, 255)), (1.0, (0, 0, 0))))
+COLOR_MAP_SPECS['blackBody'] = ('Black Body (2)', ((0.0, (0, 0, 0)), (0.25, (160, 0, 0)), (0.5, (255, 66, 0)), (0.75, (255, 229, 0)), (1.0, (255, 255, 255))))
+COLOR_MAP_SPECS['hotIron'] = ('Hot Iron (2)', ((0.0, (0, 0, 0)), (0.25, (128, 0, 0)), (0.5, (255, 35, 0)), (0.75, (255, 173, 64)), (1.0, (255, 255, 255))))
 COLOR_MAP_SPECS['hotMetal'] = ('Hot Metal', ((0.0, (0, 0, 0)), (0.25, (121, 0, 0)), (0.5, (194, 42, 0)), (0.75, (232, 190, 32)), (1.0, (255, 255, 223))))
 COLOR_MAP_SPECS['pet'] = ('PET', ((0.0, (0, 0, 0)), (0.25, (0, 123, 123)), (0.5, (89, 0, 200)), (0.75, (231, 126, 33)), (1.0, (255, 255, 255))))
 

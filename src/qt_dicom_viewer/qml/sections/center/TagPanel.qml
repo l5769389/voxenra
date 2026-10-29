@@ -315,7 +315,10 @@ Rectangle {
                             readonly property bool selected: panel.tagController.selectedNodeId === nodeId
                             objectName: "tagRow-" + nodeId
                             width: panel.tableWidth
-                            height: isItem ? 38 : 78
+                            readonly property bool distinctKeyword: keyword !== ""
+                                && keyword.toLowerCase().replace(/[^a-z0-9]/g, "")
+                                    !== tagName.toLowerCase().replace(/'s\b/g, "").replace(/[^a-z0-9]/g, "")
+                            height: isItem ? 38 : distinctKeyword ? 78 : 60
                             color: selected ? Theme.selectionBackground
                                 : hover.hovered ? Theme.cardBackgroundHover : Theme.cardBackground
 
@@ -337,7 +340,7 @@ Rectangle {
                                 onTapped: panel.tagController.selectNode(row.nodeId)
                                 onDoubleTapped: {
                                     panel.detailTitle = row.tagName
-                                    panel.detailMetadata = row.tagNumber + (row.vr ? " · VR " + row.vr : "")
+                                    panel.detailMetadata = row.tagNumber + (row.vr ? " · VR " + row.vr : "") + (row.keyword ? " · " + row.keyword : "")
                                     panel.detailValue = row.valueText
                                     detailDialog.open()
                                 }
@@ -381,7 +384,7 @@ Rectangle {
                                     elide: Text.ElideRight
                                 }
                                 Text {
-                                    visible: row.keyword !== ""
+                                    visible: row.distinctKeyword
                                     width: parent.width
                                     text: row.keyword
                                     color: Theme.textMuted

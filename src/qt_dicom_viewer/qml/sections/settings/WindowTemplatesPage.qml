@@ -7,7 +7,25 @@ ColumnLayout {
     id: root
     required property var settingsController
     property string editingId: ""
+    signal revealEditor(var item)
     spacing: 24
+    function editTemplate(template) {
+        editingId = template.presetId
+        name.text = template.label
+        ww.text = String(template.width)
+        wl.text = String(template.center)
+        editorSection.expand()
+        revealTimer.restart()
+    }
+    Timer {
+        id: revealTimer
+        interval: 40
+        onTriggered: {
+            root.revealEditor(editorSection)
+            name.forceActiveFocus()
+            name.selectAll()
+        }
+    }
     function clearEditor() { editingId = ""; name.text = ""; ww.text = "400"; wl.text = "40" }
     function saveEditor() {
         if (settingsController.saveWindowTemplate(editingId, name.text,
@@ -67,7 +85,19 @@ ColumnLayout {
                         objectName: "settingWindowFavorite-" + entry.modelData.presetId
                         Layout.preferredWidth: 28; Layout.preferredHeight: 28
                         minimumButtonWidth: 28; compact: true
-                        text: checked ? "★" : "☆"
+                        iconName: checked ? "star-filled" : "star"
+                        iconSize: 18
+                        padding: 0
+                        leftPadding: 0
+                        rightPadding: 0
+                        topPadding: 0
+                        bottomPadding: 0
+                        background: Rectangle {
+                            color: "transparent"
+                            radius: 3
+                            border.width: parent.visualFocus ? 2 : 0
+                            border.color: Theme.focusBorder
+                        }
                         normalColor: "transparent"
                         textColor: checked ? Theme.primaryColor : Theme.textMuted
                         checked: entry.modelData.favorite === true
@@ -75,7 +105,6 @@ ColumnLayout {
                         Accessible.checked: checked
                         Accessible.name: qsTrId(checked ? "window.favoriteRemove" : "window.favoriteAdd") + " · " + entry.modelData.label
                         onClicked: root.settingsController.setWindowTemplateFavorite(entry.modelData.presetId, !entry.modelData.favorite)
-                        Components.AppToolTip { visible: parent.hovered; text: parent.Accessible.name }
                     }
                     Components.AppCheckBox {
                         id: enabledBox
@@ -100,7 +129,7 @@ ColumnLayout {
                             objectName: "windowEdit-" + entry.modelData.presetId
                             visible: !entry.modelData.builtin; text: qsTrId("text.0782"); compact: true
                             Layout.preferredWidth: 46; Layout.preferredHeight: 28
-                            onClicked: { root.editingId = entry.modelData.presetId; name.text = entry.modelData.label; ww.text = entry.modelData.width; wl.text = entry.modelData.center }
+                            onClicked: root.editTemplate(entry.modelData)
                         }
                         Components.AppButton {
                             objectName: "windowDelete-" + entry.modelData.presetId
@@ -116,6 +145,8 @@ ColumnLayout {
         }
     }
     SettingsSection {
+        id: editorSection
+        sectionKey: "window-template-editor"
         Layout.fillWidth: true
         title: root.editingId ? qsTrId("text.0784") : qsTrId("text.0785")
         GridLayout {

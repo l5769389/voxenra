@@ -118,7 +118,17 @@ Item {
     }
     Component { id: privacyPage; PrivacySettingsPage { settingsController: page.settingsController } }
     Component { id: colorsPage; ColorMapsPage { settingsController: page.settingsController } }
-    Component { id: windowsPage; WindowTemplatesPage { settingsController: page.settingsController } }
+    Component {
+        id: windowsPage
+        WindowTemplatesPage {
+            settingsController: page.settingsController
+            onRevealEditor: item => {
+                const flick = scroll.contentItem
+                const top = item.mapToItem(flick.contentItem, 0, 0).y
+                flick.contentY = Math.max(0, Math.min(top, flick.contentHeight - flick.height))
+            }
+        }
+    }
     Component { id: crosshairPage; CrosshairSettingsPage { settingsController: page.settingsController } }
     Component { id: cornersPage; CornerSettingsPage { settingsController: page.settingsController } }
     Component { id: scalePage; ScaleSettingsPage { settingsController: page.settingsController } }

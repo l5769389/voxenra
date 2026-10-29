@@ -373,6 +373,7 @@ def test_value_dialog_adapts_to_content_and_copies_plain_text(scene, tmp_path):
     assert dialog.property("height") < 260
     assert dialog.property("width") <= 640
     assert row["tagNumber"] in panel.property("detailMetadata")
+    assert row["keyword"] in panel.property("detailMetadata")
     copy = find(window, "tagCopyValue")
     close = find(window, "tagCloseValue")
     assert copy.width() < 120 and close.width() < 100
@@ -408,3 +409,15 @@ def test_value_dialog_adapts_to_content_and_copies_plain_text(scene, tmp_path):
     finally:
         clipboard.setText(previous)
     assert not warnings, "\n".join(warnings)
+
+
+def test_redundant_keywords_are_compact_but_remain_searchable(scene):
+    window, workspace, series, warnings = scene
+    controller = open_tags(window, workspace, series)
+    type_text(window, find(window, "tagSearch"), "PatientName")
+    patient = next(row for row in rows(controller.tagModel) if row["keyword"] == "PatientName")
+    item = find(window, "tagRow-" + patient["nodeId"])
+    assert not item.property("distinctKeyword")
+    assert item.height() == 60
+    assert item.property("keyword") == "PatientName"
+    assert not warnings, warnings

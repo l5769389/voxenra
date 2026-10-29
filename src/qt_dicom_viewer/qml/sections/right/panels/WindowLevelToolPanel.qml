@@ -354,11 +354,6 @@ ColumnLayout {
             objectName: "windowPreset-" + modelData.presetId
             Accessible.name: modelData.label + ", WW " + modelData.width + ", WL " + modelData.center
 
-            Components.AppToolTip {
-                visible: presetItem.hovered
-                text: presetItem.modelData.label + " · WW " + presetItem.modelData.width + " / WL " + presetItem.modelData.center
-            }
-
             width: presetList.width
             height: 36
             leftPadding: 10
@@ -393,7 +388,19 @@ ColumnLayout {
                         Layout.preferredHeight: 28
                         minimumButtonWidth: 22
                         compact: true
-                        text: checked ? "★" : "☆"
+                        iconName: checked ? "star-filled" : "star"
+                        iconSize: 18
+                        padding: 0
+                        leftPadding: 0
+                        rightPadding: 0
+                        topPadding: 0
+                        bottomPadding: 0
+                        background: Rectangle {
+                            color: "transparent"
+                            radius: 3
+                            border.width: parent.visualFocus ? 2 : 0
+                            border.color: Theme.focusBorder
+                        }
                         textColor: checked ? Theme.primaryColor : Theme.textMuted
                         normalColor: "transparent"
                         checked: presetItem.modelData.favorite === true
@@ -404,7 +411,6 @@ ColumnLayout {
                             windowPanel.errorText = windowPanel.settingsController.setWindowTemplateFavorite(presetItem.modelData.presetId, !presetItem.modelData.favorite)
                                 ? "" : windowPanel.settingsController.message
                         }
-                        Components.AppToolTip { visible: parent.hovered; text: parent.Accessible.name }
                     }
 
                     Text {

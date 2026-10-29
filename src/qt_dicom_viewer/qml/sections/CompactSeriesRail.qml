@@ -72,6 +72,7 @@ Item {
             actionEnabled: true
             onTriggered: rail.panelController.openImportDialog()
         }
+
         Components.ToolbarAction {
             tooltipPlacement: "right"
             buttonObjectName: "compactSidebarPacs"

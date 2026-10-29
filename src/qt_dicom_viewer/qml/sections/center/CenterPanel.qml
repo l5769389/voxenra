@@ -22,7 +22,7 @@ Rectangle {
     readonly property var windowManager: workspaceController.windowManager ?? null
 
     readonly property var opening: workspaceController.activeLoadState
-    readonly property int tabStripHeight: 46
+    readonly property int tabStripHeight: 40
     readonly property bool imageWorkspace: ["2d", "compare2d", "comparempr", "mpr", "4d", "petctfusion"].includes(workspaceController.activeTabType)
 
     readonly property Item exportItem: workspaceLoader.item

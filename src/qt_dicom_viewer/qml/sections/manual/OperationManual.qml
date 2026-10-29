@@ -199,6 +199,8 @@ Rectangle {
                     file: manual.article.example
                         ?? ((manual.article.examples?.length ?? 0) > 0 ? manual.article.examples[manual.petExample ? 1 : 0] : "")
                     caption: manual.article.caption ?? qsTrId("text.0952")
+                    sourceCrop: manual.article.exampleCrop
+                        ? Qt.rect(...manual.article.exampleCrop) : Qt.rect(0, 0, 0, 0)
                     pageActive: manual.active
                     readingViewport: readingArea
                 }

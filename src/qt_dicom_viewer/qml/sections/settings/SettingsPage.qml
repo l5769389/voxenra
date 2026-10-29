@@ -4,6 +4,7 @@ import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "../../components" as Components
 import "../../theme"
+import "SettingsSearchIndex.js" as SearchIndex
 
 Rectangle {
     id: page
@@ -11,6 +12,15 @@ Rectangle {
     required property var pacsController
     required property var settingsController
     property var workspaceController: null
+    readonly property var toolbarEditor: settingsController.createToolbarEditor(page)
+    Component.onCompleted: toolbarEditor.selectProfile(page.workspaceController?.toolbarProfileForEditing?.() ?? "")
+    readonly property string searchQuery: search.text.trim().toLocaleLowerCase()
+    readonly property var searchAliases: ({appearance: qsTrId("settings.searchAliases.appearance"), input: qsTrId("settings.searchAliases.input"), window: qsTrId("settings.searchAliases.window")})
+    function matchesCategory(category) {
+        const terms = (SearchIndex.labels[category.key] ?? []).map(key => qsTrId(key)).join(" ")
+        return !searchQuery || (category.title + " " + category.subtitle + " " + terms + " " + (searchAliases[category.key] ?? "")).toLocaleLowerCase().includes(searchQuery)
+    }
+    readonly property int searchMatchCount: categories.filter(category => matchesCategory(category)).length
     color: Theme.panelBackgroundStrong
     readonly property string selectedCategory: settingsController.activeCategory
     readonly property var categories: [
@@ -166,6 +176,13 @@ Rectangle {
                     ColumnLayout {
                         width: navigationScroll.availableWidth
                         spacing: page.compactNavigation ? 0 : 4
+                        Text {
+                            objectName: "settingsSearchNoResults"
+                            Layout.fillWidth: true
+                            visible: page.searchMatchCount === 0
+                            text: qsTrId("settings.searchNoResults")
+                            color: Theme.textMuted; font.pixelSize: 12; wrapMode: Text.Wrap
+                        }
                         Repeater {
                             id: categoryRepeater
                             model: page.categories
@@ -175,7 +192,7 @@ Rectangle {
                                 property alias navigationButton: category
                                 Layout.fillWidth: true
                                 spacing: page.compactNavigation ? 0 : 4
-                                visible: !search.text || (modelData.title + modelData.subtitle).toLowerCase().includes(search.text.toLowerCase())
+                                visible: page.matchesCategory(modelData)
                                 Text {
                                     visible: !!entry.modelData.group && !search.text
                                     Layout.topMargin: page.compactNavigation ? 0 : 8
@@ -254,7 +271,7 @@ Rectangle {
         id: toolbarComponent
         ToolbarSettingsPage {
             settingsController: page.settingsController
-            initialProfile: page.workspaceController?.toolbarProfileForEditing?.() ?? ""
+            editor: page.toolbarEditor
         }
     }
     Component {

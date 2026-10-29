@@ -152,7 +152,7 @@ def test_four_d_panel_updates_fps_and_accepts_phase_click(
     controller.setFps(13)
     QTest.qWait(20)
     assert fps_slider.property("value") == 13.0
-    assert fps_value.property("text") == "13"
+    assert fps_value.property("text") == "13 FPS"
     assert first_phase_button.property("checked")
     assert fifth_phase_button.mapToScene(QPointF()).y() == pytest.approx(
         first_phase_button.mapToScene(QPointF()).y()

@@ -98,62 +98,69 @@ Rectangle {
         }
     }
 
-    component NavigationActionButton: Components.ToolbarAction {
-        tooltipPlacement: "right"
+    component NavigationActionButton: Item {
         id: navigationAction
+        implicitWidth: 46
+        implicitHeight: leftPanel.navigationButtonHeight
 
         required property var actionData
         readonly property bool isFileAction: actionData.type === "file"
         readonly property bool isPacsAction: actionData.type === "pacs"
 
-        buttonObjectName: isFileAction
-            ? "sidebarOpenFolder"
-            : isPacsAction ? "sidebarPacs" : "openView-" + actionData.type
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
         Layout.minimumWidth: 0
-        label: isFileAction && leftPanel.panelController.scanning ? qsTrId("text.0620") : actionData.label
-        showLabel: leftPanel.showNavigationLabels
-        shortLabel: actionData.shortLabel
-        iconSize: Theme.navigationIconSize
-        hoverWhenDisabled: true
-        checked: (isFileAction || isPacsAction) && leftPanel.activeSource === actionData.type
-        segmented: isFileAction || isPacsAction
-        normalIconColor: segmented ? Theme.folderAccent : Theme.iconDefault
-        disabledIconColor: normalIconColor
-        iconName: actionData.icon
-        readonly property string viewError: leftPanel.panelController.activeMrViewErrors[actionData.type] ?? ""
-        tooltipText: viewError || label
-        placeholder: !actionData.supported
-        actionEnabled: isFileAction
-            ? true
-            : isPacsAction ? leftPanel.workspaceController !== null
-            : leftPanel.activeSeriesUid !== ""
-                && actionData.supported
-                && (leftPanel.activeSeriesModality !== "PT"
-                    || ["2d", "tag", "mpr", "3d", "fusion"].includes(actionData.type))
-                && (actionData.type !== "montage" || !leftPanel.panelController.scanning)
-                && (
-                    actionData.type !== "4d"
-                    || leftPanel.panelController.activeSeriesSupportsFourD
-                )
 
-        onTriggered: {
-            if (isFileAction || isPacsAction)
-                leftPanel.selectedSource = actionData.type
-            if (isFileAction)
-                leftPanel.panelController.openImportDialog()
-            else if (isPacsAction)
-                leftPanel.workspaceController.openPacs()
-            else if (actionData.type === "fusion")
-                leftPanel.panelController.requestFusionView()
-            else
-                leftPanel.panelController.openSeriesView(
-                    leftPanel.activeSeriesUid,
-                    actionData.type
-                )
+        Components.ToolbarAction {
+            anchors.fill: parent
+            tooltipPlacement: "right"
+            buttonObjectName: isFileAction
+                ? "sidebarOpenFolder"
+                : isPacsAction ? "sidebarPacs" : "openView-" + actionData.type
+            label: isFileAction && leftPanel.panelController.scanning ? qsTrId("text.0620") : actionData.label
+            showLabel: leftPanel.showNavigationLabels
+            shortLabel: actionData.shortLabel
+            iconSize: Theme.navigationIconSize
+            hoverWhenDisabled: true
+            checked: (isFileAction || isPacsAction) && leftPanel.activeSource === actionData.type
+            segmented: isFileAction || isPacsAction
+            normalIconColor: segmented ? Theme.folderAccent : Theme.iconDefault
+            disabledIconColor: normalIconColor
+            iconName: actionData.icon
+            readonly property string viewError: leftPanel.panelController.activeMrViewErrors[actionData.type] ?? ""
+            tooltipText: viewError || label
+            placeholder: !actionData.supported
+            actionEnabled: isFileAction
+                ? true
+                : isPacsAction ? leftPanel.workspaceController !== null
+                : leftPanel.activeSeriesUid !== ""
+                    && actionData.supported
+                    && (leftPanel.activeSeriesModality !== "PT"
+                        || ["2d", "tag", "mpr", "3d", "fusion"].includes(actionData.type))
+                    && (actionData.type !== "montage" || !leftPanel.panelController.scanning)
+                    && (
+                        actionData.type !== "4d"
+                        || leftPanel.panelController.activeSeriesSupportsFourD
+                    )
+
+            onTriggered: {
+                if (isFileAction || isPacsAction)
+                    leftPanel.selectedSource = actionData.type
+                if (isFileAction)
+                    leftPanel.panelController.openImportDialog()
+                else if (isPacsAction)
+                    leftPanel.workspaceController.openPacs()
+                else if (actionData.type === "fusion")
+                    leftPanel.panelController.requestFusionView()
+                else
+                    leftPanel.panelController.openSeriesView(
+                        leftPanel.activeSeriesUid,
+                        actionData.type
+                    )
+            }
         }
+
 
     }
 

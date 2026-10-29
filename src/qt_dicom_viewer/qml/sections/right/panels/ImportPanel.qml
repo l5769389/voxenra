@@ -43,7 +43,8 @@ ColumnLayout {
     }
     Components.AppButton {
         visible: panel.controller?.busy ?? false
-        text: qsTrId("text.0656")
+        objectName: "cancelAssociatedImport"
+        text: panel.controller?.operation === "import" ? qsTrId("seg.cancelImport") : qsTrId("text.0656")
         onClicked: panel.controller.cancel()
     }
     Components.AppButton {

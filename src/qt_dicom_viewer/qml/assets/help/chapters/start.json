@@ -215,6 +215,11 @@
         "messageId": "manual.local-import.section0"
       },
       {
+        "title": "收藏常用目录",
+        "body": "在选择影像窗口进入常用文件夹，点击 **收藏此目录**。收藏目录直接显示在窗口上方，点击名称即可进入，然后点击 **打开当前文件夹**，或选择文件后点击 **打开所选**。收藏较多时，可在收藏区域内滚动。\n\n在 **管理收藏…** 中可以改名、调整顺序、取消收藏或重新指定目录。收藏会在重启后保留；目录移动或外接硬盘断开时，请重新指定目录或恢复连接。\n\n拖动条目调整顺序，松手后自动保存；按 Esc 取消拖动。",
+        "messageId": "manual.local-import.section5"
+      },
+      {
         "title": "支持的压缩包",
         "body": "**ZIP、RAR4/5、7z、TAR**（含 TGZ、TBZ2、TXZ）及单文件 **GZ、BZ2、XZ**。支持中文路径和固实 RAR，无需安装 WinRAR。加密包、分卷包请先解密或合并解压。",
         "messageId": "manual.local-import.section1"
@@ -285,6 +290,12 @@
     ],
     "example": "pacs-dimse-settings.png",
     "caption": "传统 DICOM（DIMSE）连接设置；演示地址仅用于本机合成数据。",
-    "icon": "nav-pacs"
+    "icon": "nav-pacs",
+    "exampleCrop": [
+      368,
+      76,
+      544,
+      668
+    ]
   }
 ]

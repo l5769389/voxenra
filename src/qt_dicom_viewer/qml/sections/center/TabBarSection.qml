@@ -12,10 +12,71 @@ Basic.TabBar {
     required property var workspaceController
     readonly property var windowManager: workspaceController.windowManager ?? null
     property real dropPosition: -1
-    readonly property int dropIndex: Math.max(0, Math.min(tabCount,
-        Math.floor((dropPosition + (contentItem.contentX ?? 0) - leftPadding + tabWidth / 2) / (tabWidth + spacing))))
+    readonly property int dropIndex: insertionIndex(dropPosition + (contentItem.contentX ?? 0) - leftPadding)
+
+    function typeLabel(type) {
+        switch (String(type).toLowerCase()) {
+        case "settings": case "manual": return ""
+        case "petctfusion": return "PET/CT"
+        case "compare2d": return qsTrId("tabs.type.compare2d")
+        case "comparempr": return qsTrId("tabs.type.comparempr")
+        case "montage": return qsTrId("tabs.type.montage")
+        case "tag": return qsTrId("tabs.type.tag")
+        default: return String(type).toUpperCase()
+        }
+    }
+
+    function widthForTab(tab) {
+        return ["settings", "manual"].includes(tab.tabType) ? Math.min(160, tabWidth) : tabWidth
+    }
+
+    function insertionOffset(index) {
+        let offset = 0
+        for (let i = 0; i < index; ++i)
+            offset += widthForTab(workspaceController.tabs[i]) + spacing
+        return offset
+    }
+
+    function insertionIndex(position) {
+        let offset = 0
+        for (let i = 0; i < tabCount; ++i) {
+            const width = widthForTab(workspaceController.tabs[i])
+            if (position < offset + width / 2)
+                return i
+            offset += width + spacing
+        }
+        return tabCount
+    }
+    function revealActiveTab() {
+        if (dropPosition >= 0 || windowManager?.dragging) return
+        const index = workspaceController.tabs.findIndex(tab => tab.tabId === workspaceController.activeTabId)
+        if (index < 0 || !contentItem) return
+        currentIndex = index
+        contentItem.positionViewAtIndex(index, ListView.Contain)
+    }
+
+    // Defer until the side panels and mixed-width delegates have settled.
+    Timer {
+        id: revealTimer
+        interval: 0
+        onTriggered: workspaceTabs.revealActiveTab()
+    }
+    onWidthChanged: revealTimer.restart()
+    onTabCountChanged: revealTimer.restart()
+    Connections {
+        target: workspaceTabs.workspaceController
+        function onActiveTabChanged() { revealTimer.restart() }
+    }
+    Connections {
+        target: workspaceTabs.contentItem
+        function onWidthChanged() { revealTimer.restart() }
+        function onContentWidthChanged() { revealTimer.restart() }
+    }
     clip: true
-    Component.onCompleted: windowManager?.registerTabBar(workspaceController.windowId, workspaceTabs)
+    Component.onCompleted: {
+        windowManager?.registerTabBar(workspaceController.windowId, workspaceTabs)
+        revealTimer.restart()
+    }
     readonly property int tabCount:
         workspaceTabs.workspaceController.tabs.length
     readonly property real tabWidth: Math.min(
@@ -47,7 +108,7 @@ Basic.TabBar {
         z: 20
         visible: workspaceTabs.dropPosition >= 0
         x: Math.max(0, Math.min(workspaceTabs.width - width,
-            workspaceTabs.leftPadding + workspaceTabs.dropIndex * (workspaceTabs.tabWidth + workspaceTabs.spacing)
+            workspaceTabs.leftPadding + workspaceTabs.insertionOffset(workspaceTabs.dropIndex)
                 - (workspaceTabs.contentItem.contentX ?? 0)))
         y: 2
         width: 2
@@ -172,8 +233,8 @@ Basic.TabBar {
             Accessible.description: tabButton.modelData.tabTooltip ?? tabButton.modelData.tabLabel
             Accessible.selected: checked
             Accessible.onPressAction: tabButton.click()
-            width: workspaceTabs.tabWidth
-            implicitWidth: workspaceTabs.tabWidth
+            width: workspaceTabs.widthForTab(modelData)
+            implicitWidth: workspaceTabs.widthForTab(modelData)
             leftPadding: 10
             rightPadding: 6
             topPadding: 3
@@ -186,6 +247,8 @@ Basic.TabBar {
                 id: identityTooltip
                 objectName: "tabTooltip-" + tabButton.modelData.tabId
                 visible: tabHover.hovered && !tabDragArea.pressed && !closeButton.hovered
+                    && (descriptionLabel.truncated || patientLabel.truncated
+                        || (patientLabel.text !== "" && !patientLabel.visible) || contextLabel.truncated)
                 delay: 550
                 text: tabButton.modelData.tabTooltip ?? tabButton.modelData.tabLabel
                 width: Math.min(560, Math.max(240, workspaceTabs.width - 24))
@@ -293,9 +356,7 @@ Basic.TabBar {
 
                         anchors.centerIn: parent
                         font.pixelSize: 11
-                        text: ["settings", "manual"].includes(String(tabButton.modelData.tabType).toLowerCase()) ? "" : String(tabButton.modelData.tabType).toLowerCase() === "petctfusion" ? "PET/CT" : String(tabButton.modelData.tabType) === "compare2d" ? "2D Compare" : String(tabButton.modelData.tabType) === "comparempr" ? "MPR Compare" : String(
-                            tabButton.modelData.tabType
-                        ).toUpperCase()
+                        text: workspaceTabs.typeLabel(tabButton.modelData.tabType)
                         font.weight: tabButton.checked
                             ? Font.DemiBold : Font.Normal
                         color: tabButton.checked
@@ -324,13 +385,14 @@ Basic.TabBar {
                         id: contextRow
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
+                        clip: true
                         visible: patientLabel.text !== "" || contextLabel.text !== ""
                         implicitHeight: Math.max(patientLabel.implicitHeight, contextLabel.implicitHeight)
                         Text {
                             id: patientLabel
                             objectName: "tabPatient-" + tabButton.modelData.tabId
-                            visible: text !== ""
-                            width: !visible ? 0 : contextLabel.text === "" ? contextRow.width
+                            visible: text !== "" && width > 0
+                            width: text === "" ? 0 : contextLabel.text === "" ? contextRow.width
                                 : Math.min(implicitWidth, contextRow.width * 0.4,
                                     Math.max(0, contextRow.width - contextLabel.implicitWidth - contextSeparator.implicitWidth))
                             text: tabButton.modelData.tabPatient ?? ""
@@ -353,7 +415,7 @@ Basic.TabBar {
                             objectName: "tabSecondary-" + tabButton.modelData.tabId
                             x: patientLabel.width + contextSeparator.width
                             width: Math.max(0, contextRow.width - x)
-                            visible: text !== ""
+                            visible: text !== "" && width > 0
                             text: tabButton.modelData.tabSecondary ?? ""
                             textFormat: Text.PlainText
                             color: Theme.textMuted

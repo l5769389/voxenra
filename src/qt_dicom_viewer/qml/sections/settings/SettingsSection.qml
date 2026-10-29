@@ -16,6 +16,15 @@ Rectangle {
     property bool sessionCollapsed: false
     readonly property bool collapsed: settingsController
         ? settingsController.values.layout.settingsCollapsedGroups.includes(sectionKey) : sessionCollapsed
+    function expand() {
+        if (settingsController) {
+            if (collapsed) settingsController.setValue("layout", "settingsCollapsedGroups",
+                settingsController.values.layout.settingsCollapsedGroups.filter(key => key !== sectionKey))
+        } else {
+            sessionCollapsed = false
+            State.collapsed[sectionKey] = false
+        }
+    }
     Component.onCompleted: sessionCollapsed = State.collapsed[sectionKey] === true
     implicitHeight: content.implicitHeight + 20
     color: Theme.panelBackground

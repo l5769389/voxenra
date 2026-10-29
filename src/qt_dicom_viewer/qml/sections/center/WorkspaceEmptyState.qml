@@ -105,7 +105,8 @@ Item {
                 iconName: "nav-load-file"
                 iconSize: 18
                 actionRole: "primary"
-                onClicked: emptyState.panelController.openImportDialog()
+                onClicked: emptyState.scanning ? emptyState.panelController.cancelImport()
+                    : emptyState.panelController.openImportDialog()
             }
             Components.AppButton {
                 objectName: "homeOpenSelected"
@@ -124,11 +125,12 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 visible: emptyState.hasSeries && (!emptyState.pacsController || emptyState.pacsController.localEnabled)
                 enabled: !emptyState.documentBusy
-                text: qsTrId("home.continueImport")
+                text: emptyState.scanning ? qsTrId("text.0620") : qsTrId("home.continueImport")
                 iconName: "nav-load-file"
                 normalColor: "transparent"
                 baseBorderWidth: 1
-                onClicked: emptyState.panelController.openImportDialog()
+                onClicked: emptyState.scanning ? emptyState.panelController.cancelImport()
+                    : emptyState.panelController.openImportDialog()
             }
             GridLayout {
                 id: secondaryActions

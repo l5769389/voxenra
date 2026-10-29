@@ -50,7 +50,9 @@ class AppController(QObject):
         self._series_export_controller = SeriesExportController(self._series_catalog, self._settings_controller, self)
         self._workspace_controller = WorkspaceController(self._series_catalog,self._image_provider,parent= self)
         self._panel_controller = PanelController(parent=self, series_catalog=self._series_catalog, image_provider=image_provider,
-            import_blocker=lambda: self._series_import_blocker("local"))
+            import_blocker=lambda: self._series_import_blocker("local"),
+            favorite_path=(self._settings_controller._path.with_name("favorite-directories.json")
+                           if self._settings_controller._path else None))
         from qt_dicom_viewer.ui.controller.window_manager import WindowManager
         self._window_manager = WindowManager(self, self._workspace_controller)
         self._export_controller = self._window_manager.mainWorkspace.exportController
@@ -85,6 +87,8 @@ class AppController(QObject):
         if source == "pacs" and self._panel_controller.scanning:
             return _msg("import.waitForLocal")
         pacs = getattr(self, "_pacs_controller", None)
+        if source == "local" and pacs is not None and not pacs.localEnabled:
+            return _msg("favorites.localDisabled")
         if source == "local" and pacs is not None and pacs.busy and pacs.operation == "import":
             return _msg("import.waitForPacs")
         return ""

@@ -80,6 +80,41 @@ def test_reorder_menu_and_pointer_actions(sidebar_scene, theme, language):
     assert not warnings, warnings
 
 
+def test_pointer_reorder_across_compact_utility_tabs(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    window.resize(1800, 900)
+    first, = open_tabs(app, records[:1])
+    session = app.windowManager.mainWorkspace
+    session.openSettings()
+    settings_id = session.activeTabId
+    session.openManual('tabs')
+    manual_id = session.activeTabId
+    QTest.qWait(100)
+    image_id = first.tab_config.tab_id
+    image = find(window, 'workspaceTab-' + image_id)
+    manual = find(window, 'workspaceTab-' + manual_id)
+    assert manual.width() < image.width()
+    assert find(window, 'workspaceTab-' + settings_id).width() < image.width()
+    # A drop past the compact tab's midpoint must insert after it, even when
+    # the same coordinate would be before it under the old equal-width rule.
+    start = find(window, 'tabDrag-' + image_id).mapToScene(QPointF(20, 15)).toPoint()
+    end = manual.mapToScene(QPointF(manual.width() - 10, 15)).toPoint()
+    QTest.mousePress(window, Qt.LeftButton, pos=start)
+    QTest.mouseMove(window, end, 30)
+    assert app.windowManager.dragging
+    QTest.mouseRelease(window, Qt.LeftButton, pos=end)
+    wait_until(lambda: session._ids == [settings_id, manual_id, image_id])
+    assert session.activeTabId == manual_id
+    start = find(window, 'tabDrag-' + manual_id).mapToScene(QPointF(20, 15)).toPoint()
+    end = find(window, 'workspaceTab-' + settings_id).mapToScene(QPointF(20, 15)).toPoint()
+    QTest.mousePress(window, Qt.LeftButton, pos=start)
+    QTest.mouseMove(window, end, 30)
+    QTest.mouseRelease(window, Qt.LeftButton, pos=end)
+    wait_until(lambda: session._ids == [manual_id, settings_id, image_id])
+    assert session.activeTabId == manual_id
+    assert not warnings, warnings
+
+
 def test_detach_move_back_preserves_views_history_and_independent_tools(sidebar_scene):
     window, app, records, warnings = sidebar_scene
     first, second = open_tabs(app, records[:2])
@@ -460,4 +495,46 @@ def test_settings_update_tooltip_handles_detached_anchor(sidebar_scene):
     assert tooltip.setProperty("parent", None)
     QTest.qWait(50)
     assert not tooltip.property("visible")
+    assert not warnings, warnings
+
+
+def test_active_tab_remains_visible_after_tool_panel_and_resize(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    window.resize(1280, 820)
+    workspace = app.windowManager.mainWorkspace
+    workspace.openSettings()
+    workspace.openManual('quick-start')
+    workspace.openPacs()
+    first, = open_tabs(app, records[:1])
+    tab_id = first.tab_config.tab_id
+    button = find(window, 'workspaceTab-' + tab_id)
+    bar = app.windowManager.bars['main']
+
+    def fully_visible():
+        point = button.mapToItem(bar, QPointF(0, 0))
+        return point.x() >= -1 and point.x() + button.width() <= bar.width() + 1
+
+    wait_until(fully_visible)
+    window.resize(1560, 820)
+    QTest.qWait(40)
+    window.resize(1280, 820)
+    wait_until(fully_visible)
+    assert not warnings, warnings
+
+
+def test_tab_identity_fields_do_not_paint_over_each_other(sidebar_scene):
+    from test_tag_qml import descendants
+    window, app, records, warnings = sidebar_scene
+    window.resize(1280, 820)
+    workspace = app.workspaceController
+    for kind in ['tag', 'montage']:
+        workspace.createTab(records[0].series_instance_uid, 'Synthetic', kind)
+    workspace.createCompareTab(*(r.series_instance_uid for r in records[:2]))
+    wait_until(lambda: workspace.activeLoadState.status == 'ready')
+    QTest.qWait(100)
+    patients = [item for item in descendants(window.contentItem())
+                if item.objectName().startswith('tabPatient-')]
+    assert patients
+    for patient in patients:
+        assert patient.width() > 0 or not patient.isVisible()
     assert not warnings, warnings

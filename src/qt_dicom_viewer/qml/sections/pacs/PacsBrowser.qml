@@ -11,6 +11,20 @@ Rectangle {
     required property var pacsController
     required property var workspaceController
     readonly property bool available: pacsController.pacsEnabled && pacsController.enabledProfiles.length > 0
+    readonly property bool canQuery: available && !pacsController.busy
+    function submitQuery() {
+        if (!canQuery) return
+        browser.pacsController.queryStudies({
+            PatientName: patientName.text,
+            PatientID: patientId.text,
+            AccessionNumber: accession.text,
+            ModalitiesInStudy: modality.currentIndex > 0 ? modality.currentText : "",
+            dateFrom: dateFrom.text,
+            dateTo: dateTo.text,
+            StudyInstanceUID: studyUid.text,
+            StudyDescription: description.text
+        }, Number(pageSize.currentText))
+    }
     color: Theme.panelBackgroundStrong
 
     component Caption: Text {
@@ -103,6 +117,7 @@ Rectangle {
                             objectName: "pacsPatientName"
                             Layout.fillWidth: true
                             placeholderText: qsTrId("pacs.patientWildcard")
+                            onAccepted: browser.submitQuery()
                             text: browser.pacsController.filterInputs.PatientName || ""
                             enabled: !browser.pacsController.busy
                         }
@@ -114,6 +129,7 @@ Rectangle {
                             objectName: "pacsPatientId"
                             Layout.fillWidth: true
                             placeholderText: "ID…"
+                            onAccepted: browser.submitQuery()
                             text: browser.pacsController.filterInputs.PatientID || ""
                             enabled: !browser.pacsController.busy
                         }
@@ -125,6 +141,7 @@ Rectangle {
                             objectName: "pacsAccession"
                             Layout.fillWidth: true
                             placeholderText: qsTrId("pacs.accessionPlaceholder")
+                            onAccepted: browser.submitQuery()
                             text: browser.pacsController.filterInputs.AccessionNumber || ""
                             enabled: !browser.pacsController.busy
                         }
@@ -146,6 +163,7 @@ Rectangle {
                             objectName: "pacsDateFrom"
                             Layout.fillWidth: true
                             placeholderText: "YYYY-MM-DD"
+                            onAccepted: browser.submitQuery()
                             text: browser.pacsController.filterInputs.dateFrom || ""
                             enabled: !browser.pacsController.busy
                         }
@@ -157,6 +175,7 @@ Rectangle {
                             objectName: "pacsDateTo"
                             Layout.fillWidth: true
                             placeholderText: "YYYY-MM-DD"
+                            onAccepted: browser.submitQuery()
                             text: browser.pacsController.filterInputs.dateTo || ""
                             enabled: !browser.pacsController.busy
                         }
@@ -181,6 +200,7 @@ Rectangle {
                             Components.AppTextField {
                                 id: studyUid
                                 Layout.fillWidth: true
+                                onAccepted: browser.submitQuery()
                                 text: browser.pacsController.filterInputs.StudyInstanceUID || ""
                                 enabled: !browser.pacsController.busy
                             }
@@ -191,6 +211,7 @@ Rectangle {
                                 id: description
                                 objectName: "pacsStudyDescription"
                                 Layout.fillWidth: true
+                                onAccepted: browser.submitQuery()
                                 text: browser.pacsController.filterInputs.StudyDescription || ""
                                 enabled: !browser.pacsController.busy
                             }
@@ -208,17 +229,8 @@ Rectangle {
                     Layout.fillWidth: true
                     text: browser.pacsController.busy && browser.pacsController.operation === "studies" ? qsTrId("text.0976") : qsTrId("text.0977")
                     actionRole: "primary"
-                    enabled: !browser.pacsController.busy
-                    onClicked: browser.pacsController.queryStudies({
-                        PatientName: patientName.text,
-                        PatientID: patientId.text,
-                        AccessionNumber: accession.text,
-                        ModalitiesInStudy: modality.currentIndex > 0 ? modality.currentText : "",
-                        dateFrom: dateFrom.text,
-                        dateTo: dateTo.text,
-                        StudyInstanceUID: studyUid.text,
-                        StudyDescription: description.text
-                    }, Number(pageSize.currentText))
+                    enabled: browser.canQuery
+                    onClicked: browser.submitQuery()
                 }
             }
             Rectangle {

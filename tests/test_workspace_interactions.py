@@ -50,12 +50,7 @@ def test_collapsible_groups_remember_category_switch_and_corner_focus(scene):
     settings = app.settingsController
     settings.selectCategory('corners')
     QTest.qWait(60)
-    first = find(window, 'cornerSelect-topLeft')
-    click(window, first)
-    click(window, find(window, 'cornerPreview-topRight'))
-    assert not first.property('checked') and not first.property('visualFocus')
-    assert find(window, 'cornerSelect-topRight').property('checked')
-    assert not any('CT · 轴位' in str(i.property('text') or '') for i in descendants(window.contentItem()))
+    assert find(window, 'cornerPreview-topRight').isVisible()
     click(window, find(window, 'settingsGroup-corner-appearance'))
     assert not any(i.isVisible() and i.objectName() == 'setting-corners-enabled' for i in descendants(window.contentItem()))
     settings.selectCategory('scale'); QTest.qWait(30)

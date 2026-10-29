@@ -8,11 +8,22 @@ SettingsSplit {
     required property var settingsController
     readonly property var values: settingsController.values.crosshair
     readonly property var planes: [{key: "axial", title: qsTrId("text.0767"), horizontal: "coronal", vertical: "sagittal"}, {key: "coronal", title: qsTrId("text.0768"), horizontal: "axial", vertical: "sagittal"}, {key: "sagittal", title: qsTrId("text.0769"), horizontal: "axial", vertical: "coronal"}]
+    Component.onCompleted: {
+        const groups = settingsController.values.layout.settingsCollapsedGroups
+        if (groups.includes("crosshair-style")) {
+            const migrated = groups.filter(key => key !== "crosshair-style")
+            for (const plane of planes) {
+                const key = "crosshair-style-" + plane.key
+                if (!migrated.includes(key)) migrated.push(key)
+            }
+            settingsController.setValue("layout", "settingsCollapsedGroups", migrated)
+        }
+    }
     Repeater {
         model: root.planes
         delegate: SettingsSection {
-        sectionKey: "crosshair-style"
-        settingsController: root.settingsController
+            sectionKey: "crosshair-style-" + modelData.key
+            settingsController: root.settingsController
             id: section
             required property var modelData
             Layout.fillWidth: true

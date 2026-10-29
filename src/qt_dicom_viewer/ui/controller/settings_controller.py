@@ -369,6 +369,28 @@ class SettingsController(QObject):
         entries.insert(dest, entries.pop(index))
         return self.setValue("corners", corner, entries)
 
+    @Slot(str, str, str, int, result=bool)
+    def transferCornerField(self, source, field, destination, slot):
+        if source not in CORNERS or destination not in CORNERS or field not in self._data['corners'][source]:
+            return self._error(_msg('text.0526'))
+        target = self._data['corners'][destination]
+        if not 0 <= slot <= len(target):
+            return self._error(_msg('text.0526'))
+        if source != destination:
+            if field in target:
+                return self._error(_msg('corners.duplicate'))
+            if len(target) >= 8:
+                return self._error(_msg('corners.full'))
+        candidate = deepcopy(self._data)
+        origin = candidate['corners'][source]
+        index = origin.index(field)
+        origin.pop(index)
+        if source == destination and slot > index:
+            slot -= 1
+        candidate['corners'][destination].insert(slot, field)
+        # Both corners are written together, so a write failure cannot lose a field.
+        return self._commit('corners', candidate)
+
     @Slot(str, int, result=bool)
     def removeCornerField(self, corner, index):
         if corner not in CORNERS:

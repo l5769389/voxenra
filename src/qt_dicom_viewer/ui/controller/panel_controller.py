@@ -46,9 +46,11 @@ class PanelController(QObject):
     fusionDialogChanged = Signal()
 
     # parent=self 是 Qt 的对象所有权关系，不是业务上的“父子 Controller 调用关系”。
-    def __init__(self, parent=None, series_catalog=None, *, image_provider=None, import_blocker=None) -> None:
+    def __init__(self, parent=None, series_catalog=None, *, image_provider=None, import_blocker=None, favorite_path=None) -> None:
         super().__init__(parent)
         self._import_blocker = import_blocker or (lambda: "")
+        from .favorite_directories_controller import FavoriteDirectoriesController
+        self._favorite_directories = FavoriteDirectoriesController(self, favorite_path)
         self._pacs_import_source_uids = None
         self.selectionChanged.connect(self.viewSupportChanged.emit)
         self._scan_thread: QThread | None = None
@@ -93,6 +95,10 @@ class PanelController(QObject):
         if self._thumbnail_service is not None:
             self._thumbnail_service.finished.connect(self._accept_thumbnail)
 
+
+    @Property(QObject, constant=True)
+    def favoriteDirectories(self):
+        return self._favorite_directories
 
     @Property(QObject, constant=True)
     def compareController(self):
@@ -273,7 +279,7 @@ class PanelController(QObject):
             return
         if self._import_is_blocked():
             return
-        paths = select_import_paths(self._last_import_directory)
+        paths = select_import_paths(self._last_import_directory, self._favorite_directories)
         if paths:
             from pathlib import Path
             chosen = Path(paths[0])

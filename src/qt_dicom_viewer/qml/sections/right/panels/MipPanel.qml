@@ -11,6 +11,7 @@ ColumnLayout {
     objectName: "mipPanel"
 
     required property var toolController
+    readonly property bool projectionEnabled: !!toolController?.mprProjectionEnabled
     spacing: 14
 
     RowLayout {
@@ -79,6 +80,8 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         spacing: 6
+        enabled: mipPanel.projectionEnabled
+        opacity: enabled ? 1 : 0.45
 
         Repeater {
             model: [
@@ -163,6 +166,8 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: 104
             spacing: 8
+            enabled: mipPanel.projectionEnabled
+            opacity: enabled ? 1 : 0.45
 
             RowLayout {
                 Layout.fillWidth: true

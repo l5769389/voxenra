@@ -2,7 +2,7 @@
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import QPointF, Qt, QUrl
+from PySide6.QtCore import QObject, QPointF, Qt, QUrl
 from PySide6.QtGui import QColor, QGuiApplication, QInputMethodEvent
 from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
@@ -44,25 +44,48 @@ def reveal_setting(window, item):
     QTest.qWait(40)
 
 
+def drag_corner(window, corner, source, target, cancel=False):
+    window.requestActivate()
+    QTest.qWaitForWindowActive(window)
+    from test_tag_qml import settled_point
+    control = find(window, f'cornerDrag-{corner}-{source}')
+    reveal_setting(window, control)
+    a = settled_point(control, QPointF(14, control.height() / 2))
+    end = find(window, f'cornerDrag-{corner}-{target}')
+    b = settled_point(end, QPointF(14, end.height() - 3 if target > source else 3))
+    QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, a)
+    for step in range(1, 11):
+        QTest.mouseMove(window, a + (b - a) * (step / 10), 20)
+    if cancel:
+        QTest.keyClick(window, Qt.Key_Escape)
+    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, b)
+    QTest.qWait(80)
+
+
 def test_corner_editor_switch_reorder_remove_add_and_preview(scene):
     window, app, warnings = open_page(scene, 'corners')
     settings = app.settingsController
     original = settings.values['corners']['topLeft'][:]
-    click(window, find(window, 'cornerDown-topLeft-0'))
+    drag_corner(window, 'topLeft', 0, 1)
     assert settings.values['corners']['topLeft'] == [original[1], original[0], *original[2:]]
+    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    assert SettingsController(path=settings._path).values['corners']['topLeft'] == settings.values['corners']['topLeft']
+    before_cancel = settings.values['corners']['topLeft'][:]
+    drag_corner(window, 'topLeft', 0, 1, cancel=True)
+    assert settings.values['corners']['topLeft'] == before_cancel
+    from test_favorite_directories_ui import shot
+    shot(window, 'corner-drag-saved')
     click(window, find(window, 'cornerRemove-topLeft-0'))
     assert settings.values['corners']['topLeft'] == [original[0], *original[2:]]
-    click(window, find(window, 'cornerSelect-topRight'))
+    click(window, find(window, 'cornerAddOpen-topRight'))
     before = settings.values['corners']['topRight'][:]
-    assert not find(window, 'cornerUp-topRight-0').isEnabled()
+    assert not window.findChild(QObject, 'cornerUp-topRight-0')
     choice = find(window, 'cornerChoice-topRight')
     chosen = choice.property('currentValue')
     assert chosen not in before
     click(window, find(window, 'cornerAdd-topRight'))
     assert settings.values['corners']['topRight'] == [*before, chosen]
-    assert find(window, 'cornerChoice-topRight').property('currentValue') not in [*before, chosen]
-    click(window, find(window, 'cornerPreview-bottomRight'))
-    assert find(window, 'cornerSelect-bottomRight').property('checked')
+    assert find(window, 'cornerPreview-bottomRight').isVisible()
     assert find(window, 'cornerRemove-bottomRight-0').isEnabled()
     assert not warnings, warnings
 
@@ -139,14 +162,20 @@ def test_window_table_columns_align_and_editor_stays_compact(scene, width, tmp_p
 @pytest.mark.parametrize('category', ['crosshair', 'corners', 'scale', 'measurement', 'roi'])
 def test_settings_preview_remains_bounded_on_wide_screens(scene, category, tmp_path):
     window, app, warnings = open_page(scene, category, 2000)
-    preview = find(window, 'settingsPreviewColumn')
-    form = find(window, 'settingsParameterColumn')
-    assert 240 <= preview.width() <= (380 if category == "measurement" else 280)
-    assert preview.height() > 80
-    assert preview.mapToScene(QPointF()).x() > form.mapToScene(QPointF()).x() + form.width()
-    for item in descendants(window.contentItem()):
-        if item.isVisible() and item.objectName().startswith(('setting-', 'settingInput-', 'cornerSelect-', 'colorPicker-')):
-            inside_width(item, form)
+    if category == 'corners':
+        board = find(window, 'cornerEditorBoard')
+        inside_width(board, window.contentItem())
+        for corner in ('topLeft', 'topRight', 'bottomLeft', 'bottomRight'):
+            inside_width(find(window, 'cornerPreview-' + corner), board)
+    else:
+        preview = find(window, 'settingsPreviewColumn')
+        form = find(window, 'settingsParameterColumn')
+        assert 240 <= preview.width() <= (380 if category == "measurement" else 280)
+        assert preview.height() > 80
+        assert preview.mapToScene(QPointF()).x() > form.mapToScene(QPointF()).x() + form.width()
+        for item in descendants(window.contentItem()):
+            if item.isVisible() and item.objectName().startswith(('setting-', 'settingInput-', 'cornerSelect-', 'colorPicker-')):
+                inside_width(item, form)
     assert window.grabWindow().save(str(tmp_path / f'{category}-2000.png'))
     assert not warnings, warnings
 

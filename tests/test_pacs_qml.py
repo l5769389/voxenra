@@ -207,3 +207,29 @@ def test_segmented_sources_and_advanced_filter_footer(scene, monkeypatch, tmp_pa
     assert "更多筛选条件" in find(window, "pacsMoreFilters").property("text")
     assert 0 <= collapse.mapToItem(scroll, QPointF()).y() < scroll.height()
     assert not warnings, warnings
+
+
+def test_query_enter_uses_button_guard_and_current_inputs(scene, monkeypatch):
+    from PySide6.QtCore import Qt, QMetaObject
+    window, app, warnings = scene
+    pacs = app.pacsController
+    pacs.saveProfile({"name": "Test", "url": "http://127.0.0.1:9"})
+    calls = []
+    monkeypatch.setattr(pacs, "_query_studies", lambda offset: calls.append(dict(pacs._filters)))
+    click(window, find(window, "sidebarPacs"))
+    field = find(window, "pacsPatientName")
+    type_text(window, field, "TEST*")
+    QTest.keyClick(window, Qt.Key_Return)
+    QTest.qWait(30)
+    assert len(calls) == 1 and calls[0]["PatientName"] == "TEST*"
+    click(window, find(window, "pacsQueryStudies"))
+    assert len(calls) == 2 and calls[0] == calls[1]
+    pacs._busy = True
+    pacs.stateChanged.emit()
+    QTest.qWait(30)
+    assert not find(window, "pacsQueryStudies").isEnabled()
+    QMetaObject.invokeMethod(field, "accepted")
+    assert len(calls) == 2
+    pacs._busy = False
+    pacs.stateChanged.emit()
+    assert not warnings, warnings
