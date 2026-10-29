@@ -52,6 +52,8 @@ def viewport(qt_app):
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [error.toString() for error in view.errors()]
     view.show()
+    view.requestActivate()
+    assert QTest.qWaitForWindowActive(view)
     QTest.qWait(80)
     root = view.rootObject()
     pixel_layer = root.findChild(QQuickItem, "dicomPixelLayer")
