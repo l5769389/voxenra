@@ -10,7 +10,7 @@
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
 
 
 ## 功能概览
@@ -172,6 +172,10 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 </tr>
 </table>
 
+在打开影像窗口中收藏常用目录，点击顶部收藏卡片快速进入；激活项的 **×** 可取消收藏。在 **管理收藏** 中拖动排序或调整名称和路径，重启后保留。
+
+![收藏目录快捷切换](docs/screenshots/57-directory-favorites-2.1.5.png)
+
 ## 外观与操作偏好
 
 在 **设置 → 外观与语言** 中选择 **深色、中性深灰或浅色**。中性深灰采用石墨灰面板与低饱和青色强调，保持影像区域突出。主题即时生效并在重启后保留，影像窗宽窗位与色表独立设置。
@@ -180,9 +184,11 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 [深色主题](docs/screenshots/25-theme-dark.png) · [浅色主题](docs/screenshots/26-theme-light.png)
 
-可设置界面大小、鼠标拖动、滚轮方向与工具快捷键，重复或保留按键会被拦截。四角字段及顺序、十字线、比例尺、测量样式和 ROI 指标也可配置。内置中文、英文与巴西葡萄牙语，并支持添加本地 JSON 语言包。左侧栏操作与右侧工具说明文字可独立开关。隐私设置支持新视图隐藏身份叠加、清除最近工作区记录。
+可设置界面大小、鼠标拖动、滚轮方向与工具快捷键，重复或保留按键会被拦截。四角信息直接显示示例，支持角内排序、跨角拖动、添加和删除，松手自动保存。十字线、比例尺、测量样式和 ROI 指标也可配置。内置中文、英文与巴西葡萄牙语，并支持添加本地 JSON 语言包。左侧栏操作与右侧工具说明文字可独立开关。隐私设置支持新视图隐藏身份叠加、清除最近工作区记录。
 
 ![主题、语言与独立按钮说明文字设置](docs/screenshots/44-appearance-2.1.1.png)
+
+![四角信息直接编辑与跨角移动](docs/screenshots/58-corner-editor-2.1.5.gif)
 
 [鼠标操作与工具快捷键设置](docs/screenshots/40-input-settings.png)
 

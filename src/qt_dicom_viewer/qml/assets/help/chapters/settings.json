@@ -190,7 +190,7 @@
       "interaction",
       "measurement-roi"
     ],
-    "example": "corners.png",
+    "example": "corner-editor-2.1.5.png",
     "caption": "选择角落，调整字段内容与顺序。",
     "icon": "info"
   }

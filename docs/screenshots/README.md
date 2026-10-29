@@ -2,6 +2,13 @@
 
 Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
 
+## 2.1.5 新增演示（2026-10-29）
+
+- [收藏目录快捷切换](57-directory-favorites-2.1.5.png) · [English](en/57-directory-favorites-2.1.5.png)
+- [四角信息直接编辑与移动前后](58-corner-editor-2.1.5.gif) · [English](en/58-corner-editor-2.1.5.gif)
+
+素材捕获自原生应用窗口，使用临时示例目录和内置示例信息。切换目录及跨角移动均校验实际状态。
+
 ## 2.1.4 新增演示（2026-10-28）
 
 - [传统 DICOM（DIMSE）配置](51-dimse-settings.png) · [English](en/51-dimse-settings.png)
