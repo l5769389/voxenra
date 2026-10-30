@@ -10,6 +10,7 @@ from qt_dicom_viewer.model.dicom_core import MprFrame, MprGridSpec
 from qt_dicom_viewer.model.dicom_types import FrameDisplayMeta, ImageGeometryMeta, PixelSpacing
 from qt_dicom_viewer.model.render_models import MprRenderRequest, StackRenderResult
 from qt_dicom_viewer.ui.measurement_source import capture_request, display_parameters
+from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from .image_2d_viewport_controller import Image2DViewportController
 
 
@@ -35,6 +36,22 @@ class CprViewportController(Image2DViewportController):
     @Property(bool, constant=True)
     def isCprViewport(self):
         return True
+
+    @_TextProperty('QVariantMap', notify=Image2DViewportController._i18n_overlayInfo,
+                   notify_name='_i18n_overlayInfo', source_notify='overlayChanged')
+    def overlayInfo(self):
+        info = Image2DViewportController.overlayInfo.fget(self)
+        info.update(cprRole=self.viewportRole, cprReconstruction='')
+        result = self._cpr._result
+        if self.viewportRole == 'curved' and result is not None and result.curve is not None:
+            # Describe the accepted raster, not controls awaiting reconstruction.
+            settings = result.curve.settings
+            mode = 'Thin'
+            if settings.projection != 'thin' and settings.thickness_mm > 0:
+                mode = ('MIP' if settings.projection == 'mip' else 'Mean')
+                mode += f' {settings.thickness_mm:g} mm'
+            info['cprReconstruction'] = f'CPR · {mode}'
+        return info
 
     @Property(bool, notify=cprChanged)
     def hasPhysicalSpacing(self):

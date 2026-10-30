@@ -1,0 +1,24 @@
+{
+  "sample": "CTACardio",
+  "sha256": "3b0d4eb1a7d8ebb0c5a89cc0504640f76a030b4e869e33ff34c564c3d3b88ad2",
+  "source": "https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/3b0d4eb1a7d8ebb0c5a89cc0504640f76a030b4e869e33ff34c564c3d3b88ad2",
+  "original_shape": [
+    321,
+    512,
+    512
+  ],
+  "crop_kji": [
+    [
+      100,
+      220
+    ],
+    [
+      150,
+      370
+    ],
+    [
+      150,
+      370
+    ]
+  ]
+}

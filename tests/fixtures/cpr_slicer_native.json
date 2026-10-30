@@ -1,0 +1,555 @@
+{
+  "session": {
+    "algorithmVersion": 1,
+    "source": {
+      "seriesUid": "1.2.826.0.1.3680043.10.999.20261029.88",
+      "frameOfReferenceUid": "1.2.826.0.1.3680043.10.999.20261029.88.300",
+      "fingerprint": "baa91e353b8175078b9a6c9399f1a5ee01afad58560c9ece188061f42a31f787"
+    },
+    "paths": [
+      {
+        "id": "63862c1d-3944-4bdf-9f19-eef643a9b927",
+        "name": "Right tube",
+        "points": {
+          "$tuple": [
+            {
+              "$tuple": [
+                80.36619718309858,
+                63.6,
+                84.45774647887325
+              ]
+            },
+            {
+              "$tuple": [
+                79.46478873239437,
+                63.6,
+                69.13380281690141
+              ]
+            },
+            {
+              "$tuple": [
+                83.97183098591549,
+                63.6,
+                44.79577464788733
+              ]
+            },
+            {
+              "$tuple": [
+                59.633802816901394,
+                63.6,
+                37.58450704225352
+              ]
+            },
+            {
+              "$tuple": [
+                48.81690140845069,
+                63.6,
+                23.16197183098592
+              ]
+            }
+          ]
+        },
+        "revision": 6,
+        "settings": {
+          "step_mm": 0.5,
+          "width_mm": 40.0,
+          "angle_radians": 0.0,
+          "up_patient": {
+            "$tuple": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "projection": "thin",
+          "thickness_mm": 0.0
+        }
+      },
+      {
+        "id": "35fa9a8a-c75d-4b68-9d3e-34623364f24d",
+        "name": {
+          "$message": "cpr.pathName",
+          "args": {
+            "$tuple": []
+          },
+          "values": {
+            "number": 2
+          }
+        },
+        "points": {
+          "$tuple": [
+            {
+              "$tuple": [
+                28.084507042253506,
+                63.6,
+                79.04929577464789
+              ]
+            },
+            {
+              "$tuple": [
+                26.281690140845058,
+                63.6,
+                61.021126760563384
+              ]
+            },
+            {
+              "$tuple": [
+                31.69014084507041,
+                61.20000000000001,
+                39.38732394366197
+              ]
+            },
+            {
+              "$tuple": [
+                38.90140845070422,
+                61.20000000000001,
+                19.55633802816901
+              ]
+            }
+          ]
+        },
+        "revision": 1,
+        "settings": {
+          "step_mm": 0.75,
+          "width_mm": 50.0,
+          "angle_radians": 0.6108652381980153,
+          "up_patient": {
+            "$tuple": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "projection": "mean",
+          "thickness_mm": 12.0
+        }
+      }
+    ],
+    "selected": "35fa9a8a-c75d-4b68-9d3e-34623364f24d",
+    "draft": {
+      "$tuple": []
+    },
+    "referencePlanes": {
+      "$tuple": [
+        "sagittal",
+        "coronal"
+      ]
+    },
+    "referenceCenters": {
+      "$tuple": [
+        {
+          "$tuple": [
+            69.49331474899496,
+            63.6,
+            51.236138948229225
+          ]
+        },
+        {
+          "$tuple": [
+            63.6,
+            61.20000000000001,
+            47.5
+          ]
+        }
+      ]
+    },
+    "positionMm": 0.0,
+    "rangeMm": {
+      "$tuple": [
+        10.0,
+        30.0
+      ]
+    },
+    "pathRanges": {
+      "63862c1d-3944-4bdf-9f19-eef643a9b927": {
+        "$tuple": [
+          0.0,
+          0.0
+        ]
+      },
+      "35fa9a8a-c75d-4b68-9d3e-34623364f24d": {
+        "$tuple": [
+          10.0,
+          30.0
+        ]
+      }
+    },
+    "crossWidthMm": 30.0,
+    "focusedRole": ""
+  },
+  "cross": {
+    "measurements": {
+      "d62c0337-028b-4f03-9f53-06b7ee47ce07": {
+        "$type": "LengthMeasurement",
+        "fields": {
+          "measurement_id": "d62c0337-028b-4f03-9f53-06b7ee47ce07",
+          "series_uid": "1.2.826.0.1.3680043.10.999.20261029.88",
+          "sop_instance_uid": "",
+          "slice_index": 72,
+          "points": {
+            "$tuple": [
+              {
+                "$type": "ImagePoint",
+                "fields": {
+                  "column": 32.356337057248744,
+                  "row": 40.11408330687693
+                }
+              },
+              {
+                "$type": "ImagePoint",
+                "fields": {
+                  "column": 40.34225231421893,
+                  "row": 40.11408330687693
+                }
+              }
+            ]
+          },
+          "length_mm": 3.992957628485094,
+          "kind": {
+            "$enum": "MeasurementKind",
+            "value": "length"
+          }
+        }
+      },
+      "cf10f9fb-522c-4e63-9c22-807e4e3360be": {
+        "$type": "RoiMeasurement",
+        "fields": {
+          "measurement_id": "cf10f9fb-522c-4e63-9c22-807e4e3360be",
+          "series_uid": "1.2.826.0.1.3680043.10.999.20261029.88",
+          "sop_instance_uid": "",
+          "slice_index": 72,
+          "kind": {
+            "$enum": "MeasurementKind",
+            "value": "rect"
+          },
+          "points": {
+            "$tuple": [
+              {
+                "$type": "ImagePoint",
+                "fields": {
+                  "column": 24.4377916930924,
+                  "row": 32.14478458157258
+                }
+              },
+              {
+                "$type": "ImagePoint",
+                "fields": {
+                  "column": 42.22318077293131,
+                  "row": 45.48382639145176
+                }
+              }
+            ]
+          },
+          "metrics": {
+            "$type": "RoiMetrics",
+            "fields": {
+              "width_mm": 8.892694539919454,
+              "height_mm": 6.6695209049395885,
+              "area_mm2": 59.310012135234935,
+              "pixel_count": 234,
+              "mean": 385.71417355333637,
+              "std": 399.4818804330335,
+              "minimum": 54.58253860473633,
+              "maximum": 1357.92578125,
+              "unit": "HU",
+              "perimeter_mm": null
+            }
+          },
+          "smooth": false
+        }
+      }
+    },
+    "frames": {
+      "d62c0337-028b-4f03-9f53-06b7ee47ce07": {
+        "$tuple": [
+          "1.2.826.0.1.3680043.10.999.20261029.88",
+          null,
+          72,
+          81,
+          81,
+          {
+            "$tuple": [
+              0.5,
+              0.5,
+              85.7068993,
+              43.6,
+              39.5263279,
+              -0.8106792,
+              0.0,
+              0.5854906,
+              0.0,
+              1.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf10f9fb-522c-4e63-9c22-807e4e3360be": {
+        "$tuple": [
+          "1.2.826.0.1.3680043.10.999.20261029.88",
+          null,
+          72,
+          81,
+          81,
+          {
+            "$tuple": [
+              0.5,
+              0.5,
+              85.7068993,
+              43.6,
+              39.5263279,
+              -0.8106792,
+              0.0,
+              0.5854906,
+              0.0,
+              1.0,
+              0.0
+            ]
+          }
+        ]
+      }
+    },
+    "labelPositions": {},
+    "presentation": {
+      "d62c0337-028b-4f03-9f53-06b7ee47ce07": {
+        "name": "",
+        "hidden": false,
+        "locked": false,
+        "ordinal": 1
+      },
+      "cf10f9fb-522c-4e63-9c22-807e4e3360be": {
+        "name": "",
+        "hidden": false,
+        "locked": false,
+        "ordinal": 2
+      }
+    },
+    "sources": {
+      "d62c0337-028b-4f03-9f53-06b7ee47ce07": {
+        "kind": "mpr",
+        "parameters": {
+          "series_uid": "1.2.826.0.1.3680043.10.999.20261029.88",
+          "window": {
+            "$type": "WindowLevel",
+            "fields": {
+              "center": 300.0,
+              "width": 1800.0
+            }
+          },
+          "inverted": false,
+          "color_map": "grayscale",
+          "display_mapping": {
+            "$type": "DisplayMappingIntent",
+            "fields": {
+              "mode": "source",
+              "lower": 0.0,
+              "upper": 1.0,
+              "unit": ""
+            }
+          },
+          "plane": {
+            "$enum": "MprPlane",
+            "value": "axial"
+          },
+          "mpr_frame": {
+            "$type": "MprFrame",
+            "fields": {
+              "center_patient": {
+                "$tuple": [
+                  69.49331474899495,
+                  63.6,
+                  51.23613894822923
+                ]
+              },
+              "u_direction_patient": {
+                "$tuple": [
+                  -0.810679228399881,
+                  0.0,
+                  0.5854905538443586
+                ]
+              },
+              "v_direction_patient": {
+                "$tuple": [
+                  0.0,
+                  1.0,
+                  0.0
+                ]
+              },
+              "w_direction_patient": {
+                "$tuple": [
+                  -0.5854905538443586,
+                  0.0,
+                  -0.810679228399881
+                ]
+              }
+            }
+          },
+          "phase_identifier": null,
+          "view_roll_radians": 0.0,
+          "mpr_grid": {
+            "$type": "MprGridSpec",
+            "fields": {
+              "rows": 81,
+              "columns": 81,
+              "row_spacing": 0.5,
+              "column_spacing": 0.5
+            }
+          },
+          "mpr_grid_anchor": null,
+          "projection_mode": null,
+          "slab_thickness_mm": 0.0,
+          "value_unit": null
+        },
+        "cpr": {
+          "pathId": "63862c1d-3944-4bdf-9f19-eef643a9b927",
+          "pathRevision": 5,
+          "pathName": "Right tube",
+          "distanceMm": 35.86414066537023,
+          "algorithmVersion": 1,
+          "frameIndex": 72,
+          "frameCount": 143,
+          "role": "cross",
+          "fingerprint": "baa91e353b8175078b9a6c9399f1a5ee01afad58560c9ece188061f42a31f787"
+        },
+        "pixelFingerprint": "f32889bbbfce7207503de4e4eb8daf7e"
+      },
+      "cf10f9fb-522c-4e63-9c22-807e4e3360be": {
+        "kind": "mpr",
+        "parameters": {
+          "series_uid": "1.2.826.0.1.3680043.10.999.20261029.88",
+          "window": {
+            "$type": "WindowLevel",
+            "fields": {
+              "center": 300.0,
+              "width": 1800.0
+            }
+          },
+          "inverted": false,
+          "color_map": "grayscale",
+          "display_mapping": {
+            "$type": "DisplayMappingIntent",
+            "fields": {
+              "mode": "source",
+              "lower": 0.0,
+              "upper": 1.0,
+              "unit": ""
+            }
+          },
+          "plane": {
+            "$enum": "MprPlane",
+            "value": "axial"
+          },
+          "mpr_frame": {
+            "$type": "MprFrame",
+            "fields": {
+              "center_patient": {
+                "$tuple": [
+                  69.49331474899495,
+                  63.6,
+                  51.23613894822923
+                ]
+              },
+              "u_direction_patient": {
+                "$tuple": [
+                  -0.810679228399881,
+                  0.0,
+                  0.5854905538443586
+                ]
+              },
+              "v_direction_patient": {
+                "$tuple": [
+                  0.0,
+                  1.0,
+                  0.0
+                ]
+              },
+              "w_direction_patient": {
+                "$tuple": [
+                  -0.5854905538443586,
+                  0.0,
+                  -0.810679228399881
+                ]
+              }
+            }
+          },
+          "phase_identifier": null,
+          "view_roll_radians": 0.0,
+          "mpr_grid": {
+            "$type": "MprGridSpec",
+            "fields": {
+              "rows": 81,
+              "columns": 81,
+              "row_spacing": 0.5,
+              "column_spacing": 0.5
+            }
+          },
+          "mpr_grid_anchor": null,
+          "projection_mode": null,
+          "slab_thickness_mm": 0.0,
+          "value_unit": null
+        },
+        "cpr": {
+          "pathId": "63862c1d-3944-4bdf-9f19-eef643a9b927",
+          "pathRevision": 5,
+          "pathName": "Right tube",
+          "distanceMm": 35.86414066537023,
+          "algorithmVersion": 1,
+          "frameIndex": 72,
+          "frameCount": 143,
+          "role": "cross",
+          "fingerprint": "baa91e353b8175078b9a6c9399f1a5ee01afad58560c9ece188061f42a31f787"
+        },
+        "pixelFingerprint": "f32889bbbfce7207503de4e4eb8daf7e",
+        "navigation": {
+          "$type": "MprState",
+          "fields": {
+            "frame": {
+              "$type": "MprFrame",
+              "fields": {
+                "center_patient": {
+                  "$tuple": [
+                    69.49331474899495,
+                    63.6,
+                    51.23613894822923
+                  ]
+                },
+                "u_direction_patient": {
+                  "$tuple": [
+                    -0.810679228399881,
+                    0.0,
+                    0.5854905538443586
+                  ]
+                },
+                "v_direction_patient": {
+                  "$tuple": [
+                    0.0,
+                    1.0,
+                    0.0
+                  ]
+                },
+                "w_direction_patient": {
+                  "$tuple": [
+                    -0.5854905538443586,
+                    0.0,
+                    -0.810679228399881
+                  ]
+                }
+              }
+            },
+            "view_rolls": {
+              "$type": "MprViewRolls",
+              "fields": {
+                "axial_radians": 0.0,
+                "coronal_radians": 0.0,
+                "sagittal_radians": 0.0
+              }
+            },
+            "view_grids": null,
+            "view_anchors": null
+          }
+        }
+      }
+    },
+    "annotations": {}
+  }
+}

@@ -57,6 +57,30 @@ def test_create_multiplane_path_and_curve_position_sync(cpr):
     assert cpr.viewForRole("reference-a").plane_geometry.frame.center_patient[2] == pytest.approx(section_center[2])
 
 
+def test_overlay_distinguishes_source_thickness_from_displayed_cpr_slab(cpr):
+    cpr._volume.representative_instance_meta = replace(cpr._volume.representative_instance_meta, slice_thickness=1.)
+    draw(cpr)
+    curved = cpr.viewForRole('curved')
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Thin'
+    cpr.setParameter('thickness', 12.)
+    cpr.setParameter('projection', 'mean')
+    # Keep the metadata tied to the image still on screen during reconstruction.
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Thin'
+    wait_until(lambda: cpr.ready)
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Mean 12 mm'
+    assert curved.overlayInfo['sliceThickness'] == '1'
+    assert curved.overlayInfo['cprRole'] == 'curved'
+    cross = cpr.viewForRole('cross').overlayInfo
+    assert cross['cprRole'] == 'cross'
+    assert cross['cprReconstruction'] == ''  # Cross section stays a thin plane.
+    cpr.setParameter('projection', 'mip')
+    wait_until(lambda: cpr.ready)
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · MIP 12 mm'
+    cpr.setParameter('thickness', 0.)
+    wait_until(lambda: cpr.ready)
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Thin'
+
+
 def test_reference_drag_preserves_original_depth_and_cancel_restores(cpr):
     view = draw(cpr)
     old = cpr.current_path

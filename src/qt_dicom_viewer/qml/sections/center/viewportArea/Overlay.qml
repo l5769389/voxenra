@@ -69,6 +69,7 @@ Item {
     function field(key) {
         switch (key) {
         case "viewPosition": {
+            if (value("cprReconstruction")) return value("cprReconstruction")
             const role = value("viewRole")
             if (role === "fusion")
                 return ["FUSION", planePosition()].filter(Boolean).join(" · ")
@@ -96,7 +97,7 @@ Item {
                petWorkspace ? [label("correctedImage", "Corrections: "), label("decayCorrection", "Decay correction: ")].filter(Boolean).join("\n")
                    : "Correction: " + value("correctedImage") + " · " + value("decayCorrection")].filter(Boolean).join("\n")
             : [label("kvp", "kV: "), label("tubeCurrentMa", "mA: ")].filter(Boolean).join("   ")
-        case "sliceThickness": return label("sliceThickness", petWorkspace ? "Source thickness: " : "Thickness: ", " mm")
+        case "sliceThickness": return label("sliceThickness", petWorkspace ? "Source thickness: " : overlay.cprRole ? "Source thk: " : "Thickness: ", " mm")
         case "window": {
             if (overlay.sourceColor === true) return ""
             if (overlay.derivedMapping) {

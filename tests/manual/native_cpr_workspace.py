@@ -101,6 +101,7 @@ def observe():
                 physicalOrientation=None if view.plane_geometry is None else view.plane_geometry.image_orientation_patient,
                 pending=view.render_pending, historical=view.historicalPlane,
                 hasPhysicalSpacing=view.hasPhysicalSpacing,
+                overlay=dict(view.overlayInfo),
                 pixels=None if pixels is None else hashlib.sha256(pixels.tobytes()).hexdigest(),
                 measurements=view.measurementController.measurementItems,
                 annotations=view.textAnnotationController.annotationItems,
