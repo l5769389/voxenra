@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../../../components" as Components
 import "../../../theme"
 
 Item {
@@ -47,49 +46,16 @@ Item {
                     anchors.fill: parent
                     anchors.margins: 2
                     spacing: 2
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        Text {
-                            Layout.leftMargin: 6
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: qsTrId("cpr." + cell.modelData.viewportRole)
-                                + (cell.modelData.historicalPlane ? " · " + qsTrId("cpr.historical") : "")
-                            elide: Text.ElideRight
-                            color: Theme.overlayText
-                            font.pixelSize: 12
-                        }
-                        Components.AppComboBox {
-                            objectName: "cprPlane-" + cell.index
-                            visible: cell.index < 2
-                            Layout.preferredWidth: 92
-                            model: [qsTrId("text.0384"), qsTrId("text.0385"), qsTrId("text.0386")]
-                            currentIndex: ["axial", "coronal", "sagittal"].indexOf(page.controller?.referencePlanes[cell.index] ?? "axial")
-                            onActivated: page.controller?.setReferencePlane(cell.index, ["axial", "coronal", "sagittal"][currentIndex])
-                        }
-                        Components.AppButton {
-                            objectName: "cprFocus-" + cell.modelData.viewportRole
-                            compact: true
-                            iconName: "fullscreen"
-                            minimumButtonWidth: 28
-                            Accessible.name: qsTrId(cell.focused ? "reading.restoreViewport" : "reading.maximizeViewport")
-                            onClicked: {
-                                page.controller?.activateViewport(cell.modelData.viewportId)
-                                page.controller?.focusSingleViewport(cell.focused ? "" : cell.modelData.viewportId)
-                            }
-                        }
-                    }
-                    RowLayout {
+                    Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        spacing: 1
                         Viewport {
                             id: viewport
                             objectName: "cprViewport-" + cell.modelData.viewportRole
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
+                            anchors.fill: parent
                             viewportController: cell.modelData
+                            twoDViewMode: cell.index < 2 && !cell.modelData.historicalPlane
+                                ? page.controller?.referencePlanes[cell.index] ?? "axial" : ""
                             hasTabs: true
                             anonymousExport: page.anonymousExport
                             multiViewport: !cell.focused
@@ -97,22 +63,37 @@ Item {
                                 onPressedChanged: if (pressed) page.controller?.activateViewport(cell.modelData.viewportId)
                             }
                         }
-                        SliceSlider {
-                            Layout.fillHeight: true
-                            viewportController: cell.modelData
-                            allowOrthogonal: true
+                        // Reuse the 2D plane selector outside the exported image.
+                        // Neither reference plane has a primary/secondary role.
+                        TwoDViewSelector {
+                            objectName: "cprPlane-" + cell.index
+                            readonly property var overlay: viewport.cornerOverlay
+                            x: 10; y: 10; z: 40
+                            visible: cell.index < 2 && !cell.modelData.historicalPlane && !page.anonymousExport
+                            width: Math.min(overlay?.selectorWidth ?? 70, Math.max(0, parent.width - x - 4))
+                            height: overlay?.selectorHeight ?? 24
+                            font.pixelSize: overlay?.textPixelSize ?? 12
+                            mode: viewport.twoDViewMode
+                            model: [
+                                {value: "axial", label: qsTrId("layout.axialReconstruction"), group: ""},
+                                {value: "coronal", label: qsTrId("layout.coronalReconstruction"), group: ""},
+                                {value: "sagittal", label: qsTrId("layout.sagittalReconstruction"), group: ""}
+                            ]
+                            onActivationRequested: page.controller?.activateViewport(cell.modelData.viewportId)
+                            onModeSelected: mode => page.controller?.setReferencePlane(cell.index, mode)
                         }
                     }
                     Text {
+                        objectName: "cprStatus-" + cell.modelData.viewportRole
                         Layout.fillWidth: true
                         Layout.leftMargin: 6
                         Layout.bottomMargin: 3
                         // Keep reference image bounds stable when modes change.
-                        text: cell.index < 2 ? qsTrId(cell.modelData.cprDrawing ? "cpr.referenceDrawHint"
+                        text: cell.modelData.historicalPlane ? cell.modelData.historicalDescription
+                            : cell.index < 2 ? qsTrId(cell.modelData.cprDrawing ? "cpr.referenceDrawHint"
                             : cell.modelData.cprEditing ? "cpr.referenceEditHint"
                             : page.controller?.drawing ? "cpr.referencePausedHint" : "cpr.referenceViewHint")
                             : page.controller?.drawing ? qsTrId(cell.modelData.imageRows > 0 ? "cpr.previousResult" : "cpr.empty")
-                            : cell.modelData.historicalPlane ? cell.modelData.historicalDescription
                             : page.controller?.busy ? qsTrId("cpr.computing")
                             : !page.controller?.ready ? qsTrId("cpr.empty")
                             : qsTrId("cpr.distance").arg((page.controller?.positionMm ?? 0).toFixed(1)).arg((page.controller?.totalLength ?? 0).toFixed(1))

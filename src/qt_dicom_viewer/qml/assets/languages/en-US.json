@@ -2783,7 +2783,7 @@
         "manual.cpr.section2.title": "Editing and multiple paths",
         "manual.cpr.section2.body": "Completed paths open in viewing mode. Choose **Edit path** to change control points. Dragging preserves the point’s depth normal to the current reference plane; click a segment to insert a point. Select a point, then press `Delete` / `Backspace` or choose **Delete selected point**. A completed path must retain at least two points. Choose **Done editing** or press `Esc` to exit; Escape during dragging restores that drag’s starting position. Each completed drag is one undo step. **Path details** contains renaming, LPS coordinates, point navigation and path deletion. Each path retains its reconstruction parameters and centerline interval.",
         "manual.cpr.section3.title": "Linked views and sampling",
-        "manual.cpr.section3.body": "Click the curved image or move **Position along path** to link the reference views and cross-section. Thin, maximum and mean projections support rotation and thickness controls. **Advanced sampling** exposes curved width, cross-section field width and sampling spacing. Windowing links all four views without recomputing CPR. Each view can be maximized.",
+        "manual.cpr.section3.body": "Click the curved image or move **Position along path** to link the reference views and cross-section. Thin, maximum and mean projections support rotation and thickness controls. **Advanced sampling** exposes curved width, cross-section field width and sampling spacing. Windowing links all four views without recomputing CPR. Double-click an image while viewing to expand/restore. Scroll through slices in reference views or along the path in curved/section views. During path drawing, double-click confirms the path; point editing and curve measurement completion do not maximize the image.",
         "manual.cpr.section4.title": "Measurement geometry",
         "manual.cpr.section4.body": "Ordinary length, angle and ROI measurements use the reference planes and perpendicular cross-section. A curved image is not a single physical plane and does not support ordinary quantitative measurements. Total and interval centerline lengths use the 3D path. After path edits or deletion, stored measurements can return to their original physical plane and show their saved path revision and position.",
         "manual.cpr.section5.title": "Saving, restoring and export",
@@ -2805,7 +2805,7 @@
         "cpr.intervalSection": "Centerline interval measurement",
         "cpr.referenceDrawHint": "Click to place · Enter to finish · Esc to cancel",
         "cpr.referenceEditHint": "Editing · Drag points · Click segments to insert",
-        "cpr.referenceViewHint": "Viewing · Choose Edit path to adjust points",
+        "cpr.referenceViewHint": "Scroll to browse · Double-click to expand/restore",
         "cpr.referencePausedHint": "Drawing paused · Return to CPR to continue",
         "cpr.previousResult": "Previous result · Finish the new path to update"
     }

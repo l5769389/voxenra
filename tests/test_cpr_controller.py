@@ -54,6 +54,26 @@ def test_confirmed_path_requires_explicit_editing(cpr):
     assert cpr.current_path == modified
 
 
+def test_double_click_has_one_owner_for_drawing_editing_and_curve_measurements(cpr):
+    ref = cpr.viewForRole("reference-a")
+    cpr.startPath()
+    ref.cprTap(5, 10, .4)
+    assert ref.cprDoubleClick()  # An incomplete draft still owns the gesture.
+    assert cpr.drawing and not cpr.focusedViewportId
+    ref.cprTap(15, 10, .4)
+    assert ref.cprDoubleClick()
+    wait_until(lambda: cpr.ready)
+    assert not cpr.drawing and not cpr.focusedViewportId
+    cpr.setPathEditing(True)
+    assert ref.cprDoubleClick()
+    assert cpr.pathEditing and not cpr.focusedViewportId
+    cpr.setPathEditing(False)
+    for kind in ("curve", "freehand"):
+        cpr.toolController.selectInteraction("measure:" + kind)
+        assert not ref.cprDoubleClick()  # Allow the shared measurement finisher.
+        assert not cpr.focusedViewportId
+
+
 def test_finish_and_delete_belong_to_reference_path_input(cpr):
     ref, cross = cpr.viewForRole('reference-a'), cpr.viewForRole('cross')
     cpr.startPath()

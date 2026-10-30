@@ -188,6 +188,18 @@ class CprViewportController(Image2DViewportController):
         return self._cpr.end_path_drag(self, column, row)
 
     @Slot(result=bool)
+    def cprDoubleClick(self):
+        # One dispatcher owns this gesture: finishing a draft must never also
+        # maximize after finishPath changes the editing state during the event.
+        if self.cprFinish() or self.cprEditing:
+            return True
+        if self.activeInteraction in ("measure:freehand", "measure:curve"):
+            return False
+        self._cpr.activateViewport(self.viewportId)
+        self._cpr.focusSingleViewport("" if self._cpr.focusedViewportId else self.viewportId)
+        return True
+
+    @Slot(result=bool)
     def cprFinish(self):
         if self.cprDrawing:
             self._cpr.finishPath()

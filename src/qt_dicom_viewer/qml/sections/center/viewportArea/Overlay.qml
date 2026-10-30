@@ -16,7 +16,7 @@ Item {
     readonly property real textRowHeight: textPixelSize * (options.lineHeight ?? 1.2)
     readonly property real selectorWidth: Math.min(Math.ceil(modeMetrics.advanceWidth) + 30, Math.max(0, (width - 24) / 2))
     readonly property real selectorHeight: Math.max(24, modeSizing.implicitHeight + 6)
-    readonly property bool inlineViewPosition: hasViewSelector && (options.topLeft ?? [])[0] === "viewPosition"
+    readonly property bool inlineViewPosition: hasViewSelector && (cprWorkspace || (options.topLeft ?? [])[0] === "viewPosition")
     readonly property rect positionRect: Qt.rect(modeRow.x + positionLabel.x, modeRow.y + positionLabel.y,
         positionLabel.width, positionLabel.height)
     readonly property string positionText: {
@@ -44,6 +44,7 @@ Item {
     readonly property var cursorInfo: viewportController ? viewportController.cursorController.cursorInfo : ({})
     readonly property var options: viewportController?.settingsController.values.corners ?? ({})
     readonly property bool petWorkspace: !!overlay.viewRole
+    readonly property bool cprWorkspace: !!overlay.cprRole
     readonly property real bottomTextHeight: Math.max(bottomLeft.visible ? bottomLeft.height : 0,
                                                      bottomRight.visible ? bottomRight.height : 0)
     readonly property real topLeftTextHeight: (topLeft.visible ? topLeft.height : 0) + (hasViewSelector ? modeRow.height : 0)
@@ -70,6 +71,7 @@ Item {
         switch (key) {
         case "viewPosition": {
             if (value("cprReconstruction")) return value("cprReconstruction")
+            if (value("cprRole") === "cross") return qsTrId("cpr.cross")
             const role = value("viewRole")
             if (role === "fusion")
                 return ["FUSION", planePosition()].filter(Boolean).join(" · ")
@@ -118,6 +120,8 @@ Item {
             return [label("windowWidth", "WW: "), label("windowCenter", "WL: ")].filter(Boolean).join("   ")
         }
         case "cursor": if (overlay.registrationPreview) return "Preview MIP · Release to refine"
+            if (cprWorkspace) return cursorInfo.inside
+                ? (cursorInfo.label ?? "Value") + ": " + cursorInfo.value + " " + (cursorInfo.unit ?? "") : ""
             return (petWorkspace ? "Col: " : "X: ") + (cursorInfo.x ?? "--") + (petWorkspace ? "   Row: " : "   Y: ") + (cursorInfo.y ?? "--")
             + (overlay.sourceColor === true ? "" : "\n" + (value("viewRole") === "mip" ? "PET max" : cursorInfo.label ?? "Value") + ": " + (cursorInfo.value ?? "--") + " " + (cursorInfo.unit ?? ""))
             + (viewportController?.secondaryCursorText ? "\n" + viewportController.secondaryCursorText : "")
@@ -131,7 +135,11 @@ Item {
     }
     function lines(corner) {
         const compactFields = ["viewPosition", "slice", "patientName", "patientId", "studyDate", "window", "transform", "cursor"]
-        return (options[corner] ?? []).filter((key, index) => !(corner === "topLeft" && inlineViewPosition && index === 0))
+        // CPR uses one source volume. Identity/acquisition metadata belongs to
+        // the tab/series context; output indices count path samples, not slices.
+        const cprFields = {topLeft: String(overlay.cprRole ?? "").startsWith("reference")
+            ? ["viewPosition", "slice"] : ["viewPosition"], topRight: [], bottomLeft: ["window"], bottomRight: ["cursor"]}
+        return (cprWorkspace ? cprFields[corner] : options[corner] ?? []).filter((key, index) => !(corner === "topLeft" && inlineViewPosition && index === 0))
             .filter(key => !overlay.compactOverlay || compactFields.includes(key))
             .map(key => field(key)).filter(Boolean).join("\n")
     }

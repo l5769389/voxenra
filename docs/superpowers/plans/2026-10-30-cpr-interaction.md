@@ -32,3 +32,7 @@ Rapid double-click order, pending rendering while exiting edit mode, tool/path c
 ## Completion record
 
 Implementation and native verification are documented in `docs/validation/cpr-interaction-20261030.md`. The final review coverage gap (Enter confirming a suspended draft) was reproduced and fixed. Reference footer bounds are stable across modes; endpoint jitter is ignored within the visible point hit target without suppressing points on another slice. Keep the existing CPR branch and worktree for continued user review.
+
+## Viewport follow-up: 2026-10-30
+
+The user requests fewer repeated corner fields and navigation controls, retaining wheel paging and double-click focus. Both reference images have equal editing capability: replace primary/auxiliary headings with the existing 2D inline plane selector. Remove fullscreen buttons and vertical slice rails. Keep orientation, physical scale, windowing, reference position/slice, accepted projection and path distance; omit repeated identity/acquisition metadata and meaningless output slice counts. Drawing double-click retains exclusive ownership of confirmation, and curve/freehand measurements retain their completion gesture. Verify real QML events, export, other workspaces' overlays and native UI/state together. No CPR resampling or persisted geometry changes.

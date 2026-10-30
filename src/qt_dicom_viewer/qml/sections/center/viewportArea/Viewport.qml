@@ -360,7 +360,7 @@ Item {
         }
 
         onFinishMeasurementRequested: {
-            if (!viewportRoot.viewportController?.cprFinish?.())
+            if (!viewportRoot.viewportController?.cprDoubleClick?.())
                 viewportRoot.viewportController?.finishMeasurement()
         }
         onTapped: position => {
