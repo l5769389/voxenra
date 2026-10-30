@@ -12,7 +12,7 @@ ColumnLayout {
     property bool details: false
     property bool interval: false
     readonly property bool drawing: controller?.drawing ?? false
-    readonly property bool editing: !drawing && (controller?.pathEditing ?? false)
+    readonly property bool editing: !drawing && ((controller?.pathEditing ?? false) || (controller?.finishing ?? false))
     readonly property bool hasPath: (controller?.selectedPathId ?? "") !== ""
     readonly property int pointCount: controller?.controlPoints.length ?? 0
     readonly property bool results: controller?.resultView ?? false
@@ -47,7 +47,7 @@ ColumnLayout {
     }
     RowLayout {
         Layout.fillWidth: true
-        visible: !panel.drawing && !panel.editing
+        visible: !panel.drawing && !panel.controller?.finishing
         Components.AppButton {
             objectName: "cprNewPath"
             Layout.fillWidth: true
@@ -63,7 +63,7 @@ ColumnLayout {
         Components.AppButton {
             objectName: "cprEditPath"
             Layout.fillWidth: true
-            visible: panel.hasPath
+            visible: panel.hasPath && !panel.editing
             text: qsTrId("cpr.edit")
             iconName: "cpr-path"
             compact: true
@@ -95,8 +95,7 @@ ColumnLayout {
             text: qsTrId("cpr.done")
             iconName: "check"
             actionRole: "primary"
-            enabled: (panel.drawing ? panel.controller?.canFinishPath : panel.hasPath)
-                && !panel.controller?.sourceMismatch
+            enabled: panel.controller?.canFinishEditing ?? false
             onClicked: panel.controller.finishEditing()
             Accessible.description: qsTrId("cpr.finishHint")
             Components.AppToolTip { visible: parent.hovered; text: qsTrId("cpr.finishHint") }

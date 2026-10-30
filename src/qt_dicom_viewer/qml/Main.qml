@@ -24,12 +24,20 @@ ApplicationWindow {
     readonly property bool shortcutPopupOpen: Overlay.overlay.children.some(item => item.visible)
     readonly property bool shortcutRecording: (shortcuts?.recordingAction ?? "").length > 0
     readonly property bool standardShortcutsAllowed: active && !shortcutPopupOpen && !shortcutRecording
+    function isCprPanelControl(item) {
+        for (let current = item; current; current = current.parent) {
+            if (current.objectName === "cprPanel" || current.objectName === "primaryTool-cpr-path") return true
+        }
+        return false
+    }
     Components.ReadingShortcuts {
         controller: window.shortcuts
         toolController: window.toolController
         tabController: window.workspaceController.activeTab
+        controlFocused: window.activeFocusItem?.checkable !== undefined
+        cprPanelFocused: window.isCprPanelControl(window.activeFocusItem)
         allowed: window.standardShortcutsAllowed && !window.editingText && !!window.viewportController
-            && !window.documentController?.busy && window.activeFocusItem?.checkable === undefined
+            && !window.documentController?.busy && !(window.windowManager?.dragging ?? false)
     }
     readonly property bool hasTabs: workspaceController.tabs.length > 0
     // Temporary presentation state belongs to this window, not the document/preferences.

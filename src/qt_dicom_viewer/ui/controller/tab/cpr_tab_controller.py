@@ -24,6 +24,7 @@ class CprTabController(TabController):
     cprLoaded = Signal()
     snapshotCommitted = Signal()
     resultViewChanged = Signal()
+    resultSplitChanged = Signal()
     pathInputStarted = Signal()
 
     def __init__(self, tab_config, parent=None):
@@ -40,7 +41,7 @@ class CprTabController(TabController):
         self._pending_restore_planes = {}
         self._drawing = self._closed = self._edit_transaction_active = False
         self._path_editing = False
-        self._pending_results = self._draft_return_results = False
+        self._pending_results = self._path_return_results = False
         self._selected_point = -1
         self._generation = 0
         self._message = self._volume_request_id = ""
@@ -119,6 +120,19 @@ class CprTabController(TabController):
         return self._drawing and len(self._session["draft"]) >= 2
 
     @Property(bool, notify=cprChanged)
+    def finishing(self):
+        return self._pending_results
+
+    @Property(bool, notify=cprChanged)
+    def canFinishEditing(self):
+        return (not self._source_mismatch and self._drag is None and not self._pending_results
+                and not self.resultView and (self.canFinishPath if self._drawing else bool(self.current_path)))
+
+    @Property(bool, notify=cprChanged)
+    def canCancelPath(self):
+        return self._drawing or self._path_editing or self._drag is not None or self._pending_results
+
+    @Property(bool, notify=cprChanged)
     def canDeletePoint(self):
         if self._drawing:
             return bool(self._session["draft"])
@@ -129,6 +143,18 @@ class CprTabController(TabController):
     @Property(bool, notify=resultViewChanged)
     def resultView(self):
         return self._session['resultView']
+
+    @Property(float, notify=resultSplitChanged)
+    def resultSplitRatio(self):
+        return self._session['resultSplitRatio']
+
+    @Slot(float)
+    def setResultSplitRatio(self, ratio):
+        if not .05 <= ratio <= .95 or abs(ratio - self.resultSplitRatio) < 1e-6:
+            return
+        self._session['resultSplitRatio'] = ratio
+        self.resultSplitChanged.emit()
+        self.persistenceChanged.emit()
 
     def _set_result_view(self, enabled, *, preserve_view=False):
         enabled = bool(enabled and self.current_path)
@@ -162,6 +188,8 @@ class CprTabController(TabController):
 
     @Slot(result=bool)
     def finishEditing(self):
+        if self._pending_results:
+            return True
         if self._drag is not None or self._source_mismatch:
             return False
         if self._drawing and not self.finishPath():
@@ -183,9 +211,12 @@ class CprTabController(TabController):
         if self._drawing:
             return
         if enabled:
+            if self.pathEditing:
+                return
             if not self.current_path or not self.referencesReady or self._source_mismatch:
                 return
             self._tool_controller.activateTool("cpr-path")
+            self._path_return_results = self.resultView
             self._pending_results = False
             self._set_result_view(False)
             self._path_editing = True
@@ -250,7 +281,7 @@ class CprTabController(TabController):
 
     def export_revision(self):
         views = list(self._viewport_dict.values()) if self._export_scope == "combined" else [self.viewForRole(self._export_scope)]
-        return repr((self._generation, self._export_scope, self.resultView, self.focusedViewportId,
+        return repr((self._generation, self._export_scope, self.resultView, self.resultSplitRatio, self.focusedViewportId,
                      [(view.viewportId, view._image_revision, view.viewport_state) for view in views]))
 
     @Property(str, notify=cprChanged)
@@ -497,7 +528,7 @@ class CprTabController(TabController):
             self._notify()
             return
         self.cancel_operation()
-        self._draft_return_results = self.resultView
+        self._path_return_results = self.resultView
         self._set_result_view(False)
         self._tool_controller.activateTool("cpr-path")
         self._drawing, self._selected_point, self._message = True, -1, ""
@@ -709,7 +740,7 @@ class CprTabController(TabController):
 
     @Slot(result=bool)
     def cancel_operation(self):
-        return_to_results = self._drawing and self._draft_return_results
+        return_to_results = (self._drawing or self._path_editing) and self._path_return_results
         claimed = self._drawing or self._drag is not None or self._path_editing or self._pending_results
         self._pending_results = False
         if self._drag is not None:
@@ -722,6 +753,8 @@ class CprTabController(TabController):
             self._request_cpr()
         self._drawing, self._message = False, ""
         self._path_editing = False
+        self._selected_point = -1
+        self._path_return_results = False
         self._session["draft"] = ()
         if return_to_results:
             self._set_result_view(True)
@@ -836,6 +869,7 @@ class CprTabController(TabController):
             raise CprError("Saved CPR paths belong to another series")
         self.cancel_operation()
         self._session = state
+        self.resultSplitChanged.emit()
         self._set_result_view(state['resultView'], preserve_view=True)
         self._drawing = bool(state["draft"])
         self._selected_point = -1

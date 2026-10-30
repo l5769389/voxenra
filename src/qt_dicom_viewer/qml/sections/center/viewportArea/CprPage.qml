@@ -11,17 +11,24 @@ Item {
     property bool anonymousExport: false
     readonly property bool results: controller?.resultView ?? false
     readonly property bool stackedResults: results && width < 720
+    readonly property bool splitResults: results && !stackedResults && !(controller?.focusedViewportId ?? "")
+    readonly property real minimumResultWidth: 280
+    readonly property real splitHandleWidth: 8
+    readonly property real resultContentWidth: Math.max(0, width - splitHandleWidth)
+    readonly property real curvedResultWidth: Math.max(minimumResultWidth,
+        Math.min(resultContentWidth - minimumResultWidth, resultContentWidth * (controller?.resultSplitRatio ?? 2/3)))
     function focusActiveViewport() {
+        if (!page.visible) return
         for (let i = 0; i < cells.count; ++i) {
             const cell = cells.itemAt(i)
-            if (cell.visible && cell.modelData === controller?.activeViewport)
+            if (cell?.visible && cell.modelData === controller?.activeViewport)
                 cell.imageItem.forceActiveFocus()
         }
     }
     function restoreVisibleFocus() {
         for (let i = 0; i < cells.count; ++i) {
             const cell = cells.itemAt(i)
-            if (!cell.visible && cell.imageItem.activeFocus) {
+            if (cell && !cell.visible && cell.imageItem.activeFocus) {
                 focusActiveViewport()
                 return
             }
@@ -50,7 +57,7 @@ Item {
     GridLayout {
         anchors.fill: parent
         rowSpacing: 4
-        columnSpacing: 4
+        columnSpacing: page.splitResults ? page.splitHandleWidth : 4
         uniformCellWidths: !page.results
         uniformCellHeights: true
         Repeater {
@@ -63,12 +70,14 @@ Item {
                 property alias imageItem: viewport
                 readonly property bool focused: (page.controller?.focusedViewportId ?? "") !== ""
                 visible: focused ? page.controller?.focusedViewportId === modelData.viewportId : !page.results || index >= 2
-                Layout.row: focused ? 0 : page.results ? (page.stackedResults ? Math.max(0, index - 2) : 0) : Math.floor(index / 2)
+                Layout.row: !visible ? index + 2 : focused ? 0
+                    : page.results ? (page.stackedResults ? Math.max(0, index - 2) : 0) : Math.floor(index / 2)
                 Layout.column: focused || page.stackedResults ? 0 : index % 2
-                Layout.preferredWidth: page.results && !page.stackedResults && index === 2 ? 2 : 1
+                Layout.preferredWidth: page.splitResults
+                    ? (index === 2 ? page.curvedResultWidth : page.resultContentWidth - page.curvedResultWidth) : 1
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumWidth: 0
+                Layout.minimumWidth: page.splitResults ? page.minimumResultWidth : 0
                 Layout.minimumHeight: 100
                 color: Theme.canvasBackground
                 border.color: page.controller?.activeViewport === modelData ? Theme.primaryColor : Theme.controlBorder
@@ -120,5 +129,19 @@ Item {
                 }
             }
         }
+    }
+    Components.WidthResizeHandle {
+        objectName: "cprResultSplitHandle"
+        visible: page.splitResults && !page.anonymousExport
+        enabled: page.splitResults
+        x: (cells.itemAt(2)?.x ?? 0) + (cells.itemAt(2)?.width ?? 0)
+        y: 0
+        width: page.splitHandleWidth
+        height: page.height
+        currentWidth: cells.itemAt(2)?.width ?? page.curvedResultWidth
+        minimumWidth: page.minimumResultWidth
+        maximumWidth: page.resultContentWidth - page.minimumResultWidth
+        onWidthDragged: value => page.controller?.setResultSplitRatio(value / page.resultContentWidth)
+        onWidthCommitted: value => page.controller?.setResultSplitRatio(value / page.resultContentWidth)
     }
 }

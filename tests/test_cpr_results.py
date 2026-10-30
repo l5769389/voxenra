@@ -139,6 +139,7 @@ def test_hidden_reference_history_restores_without_leaving_results(cpr_app, tmp_
     tab.activateViewport(cross.viewportId)
     tab.focusSingleViewport(cross.viewportId)
     path = tmp_path/'results.voxworkspace'
+    tab.setResultSplitRatio(.58)
     save(app, path)
     doc = app.workspaceDocumentController
     assert doc.restore_from(path)
@@ -148,6 +149,7 @@ def test_hidden_reference_history_restores_without_leaving_results(cpr_app, tmp_
     ref = restored.viewForRole('reference-a')
     wait_until(lambda: ref.historicalPlane)
     assert restored.resultView
+    assert restored.resultSplitRatio == .58
     assert restored.activeViewport.viewportRole == 'cross'
     assert restored.focusedViewportId == restored.activeViewport.viewportId
     restored.navigate_measurement(ref, source)
