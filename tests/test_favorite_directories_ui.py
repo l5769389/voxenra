@@ -1,6 +1,8 @@
 """Physical Qt clicks through favorites, with visible UI and resulting state checks."""
 from pathlib import Path
 
+import pytest
+
 from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtTest import QTest
 from shiboken6 import delete
@@ -190,7 +192,12 @@ def test_inline_favorites_many_resize_manage_and_reload(scene, tmp_path):
             listing = picker.favorite_list
             assert listing.height() <= 80
             assert listing.verticalScrollBar().maximum() > 0
-            assert listing.horizontalScrollBar().maximum() == 0
+            # Some Qt styles retain a range on an AlwaysOff scrollbar even
+            # when every wrapped card fits; verify the visible bounds instead.
+            assert not listing.horizontalScrollBar().isVisible()
+            for index in range(listing.count()):
+                rect = listing.visualItemRect(listing.item(index))
+                assert 0 <= rect.left() <= rect.right() < listing.viewport().width()
             assert picker.view.height() >= 100
             shot(picker, 'inline-favorites-light-' + str(width))
         last = picker.favorite_list.item(11)
@@ -313,3 +320,99 @@ def test_rename_only_enabled_for_changed_nonempty_name(qt_app, tmp_path):
     finally:
         dialog.close()
         delete(dialog)
+
+
+@pytest.mark.parametrize('fail', [False, True])
+def test_switch_favorite_keeps_pending_highlight_and_close_position(qt_app, tmp_path, monkeypatch, fail):
+    from threading import Event
+    import os
+    from PySide6.QtCore import QItemSelectionModel
+    first, second = tmp_path / 'first', tmp_path / 'second'
+    first.mkdir(); second.mkdir()
+    (first / 'image.dcm').write_bytes(b'test')
+    panel = PanelController()
+    favorites = panel.favoriteDirectories
+    assert favorites.add(str(first)) and favorites.add(str(second))
+    picker = LocalImportDialog(str(first), favorites=favorites)
+    picker.show(); picker.activateWindow()
+    assert QTest.qWaitForWindowActive(picker)
+    entered, release = Event(), Event()
+    real_scandir = os.scandir
+    def delayed(path):
+        if str(path) == str(second):
+            entered.set()
+            release.wait(3)
+            if fail:
+                raise OSError('Disconnected directory')
+        return real_scandir(path)
+    try:
+        wait_until(lambda: not picker._loading)
+        index = picker.model.index(str(first / 'image.dcm'))
+        picker.view.selectionModel().select(index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        monkeypatch.setattr(os, 'scandir', delayed)
+        listing = picker.favorite_list
+        seen = []
+        listing.itemSelectionChanged.connect(lambda: seen.append([x.data(Qt.UserRole) for x in listing.selectedItems()]))
+        rects = [listing.visualItemRect(listing.item(i)) for i in range(2)]
+        QTest.mouseClick(listing.viewport(), Qt.LeftButton, Qt.NoModifier, rects[1].center())
+        wait_until(entered.is_set)
+        QTest.qWait(40)
+        assert [x.data(Qt.UserRole) for x in listing.selectedItems()] == [str(second)], seen
+        assert rects[1].contains(picker.favorite_remove.geometry())
+        pending_close = picker.favorite_remove.geometry()
+        shot(picker, f'favorite-switch-pending-{fail}')
+        release.set()
+        wait_until(lambda: not picker._loading)
+        expected = str(first if fail else second)
+        assert picker._directory == expected
+        assert [x.data(Qt.UserRole) for x in listing.selectedItems()] == [expected]
+        if fail:
+            assert picker.selected_paths() == [str(first / 'image.dcm')]
+        assert seen and all(paths == [str(second)] for paths in seen), seen
+        assert [listing.visualItemRect(listing.item(i)) for i in range(2)] == rects
+        if fail:
+            assert rects[0].contains(picker.favorite_remove.geometry())
+        else:
+            assert picker.favorite_remove.geometry() == pending_close
+        shot(picker, f'favorite-switch-finished-{fail}')
+    finally:
+        release.set(); picker.close(); delete(picker)
+
+
+def test_rapid_favorite_switch_ignores_late_directory(qt_app, tmp_path, monkeypatch):
+    import os
+    from threading import Event
+    folders = [tmp_path / name for name in ('first', 'slow', 'latest')]
+    panel = PanelController()
+    for folder in folders:
+        folder.mkdir()
+        assert panel.favoriteDirectories.add(str(folder))
+    picker = LocalImportDialog(str(folders[0]), favorites=panel.favoriteDirectories)
+    picker.show(); picker.activateWindow()
+    assert QTest.qWaitForWindowActive(picker)
+    entered, release = Event(), Event()
+    real_scandir = os.scandir
+    def delayed(path):
+        if str(path) == str(folders[1]):
+            entered.set()
+            release.wait(3)
+        return real_scandir(path)
+    try:
+        wait_until(lambda: not picker._loading)
+        monkeypatch.setattr(os, 'scandir', delayed)
+        listing = picker.favorite_list
+        for row in (1, 2):
+            QTest.mouseClick(listing.viewport(), Qt.LeftButton, Qt.NoModifier,
+                            listing.visualItemRect(listing.item(row)).center())
+            if row == 1:
+                wait_until(entered.is_set)
+        wait_until(lambda: not picker._loading)
+        release.set()
+        wait_until(lambda: not picker._directory_results.empty())
+        picker._finish_navigation()
+        assert picker._directory == str(folders[2])
+        assert picker.path_edit.text() == str(folders[2])
+        assert [x.data(Qt.UserRole) for x in listing.selectedItems()] == [str(folders[2])]
+        assert listing.visualItemRect(listing.item(2)).contains(picker.favorite_remove.geometry())
+    finally:
+        release.set(); picker.close(); delete(picker)

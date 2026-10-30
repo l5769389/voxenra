@@ -6,7 +6,7 @@ import os
 import queue
 import threading
 
-from PySide6.QtCore import QEvent, QDir, QFileInfo, QFileSystemWatcher, QTimer, QAbstractTableModel, QLocale, QModelIndex, QItemSelectionModel, QStandardPaths, QSize, Qt
+from PySide6.QtCore import QEvent, QDir, QFileInfo, QFileSystemWatcher, QTimer, QAbstractTableModel, QLocale, QModelIndex, QItemSelectionModel, QSignalBlocker, QStandardPaths, QSize, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QTableView, QVBoxLayout, QApplication, QStyle, QListWidget, QListWidgetItem, QListView
 from qt_dicom_viewer.i18n.widgets import QDialog, QLabel, QLineEdit, QPushButton
@@ -25,9 +25,9 @@ def apply_import_dialog_theme(widget):
         QTableView::item:selected { background: @selectionBackground; color: @textPrimary; }
         QListWidget#importFavorites { background: transparent; border: none; }
         QListWidget#importFavorites::item { background: @controlBackground; color: @textPrimary;
-            border: 1px solid @controlBorder; border-radius: 4px; padding: 3px; }
+            border: 1px solid @controlBorder; border-radius: 4px; padding: 3px 25px 3px 3px; }
         QListWidget#importFavorites::item:hover { background: @controlHover; }
-        QListWidget#importFavorites::item:selected { background: @selectionBackground; border-color: @focusBorder; padding-right: 25px; }
+        QListWidget#importFavorites::item:selected { background: @selectionBackground; border-color: @focusBorder; }
         QHeaderView { background: @panelBackgroundStrong; }
         QHeaderView::section { background: @panelBackgroundStrong; color: @textSecondary;
             padding: 6px; border: none; }
@@ -137,6 +137,7 @@ class LocalImportDialog(QDialog):
         self._favorite_position_timer.setSingleShot(True)
         self._favorite_position_timer.timeout.connect(self._position_favorite_remove)
         self._directory = ""
+        self._navigation_directory = ""
         self._favorite_request = -1
         self._favorite_path = ""
         self._navigation_id = 0
@@ -372,9 +373,15 @@ class LocalImportDialog(QDialog):
         busy = self._favorites is not None and self._favorites.busy
         self.favorite_button.setText(_msg('favorites.checking' if busy else 'favorites.saved' if saved else 'favorites.addCurrent'))
         if hasattr(self, 'favorite_list'):
-            for index in range(self.favorite_list.count()):
-                item = self.favorite_list.item(index)
-                item.setSelected(os.path.normcase(os.path.normpath(item.data(Qt.UserRole))) == key)
+            # Keep the requested folder highlighted throughout asynchronous loading.
+            # Updating the address or resetting file rows must not select the old folder.
+            active = self._navigation_directory if self._loading else self._directory
+            active_key = os.path.normcase(os.path.normpath(active))
+            with QSignalBlocker(self.favorite_list):
+                for index in range(self.favorite_list.count()):
+                    item = self.favorite_list.item(index)
+                    item.setSelected(os.path.normcase(os.path.normpath(item.data(Qt.UserRole))) == active_key)
+            self._position_favorite_remove()
         displayed_key = os.path.normcase(os.path.normpath(self.path_edit.text()))
         self.favorite_button.setEnabled(bool(self._directory) and displayed_key == key
                                        and not self._loading and not saved and not busy)
@@ -433,6 +440,7 @@ class LocalImportDialog(QDialog):
         request = self._navigation_id
         self._accept_navigation = request if accept_after else 0
         results = self._directory_results
+        self._navigation_directory = directory
         self._loading = True
         self._update_favorite_button()
         self.path_edit.setText(directory)
@@ -492,8 +500,8 @@ class LocalImportDialog(QDialog):
                     _msg('favorites.unavailable', path=self._favorite_path)
                     if request == self._favorite_request else _msg('import.directoryUnavailable'))
                 continue
-            self.model.set_files(files)
             self._directory = target
+            self.model.set_files(files)
             if self._watcher.directories() != ([target] if target else []):
                 if self._watcher.directories():
                     self._watcher.removePaths(self._watcher.directories())

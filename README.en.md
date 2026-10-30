@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.4/Voxenra-2.1.4-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 
 ## Features
@@ -173,6 +173,10 @@ Drag tabs into detached windows or move them between windows. Workspaces preserv
 </tr>
 </table>
 
+Favorite frequently used folders in the image picker and click a card at the top to browse it. Use **×** on the active card to remove the favorite. **Manage favorites** supports drag ordering, renaming, and replacing paths; changes persist after restart.
+
+![Quick access to favorite folders](docs/screenshots/en/57-directory-favorites-2.1.5.png)
+
 ## Appearance and controls
 
 Choose **dark, neutral gray, or light** in **Settings → Appearance & language**. Neutral gray combines graphite panels with restrained cyan accents. Theme changes apply immediately and persist after restart; image windowing and color maps remain independent.
@@ -181,9 +185,11 @@ Choose **dark, neutral gray, or light** in **Settings → Appearance & language*
 
 [Dark theme](docs/screenshots/25-theme-dark.png) · [Light theme](docs/screenshots/26-theme-light.png)
 
-Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Conflicting or reserved shortcuts are rejected. Configure corner fields and ordering, crosshairs, scales, measurement styles, and ROI metrics. Chinese, English, and Brazilian Portuguese are built in, with support for additional local JSON language packs. Independent switches show labels for sidebar actions and right-side tools. Privacy options control identity overlays in new views and let you clear recent workspace entries.
+Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Conflicting or reserved shortcuts are rejected. Edit corner information directly with sample values, drag within or between corners, and add or remove fields; changes save on release. Crosshairs, scales, measurement styles, and ROI metrics remain configurable. Chinese, English, and Brazilian Portuguese are built in, with support for additional local JSON language packs. Independent switches show labels for sidebar actions and right-side tools. Privacy options control identity overlays in new views and let you clear recent workspace entries.
 
 ![Theme, language and independent button labels](docs/screenshots/en/44-appearance-2.1.1.png)
+
+![Direct corner editing and moves between corners](docs/screenshots/en/58-corner-editor-2.1.5.gif)
 
 [Mouse bindings and tool shortcuts](docs/screenshots/40-input-settings.png)
 
