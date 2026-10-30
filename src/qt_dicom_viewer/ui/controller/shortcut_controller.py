@@ -88,6 +88,15 @@ class ShortcutController(QObject):
     @Slot(str, QObject, QObject, result=bool)
     def activate(self, action, tools, tab):
         if tools is None or tab is None or QGuiApplication.mouseButtons() != Qt.NoButton: return False
+        if action in ('cpr-new', 'cpr-edit'):
+            cpr = getattr(tab, 'cprController', None)
+            if cpr is None or not cpr.referencesReady or cpr.sourceMismatch:
+                return False
+            if action == 'cpr-new':
+                cpr.startPath()
+                return cpr.drawing
+            cpr.setPathEditing(True)
+            return cpr.pathEditing
         target = 'segmentation' if action in ('paint','erase') else action
         if action == 'play':
             mode = tab.playbackMode

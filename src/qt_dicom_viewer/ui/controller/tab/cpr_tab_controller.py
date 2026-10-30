@@ -23,6 +23,8 @@ class CprTabController(TabController):
     cprChanged = Signal()
     cprLoaded = Signal()
     snapshotCommitted = Signal()
+    resultViewChanged = Signal()
+    pathInputStarted = Signal()
 
     def __init__(self, tab_config, parent=None):
         meta = tab_config.series_metas[0]
@@ -38,6 +40,7 @@ class CprTabController(TabController):
         self._pending_restore_planes = {}
         self._drawing = self._closed = self._edit_transaction_active = False
         self._path_editing = False
+        self._pending_results = self._draft_return_results = False
         self._selected_point = -1
         self._generation = 0
         self._message = self._volume_request_id = ""
@@ -123,6 +126,58 @@ class CprTabController(TabController):
         return bool(self.pathEditing and path and len(path.control_points) > 2
                     and 0 <= self._selected_point < len(path.control_points))
 
+    @Property(bool, notify=resultViewChanged)
+    def resultView(self):
+        return self._session['resultView']
+
+    def _set_result_view(self, enabled, *, preserve_view=False):
+        enabled = bool(enabled and self.current_path)
+        self._session['resultView'] = enabled
+        focused = self._viewport_dict.get(self.focusedViewportId)
+        if not preserve_view or (enabled and focused and focused.viewportRole.startswith('reference')):
+            self.focusSingleViewport('')
+        active = self.activeViewport
+        if not preserve_view or active is None or (enabled and active.viewportRole.startswith('reference')):
+            role = 'curved' if enabled else 'reference-a'
+            super().activateViewport(self.viewForRole(role).viewportId)
+        self.resultViewChanged.emit()
+        self.persistenceChanged.emit()
+        self._notify()
+
+    @Slot(str)
+    def activateViewport(self, viewport_id):
+        view = self._viewport_dict.get(viewport_id)
+        if self.resultView and view and view.viewportRole.startswith('reference'):
+            self._set_result_view(False)
+        if view and self.focusedViewportId and self.focusedViewportId != viewport_id:
+            self.focusSingleViewport(viewport_id)
+        super().activateViewport(viewport_id)
+
+    @Slot(str)
+    def focusSingleViewport(self, viewport_id):
+        view = self._viewport_dict.get(viewport_id)
+        if self.resultView and view and view.viewportRole.startswith('reference'):
+            self._set_result_view(False)
+        super().focusSingleViewport(viewport_id)
+
+    @Slot(result=bool)
+    def finishEditing(self):
+        if self._drag is not None or self._source_mismatch:
+            return False
+        if self._drawing and not self.finishPath():
+            return False
+        if not self.current_path:
+            return False
+        self._path_editing, self._selected_point = False, -1
+        self._pending_results = True
+        if self.ready:
+            self._pending_results = False
+            self._set_result_view(True)
+        elif not self.busy:
+            self._request_cpr()
+        self._notify()
+        return True
+
     @Slot(bool)
     def setPathEditing(self, enabled):
         if self._drawing:
@@ -131,7 +186,10 @@ class CprTabController(TabController):
             if not self.current_path or not self.referencesReady or self._source_mismatch:
                 return
             self._tool_controller.activateTool("cpr-path")
+            self._pending_results = False
+            self._set_result_view(False)
             self._path_editing = True
+            self.pathInputStarted.emit()
         else:
             self.cancel_operation()
             self._selected_point = -1
@@ -192,7 +250,7 @@ class CprTabController(TabController):
 
     def export_revision(self):
         views = list(self._viewport_dict.values()) if self._export_scope == "combined" else [self.viewForRole(self._export_scope)]
-        return repr((self._generation, self._export_scope,
+        return repr((self._generation, self._export_scope, self.resultView, self.focusedViewportId,
                      [(view.viewportId, view._image_revision, view.viewport_state) for view in views]))
 
     @Property(str, notify=cprChanged)
@@ -223,7 +281,7 @@ class CprTabController(TabController):
 
     @Slot()
     def _tool_panel_changed(self):
-        if self._tool_controller.activePanel != "cpr-path" and self._path_editing:
+        if self._tool_controller.activePanel != "cpr-path" and (self._path_editing or self._drawing or self._pending_results):
             self.cancel_operation()
         if self._tool_controller.activePanel == "export":
             self.setExportScope(self._export_scope)
@@ -292,7 +350,7 @@ class CprTabController(TabController):
     def navigate_measurement(self, view, source):
         self._start_historical_planes([(view, source)])
 
-    def _start_historical_planes(self, planes):
+    def _start_historical_planes(self, planes, *, activate=True):
         from qt_dicom_viewer.ui.measurement_source import restore_request, display_parameters
         for view, source in planes:
             metadata = source.get("cpr", {})
@@ -300,6 +358,8 @@ class CprTabController(TabController):
                     or source.get("parameters", {}).get("series_uid") != self._session["source"]["seriesUid"]
                     or self._source_mismatch or metadata.get("fingerprint") != self._fingerprint):
                 raise CprError(str(_msg("cpr.sourceChanged")))
+        if activate:
+            self._pending_results = False
         if self._queue.running or self._preview_timer.isActive():
             self._generation += 1
         self._queue.cancel()
@@ -312,7 +372,8 @@ class CprTabController(TabController):
             view._latest_request_id = request.request_id
             view.render_pending = True
             view.cancelMeasurement()
-            self.activateViewport(view.viewportId)
+            if activate:
+                self.activateViewport(view.viewportId)
             self.renderRequested.emit(request)
         self._notify()
 
@@ -386,13 +447,17 @@ class CprTabController(TabController):
                 self.viewForRole(role).clear_cpr()
         self.cprLoaded.emit()
         self._notify()
+        if self._pending_results and self.ready:
+            self._pending_results = False
+            self._set_result_view(True)
         if self._pending_restore_planes and not result.preview:
             planes, self._pending_restore_planes = self._pending_restore_planes, {}
-            active = self._active_viewport_id
-            self._start_historical_planes([(self._viewport_dict[key], source) for key, source in planes.items()])
-            self.activateViewport(active)
+            self._start_historical_planes([(self._viewport_dict[key], source) for key, source in planes.items()],
+                                          activate=False)
 
     def _reject_source(self):
+        self._pending_results = False
+        self._set_result_view(False)
         self._queue.cancel()
         self._generation += 1
         self._source_mismatch = True
@@ -406,6 +471,7 @@ class CprTabController(TabController):
     @Slot(int, str)
     def _fail_cpr(self, generation, error):
         if generation == self._generation and not self._closed:
+            self._pending_results = False
             self._message = _msg("cpr.error", reason=error)
             self.cprLoaded.emit()
             self._notify()
@@ -424,18 +490,21 @@ class CprTabController(TabController):
 
     @Slot()
     def startPath(self):
-        if not self.referencesReady:
+        if not self.referencesReady or self._drawing or self._source_mismatch:
             return
         if len(self._session["paths"]) >= MAX_PATHS:
             self._message = _msg("cpr.pathLimit")
             self._notify()
             return
         self.cancel_operation()
+        self._draft_return_results = self.resultView
+        self._set_result_view(False)
         self._tool_controller.activateTool("cpr-path")
         self._drawing, self._selected_point, self._message = True, -1, ""
         self._session["draft"] = ()
         self.persistenceChanged.emit()
         self._notify()
+        self.pathInputStarted.emit()
 
     @Slot(result=bool)
     def finishPath(self):
@@ -490,6 +559,7 @@ class CprTabController(TabController):
     @Slot()
     def deletePath(self):
         self.cancel_operation()
+        self._set_result_view(False)
         self._session["pathRanges"].pop(self.selectedPathId, None)
         self._session["paths"] = [r for r in self._session["paths"] if r["id"] != self.selectedPathId]
         self._session["selected"] = self._session["paths"][0]["id"] if self._session["paths"] else ""
@@ -639,7 +709,9 @@ class CprTabController(TabController):
 
     @Slot(result=bool)
     def cancel_operation(self):
-        claimed = self._drawing or self._drag is not None or self._path_editing
+        return_to_results = self._drawing and self._draft_return_results
+        claimed = self._drawing or self._drag is not None or self._path_editing or self._pending_results
+        self._pending_results = False
         if self._drag is not None:
             record = self._drag[0]
             self._selected_record().update(record)
@@ -651,6 +723,8 @@ class CprTabController(TabController):
         self._drawing, self._message = False, ""
         self._path_editing = False
         self._session["draft"] = ()
+        if return_to_results:
+            self._set_result_view(True)
         if claimed:
             self.persistenceChanged.emit()
         self._notify()
@@ -762,6 +836,7 @@ class CprTabController(TabController):
             raise CprError("Saved CPR paths belong to another series")
         self.cancel_operation()
         self._session = state
+        self._set_result_view(state['resultView'], preserve_view=True)
         self._drawing = bool(state["draft"])
         self._selected_point = -1
         frame = self._tab_config.series_metas[0].frame_of_reference_uid or ""

@@ -31,7 +31,7 @@ def default_cpr_session(series_uid: str, frame_of_reference_uid: str = "") -> di
                 source=dict(seriesUid=series_uid, frameOfReferenceUid=frame_of_reference_uid,
                             fingerprint=""), paths=[], selected="", draft=(),
                 referencePlanes=("axial", "coronal"), referenceCenters=None,
-                positionMm=0., rangeMm=(0., 0.), pathRanges={}, crossWidthMm=40., focusedRole="")
+                positionMm=0., rangeMm=(0., 0.), pathRanges={}, crossWidthMm=40., focusedRole="", resultView=False)
 
 
 def path_record(path: CprPath, settings: CprSettings) -> dict:
@@ -58,8 +58,12 @@ def _point(point):
 
 def validate_cpr_session(state: dict) -> dict:
     """Return normalized independent values or reject before modifying live state."""
+    if isinstance(state, dict) and 'resultView' not in state:
+        state = dict(state, resultView=False)
     if not isinstance(state, dict) or set(state) != set(default_cpr_session("")):
         raise CprError("Invalid saved CPR session")
+    if type(state['resultView']) is not bool:
+        raise CprError("Invalid saved CPR result layout")
     if type(state["algorithmVersion"]) is not int or state["algorithmVersion"] != ALGORITHM_VERSION:
         raise CprError("Unsupported CPR algorithm version")
     source = state["source"]
@@ -117,4 +121,5 @@ def validate_cpr_session(state: dict) -> dict:
     return dict(algorithmVersion=ALGORITHM_VERSION, source=dict(source), paths=normalized,
                 selected=selected, draft=draft, referencePlanes=tuple(planes),
                 referenceCenters=centers, positionMm=position, rangeMm=interval,
-                pathRanges=normalized_ranges, crossWidthMm=width, focusedRole=focused)
+                pathRanges=normalized_ranges, crossWidthMm=width, focusedRole=focused,
+                resultView=state['resultView'] and bool(selected) and not bool(draft))

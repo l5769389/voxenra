@@ -216,8 +216,8 @@ class CprViewportController(Image2DViewportController):
 
     @Slot(result=bool)
     def cprFinish(self):
-        if self.cprDrawing:
-            self._cpr.finishPath()
+        if self.cprEditing:
+            self._cpr.finishEditing()
             return True
         return False
 

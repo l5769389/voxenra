@@ -1,5 +1,6 @@
 from pathlib import Path
 from contextlib import contextmanager
+from dataclasses import replace
 
 import pytest
 
@@ -13,6 +14,7 @@ from test_cpr_controller import cpr, qt_app, draw
 from test_cpr_persistence import cpr_app
 from test_dicom_tags import wait_until
 from test_measurement_qml import _visual_children
+from test_series_sidebar import sidebar_scene
 from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
 from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
 
@@ -66,6 +68,8 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
         wait_until(lambda: cpr.ready)
         assert len(cpr.paths) == 1
         assert len(cpr.current_path.control_points) == 3
+        assert cpr.resultView
+        assert not target.isVisible()
         assert target.size() == original_size
         assert not cpr.focusedViewportId
         view.rootObject().setProperty("controller", None)
@@ -121,6 +125,120 @@ def double_click(window, item):
     QTest.mouseDClick(window, Qt.LeftButton, Qt.NoModifier, point)
     QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, point)
     QTest.qWait(50)
+
+
+def test_done_changes_visible_layout_and_edit_restores_four_views(cpr_page, tmp_path):
+    from qt_dicom_viewer.model import WindowLevel
+    from qt_dicom_viewer.model.interaction import WindowLevelChange
+    window, tab = cpr_page
+    root = window.rootObject()
+    items = {role: named_item(root, 'cprViewport-' + role)
+             for role in ('reference-a', 'reference-b', 'curved', 'cross')}
+    cross = tab.viewForRole('cross')
+    cross.apply_window_level(WindowLevelChange(WindowLevel(2200, 4400), False))
+    cross.setZoom(2)
+    tab.setPositionMm(5)
+    wait_until(lambda: tab.ready)
+    state = cross.viewport_state
+    assert all(item.isVisible() for item in items.values())
+    assert window.grabWindow().save(str(tmp_path/'editing.png'))
+    tab.finishEditing()
+    QTest.qWait(80)
+    assert not items['reference-a'].isVisible() and not items['reference-b'].isVisible()
+    assert items['curved'].isVisible() and items['cross'].isVisible()
+    assert items['curved'].width() / items['cross'].width() == pytest.approx(2, abs=.03)
+    assert items['curved'].height() > window.height() - 10
+    assert window.grabWindow().save(str(tmp_path/'results.png'))
+    double_click(window, items['cross'])
+    assert tab.focusedViewportId == cross.viewportId
+    assert not items['curved'].isVisible()
+    QTest.qWait(500)
+    double_click(window, items['cross'])
+    assert not tab.focusedViewportId and tab.resultView
+    assert items['curved'].isVisible() and not items['reference-a'].isVisible()
+    window.resize(600, 700)
+    QTest.qWait(80)
+    assert items['curved'].width() > 590 and items['cross'].width() > 590
+    assert items['curved'].height() == items['cross'].height()
+    assert window.grabWindow().save(str(tmp_path/'results-narrow.png'))
+    tab.setPathEditing(True)
+    QTest.qWait(80)
+    assert all(item.isVisible() for item in items.values())
+    assert replace(cross.viewport_state, width=state.width, height=state.height) == state
+    # Returning to edit from a button/shortcut gives the reference keyboard focus.
+    QTest.keyClick(window, Qt.Key_Return)
+    QTest.qWait(80)
+    assert tab.resultView and not tab.pathEditing
+    assert replace(cross.viewport_state, width=state.width, height=state.height) == state
+
+
+def test_main_window_cpr_shortcuts_and_text_input_guards(sidebar_scene, tmp_path):
+    from test_tag_qml import find, click
+    window, app, records, warnings = sidebar_scene
+    ws = app.workspaceController
+    ws.createTab(records[0].series_instance_uid, 'CPR', 'cpr')
+    tab = ws.activeTab
+    wait_until(lambda: tab.referencesReady)
+    window.requestActivate()
+    QTest.qWait(80)
+    reference = find(window, 'cprViewport-reference-a')
+    reference.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_N)
+    QTest.qWait(30)
+    assert tab.drawing
+    ref = tab.viewForRole('reference-a')
+    ref.cprTap(35, 48, .4)
+    ref.cprTap(65, 48, .4)
+    QTest.keyClick(window, Qt.Key_Return)
+    wait_until(lambda: tab.resultView)
+    QTest.qWait(80)
+    assert not reference.isVisible()
+    assert window.grabWindow().save(str(tmp_path/'main-results.png'))
+    QTest.keyClick(window, Qt.Key_R)
+    QTest.qWait(40)
+    assert tab.pathEditing and reference.isVisible()
+    assert window.grabWindow().save(str(tmp_path/'main-editing.png'))
+    click(window, find(window, 'cprDetails'))
+    name = find(window, 'cprPathName')
+    click(window, name)
+    assert name.hasActiveFocus()
+    QTest.keyClick(window, Qt.Key_N)
+    QTest.keyClick(window, Qt.Key_R)
+    assert not tab.drawing and tab.pathEditing
+    assert name.hasActiveFocus()
+    click(window, find(window, 'cprFinishPath'))
+    QTest.qWait(80)
+    assert tab.resultView and not name.isVisible()
+    QTest.keyClick(window, Qt.Key_N)
+    QTest.qWait(40)
+    assert tab.drawing and reference.isVisible()
+    QTest.keyClick(window, Qt.Key_Escape)
+    QTest.qWait(40)
+    assert tab.resultView and not tab.drawing
+    assert not warnings, warnings
+
+
+def test_cross_section_history_is_visible_when_curved_result_is_maximized(cpr_app):
+    from test_workspace_persistence import draw_length
+    _, tab, _ = cpr_app
+    cross = tab.viewForRole('cross')
+    measurement = draw_length(cross)
+    source = cross.measurementController._sources[measurement]
+    tab.finishEditing()
+    with displayed_cpr_page(tab) as (window, _):
+        curved = named_item(window.rootObject(), 'cprViewport-curved')
+        section = named_item(window.rootObject(), 'cprViewport-cross')
+        curved.forceActiveFocus()
+        tab.focusSingleViewport(tab.viewForRole('curved').viewportId)
+        QTest.qWait(20)
+        assert curved.isVisible() and not section.isVisible()
+        tab.navigate_measurement(cross, source)
+        wait_until(lambda: cross.historicalPlane)
+        QTest.qWait(20)
+        assert tab.resultView and tab.activeViewport is cross
+        assert tab.focusedViewportId == cross.viewportId
+        assert section.isVisible() and not curved.isVisible()
+        assert section.hasActiveFocus() and not curved.hasActiveFocus()
 
 
 @pytest.mark.parametrize("role", ["reference-a", "reference-b", "curved", "cross"])
@@ -304,7 +422,7 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
         assert not cpr.drawing and not cpr.pathEditing
         click('cprEditPath')
         assert cpr.pathEditing
-        click('cprEditPath')
+        click('cprFinishPath')
         assert not cpr.pathEditing
         click('cprNewPath')
         click("cprCancelPath")

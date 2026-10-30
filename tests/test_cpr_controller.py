@@ -66,7 +66,7 @@ def test_double_click_has_one_owner_for_drawing_editing_and_curve_measurements(c
     assert not cpr.drawing and not cpr.focusedViewportId
     cpr.setPathEditing(True)
     assert ref.cprDoubleClick()
-    assert cpr.pathEditing and not cpr.focusedViewportId
+    assert not cpr.pathEditing and cpr.resultView and not cpr.focusedViewportId
     cpr.setPathEditing(False)
     for kind in ("curve", "freehand"):
         cpr.toolController.selectInteraction("measure:" + kind)
@@ -108,7 +108,7 @@ def test_leaving_edit_mode_cancels_an_uncommitted_drag(cpr):
     assert not cpr.pathEditing
 
 
-def test_other_tools_cannot_confirm_or_delete_a_suspended_draft(cpr):
+def test_other_tools_cancel_draft_without_claiming_measurement_input(cpr):
     ref = cpr.viewForRole('reference-a')
     cpr.startPath()
     ref.cprTap(5, 10, .4)
@@ -116,9 +116,9 @@ def test_other_tools_cannot_confirm_or_delete_a_suspended_draft(cpr):
     cpr._tool_controller.activateTool('measure')
     assert not ref.cprFinish()
     assert not ref.cprDelete()
-    assert cpr.drawing and len(cpr.controlPoints) == 2
+    assert not cpr.drawing and not cpr.controlPoints
     cpr._tool_controller.activateTool('cpr-path')
-    assert ref.cprFinish()
+    assert not ref.cprFinish()
     assert not cpr.drawing
 
 

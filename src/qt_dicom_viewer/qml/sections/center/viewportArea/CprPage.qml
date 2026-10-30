@@ -9,6 +9,30 @@ Item {
     objectName: "cprPage"
     required property var controller
     property bool anonymousExport: false
+    readonly property bool results: controller?.resultView ?? false
+    readonly property bool stackedResults: results && width < 720
+    function focusActiveViewport() {
+        for (let i = 0; i < cells.count; ++i) {
+            const cell = cells.itemAt(i)
+            if (cell.visible && cell.modelData === controller?.activeViewport)
+                cell.imageItem.forceActiveFocus()
+        }
+    }
+    function restoreVisibleFocus() {
+        for (let i = 0; i < cells.count; ++i) {
+            const cell = cells.itemAt(i)
+            if (!cell.visible && cell.imageItem.activeFocus) {
+                focusActiveViewport()
+                return
+            }
+        }
+    }
+    Connections {
+        target: page.controller ?? null
+        function onResultViewChanged() { Qt.callLater(page.focusActiveViewport) }
+        function onPathInputStarted() { Qt.callLater(page.focusActiveViewport) }
+        function onViewLayoutChanged() { Qt.callLater(page.restoreVisibleFocus) }
+    }
     Components.DelayedActivity {
         id: rebuildFeedback
         active: page.visible && (page.controller?.busy ?? false)
@@ -27,7 +51,7 @@ Item {
         anchors.fill: parent
         rowSpacing: 4
         columnSpacing: 4
-        uniformCellWidths: true
+        uniformCellWidths: !page.results
         uniformCellHeights: true
         Repeater {
             id: cells
@@ -38,9 +62,10 @@ Item {
                 required property var modelData
                 property alias imageItem: viewport
                 readonly property bool focused: (page.controller?.focusedViewportId ?? "") !== ""
-                visible: !focused || page.controller?.focusedViewportId === modelData.viewportId
-                Layout.row: focused ? 0 : Math.floor(index / 2)
-                Layout.column: focused ? 0 : index % 2
+                visible: focused ? page.controller?.focusedViewportId === modelData.viewportId : !page.results || index >= 2
+                Layout.row: focused ? 0 : page.results ? (page.stackedResults ? Math.max(0, index - 2) : 0) : Math.floor(index / 2)
+                Layout.column: focused || page.stackedResults ? 0 : index % 2
+                Layout.preferredWidth: page.results && !page.stackedResults && index === 2 ? 2 : 1
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumWidth: 0

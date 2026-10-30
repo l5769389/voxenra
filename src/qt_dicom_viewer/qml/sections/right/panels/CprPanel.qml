@@ -15,6 +15,13 @@ ColumnLayout {
     readonly property bool editing: !drawing && (controller?.pathEditing ?? false)
     readonly property bool hasPath: (controller?.selectedPathId ?? "") !== ""
     readonly property int pointCount: controller?.controlPoints.length ?? 0
+    readonly property bool results: controller?.resultView ?? false
+    readonly property var shortcutBindings: typeof appController !== "undefined"
+        ? appController.shortcutController?.bindings ?? [] : []
+    function actionHint(label, action) {
+        const key = shortcutBindings.find(binding => binding.action === action)?.display ?? ""
+        return label + (key ? " (" + key + ")" : "")
+    }
     spacing: 8
 
     Components.PanelHeading { title: qsTrId("cpr.title"); explanation: panel.controller?.message ?? "" }
@@ -40,7 +47,7 @@ ColumnLayout {
     }
     RowLayout {
         Layout.fillWidth: true
-        visible: !panel.drawing
+        visible: !panel.drawing && !panel.editing
         Components.AppButton {
             objectName: "cprNewPath"
             Layout.fillWidth: true
@@ -48,22 +55,28 @@ ColumnLayout {
             iconName: "add"
             compact: true
             actionRole: panel.hasPath ? "neutral" : "primary"
-            enabled: panel.controller?.referencesReady ?? false
+            enabled: (panel.controller?.referencesReady ?? false) && !panel.controller?.sourceMismatch
             onClicked: panel.controller.startPath()
+            Accessible.description: panel.actionHint(text, "cpr-new")
+            Components.AppToolTip { visible: parent.hovered; text: panel.actionHint(qsTrId("cpr.new"), "cpr-new") }
         }
         Components.AppButton {
             objectName: "cprEditPath"
             Layout.fillWidth: true
             visible: panel.hasPath
-            text: qsTrId(panel.editing ? "cpr.doneEditing" : "cpr.edit")
-            iconName: panel.editing ? "check" : "cpr-path"
+            text: qsTrId("cpr.edit")
+            iconName: "cpr-path"
             compact: true
             checked: panel.editing
-            onClicked: panel.controller.setPathEditing(!panel.editing)
+            enabled: (panel.controller?.referencesReady ?? false) && !panel.controller?.sourceMismatch
+            onClicked: panel.controller.setPathEditing(true)
+            Accessible.description: panel.actionHint(text, "cpr-edit")
+            Components.AppToolTip { visible: parent.hovered; text: panel.actionHint(qsTrId("cpr.edit"), "cpr-edit") }
         }
     }
     Text {
         objectName: "cprPathStatus"
+        visible: !panel.results
         Accessible.role: Accessible.StaticText
         Accessible.name: text
         Layout.fillWidth: true
@@ -75,20 +88,24 @@ ColumnLayout {
     }
     RowLayout {
         Layout.fillWidth: true
-        visible: panel.drawing
+        visible: panel.drawing || (!panel.results && panel.hasPath)
         Components.AppButton {
             objectName: "cprFinishPath"
             Layout.fillWidth: true
-            text: qsTrId("cpr.finish")
+            text: qsTrId("cpr.done")
             iconName: "check"
             actionRole: "primary"
-            enabled: panel.controller?.canFinishPath ?? false
-            onClicked: panel.controller.finishPath()
+            enabled: (panel.drawing ? panel.controller?.canFinishPath : panel.hasPath)
+                && !panel.controller?.sourceMismatch
+            onClicked: panel.controller.finishEditing()
+            Accessible.description: qsTrId("cpr.finishHint")
+            Components.AppToolTip { visible: parent.hovered; text: qsTrId("cpr.finishHint") }
         }
         Components.AppButton {
             objectName: "cprCancelPath"
             Layout.fillWidth: true
-            text: qsTrId("cpr.cancel")
+            visible: panel.drawing || panel.editing
+            text: qsTrId(panel.drawing ? "cpr.cancel" : "cpr.exitEdit")
             iconName: "close"
             onClicked: panel.controller.cancel_operation()
         }
@@ -117,7 +134,7 @@ ColumnLayout {
     Components.AppButton {
         objectName: "cprDetails"
         Layout.fillWidth: true
-        visible: panel.hasPath || panel.drawing
+        visible: !panel.results && (panel.hasPath || panel.drawing)
         compact: true
         text: qsTrId("cpr.pathDetails")
         iconName: panel.details ? "chevron-up" : "chevron-down"
@@ -127,7 +144,7 @@ ColumnLayout {
     }
     ColumnLayout {
         Layout.fillWidth: true
-        visible: panel.details && (panel.hasPath || panel.drawing)
+        visible: !panel.results && panel.details && (panel.hasPath || panel.drawing)
         spacing: 6
         Components.AppTextField {
             id: nameField
