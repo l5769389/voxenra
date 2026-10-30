@@ -12,9 +12,10 @@ ColumnLayout {
     property bool details: false
     property bool interval: false
     readonly property bool drawing: controller?.drawing ?? false
-    readonly property bool editing: !drawing && (controller?.pathEditing ?? false)
+    readonly property bool editing: !drawing && ((controller?.pathEditing ?? false) || (controller?.finishing ?? false))
     readonly property bool hasPath: (controller?.selectedPathId ?? "") !== ""
     readonly property int pointCount: controller?.controlPoints.length ?? 0
+    readonly property bool results: controller?.resultView ?? false
     spacing: 8
 
     Components.PanelHeading { title: qsTrId("cpr.title"); explanation: panel.controller?.message ?? "" }
@@ -38,32 +39,9 @@ ColumnLayout {
         currentIndex: model.findIndex(item => item.pathId === panel.controller?.selectedPathId)
         onActivated: panel.controller.selectPath(model[currentIndex].pathId)
     }
-    RowLayout {
-        Layout.fillWidth: true
-        visible: !panel.drawing
-        Components.AppButton {
-            objectName: "cprNewPath"
-            Layout.fillWidth: true
-            text: qsTrId("cpr.new")
-            iconName: "add"
-            compact: true
-            actionRole: panel.hasPath ? "neutral" : "primary"
-            enabled: panel.controller?.referencesReady ?? false
-            onClicked: panel.controller.startPath()
-        }
-        Components.AppButton {
-            objectName: "cprEditPath"
-            Layout.fillWidth: true
-            visible: panel.hasPath
-            text: qsTrId(panel.editing ? "cpr.doneEditing" : "cpr.edit")
-            iconName: panel.editing ? "check" : "cpr-path"
-            compact: true
-            checked: panel.editing
-            onClicked: panel.controller.setPathEditing(!panel.editing)
-        }
-    }
     Text {
         objectName: "cprPathStatus"
+        visible: !panel.results
         Accessible.role: Accessible.StaticText
         Accessible.name: text
         Layout.fillWidth: true
@@ -72,26 +50,6 @@ ColumnLayout {
         color: panel.drawing ? Theme.textPrimary : Theme.textSecondary
         wrapMode: Text.Wrap
         font.pixelSize: 12
-    }
-    RowLayout {
-        Layout.fillWidth: true
-        visible: panel.drawing
-        Components.AppButton {
-            objectName: "cprFinishPath"
-            Layout.fillWidth: true
-            text: qsTrId("cpr.finish")
-            iconName: "check"
-            actionRole: "primary"
-            enabled: panel.controller?.canFinishPath ?? false
-            onClicked: panel.controller.finishPath()
-        }
-        Components.AppButton {
-            objectName: "cprCancelPath"
-            Layout.fillWidth: true
-            text: qsTrId("cpr.cancel")
-            iconName: "close"
-            onClicked: panel.controller.cancel_operation()
-        }
     }
     Text {
         objectName: "cprInteractionHint"
@@ -117,7 +75,7 @@ ColumnLayout {
     Components.AppButton {
         objectName: "cprDetails"
         Layout.fillWidth: true
-        visible: panel.hasPath || panel.drawing
+        visible: !panel.results && (panel.hasPath || panel.drawing)
         compact: true
         text: qsTrId("cpr.pathDetails")
         iconName: panel.details ? "chevron-up" : "chevron-down"
@@ -127,7 +85,7 @@ ColumnLayout {
     }
     ColumnLayout {
         Layout.fillWidth: true
-        visible: panel.details && (panel.hasPath || panel.drawing)
+        visible: !panel.results && panel.details && (panel.hasPath || panel.drawing)
         spacing: 6
         Components.AppTextField {
             id: nameField
@@ -196,8 +154,11 @@ ColumnLayout {
             Layout.fillWidth: true
             text: qsTrId("cpr.distance").arg((panel.controller?.positionMm ?? 0).toFixed(1))
                 .arg((panel.controller?.totalLength ?? 0).toFixed(1))
+            Layout.minimumWidth: 0
+            elide: Text.ElideRight
             color: Theme.textSecondary
             font.pixelSize: 12
+            font.features: ({ "tnum": 1 })
         }
         Components.AppSlider {
             objectName: "cprPosition"

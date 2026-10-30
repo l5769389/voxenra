@@ -10,6 +10,11 @@ Rectangle {
     required property var controller
     readonly property var volume: controller?.volumeViewport ?? null
     color: Theme.canvasBackground
+    Components.DelayedActivity {
+        id: feedback
+        active: root.visible && root.volume?.loadState !== "ready" && root.volume?.loadState !== "error"
+        activityKey: root.volume
+    }
     TapHandler {
         onTapped: root.controller?.activate()
         onDoubleTapped: root.controller?.toggleMaximized()
@@ -28,7 +33,7 @@ Rectangle {
         anchors.centerIn: parent
         width: Math.max(0, parent.width - 32)
         spacing: 10
-        visible: root.volume?.loadState !== "ready"
+        visible: root.volume?.loadState === "error" || feedback.showing
         Basic.BusyIndicator {
             anchors.horizontalCenter: parent.horizontalCenter
             running: root.visible && root.volume?.loadState !== "error"

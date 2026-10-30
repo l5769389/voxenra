@@ -10,13 +10,20 @@ Rectangle {
     objectName: "workspaceLoadingState"
     property bool loading: true
     property string message: qsTrId("text.0895")
+    property var activityKey: null
     signal closeRequested()
     color: Theme.workspaceBackground
-    Accessible.name: message
+    Accessible.name: !loading || feedback.showing ? message : ""
+    Components.DelayedActivity {
+        id: feedback
+        active: root.visible && root.loading
+        activityKey: root.activityKey
+    }
 
     // Block the unfinished image, while the tab strip and sidebar stay usable.
     MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; onWheel: wheel => wheel.accepted = true }
     ColumnLayout {
+        visible: !root.loading || feedback.showing
         anchors.centerIn: parent
         width: Math.min(360, Math.max(0, parent.width - 40))
         spacing: 14

@@ -147,6 +147,10 @@ class LocalImportDialog(QDialog):
         self._directory_timer = QTimer(self)
         self._directory_timer.setInterval(20)
         self._directory_timer.timeout.connect(self._finish_navigation)
+        self._directory_feedback = QTimer(self)
+        self._directory_feedback.setSingleShot(True)
+        self._directory_feedback.setInterval(300)
+        self._directory_feedback.timeout.connect(self._show_directory_feedback)
         self._apply_theme()
         from qt_dicom_viewer.ui.controller import appearance_controller
         appearance = appearance_controller._current() if appearance_controller._current else None
@@ -252,6 +256,7 @@ class LocalImportDialog(QDialog):
         self.view.selectionModel().selectionChanged.connect(self.update_selection)
         layout.addWidget(self.view, 1)
         self.selection_label = QLabel()
+        self.selection_label.setMinimumHeight(self.selection_label.fontMetrics().height())
         self.selection_label.setObjectName("importSelectionSummary")
         if favorites is not None:
             favorites.messageChanged.connect(self._favorite_feedback)
@@ -447,7 +452,8 @@ class LocalImportDialog(QDialog):
         self.path_edit.setEnabled(not accept_after)
         self.view.setEnabled(False)
         self.open_button.setEnabled(False)
-        self.selection_label.setText(_msg('import.readingDirectory'))
+        self.selection_label.clear()
+        self._directory_feedback.start()
         self._directory_timer.start()
 
         # Filesystem access may wait on a network mount or OS consent. Keep it
@@ -481,12 +487,17 @@ class LocalImportDialog(QDialog):
 
         threading.Thread(target=read_directory, daemon=True, name="import-directory").start()
 
+    def _show_directory_feedback(self):
+        if self._loading and self.isVisible():
+            self.selection_label.setText(_msg('import.readingDirectory'))
+
     def _finish_navigation(self):
         while not self._directory_results.empty():
             request, target, files, selected, error = self._directory_results.get()
             if request != self._navigation_id:
                 continue
             self._loading = False
+            self._directory_feedback.stop()
             accept_after = self._accept_navigation == request
             self._accept_navigation = 0
             self._directory_timer.stop()
@@ -570,6 +581,7 @@ class LocalImportDialog(QDialog):
         super().accept()
 
     def reject(self):
+        self._directory_feedback.stop()
         self._accept_navigation = 0
         super().reject()
 

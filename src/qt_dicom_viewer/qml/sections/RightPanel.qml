@@ -5,6 +5,7 @@ import QtQuick.Window
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "right" as Right
+import "right/components" as ToolControls
 import "../theme"
 import "../components" as Components
 
@@ -178,6 +179,7 @@ Rectangle {
             onCollapseRequested: rightPanel.collapseRequested()
             toolController: rightPanel.toolController
             voiController: rightPanel.tabController?.voiController ?? rightPanel.viewportController?.voiController ?? null
+            cprController: rightPanel.tabController?.cprController ?? null
         }
     }
 
@@ -198,6 +200,16 @@ Rectangle {
         objectName: "compactVolumePanel"
         parent: rightPanel
         property string panelTool: ""
+        property bool detailsLoaded: false
+        onVisibleChanged: {
+            if (visible) detailsLoaded = true
+            // A native popup can close during a nested event loop while its
+            // panel is being built. Unload after construction has unwound.
+            else Qt.callLater(function() {
+                if (!compactPanel.visible) compactPanel.detailsLoaded = false
+            })
+        }
+        readonly property bool cprActions: panelTool === "cpr-path" && !!rightPanel.tabController?.cprController
         // A native popup remains above the native VTK viewport.
         popupType: Basic.Popup.Window
         x: -width - 8
@@ -207,7 +219,7 @@ Rectangle {
         implicitWidth: 280
         width: implicitWidth
         implicitHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48,
-            compactDetails.implicitHeight + chromeHeight)
+            compactDetails.implicitHeight + chromeHeight + (cprActions ? 36 : 0))
         height: implicitHeight
         title: rightPanel.toolController?.activeToolLabel ?? ""
         closeButtonName: "compactVolumePanelClose"
@@ -222,10 +234,11 @@ Rectangle {
             boundsBehavior: Flickable.StopAtBounds
             Right.ToolDetailPanel {
                 id: compactDetails
-                availableHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48) - compactPanel.chromeHeight
+                availableHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48)
+                    - compactPanel.chromeHeight - (compactPanel.cprActions ? 36 : 0)
                 width: parent.width - 8
                 height: implicitHeight
-                activePanel: compactPanel.visible ? compactPanel.panelTool : ""
+                activePanel: compactPanel.detailsLoaded ? compactPanel.panelTool : ""
                 onManualRequested: chapter => rightPanel.manualRequested(chapter)
                 viewportController: rightPanel.viewportController
                 toolController: rightPanel.toolController
@@ -234,6 +247,13 @@ Rectangle {
                 exportItem: rightPanel.exportItem
             }
             Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
+        }
+        ToolControls.CprActions {
+            visible: compactPanel.cprActions
+            Layout.fillWidth: true
+            Layout.minimumHeight: 32
+            Layout.maximumHeight: 32
+            controller: rightPanel.tabController?.cprController ?? null
         }
     }
 }

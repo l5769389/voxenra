@@ -26,6 +26,7 @@ class CprViewportController(Image2DViewportController):
         self._historical = False
         super().__init__(config, tools, parent=parent)
         parent.cprChanged.connect(self.exportReadinessChanged)
+        self.cprChanged.connect(self.overlayChanged)
 
     @Property(bool, notify=exportReadinessChanged)
     def exportReady(self):
@@ -43,16 +44,29 @@ class CprViewportController(Image2DViewportController):
                    notify_name='_i18n_overlayInfo', source_notify='overlayChanged')
     def overlayInfo(self):
         info = Image2DViewportController.overlayInfo.fget(self)
-        info.update(cprRole=self.viewportRole, cprReconstruction='')
+        info.update(cprRole=self.viewportRole, cprReconstruction='', cprDistance='')
         result = self._cpr._result
         if self.viewportRole == 'curved' and result is not None and result.curve is not None:
             # Describe the accepted raster, not controls awaiting reconstruction.
             settings = result.curve.settings
-            mode = 'Thin'
+            mode = 'THIN'
             if settings.projection != 'thin' and settings.thickness_mm > 0:
-                mode = ('MIP' if settings.projection == 'mip' else 'Mean')
+                mode = ('MIP' if settings.projection == 'mip' else 'MEAN')
                 mode += f' {settings.thickness_mm:g} mm'
             info['cprReconstruction'] = f'CPR · {mode}'
+        if self._frame_meta is not None and self.viewportRole in ('curved', 'cross'):
+            if self._historical:
+                source = self._measure_controller.current_source.get('cpr', {})
+                distance = source.get('distanceMm')
+                if distance is not None:
+                    # Older paths may have a different length. Only use the
+                    # distance saved with this exact measurement plane.
+                    info['cprDistance'] = f's: {distance:.1f} mm'
+            elif result is not None and result.curve is not None and result.section is not None:
+                # A requested position can already be ahead of the displayed
+                # section. Keep both numbers tied to the accepted result.
+                info['cprDistance'] = (f's: {result.section.distance_mm:.1f} / '
+                                       f'{result.curve.centerline.length_mm:.1f} mm')
         return info
 
     @Property(bool, notify=cprChanged)
@@ -143,6 +157,7 @@ class CprViewportController(Image2DViewportController):
 
     def clear_cpr(self):
         self.cancelMeasurement()
+        self._historical = False
         self._frame_meta = self._modality_pixel = self.plane_geometry = None
         self._has_image = False
         self._measure_controller.hide_frame()
@@ -197,9 +212,21 @@ class CprViewportController(Image2DViewportController):
         return self._cpr.end_path_drag(self, column, row)
 
     @Slot(result=bool)
+    def cprDoubleClick(self):
+        # One dispatcher owns this gesture: finishing a draft must never also
+        # maximize after finishPath changes the editing state during the event.
+        if self.cprFinish() or self.cprEditing:
+            return True
+        if self.activeInteraction in ("measure:freehand", "measure:curve"):
+            return False
+        self._cpr.activateViewport(self.viewportId)
+        self._cpr.focusSingleViewport("" if self._cpr.focusedViewportId else self.viewportId)
+        return True
+
+    @Slot(result=bool)
     def cprFinish(self):
-        if self.cprDrawing:
-            self._cpr.finishPath()
+        if self.cprEditing:
+            self._cpr.finishEditing()
             return True
         return False
 

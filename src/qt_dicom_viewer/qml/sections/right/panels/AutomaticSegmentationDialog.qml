@@ -7,6 +7,7 @@ import "../../../theme"
 
 Components.AppDialog {
     id: dialog
+    Components.DelayedActivity { id: feedback; active: dialog.visible && (dialog.controller?.busy ?? false) }
     objectName: "automaticSegmentationDialog"
     property var controller: null
     property var settingsController: null
@@ -97,11 +98,12 @@ Components.AppDialog {
         }
         Basic.ProgressBar {
             Layout.fillWidth: true
-            visible: dialog.controller?.busy ?? false
+            visible: feedback.showing
             indeterminate: true
         }
         Text {
             objectName: "automaticSegmentationMessage"
+            visible: !dialog.controller?.busy || feedback.showing
             Layout.fillWidth: true
             text: dialog.controller?.message ?? ""
             textFormat: Text.PlainText

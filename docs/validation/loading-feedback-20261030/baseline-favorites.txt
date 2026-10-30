@@ -1,0 +1,51 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_inline_favorites_many_resize_manage_and_reload ______________
+
+scene = (<PySide6.QtQuick.QQuickWindow(0x76d2da7900 exposed, visibility=QWindow::Windowed, flags=QFlags<Qt::WindowType>(Window...y=239,89 1440x900) at 0x11705e240>, <qt_dicom_viewer.ui.app_controller.AppController(0x76d47b4190) at 0x1180e6340>, [])
+tmp_path = PosixPath('/private/var/folders/cm/56fnt4dx3zd4kzn92m5dfz_c0000gn/T/pytest-of-jun/pytest-1501/test_inline_favorites_many_res0')
+
+    def test_inline_favorites_many_resize_manage_and_reload(scene, tmp_path):
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QApplication
+        window, app, warnings = scene
+        favorites = app.panelController.favoriteDirectories
+        for i in range(12):
+            directory = tmp_path / ('Directory-' + str(i))
+            directory.mkdir()
+            assert favorites.add(str(directory))
+        app.settingsController.setValue('appearance', 'theme', 'light')
+        picker = LocalImportDialog(str(tmp_path), favorites=favorites)
+        picker.show()
+        try:
+            wait_until(lambda: not picker._loading)
+            for width in (880, 620):
+                picker.resize(width, 560)
+                QTest.qWait(60)
+                listing = picker.favorite_list
+                assert listing.height() <= 80
+                assert listing.verticalScrollBar().maximum() > 0
+>               assert listing.horizontalScrollBar().maximum() == 0
+E               assert 3 == 0
+E                +  where 3 = <built-in method maximum of PySide6.QtWidgets.QScrollBar object at 0x117f1de00>()
+E                +    where <built-in method maximum of PySide6.QtWidgets.QScrollBar object at 0x117f1de00> = <PySide6.QtWidgets.QScrollBar(0x76d6ee8720) at 0x117f1de00>.maximum
+E                +      where <PySide6.QtWidgets.QScrollBar(0x76d6ee8720) at 0x117f1de00> = <built-in method horizontalScrollBar of PySide6.QtWidgets.QListWidget object at 0x109547bc0>()
+E                +        where <built-in method horizontalScrollBar of PySide6.QtWidgets.QListWidget object at 0x109547bc0> = <PySide6.QtWidgets.QListWidget(0x76d657ea00, name="importFavorites") at 0x109547bc0>.horizontalScrollBar
+
+tests/test_favorite_directories_ui.py:193: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+qt.qpa.fonts: Populating font family aliases took 105 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost.
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_favorite_directories_ui.py::test_inline_favorites_many_resize_manage_and_reload
+1 failed, 3 warnings in 1.58s

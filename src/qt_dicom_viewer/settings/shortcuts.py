@@ -5,10 +5,12 @@ from PySide6.QtGui import QKeySequence
 from qt_dicom_viewer.i18n import message as _msg
 
 DEFAULT_BINDINGS = {'window': 'W', 'scroll': 'S', 'pan': 'P', 'zoom': 'Z',
-                    'measure': 'M', 'paint': 'B', 'erase': 'E', 'play': 'Space'}
+                    'measure': 'M', 'paint': 'B', 'erase': 'E', 'play': 'Space',
+                    'cpr-new': 'N', 'cpr-edit': 'R'}
 ACTION_LABELS = {'window': 'text.0285', 'scroll': 'input.action.scroll', 'pan': 'input.action.pan',
                  'zoom': 'input.action.zoom', 'measure': 'text.0292', 'paint': 'seg.paint',
-                 'erase': 'seg.erase', 'play': 'input.action.play'}
+                 'erase': 'seg.erase', 'play': 'input.action.play',
+                 'cpr-new': 'cpr.new', 'cpr-edit': 'cpr.edit'}
 FIXED = {'reopenClosedTab': ('workspace.reopenClosed', 'Ctrl+Shift+T'), 'newWorkspace': ('workspace.new.action', 'Ctrl+N'), 'open': ('input.action.open', 'Ctrl+O'), 'save': ('input.action.save', 'Ctrl+S'),
          'saveAs': ('input.action.saveAs', 'Ctrl+Shift+S'), 'openWorkspace': ('input.action.openWorkspace', 'Ctrl+Shift+O'),
          'undo': ('seg.undo', 'Ctrl+Z'), 'redo': ('seg.redo', 'Ctrl+Shift+Z' if sys.platform == 'darwin' else 'Ctrl+Y'),
@@ -29,6 +31,12 @@ def validate_bindings(raw):
     if not isinstance(raw, dict) or set(raw) - set(DEFAULT_BINDINGS):
         raise ValueError(_msg('input.invalidShortcut'))
     result = dict(DEFAULT_BINDINGS, **raw)
+    # Older settings may already use these letters for another action. Preserve
+    # that binding instead of resetting the user's shortcut section on upgrade.
+    for action in ('cpr-new', 'cpr-edit'):
+        if action not in raw and any(canonical(value) == canonical(result[action])
+                                     for value in raw.values() if isinstance(value, str)):
+            result[action] = ''
     reserved = {canonical(v[1]) for v in FIXED.values()} | {canonical(v) for v in (
         'Ctrl+A', 'Ctrl+X', 'Ctrl+Q', 'Ctrl+H', 'Ctrl+M', 'Ctrl+N', 'Ctrl+F', 'Ctrl+P',
         'Ctrl+Shift+Z', 'Ctrl+Y', 'Ctrl+,', 'Ctrl+Space', 'Ctrl+Shift+3', 'Ctrl+Shift+4', 'Ctrl+Shift+5', 'F1', 'F11', 'F12')}

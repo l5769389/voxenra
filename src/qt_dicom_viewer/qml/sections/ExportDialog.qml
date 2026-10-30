@@ -7,6 +7,7 @@ import "../theme"
 
 Components.AppDialog {
     id: dialog
+    Components.DelayedActivity { id: feedback; active: dialog.visible && (dialog.controller?.busy ?? false) }
     objectName: "exportDialog"
     property var controller: null
     property var settingsController: null
@@ -110,7 +111,7 @@ Components.AppDialog {
             Basic.ProgressBar {
                 objectName: "exportProgress"
                 Layout.fillWidth: true
-                visible: dialog.controller && dialog.controller.busy
+                visible: feedback.showing
                 from: 0
                 to: dialog.controller ? Math.max(1, dialog.controller.totalCount) : 1
                 value: dialog.controller ? dialog.controller.completedCount : 0
@@ -119,7 +120,7 @@ Components.AppDialog {
             Text {
                 objectName: "exportMessage"
                 Layout.fillWidth: true
-                visible: text !== ""
+                visible: text !== "" && (!dialog.controller?.busy || feedback.showing)
                 text: dialog.controller ? dialog.controller.message : ""
                 textFormat: Text.PlainText
                 color: Theme.textPrimary

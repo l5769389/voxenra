@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Window
 import "../../../components" as Components
 import "../../../theme"
 
@@ -9,6 +10,51 @@ Item {
     objectName: "cprPage"
     required property var controller
     property bool anonymousExport: false
+    readonly property bool results: controller?.resultView ?? false
+    readonly property bool stackedResults: results && width < 720
+    readonly property bool splitResults: results && !stackedResults && !(controller?.focusedViewportId ?? "")
+    readonly property real minimumResultWidth: 280
+    readonly property real splitHandleWidth: 8
+    readonly property real resultContentWidth: Math.max(0, width - splitHandleWidth)
+    readonly property real curvedResultWidth: Math.max(minimumResultWidth,
+        Math.min(resultContentWidth - minimumResultWidth, resultContentWidth * (controller?.resultSplitRatio ?? 2/3)))
+    function focusActiveViewport() {
+        if (!page.visible) return
+        for (let i = 0; i < cells.count; ++i) {
+            const cell = cells.itemAt(i)
+            if (cell?.visible && cell.modelData === controller?.activeViewport)
+                cell.imageItem.forceActiveFocus()
+        }
+    }
+    function restoreVisibleFocus() {
+        for (let i = 0; i < cells.count; ++i) {
+            const cell = cells.itemAt(i)
+            if (cell && !cell.visible && cell.imageItem.activeFocus) {
+                focusActiveViewport()
+                return
+            }
+        }
+    }
+    function focusAfterResultChange() {
+        const focused = page.Window.window?.activeFocusItem
+        // Reconstruction can finish while the user is typing or operating a
+        // control. Only redirect focus if it no longer belongs to that control.
+        if (focused?.visible && (focused.selectByMouse !== undefined
+                || (focused.focusPolicy !== undefined && focused.focusPolicy !== Qt.NoFocus)))
+            return
+        focusActiveViewport()
+    }
+    Connections {
+        target: page.controller ?? null
+        function onResultViewChanged() { Qt.callLater(page.focusAfterResultChange) }
+        function onPathInputStarted() { Qt.callLater(page.focusActiveViewport) }
+        function onViewLayoutChanged() { Qt.callLater(page.restoreVisibleFocus) }
+    }
+    Components.DelayedActivity {
+        id: rebuildFeedback
+        active: page.visible && (page.controller?.busy ?? false)
+        activityKey: page.controller
+    }
     function activeExportItem() {
         if (!controller) return null
         if (controller.exportScope === "combined") return page
@@ -21,8 +67,8 @@ Item {
     GridLayout {
         anchors.fill: parent
         rowSpacing: 4
-        columnSpacing: 4
-        uniformCellWidths: true
+        columnSpacing: page.splitResults ? page.splitHandleWidth : 4
+        uniformCellWidths: !page.results
         uniformCellHeights: true
         Repeater {
             id: cells
@@ -33,95 +79,79 @@ Item {
                 required property var modelData
                 property alias imageItem: viewport
                 readonly property bool focused: (page.controller?.focusedViewportId ?? "") !== ""
-                visible: !focused || page.controller?.focusedViewportId === modelData.viewportId
-                Layout.row: focused ? 0 : Math.floor(index / 2)
-                Layout.column: focused ? 0 : index % 2
+                visible: focused ? page.controller?.focusedViewportId === modelData.viewportId : !page.results || index >= 2
+                Layout.row: !visible ? index + 2 : focused ? 0
+                    : page.results ? (page.stackedResults ? Math.max(0, index - 2) : 0) : Math.floor(index / 2)
+                Layout.column: focused || page.stackedResults ? 0 : index % 2
+                Layout.preferredWidth: page.splitResults
+                    ? (index === 2 ? page.curvedResultWidth : page.resultContentWidth - page.curvedResultWidth) : 1
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.minimumWidth: 0
+                Layout.minimumWidth: page.splitResults ? page.minimumResultWidth : 0
                 Layout.minimumHeight: 100
                 color: Theme.canvasBackground
                 border.color: page.controller?.activeViewport === modelData ? Theme.primaryColor : Theme.controlBorder
                 border.width: 1
-                ColumnLayout {
+                Item {
                     anchors.fill: parent
                     anchors.margins: 2
-                    spacing: 2
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        Text {
-                            Layout.leftMargin: 6
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: qsTrId("cpr." + cell.modelData.viewportRole)
-                                + (cell.modelData.historicalPlane ? " · " + qsTrId("cpr.historical") : "")
-                            elide: Text.ElideRight
-                            color: Theme.overlayText
-                            font.pixelSize: 12
-                        }
-                        Components.AppComboBox {
-                            objectName: "cprPlane-" + cell.index
-                            visible: cell.index < 2
-                            Layout.preferredWidth: 92
-                            model: [qsTrId("text.0384"), qsTrId("text.0385"), qsTrId("text.0386")]
-                            currentIndex: ["axial", "coronal", "sagittal"].indexOf(page.controller?.referencePlanes[cell.index] ?? "axial")
-                            onActivated: page.controller?.setReferencePlane(cell.index, ["axial", "coronal", "sagittal"][currentIndex])
-                        }
-                        Components.AppButton {
-                            objectName: "cprFocus-" + cell.modelData.viewportRole
-                            compact: true
-                            iconName: "fullscreen"
-                            minimumButtonWidth: 28
-                            Accessible.name: qsTrId(cell.focused ? "reading.restoreViewport" : "reading.maximizeViewport")
-                            onClicked: {
-                                page.controller?.activateViewport(cell.modelData.viewportId)
-                                page.controller?.focusSingleViewport(cell.focused ? "" : cell.modelData.viewportId)
-                            }
-                        }
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        spacing: 1
+                    Item {
+                        anchors.fill: parent
                         Viewport {
                             id: viewport
                             objectName: "cprViewport-" + cell.modelData.viewportRole
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
+                            anchors.fill: parent
                             viewportController: cell.modelData
+                            twoDViewMode: cell.index < 2 && !cell.modelData.historicalPlane
+                                ? page.controller?.referencePlanes[cell.index] ?? "axial" : ""
                             hasTabs: true
                             anonymousExport: page.anonymousExport
                             multiViewport: !cell.focused
+                            overlayStatusText: cell.modelData.historicalPlane ? "HISTORICAL PLANE"
+                                : cell.index < 2 ? ""
+                                : page.controller?.drawing && cell.modelData.imageRows > 0 ? "PREVIOUS RESULT"
+                                : page.controller?.busy ? (rebuildFeedback.showing ? "UPDATING" : "")
+                                : !page.controller?.ready ? "NO RESULT" : ""
                             TapHandler {
                                 onPressedChanged: if (pressed) page.controller?.activateViewport(cell.modelData.viewportId)
                             }
                         }
-                        SliceSlider {
-                            Layout.fillHeight: true
-                            viewportController: cell.modelData
-                            allowOrthogonal: true
+                        // Reuse the 2D plane selector outside the exported image.
+                        // Neither reference plane has a primary/secondary role.
+                        TwoDViewSelector {
+                            objectName: "cprPlane-" + cell.index
+                            readonly property var overlay: viewport.cornerOverlay
+                            x: 10; y: 10; z: 40
+                            visible: cell.index < 2 && !cell.modelData.historicalPlane && !page.anonymousExport
+                            width: Math.min(overlay?.selectorWidth ?? 70, Math.max(0, parent.width - x - 4))
+                            height: overlay?.selectorHeight ?? 24
+                            font.pixelSize: overlay?.textPixelSize ?? 12
+                            mode: viewport.twoDViewMode
+                            model: [
+                                {value: "axial", label: qsTrId("layout.axialReconstruction"), group: ""},
+                                {value: "coronal", label: qsTrId("layout.coronalReconstruction"), group: ""},
+                                {value: "sagittal", label: qsTrId("layout.sagittalReconstruction"), group: ""}
+                            ]
+                            onActivationRequested: page.controller?.activateViewport(cell.modelData.viewportId)
+                            onModeSelected: mode => page.controller?.setReferencePlane(cell.index, mode)
                         }
-                    }
-                    Text {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 6
-                        Layout.bottomMargin: 3
-                        // Keep reference image bounds stable when modes change.
-                        text: cell.index < 2 ? qsTrId(cell.modelData.cprDrawing ? "cpr.referenceDrawHint"
-                            : cell.modelData.cprEditing ? "cpr.referenceEditHint"
-                            : page.controller?.drawing ? "cpr.referencePausedHint" : "cpr.referenceViewHint")
-                            : page.controller?.drawing ? qsTrId(cell.modelData.imageRows > 0 ? "cpr.previousResult" : "cpr.empty")
-                            : cell.modelData.historicalPlane ? cell.modelData.historicalDescription
-                            : page.controller?.busy ? qsTrId("cpr.computing")
-                            : !page.controller?.ready ? qsTrId("cpr.empty")
-                            : qsTrId("cpr.distance").arg((page.controller?.positionMm ?? 0).toFixed(1)).arg((page.controller?.totalLength ?? 0).toFixed(1))
-                        color: Theme.overlayText
-                        font.pixelSize: 11
-                        elide: Text.ElideRight
                     }
                 }
             }
         }
+    }
+    Components.WidthResizeHandle {
+        objectName: "cprResultSplitHandle"
+        visible: page.splitResults && !page.anonymousExport
+        enabled: page.splitResults
+        x: (cells.itemAt(2)?.x ?? 0) + (cells.itemAt(2)?.width ?? 0)
+        y: 0
+        width: page.splitHandleWidth
+        height: page.height
+        currentWidth: cells.itemAt(2)?.width ?? page.curvedResultWidth
+        minimumWidth: page.minimumResultWidth
+        maximumWidth: page.resultContentWidth - page.minimumResultWidth
+        onWidthDragged: value => page.controller?.setResultSplitRatio(value / page.resultContentWidth)
+        onWidthCommitted: value => page.controller?.setResultSplitRatio(value / page.resultContentWidth)
     }
 }

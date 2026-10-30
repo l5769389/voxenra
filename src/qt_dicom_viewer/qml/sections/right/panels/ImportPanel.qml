@@ -7,6 +7,7 @@ import "../../../theme"
 
 ColumnLayout {
     id: panel
+    Components.DelayedActivity { id: feedback; active: panel.visible && (panel.controller?.busy ?? false) }
     objectName: "associatedImportPanel"
     property var controller: null
     property var regionController: null
@@ -28,7 +29,7 @@ ColumnLayout {
     }
     Basic.ProgressBar {
         Layout.fillWidth: true
-        visible: panel.controller?.busy ?? false
+        visible: feedback.showing
         indeterminate: true
     }
     Text {
@@ -36,13 +37,13 @@ ColumnLayout {
         Layout.fillWidth: true
         text: panel.controller?.operation === "import" ? panel.controller.message : ""
         textFormat: Text.PlainText
-        visible: text !== ""
+        visible: text !== "" && (!panel.controller?.busy || feedback.showing)
         color: panel.controller?.isError ? Theme.dangerColor : Theme.textSecondary
         font.pixelSize: 12
         wrapMode: Text.Wrap
     }
     Components.AppButton {
-        visible: panel.controller?.busy ?? false
+        visible: feedback.showing
         objectName: "cancelAssociatedImport"
         text: panel.controller?.operation === "import" ? qsTrId("seg.cancelImport") : qsTrId("text.0656")
         onClicked: panel.controller.cancel()

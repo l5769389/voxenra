@@ -98,11 +98,14 @@ def test_background_preparation_leaves_gui_timer_running(host, monkeypatch):
         QTest.qWait(100)
         assert len(ticks) >= 4 and not installed
         assert h.stack.currentWidget() is h.status_page
+        assert h.message.isHidden()
+        wait_until(lambda: not h.message.isHidden())
         release.set()
         wait_until(lambda: h.backend.volume is c.volume)
         assert threads == [threads[0]] and threads[0] != gui_thread
         assert installed == [gui_thread]
         assert h.stack.currentWidget() is h.vtk_widget
+        assert h.message.isHidden()
     finally:
         release.set(); timer.stop()
 

@@ -135,6 +135,39 @@ def open_tags(window, workspace, series):
     return workspace.activeTab.tagController
 
 
+def test_page_feedback_skips_fast_reads_but_keeps_waits_and_errors(scene, monkeypatch):
+    from qt_dicom_viewer.model.dicom_tags import TagNode, TagReadResult
+    window, workspace, series, warnings = scene
+    controller = open_tags(window, workspace, series)
+    requests = []
+    monkeypatch.setattr(controller._service, "submit", requests.append)
+
+    def status_visible():
+        return any(i.objectName() == "tagStatus" and i.isVisible()
+                   for i in descendants(window.contentItem()))
+
+    node = TagNode("test", "(0010,0020)", "Patient ID", "PatientID", "LO", "page-two")
+    controller.setPage(2)
+    QTest.qWait(60)
+    assert controller.loading and not status_visible()
+    controller._accept_result(TagReadResult(requests[-1], (node,)))
+    QTest.qWait(350)
+    assert not status_visible()  # The old timer must not leak into the completed page.
+    assert controller.currentPage == 2 and rows(controller.tagModel)[0]["valueText"] == "page-two"
+
+    controller.setPage(3)
+    wait_until(status_visible)
+    assert controller.loading
+    controller._accept_result(TagReadResult(requests[-1], error="read failed"))
+    assert "read failed" in find(window, "tagStatus").property("text")
+    assert find(window, "tagRetry").isVisible()
+
+    controller.setPage(4)
+    controller._accept_result(TagReadResult(requests[-1], error="immediate failure"))
+    assert "immediate failure" in find(window, "tagStatus").property("text")
+    assert not warnings
+
+
 def test_real_tag_click_search_paging_expand_and_layout(scene, tmp_path):
     window, workspace, series, warnings = scene
     assert not find(window, "openView-tag").isEnabled()

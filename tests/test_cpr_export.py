@@ -1,6 +1,7 @@
 from test_cpr_persistence import cpr_app, qt_app
 from test_dicom_tags import wait_until
 from pathlib import Path
+import pytest
 import pydicom
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QImage
@@ -42,8 +43,11 @@ def test_export_scope_selects_required_view_and_restores_combined_layout(cpr_app
     assert not tab.focusedViewportId
 
 
-def test_three_scopes_write_real_anonymous_pngs_and_reject_changed_scope(cpr_app, tmp_path, monkeypatch):
+@pytest.mark.parametrize('results', [False, True])
+def test_three_scopes_write_real_anonymous_pngs_and_reject_changed_scope(cpr_app, tmp_path, monkeypatch, results):
     app, tab, record = cpr_app
+    if results:
+        tab.finishEditing()
     for instance in record.instances:
         dataset = pydicom.dcmread(instance.path)
         dataset.BurnedInAnnotation = 'NO'

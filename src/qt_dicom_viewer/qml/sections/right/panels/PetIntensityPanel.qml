@@ -12,6 +12,11 @@ ColumnLayout {
 
     required property var viewportController
     spacing: 12
+    Components.DelayedActivity {
+        id: unitFeedback
+        active: petPanel.visible && (petPanel.viewportController?.petUnitPending ?? false)
+        activityKey: petPanel.viewportController
+    }
 
     function formatValue(value) {
         if (!Number.isFinite(value))
@@ -29,7 +34,7 @@ ColumnLayout {
         font.weight: Font.DemiBold
     }
     Text {
-        visible: petPanel.viewportController ? petPanel.viewportController.petUnitPending : false
+        visible: unitFeedback.showing
         text: qsTrId("text.1147")
         color: Theme.textMuted
         font.pixelSize: 12

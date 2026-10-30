@@ -313,9 +313,13 @@ Item {
                     }
                 }
 
+                Components.DelayedActivity {
+                    id: tileFeedback
+                    active: tile.loadState === "loading"
+                }
                 Basic.BusyIndicator {
                     anchors.centerIn: parent
-                    running: tile.loadState === "loading"
+                    running: tileFeedback.showing
                     visible: running
                     width: 28
                     height: 28

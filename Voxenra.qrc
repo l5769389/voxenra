@@ -351,6 +351,8 @@
     <file>src/qt_dicom_viewer/qml/sections/right/CompactToolRail.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/TwoDViewSelector.qml</file>
       <file>src/qt_dicom_viewer/qml/components/ReadingShortcuts.qml</file>
+    <file>src/qt_dicom_viewer/qml/components/DelayedActivity.qml</file>
+    <file>src/qt_dicom_viewer/qml/sections/right/components/CprActions.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/settings/InputSettingsPage.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/settings/PrivacySettingsPage.qml</file>
     <file>src/qt_dicom_viewer/qml/assets/help/input-settings.png</file>

@@ -1,0 +1,128 @@
+{
+  "platform": "cocoa",
+  "visible": true,
+  "active": true,
+  "accessible": true,
+  "dpr": 2.0,
+  "title": "Voxenra \u2014 CPR native validation",
+  "windowSize": [
+    1280,
+    720
+  ],
+  "tab": "tag",
+  "tabIds": [
+    "1.2.826.0.1.3680043.10.999.20261029.88_cpr",
+    "1.2.826.0.1.3680043.10.999.20261029.88_tag"
+  ],
+  "scanning": false,
+  "document": {
+    "busy": false,
+    "dirty": true,
+    "error": false,
+    "message": "\u5de5\u4f5c\u533a\u5df2\u6062\u590d\u3002",
+    "closedTabs": 0
+  },
+  "export": {
+    "busy": false,
+    "message": ""
+  },
+  "tags": {
+    "page": 96,
+    "count": 96,
+    "loading": false,
+    "file": "/Users/jun/.codex/worktrees/dicom-dimse/qt-dicom-viewer/build/native-cpr/synthetic-ct/096.dcm",
+    "sopInstanceUid": "1.2.826.0.1.3680043.10.999.20261029.88.96",
+    "rowCount": 1,
+    "error": ""
+  },
+  "tagFeedbackTrace": [
+    {
+      "time": 106546.761491166,
+      "page": 2,
+      "loading": true,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    },
+    {
+      "time": 106546.785497041,
+      "page": 2,
+      "loading": false,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    },
+    {
+      "time": 106571.590185583,
+      "page": 3,
+      "loading": true,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    },
+    {
+      "time": 106571.609871,
+      "page": 3,
+      "loading": false,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    },
+    {
+      "time": 106572.356803916,
+      "page": 4,
+      "loading": true,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    },
+    {
+      "time": 106572.376566041,
+      "page": 4,
+      "loading": false,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    },
+    {
+      "time": 106582.110881541,
+      "page": 96,
+      "loading": true,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    },
+    {
+      "time": 106582.147164833,
+      "page": 96,
+      "loading": false,
+      "visible": {
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_cpr": false,
+        "tabLoading-1.2.826.0.1.3680043.10.999.20261029.88_tag": false,
+        "tagStatus": false,
+        "workspaceLoadingMessage": false
+      }
+    }
+  ]
+}

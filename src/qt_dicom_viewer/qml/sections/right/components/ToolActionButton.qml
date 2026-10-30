@@ -14,7 +14,8 @@ Components.AppButton {
     property string shortLabel: label
     property bool showLabel: !textOnly && width >= 60
         && (typeof appController !== "undefined" ? appController.settingsController?.values.appearance.toolLabels ?? false : false)
-    readonly property color foregroundColor: !enabled ? Theme.iconDisabled : down ? Theme.iconActive : hovered ? (checked ? Theme.primaryHover : Theme.iconHover) : checked ? Theme.iconActive : Theme.iconDefault
+    readonly property color foregroundColor: !enabled ? Theme.iconDisabled : actionRole === "primary" ? Theme.textOnPrimary
+        : down ? Theme.iconActive : hovered ? (checked ? Theme.primaryHover : Theme.iconHover) : checked ? Theme.iconActive : Theme.iconDefault
     readonly property var shortcutOwner: typeof appController !== "undefined" ? appController.shortcutController ?? null : null
     readonly property string shortcutHint: {
         const bindings = shortcutOwner?.bindings ?? []

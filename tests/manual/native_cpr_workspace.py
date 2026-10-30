@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 
 import numpy as np
 from pydicom.dataset import FileDataset, FileMetaDataset
@@ -73,6 +74,25 @@ window.show()
 window.raise_()
 window.requestActivate()
 
+observed_tags = set()
+tag_feedback_trace = []
+
+def observe_tag_feedback():
+    tab = controller.workspaceController.activeTab
+    tags = getattr(tab, 'tagController', None)
+    if tags is None:
+        return
+    def items(item):
+        yield item
+        for child in item.childItems():
+            yield from items(child)
+    status = {item.objectName(): item.isVisible() for item in items(window.contentItem())
+              if item.objectName() in ('tagStatus', 'workspaceLoadingMessage')
+              or item.objectName().startswith('tabLoading-')}
+    tag_feedback_trace.append(dict(time=time.monotonic(), page=tags.currentPage,
+                                   loading=tags.loading, visible=status))
+    del tag_feedback_trace[:-80]
+
 def observe():
     workspace = controller.workspaceController
     tab = workspace.activeTab
@@ -86,6 +106,15 @@ def observe():
                 document=dict(busy=document.busy, dirty=document.dirty, error=document.isError, message=str(document.message),
                               closedTabs=document.closedTabCount),
                 export=dict(busy=controller.exportController.busy, message=str(controller.exportController.message)))
+    tags = getattr(tab, 'tagController', None)
+    if tags is not None:
+        if id(tags) not in observed_tags:
+            observed_tags.add(id(tags))
+            tags.stateChanged.connect(observe_tag_feedback)
+        info['tags'] = dict(page=tags.currentPage, count=tags.pageCount, loading=tags.loading,
+                            file=tags.filePath, sopInstanceUid=tags.sopInstanceUid,
+                            rowCount=tags.tagModel.rowCount(), error=str(tags.errorMessage))
+        info['tagFeedbackTrace'] = tag_feedback_trace
     if tab is not None and hasattr(tab, 'session_state'):
         info.update(session=tab.session_state(), ready=tab.ready, busy=tab.busy,
                     generation=tab._generation, message=str(tab.message), drawing=tab.drawing,
