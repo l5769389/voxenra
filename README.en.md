@@ -20,7 +20,7 @@ A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fu
 | Local images | Mixed file, folder, and ZIP / RAR / 7z / TAR archive selection, drag-and-drop, background import, and DICOM tags. |
 | PACS | DICOMweb query and download; supports traditional DICOM (DIMSE) connection tests, queries, and retrieval. |
 | 2D and comparison | Windowing, inversion, color maps, playback, montage, custom viewports, and 2–4 series comparison with patient-space or relative-progress linking. |
-| Reconstruction and 3D | Three-plane and oblique MPR, thick slabs, dual-series MPR comparison, volume rendering, presets, cropping, CT bed removal, and multi-phase CT 4D. |
+| Reconstruction and 3D | Three-plane and oblique MPR, manual CPR, thick slabs, dual-series MPR comparison, volume rendering, presets, cropping, CT bed removal, and multi-phase CT 4D. |
 | PET/CT fusion | Linked CT, PET, fused, and MIP views; SUV/source units, manual rigid registration, blending, and fused 3D. |
 | Measurement and annotation | Length, angle, curve, rectangle, ellipse, and free-shape ROIs; text and arrows, list management, copy/paste, undo and redo. |
 | Segmentation and VOI | CT/PET thresholding and spherical/ellipsoidal VOIs; CT/MR/PET mask management, paint/erase, connected-region editing, and statistics. |
@@ -82,6 +82,8 @@ Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F1
 - **CPR:** open from a CT / MR series context menu or MPR **More → CPR**. Draw and edit multiple manual 3D paths with undo, two linked reference planes, a curved image and a perpendicular cross-section. Thin / maximum / mean projections, workspace restoration and three anonymous PNG export scopes are available. Ordinary quantitative measurements use the physical reference planes and cross-section; the curved image provides 3D centerline distances. See **Operation manual → Curved planar reformation (CPR)** in the app.
 - **3D:** CT, MR, and PET volume rendering with presets, windowing, orientation, rotation, and region cropping; 20 CT presets and CT bed removal.
 - **4D:** synchronized multi-phase CT playback, with segmentation and VOI stored by phase; separate slice playback within the current phase.
+
+![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/59-cpr-2.2.0.png)
 
 **Dual-series MPR comparison** keeps position, rotation, CT windowing, and physical display-scale switches visible. Groups start independently. Enabling window/scale sync uses the selected group; position/rotation linking preserves existing offsets and synchronizes subsequent changes. Double-click to enlarge corresponding planes side by side. Linking does not perform automatic registration.
 

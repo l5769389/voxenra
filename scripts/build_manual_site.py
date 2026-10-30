@@ -41,6 +41,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-mtf.png": "28-mtf-analysis.png",
 }
 for media, source in {
+    'feature-cpr.png': '59-cpr-2.2.0.png',
     'feature-dimse-settings.png': '51-dimse-settings.png',
     'feature-dimse-import.gif': '52-dimse-import.gif',
     'feature-dimse-import.png': '52-dimse-import.png',
@@ -381,7 +382,7 @@ PRODUCT_COPY = {
         'controls_link': '查看工具栏设置教程',
         'favorites_link': '查看窗模板收藏示例',
         "lang": "zh-CN", "title": "Voxenra · DICOM 医学影像工作台",
-        "description": "跨平台 DICOM 影像工作台：CT/MR/PET 阅片、MPR 与 3D、融合、测量分割和导出。支持基于 TotalSegmentator 的本地 AI 自动分割。",
+        "description": "跨平台 DICOM 影像工作台：CT/MR/PET 阅片、MPR / CPR 与 3D、融合、测量分割和导出。支持基于 TotalSegmentator 的本地 AI 自动分割。",
         "features": "功能", "manual": "操作手册", "language": "English",
         "heading": "让医学影像工作更连贯", "intro": "导入 CT、MR 与 PET 影像，在同一工作区中完成阅片、重建、融合与分析。",
         "download": "下载应用", "explore": "阅读操作手册",
@@ -397,8 +398,12 @@ PRODUCT_COPY = {
             ("工作区", "新建、保存与恢复工作区；关闭页签保留结果，重新打开可继续编辑。请同时保留原始影像。"),
         ),
         "workflow_images": (("拖拽 ZIP 压缩包导入", "feature-zip-drag.gif"), ("PACS 检索与序列选择", "feature-pacs.png"), ("保存与恢复工作区", "feature-workspace-overview.png")),
+        "cpr_title": "沿路径查看曲面与横截面",
+        "cpr_body": "在参考影像中逐点绘制三维折线路径，联动查看 CPR 曲面图与垂直横截面。路径支持编辑、撤销与工作区保存；物理测量在参考图和横截面完成。",
+        "cpr_caption": "手动 CPR：参考平面、曲面图和横截面联动",
+        "alt_cpr": "CPR 曲面重建与路径编辑界面",
         "viewing_title": "从二维切片到三维重建",
-        "viewing_body": "查看原始切片并联动比较多组序列；通过 MPR、斜面重建和 3D 体绘制查看空间结构，或同步播放 CT 多时相影像。常见彩色 DICOM 支持二维浏览与多帧播放。",
+        "viewing_body": "查看原始切片并联动比较多组序列；通过 MPR、手动 CPR 曲面重建和 3D 体绘制查看空间结构，或同步播放 CT 多时相影像。常见彩色 DICOM 支持二维浏览与多帧播放。",
         "fusion_title": "PET/CT 联动融合",
         "fusion_body": "并排查看 CT、PET、融合与 MIP 视图，调整融合比例，并在需要时进行手动刚性配准。",
         "analysis_title": "测量、分割与结果交换",
@@ -452,8 +457,12 @@ PRODUCT_COPY = {
             ("Workspace", "Create, save and restore workspaces; reopen closed tabs with their results. Keep the original image files alongside the workspace."),
         ),
         "workflow_images": (("Drag a ZIP archive to import", "feature-zip-drag.gif"), ("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace-overview.png")),
+        "cpr_title": "Follow a path through curved and cross-sectional views",
+        "cpr_body": "Draw a manual 3D polyline on reference images and explore linked CPR and perpendicular cross-sections. Edit or undo path changes and save them in a workspace. Physical measurements use reference planes and cross-sections.",
+        "cpr_caption": "Manual CPR with linked reference planes, curved image, and cross-section",
+        "alt_cpr": "CPR reconstruction and path editing interface",
         "viewing_title": "From 2D slices to 3D reconstruction",
-        "viewing_body": "Read original slices and compare linked series. Explore spatial structures with MPR, oblique views, and volume rendering, or play multi-phase CT in sync. Common color DICOM also supports 2D viewing and multi-frame playback.",
+        "viewing_body": "Read original slices and compare linked series. Explore spatial structures with MPR, manual CPR paths, and volume rendering, or play multi-phase CT in sync. Common color DICOM also supports 2D viewing and multi-frame playback.",
         "fusion_title": "Linked PET/CT fusion",
         "fusion_body": "See linked CT, PET, fused, and MIP views, adjust blending, and perform manual rigid registration when needed.",
         "analysis_title": "Measurement, segmentation, and DICOM results",
@@ -525,7 +534,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
                             f'<div class="product-feature-copy"><h2>{escape(copy[key + "_title"])}</h2><p>{escape(copy[key + "_body"])}</p></div>'
                             f'<div class="feature-media-grid">{"".join(figures)}</div><div class="ai-details">{extra}'
                                  f'<a href="{prefix}{code}/{guide}">{escape(copy[key + "_link"])}</a></div></section>')
-    for key, image in (("viewing", "feature-mr-reading.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
+    for key, image in (("viewing", "feature-mr-reading.png"), ("cpr", media_prefix + "feature-cpr.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
         title = escape(copy[key + "_title"])
         image_url = product_image_asset(prefix, image)
         if key in ("viewing", "analysis"):

@@ -90,9 +90,13 @@ def test_restore_rejects_changed_pixels_but_accepts_cache_path_change(cpr_app):
     assert not tab.ready
     assert tab.sourceMismatch
     assert tab.session_state()['paths'] == state['paths']
+    message = str(tab.message)
     tab.setParameter('angle', 20)
     wait_until(lambda: not tab.busy)
     assert not tab.ready and tab.sourceMismatch
+    assert tab.hasError and str(tab.message) == message
+    tab.cancel_operation()
+    assert tab.hasError and str(tab.message) == message
 
 
 def test_missing_source_keeps_cpr_records_when_other_sources_are_opened(cpr_app, tmp_path):
@@ -155,3 +159,26 @@ def test_closing_during_drag_retains_committed_path(cpr_app):
     app.workspaceController.closeTab(tab.tab_config.tab_id)
     retained = loads(next(iter(app.workspaceController._closed_tab_snapshots.values())))
     assert retained['edits']['cpr']['paths'] == before['paths']
+
+
+@pytest.mark.parametrize('action', ['plane', 'point'])
+def test_saved_workspace_tracks_reference_navigation(cpr_app, tmp_path, action):
+    app, tab, _ = cpr_app
+    path = tmp_path/'navigation.voxworkspace'
+    save(app, path)
+    assert not app.workspaceDocumentController.dirty
+    if action == 'plane':
+        tab.setReferencePlane(0, 'sagittal')
+    else:
+        tab.locatePoint(1)
+    assert app.workspaceDocumentController.dirty
+    wait_until(lambda: tab.ready and not tab.busy)
+    expected = tab.session_state()
+    save(app, path)
+    doc = app.workspaceDocumentController
+    assert doc.restore_from(path)
+    wait_until(lambda: not doc.busy, timeout=10000)
+    restored = app.workspaceController.activeTab
+    wait_until(lambda: restored.ready)
+    assert restored.session_state()['referencePlanes'] == expected['referencePlanes']
+    assert restored.session_state()['referenceCenters'] == expected['referenceCenters']

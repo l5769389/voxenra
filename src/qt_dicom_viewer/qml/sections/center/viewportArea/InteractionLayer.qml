@@ -12,6 +12,7 @@ Item {
     objectName: "viewportInteractionLayer"
     clip: true
     property bool cprPathInput: false
+    property bool cprPointPressed: false
 
     signal pointerMoved(point position)
     signal pointerExited()
@@ -61,10 +62,10 @@ Item {
     property string dragCursorKind: ""
     // 从按下到释放持续为 true，不受 DragHandler 拖动阈值影响。
     readonly property bool pointerPressed: pressTracker.active
-    // ROI 和箭头标注需要从第一个像素位移就反馈。其他视图操作继续沿用
+    // CPR 控制点、ROI 和箭头标注从第一个像素位移就反馈。其他视图操作沿用
     // 平台拖动阈值，避免一次普通点击被解释成调窗、平移或缩放。
     readonly property bool immediateRoiDrag:
-        locatorPressed || registrationInteraction || activeInteraction === "mpr:segmentation"
+        cprPointPressed || locatorPressed || registrationInteraction || activeInteraction === "mpr:segmentation"
         || activeInteraction === "mpr:voi"
         || activeInteraction === "measure:rect"
         || activeInteraction === "measure:ellipse"
@@ -122,6 +123,7 @@ Item {
         onActiveChanged: {
             if (active) {
                 interactionLayer.locatorPressed = false
+                interactionLayer.cprPointPressed = false
                 interactionLayer.pointerPressedAt(point.position, point.pressedButtons)
             }
         }

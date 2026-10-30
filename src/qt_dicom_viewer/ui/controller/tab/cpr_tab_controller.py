@@ -11,6 +11,7 @@ from qt_dicom_viewer.core.cpr_session import (
     MAX_PATHS, ROLES, default_cpr_session, path_record, unpack_path, validate_cpr_session,
 )
 from qt_dicom_viewer.i18n import message as _msg
+from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from qt_dicom_viewer.model import MprPlane, TwoDViewType, ViewportConfig
 from qt_dicom_viewer.model.cpr import CprError, CprPath, CprSettings
 from qt_dicom_viewer.model.render_models import VolumeLoadRequest, VolumeLoadResult
@@ -20,6 +21,7 @@ from .tab_controller import TabController
 
 
 class CprTabController(TabController):
+    _i18n_message = Signal()
     cprChanged = Signal()
     cprLoaded = Signal()
     snapshotCommitted = Signal()
@@ -157,7 +159,7 @@ class CprTabController(TabController):
 
     @Property(bool, notify=cprChanged)
     def hasError(self):
-        return bool(self._message)
+        return self._source_mismatch or bool(self._message)
 
     @Property(str, notify=cprChanged)
     def exportScope(self):
@@ -195,8 +197,10 @@ class CprTabController(TabController):
         return repr((self._generation, self._export_scope,
                      [(view.viewportId, view._image_revision, view.viewport_state) for view in views]))
 
-    @Property(str, notify=cprChanged)
+    @_TextProperty(str, notify=_i18n_message, notify_name='_i18n_message', source_notify='cprChanged')
     def message(self):
+        if self._source_mismatch:
+            return _msg("cpr.sourceChanged")
         return self._message or _msg("cpr.drawHint" if self._drawing else
                                     "cpr.editHint" if self.pathEditing else "cpr.viewHint")
 
@@ -338,6 +342,7 @@ class CprTabController(TabController):
     def _request_cpr(self, *, preview=False):
         if self._volume is None or self._closed or self._source_mismatch:
             return
+        self._message = ""
         self._historical_requests.clear()
         for view in self._viewport_dict.values():
             view._independent_measurement_source = None
@@ -666,6 +671,7 @@ class CprTabController(TabController):
         if not self._drawing:
             self._session["positionMm"] = float(np.linalg.norm(np.diff(points[:index+1], axis=0), axis=1).sum()) if index else 0.
         self._request_cpr()
+        self.persistenceChanged.emit()
 
     @Slot(float)
     def setPositionMm(self, value):
@@ -715,6 +721,7 @@ class CprTabController(TabController):
         planes[index] = plane
         self._session["referencePlanes"] = tuple(planes)
         self._request_cpr()
+        self.persistenceChanged.emit()
 
     @Slot(str, 'QVariant')
     def setParameter(self, key, value):

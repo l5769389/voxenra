@@ -3,6 +3,7 @@ from dataclasses import replace
 from uuid import uuid4
 
 import numpy as np
+from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from PySide6.QtCore import Property, Signal, Slot
 
 from qt_dicom_viewer.model import MprPlane
@@ -15,6 +16,7 @@ from .image_2d_viewport_controller import Image2DViewportController
 
 
 class CprViewportController(Image2DViewportController):
+    _i18n_historicalDescription = Signal()
     cprChanged = Signal()
     exportReadinessChanged = Signal()
 
@@ -65,16 +67,17 @@ class CprViewportController(Image2DViewportController):
     def historicalPlane(self):
         return self._historical
 
-    @Property(str, notify=cprChanged)
+    @_TextProperty(str, notify=_i18n_historicalDescription,
+                   notify_name='_i18n_historicalDescription', source_notify='cprChanged')
     def historicalDescription(self):
         if not self._historical:
             return ""
         from qt_dicom_viewer.i18n import message
         source = self._measure_controller.current_source.get("cpr", {})
         if source.get("role") == "cross":
-            return str(message("cpr.historicalDescription", revision=source["pathRevision"],
-                               distance=f'{source["distanceMm"]:.1f}'))
-        return str(message("cpr.historical"))
+            return message("cpr.historicalDescription", revision=source["pathRevision"],
+                           distance=f'{source["distanceMm"]:.1f}')
+        return message("cpr.historical")
 
     @Property(bool, notify=cprChanged)
     def cprEditing(self):
@@ -143,6 +146,7 @@ class CprViewportController(Image2DViewportController):
         self._frame_meta = self._modality_pixel = self.plane_geometry = None
         self._has_image = False
         self._measure_controller.hide_frame()
+        self._text_annotation_controller.set_current_slice(None)
         self.imageSourceChanged.emit()
         self.imageDimensionChanged.emit()
         self.cprChanged.emit()
@@ -174,6 +178,11 @@ class CprViewportController(Image2DViewportController):
     @Slot(float, float, float, result=bool)
     def cprTap(self, column, row, tolerance):
         return self._cpr.path_tap(self, column, row, tolerance)
+
+    @Slot(float, float, float, result=bool)
+    def cprCanDragPoint(self, column, row, tolerance):
+        return (self.cprEditing and not self.cprDrawing
+                and self._cpr._hit_point(self, column, row, tolerance) >= 0)
 
     @Slot(float, float, float, result=bool)
     def cprBeginDrag(self, column, row, tolerance):

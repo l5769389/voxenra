@@ -112,6 +112,11 @@ def observe():
     temporary = base/'state.tmp'
     temporary.write_text(json.dumps(info, default=str, indent=2))
     temporary.replace(base/'state.json')
+    # Read-only capture of this application's content, excluding desktop overlays.
+    capture = base/'capture.request'
+    if capture.exists():
+        window.grabWindow().save(str(base/'window.png'))
+        capture.unlink()
 
 timer = QTimer()
 timer.timeout.connect(observe)

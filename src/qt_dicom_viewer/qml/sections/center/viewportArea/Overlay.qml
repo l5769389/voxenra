@@ -9,12 +9,13 @@ Item {
     property bool hideSensitiveInfo: false
     property bool multiViewport: false
     property string viewMode: ""
+    property real centerLabelGap: 24
     readonly property bool hasViewSelector: viewMode !== ""
     readonly property string modeLabel: ({stack: qsTrId("layout.originalSlices"), axial: qsTrId("layout.axialReconstruction"),
         coronal: qsTrId("layout.coronalReconstruction"), sagittal: qsTrId("layout.sagittalReconstruction")})[viewMode] ?? ""
     readonly property int textPixelSize: Math.max(10, Math.round((options.fontSize ?? 12) * fontScale))
     readonly property real textRowHeight: textPixelSize * (options.lineHeight ?? 1.2)
-    readonly property real selectorWidth: Math.min(Math.ceil(modeMetrics.advanceWidth) + 30, Math.max(0, (width - 24) / 2))
+    readonly property real selectorWidth: Math.min(Math.ceil(modeMetrics.advanceWidth) + 30, Math.max(0, (width - centerLabelGap) / 2))
     readonly property real selectorHeight: Math.max(24, modeSizing.implicitHeight + 6)
     readonly property bool inlineViewPosition: hasViewSelector && (options.topLeft ?? [])[0] === "viewPosition"
     readonly property rect positionRect: Qt.rect(modeRow.x + positionLabel.x, modeRow.y + positionLabel.y,
@@ -145,7 +146,7 @@ Item {
         readonly property int rowLimit: Math.max(0, Math.min(root.overlay.compactOverlay ? 4 : 12,
             Math.floor((root.height / 2 - 12 - reservedHeight) / rowHeight)))
         readonly property var rows: text.split("\n").filter(Boolean).slice(0, rowLimit)
-        width: Math.max(0, (root.width - 24) / 2)
+        width: Math.max(0, (root.width - root.centerLabelGap) / 2)
         height: rows.length * rowHeight
         clip: true
         visible: root.viewportController !== null && text.length > 0

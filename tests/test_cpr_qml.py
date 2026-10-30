@@ -65,6 +65,19 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
         assert len(cpr.paths) == 1
         assert len(cpr.current_path.control_points) == 3
         assert target.size() == original_size
+        # A two-pixel correction must move the existing control point, not
+        # become a tap (or insert a new point) at the release position.
+        cpr.setPathEditing(True)
+        before = cpr.current_path.control_points
+        start = target.mapToScene(QPointF(target.width()*.35, target.height()*.35)).toPoint()
+        end = (QPointF(start) + QPointF(2, 1)).toPoint()
+        QTest.mousePress(view, Qt.LeftButton, Qt.NoModifier, start)
+        QTest.mouseMove(view, end, 20)
+        QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
+        wait_until(lambda: not cpr.busy)
+        assert len(cpr.current_path.control_points) == 3
+        assert cpr.current_path.control_points[0] != before[0]
+        assert cpr.current_path.control_points[1:] == before[1:]
         view.rootObject().setProperty("controller", None)
         QCoreApplication.processEvents()
         assert not warnings, "\n".join(warnings)
@@ -148,4 +161,55 @@ def test_panel_syncs_saved_values_when_loader_assigns_controller_late(cpr):
         assert fields["cprParameter-thickness"].property("text") == "12.0"
         assert fields["cprParameter-step"].property("text") == "0.75"
     finally:
+        delete(view)
+
+
+def test_empty_cpr_results_do_not_show_unavailable_corner_values(cpr):
+    def overlay(viewport):
+        return next(item for item in _visual_children(viewport)
+                    if item.objectName() == "viewportMetadataOverlay")
+
+    view = QQuickView()
+    provider = DicomImageProvider()
+    cpr.imageUpdateRequested.connect(provider.set_array)
+    for viewport in cpr.viewports_by_id.values():
+        viewport.refresh_window_image()
+    view.engine().addImageProvider('dicom', provider)
+    view.engine().addImageProvider('navigation', SvgIconProvider())
+    view.setInitialProperties(dict(controller=cpr))
+    view.setResizeMode(QQuickView.SizeRootObjectToView)
+    view.resize(1000, 700)
+    view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
+        'src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPage.qml')))
+    assert view.status() == QQuickView.Ready
+    view.show()
+    QTest.qWait(30)
+    try:
+        targets = {item.objectName(): item for item in _visual_children(view.rootObject())
+                   if item.objectName().startswith('cprViewport-')}
+        assert overlay(targets['cprViewport-reference-a']).isVisible()
+        for role in ('curved', 'cross'):
+            assert not overlay(targets['cprViewport-'+role]).isVisible()
+        draw(cpr)
+        QCoreApplication.processEvents()
+        assert overlay(targets['cprViewport-cross']).isVisible()
+        cpr.setPositionMm(cpr.totalLength * .8)
+        cpr.setParameter('angle', 30)
+        wait_until(lambda: cpr.ready and not cpr.busy)
+        QCoreApplication.processEvents()
+        cross_items = list(_visual_children(targets['cprViewport-cross']))
+        directions = next(item for item in cross_items
+                          if item.metaObject().className().startswith('DirectionOverlay'))
+        label = directions.property('directionLabels')['top']
+        assert len(label) == 3
+        top = next(item for item in _visual_children(directions)
+                   if item.property('text') == label)
+        right = next(item for item in cross_items if item.objectName() == 'overlay-topRight')
+        assert top.mapToScene(QPointF(top.width(), 0)).x() + 4 <= right.mapToScene(QPointF()).x()
+        cpr.deletePath()
+        wait_until(lambda: not cpr.busy)
+        QCoreApplication.processEvents()
+        assert not overlay(targets['cprViewport-cross']).isVisible()
+    finally:
+        view.hide()
         delete(view)

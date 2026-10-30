@@ -200,13 +200,18 @@ Item {
     // 四角信息
     Overlay {
         id: metadataOverlay
+        centerLabelGap: directionOverlay.visible
+            ? Math.max(24, directionOverlay.horizontalLabelWidth + 16) : 24
         viewMode: viewportRoot.twoDViewMode
         multiViewport: viewportRoot.multiViewport
         anchors.fill: parent
         z: 10
         anchors.margins: 8
         viewportController: viewportRoot.viewportController
-        visible: !viewportRoot.anonymousExport && (viewportRoot.viewportController
+        visible: !viewportRoot.anonymousExport
+            && (viewportRoot.viewportController?.isCprViewport !== true
+                || viewportRoot.viewportController.imageRows > 0)
+            && (viewportRoot.viewportController
             ? viewportRoot.viewportController.showWindowAnnotations : false)
         hideSensitiveInfo: viewportRoot.viewportController
             ? viewportRoot.viewportController.hideSensitiveInfo : false
@@ -227,6 +232,7 @@ Item {
     }
 
     DirectionOverlay {
+        id: directionOverlay
         anchors.fill: parent
         z: 11
         visible: viewportRoot.viewportController
@@ -328,8 +334,11 @@ Item {
         onPointerPressedAt: (position, buttons) => {
             const controller = viewportRoot.viewportController
             controller?.setBrushViewMetrics?.(imageCanvas.pixelsPerMillimeter, Math.min(width, height))
-            if (controller?.captureLocatorPress === undefined) return
             const hit = imageCanvas.mapToDicomPixel(interactionLayer, position)
+            interactionLayer.cprPointPressed = buttons === Qt.LeftButton && hit.valid
+                && (controller?.cprCanDragPoint?.(hit.column, hit.row,
+                    imageCanvas.pointHitToleranceInImagePixels) ?? false)
+            if (controller?.captureLocatorPress === undefined) return
             interactionLayer.locatorPressed = controller.captureLocatorPress(
                 position.x, position.y, buttons, hit.valid, hit.column, hit.row,
                 imageCanvas.pointHitToleranceInImagePixels, imageCanvas.lineHitToleranceInImagePixels)

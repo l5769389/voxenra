@@ -1,0 +1,444 @@
+{
+  "platform": "cocoa",
+  "visible": true,
+  "active": true,
+  "accessible": true,
+  "dpr": 2.0,
+  "title": "Voxenra \u2014 CPR native validation",
+  "windowSize": [
+    1280,
+    720
+  ],
+  "tab": "cpr",
+  "tabIds": [
+    "1.2.826.0.1.3680043.10.999.20261029.88_cpr"
+  ],
+  "scanning": false,
+  "document": {
+    "busy": false,
+    "dirty": true,
+    "error": false,
+    "message": "\u5de5\u4f5c\u533a\u5df2\u4fdd\u5b58\u3002",
+    "closedTabs": 0
+  },
+  "export": {
+    "busy": false,
+    "message": ""
+  },
+  "session": {
+    "algorithmVersion": 1,
+    "source": {
+      "seriesUid": "1.2.826.0.1.3680043.10.999.20261029.88",
+      "frameOfReferenceUid": "1.2.826.0.1.3680043.10.999.20261029.88.300",
+      "fingerprint": "baa91e353b8175078b9a6c9399f1a5ee01afad58560c9ece188061f42a31f787"
+    },
+    "paths": [
+      {
+        "id": "5f642b8a-269d-48dc-908f-9d605b00b0d9",
+        "name": "\u8def\u5f84 1",
+        "points": [
+          [
+            35.490196078431374,
+            1.8588235294117696,
+            47.5
+          ],
+          [
+            19.67843137254902,
+            21.93725490196079,
+            47.5
+          ]
+        ],
+        "revision": 1,
+        "settings": {
+          "step_mm": 0.5,
+          "width_mm": 40.0,
+          "angle_radians": 0.0,
+          "up_patient": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "projection": "thin",
+          "thickness_mm": 0.0
+        }
+      },
+      {
+        "id": "63bc64b4-b0fa-482e-af52-55cd5fe7f422",
+        "name": "\u8def\u5f84 2",
+        "points": [
+          [
+            86.37579953372455,
+            63.6,
+            78.47508896797153
+          ],
+          [
+            70.43273925193789,
+            63.6,
+            50.005338078291814
+          ],
+          [
+            46.518148829257896,
+            63.6,
+            15.841637010676166
+          ]
+        ],
+        "revision": 1,
+        "settings": {
+          "step_mm": 0.5,
+          "width_mm": 40.0,
+          "angle_radians": 0.5235987755982988,
+          "up_patient": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "projection": "mip",
+          "thickness_mm": 8.0
+        }
+      }
+    ],
+    "selected": "63bc64b4-b0fa-482e-af52-55cd5fe7f422",
+    "draft": [],
+    "referencePlanes": [
+      "sagittal",
+      "coronal"
+    ],
+    "referenceCenters": [
+      [
+        63.6,
+        63.6,
+        47.5
+      ],
+      [
+        63.6,
+        63.6,
+        47.5
+      ]
+    ],
+    "positionMm": 0.0,
+    "rangeMm": [
+      0.0,
+      0.0
+    ],
+    "pathRanges": {
+      "5f642b8a-269d-48dc-908f-9d605b00b0d9": [
+        0.0,
+        0.0
+      ],
+      "63bc64b4-b0fa-482e-af52-55cd5fe7f422": [
+        0.0,
+        0.0
+      ]
+    },
+    "crossWidthMm": 40.0,
+    "focusedRole": ""
+  },
+  "ready": true,
+  "busy": false,
+  "generation": 5,
+  "message": "\u5b8c\u6210\u540e\u9ed8\u8ba4\u67e5\u770b\u8def\u5f84\u3002\u70b9\u51fb\u300c\u7f16\u8f91\u8def\u5f84\u300d\u53ef\u8c03\u6574\u63a7\u5236\u70b9\u3002\u66f2\u9762\u56fe\u4ec5\u8868\u793a\u4e2d\u5fc3\u7ebf\u8ddd\u79bb\uff0c\u6a2a\u622a\u9762\u652f\u6301\u7269\u7406\u6d4b\u91cf\u3002",
+  "drawing": false,
+  "pathEditing": false,
+  "canFinishPath": false,
+  "canDeletePoint": false,
+  "history": {
+    "undo": 0,
+    "redo": 1
+  },
+  "activeRole": "reference-b",
+  "focused": "",
+  "activePanel": "cpr-path",
+  "interaction": "",
+  "exportScope": "curved",
+  "views": {
+    "reference-a": {
+      "state": "ViewportState(slice_index=80, slice_count=160, window=WindowLevel(center=300.0, width=1800.0), width=281.0, height=255.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "MprImageGeometry(rows=96, columns=160, row_spacing=1.0, column_spacing=0.8, navigation_spacing=0.8, frame=MprFrame(center_patient=(63.6, 63.6, 47.5), u_direction_patient=(1.0, 0.0, 0.0), v_direction_patient=(0.0, 1.0, 0.0), w_direction_patient=(0.0, 0.0, 1.0)), image_origin_mpr=(0.0, -63.6, 47.5), row_direction_mpr=(0.0, 0.0, -1.0), column_direction_mpr=(0.0, 1.0, 0.0), navigation_direction_mpr=(1.0, 0.0, 0.0), navigation_origin_offset=-63.6)",
+      "physicalOrigin": [
+        63.6,
+        0.0,
+        95.0
+      ],
+      "physicalOrientation": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": true,
+      "overlay": {
+        "mrParameters": "",
+        "patientName": "CPR^PHANTOM",
+        "patientId": "SYNTHETIC-CPR",
+        "studyDescription": "Native CPR validation",
+        "studyDate": "2026/10/29",
+        "seriesDescription": "CPR synthetic curved tubes",
+        "modality": "CT",
+        "manufacturer": "--",
+        "viewType": "cpr",
+        "viewPosition": "Sagittal, L: 63.60mm",
+        "kvp": "--",
+        "tubeCurrentMa": "--",
+        "sliceThickness": "1",
+        "sliceIndex": "81",
+        "sliceCount": "160",
+        "instanceNumber": "--",
+        "rows": "96",
+        "columns": "160",
+        "pixelSpacingX": "0.8",
+        "pixelSpacingY": "1",
+        "positionX": "63.6",
+        "positionY": "0",
+        "positionZ": "95",
+        "sliceLocation": "--",
+        "windowCenter": "300",
+        "windowWidth": "1800",
+        "zoom": "100%",
+        "radiopharmaceutical": "",
+        "petUnits": "",
+        "suvType": "",
+        "derivedMapping": false,
+        "mappingMode": "source",
+        "mappingLower": "",
+        "mappingUpper": "",
+        "pixelUnit": "HU",
+        "sourceColor": false,
+        "supplementalColor": false,
+        "decayCorrection": "",
+        "quantificationWarning": "",
+        "correctedImage": "",
+        "petDisplayLower": "",
+        "petDisplayUpper": "--",
+        "rotation": "0",
+        "flip": "--",
+        "seriesUid": "1.2.826.0.1.3680043.10.999.20261029.88",
+        "transform": "Rot: 0\u00b0 \u00b7 Flip: \u2014",
+        "cprRole": "reference-a",
+        "cprReconstruction": ""
+      },
+      "pixels": "977f1b42da14c8a9bd5808d30ea512bc1961a737bbd01aead61092cb5f0579eb",
+      "measurements": [],
+      "annotations": [],
+      "selectedAnnotation": "",
+      "sources": {}
+    },
+    "reference-b": {
+      "state": "ViewportState(slice_index=80, slice_count=160, window=WindowLevel(center=300.0, width=1800.0), width=281.0, height=255.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "MprImageGeometry(rows=96, columns=160, row_spacing=1.0, column_spacing=0.8, navigation_spacing=0.8, frame=MprFrame(center_patient=(63.6, 63.6, 47.5), u_direction_patient=(1.0, 0.0, 0.0), v_direction_patient=(0.0, 1.0, 0.0), w_direction_patient=(0.0, 0.0, 1.0)), image_origin_mpr=(-63.6, 0.0, 47.5), row_direction_mpr=(0.0, 0.0, -1.0), column_direction_mpr=(1.0, 0.0, 0.0), navigation_direction_mpr=(0.0, 1.0, 0.0), navigation_origin_offset=-63.6)",
+      "physicalOrigin": [
+        0.0,
+        63.6,
+        95.0
+      ],
+      "physicalOrientation": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": true,
+      "overlay": {
+        "mrParameters": "",
+        "patientName": "CPR^PHANTOM",
+        "patientId": "SYNTHETIC-CPR",
+        "studyDescription": "Native CPR validation",
+        "studyDate": "2026/10/29",
+        "seriesDescription": "CPR synthetic curved tubes",
+        "modality": "CT",
+        "manufacturer": "--",
+        "viewType": "cpr",
+        "viewPosition": "Coronal, P: 63.60mm",
+        "kvp": "--",
+        "tubeCurrentMa": "--",
+        "sliceThickness": "1",
+        "sliceIndex": "81",
+        "sliceCount": "160",
+        "instanceNumber": "--",
+        "rows": "96",
+        "columns": "160",
+        "pixelSpacingX": "0.8",
+        "pixelSpacingY": "1",
+        "positionX": "0",
+        "positionY": "63.6",
+        "positionZ": "95",
+        "sliceLocation": "--",
+        "windowCenter": "300",
+        "windowWidth": "1800",
+        "zoom": "100%",
+        "radiopharmaceutical": "",
+        "petUnits": "",
+        "suvType": "",
+        "derivedMapping": false,
+        "mappingMode": "source",
+        "mappingLower": "",
+        "mappingUpper": "",
+        "pixelUnit": "HU",
+        "sourceColor": false,
+        "supplementalColor": false,
+        "decayCorrection": "",
+        "quantificationWarning": "",
+        "correctedImage": "",
+        "petDisplayLower": "",
+        "petDisplayUpper": "--",
+        "rotation": "0",
+        "flip": "--",
+        "seriesUid": "1.2.826.0.1.3680043.10.999.20261029.88",
+        "transform": "Rot: 0\u00b0 \u00b7 Flip: \u2014",
+        "cprRole": "reference-b",
+        "cprReconstruction": ""
+      },
+      "pixels": "8eee61dbe0613f2901de089f050334f41c95f9d2a20b11bb8f9630e55f28edfe",
+      "measurements": [],
+      "annotations": [],
+      "selectedAnnotation": "",
+      "sources": {}
+    },
+    "curved": {
+      "state": "ViewportState(slice_index=0, slice_count=150, window=WindowLevel(center=300.0, width=1800.0), width=281.0, height=256.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "None",
+      "physicalOrigin": null,
+      "physicalOrientation": null,
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": false,
+      "overlay": {
+        "mrParameters": "",
+        "patientName": "CPR^PHANTOM",
+        "patientId": "SYNTHETIC-CPR",
+        "studyDescription": "Native CPR validation",
+        "studyDate": "2026/10/29",
+        "seriesDescription": "CPR synthetic curved tubes",
+        "modality": "CT",
+        "manufacturer": "--",
+        "viewType": "cpr",
+        "viewPosition": "",
+        "kvp": "--",
+        "tubeCurrentMa": "--",
+        "sliceThickness": "1",
+        "sliceIndex": "1",
+        "sliceCount": "150",
+        "instanceNumber": "--",
+        "rows": "81",
+        "columns": "150",
+        "pixelSpacingX": "--",
+        "pixelSpacingY": "--",
+        "positionX": "--",
+        "positionY": "--",
+        "positionZ": "--",
+        "sliceLocation": "--",
+        "windowCenter": "300",
+        "windowWidth": "1800",
+        "zoom": "100%",
+        "radiopharmaceutical": "",
+        "petUnits": "",
+        "suvType": "",
+        "derivedMapping": false,
+        "mappingMode": "source",
+        "mappingLower": "",
+        "mappingUpper": "",
+        "pixelUnit": "HU",
+        "sourceColor": false,
+        "supplementalColor": false,
+        "decayCorrection": "",
+        "quantificationWarning": "",
+        "correctedImage": "",
+        "petDisplayLower": "",
+        "petDisplayUpper": "--",
+        "rotation": "0",
+        "flip": "--",
+        "seriesUid": "1.2.826.0.1.3680043.10.999.20261029.88",
+        "transform": "Rot: 0\u00b0 \u00b7 Flip: \u2014",
+        "cprRole": "curved",
+        "cprReconstruction": "CPR \u00b7 MIP 8 mm"
+      },
+      "pixels": "97a6446a317e7122ed8067b605d97a380d05b5c62c19d187cc5f9555688829bb",
+      "measurements": [],
+      "annotations": [],
+      "selectedAnnotation": "",
+      "sources": {}
+    },
+    "cross": {
+      "state": "ViewportState(slice_index=0, slice_count=150, window=WindowLevel(center=300.0, width=1800.0), width=281.0, height=256.0, zoom=1.0, pan_x=0.0, pan_y=0.0, rotation_degrees=0.0, horizontal_flip=False, vertical_flip=False, inverted=False, display_mapping=DisplayMappingIntent(mode='source', lower=0.0, upper=1.0, unit=''), display_style=DisplayStyle(color_map='grayscale', no_data_color='#000000'), display_settings=ViewportDisplaySettings(show_window_annotations=True, hide_sensitive_info=False, show_scale_bar=True, show_color_bar=False, show_dicom_overlay=True, show_localizer=True, fit_to_window=True))",
+      "geometry": "MprImageGeometry(rows=81, columns=81, row_spacing=0.5, column_spacing=0.5, navigation_spacing=0.4988723047955698, frame=MprFrame(center_patient=(np.float64(86.37579953372455), np.float64(63.6), np.float64(78.47508896797153)), u_direction_patient=(1.0, 0.0, 0.0), v_direction_patient=(0.0, 1.0, 0.0), w_direction_patient=(0.0, 0.0, 1.0)), image_origin_mpr=(np.float64(6.387187356547251), np.float64(-27.32050807568877), np.float64(-3.576824871109502)), row_direction_mpr=(np.float64(0.43625300938871575), np.float64(0.8660254037844387), np.float64(-0.24430168194117913)), column_direction_mpr=(np.float64(-0.7556123772160783), np.float64(0.49999999999999994), np.float64(0.4231429254966542)), navigation_direction_mpr=(np.float64(-0.4886033638823583), np.float64(0.0), np.float64(-0.8725060187774316)), navigation_origin_offset=None)",
+      "physicalOrigin": [
+        92.7629868902718,
+        36.27949192431123,
+        74.89826409686202
+      ],
+      "physicalOrientation": [
+        -0.7556123772160783,
+        0.49999999999999994,
+        0.4231429254966542,
+        0.43625300938871575,
+        0.8660254037844387,
+        -0.24430168194117913
+      ],
+      "pending": false,
+      "historical": false,
+      "hasPhysicalSpacing": true,
+      "overlay": {
+        "mrParameters": "",
+        "patientName": "CPR^PHANTOM",
+        "patientId": "SYNTHETIC-CPR",
+        "studyDescription": "Native CPR validation",
+        "studyDate": "2026/10/29",
+        "seriesDescription": "CPR synthetic curved tubes",
+        "modality": "CT",
+        "manufacturer": "--",
+        "viewType": "cpr",
+        "viewPosition": "Oblique, S: 110.67mm",
+        "kvp": "--",
+        "tubeCurrentMa": "--",
+        "sliceThickness": "1",
+        "sliceIndex": "1",
+        "sliceCount": "150",
+        "instanceNumber": "--",
+        "rows": "81",
+        "columns": "81",
+        "pixelSpacingX": "0.5",
+        "pixelSpacingY": "0.5",
+        "positionX": "92.76",
+        "positionY": "36.28",
+        "positionZ": "74.9",
+        "sliceLocation": "--",
+        "windowCenter": "300",
+        "windowWidth": "1800",
+        "zoom": "100%",
+        "radiopharmaceutical": "",
+        "petUnits": "",
+        "suvType": "",
+        "derivedMapping": false,
+        "mappingMode": "source",
+        "mappingLower": "",
+        "mappingUpper": "",
+        "pixelUnit": "HU",
+        "sourceColor": false,
+        "supplementalColor": false,
+        "decayCorrection": "",
+        "quantificationWarning": "",
+        "correctedImage": "",
+        "petDisplayLower": "",
+        "petDisplayUpper": "--",
+        "rotation": "0",
+        "flip": "--",
+        "seriesUid": "1.2.826.0.1.3680043.10.999.20261029.88",
+        "transform": "Rot: 0\u00b0 \u00b7 Flip: \u2014",
+        "cprRole": "cross",
+        "cprReconstruction": ""
+      },
+      "pixels": "a21fae2422dd8e927045bdf0fa2aaece4194d58b096ed32248b7412cb6d57b08",
+      "measurements": [],
+      "annotations": [],
+      "selectedAnnotation": "",
+      "sources": {}
+    }
+  }
+}

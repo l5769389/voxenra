@@ -8,6 +8,7 @@ Item {
 
     required property var directionLabels
     readonly property int directionMargin: 4
+    readonly property real horizontalLabelWidth: Math.max(topDirection.implicitWidth, bottomDirection.implicitWidth)
 
     component DirectionText: Text {
         visible: text.length > 0
@@ -19,6 +20,7 @@ Item {
     }
 
     DirectionText {
+        id: topDirection
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: directionOverlay.directionMargin
@@ -33,6 +35,7 @@ Item {
     }
 
     DirectionText {
+        id: bottomDirection
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: directionOverlay.directionMargin

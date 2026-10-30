@@ -2807,6 +2807,7 @@
         "cpr.referenceEditHint": "Editing · Drag points · Click segments to insert",
         "cpr.referenceViewHint": "Viewing · Choose Edit path to adjust points",
         "cpr.referencePausedHint": "Drawing paused · Return to CPR to continue",
-        "cpr.previousResult": "Previous result · Finish the new path to update"
+        "cpr.previousResult": "Previous result · Finish the new path to update",
+        "manual.cpr.caption": "Two reference planes, the curved image, and a perpendicular cross-section stay linked."
     }
 }

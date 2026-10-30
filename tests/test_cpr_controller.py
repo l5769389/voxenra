@@ -289,3 +289,51 @@ def test_cpr_toolbar_preferences_target_the_cpr_profile(qt_app, tmp_path):
     assert editor.moveTool("common", 0, 1)
     assert editor.save()
     assert list(settings.section("toolbar")["rightProfiles"]) == ["cpr:ct"]
+
+
+@pytest.mark.parametrize('action', ['plane', 'point'])
+def test_reference_navigation_notifies_workspace_persistence(cpr, action):
+    draw(cpr)
+    changes = []
+    cpr.persistenceChanged.connect(lambda: changes.append(cpr.session_state()))
+    if action == 'plane':
+        cpr.setReferencePlane(0, 'sagittal')
+    else:
+        cpr.locatePoint(1)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    assert changes, 'Reference navigation must mark the workspace dirty for exit/recovery'
+
+
+def test_successful_retry_clears_render_failure(cpr):
+    draw(cpr)
+    cpr._fail_cpr(cpr._generation, 'Simulated worker failure')
+    assert cpr.hasError
+    cpr.setPositionMm(5)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    assert not cpr.hasError
+
+
+def test_cpr_messages_follow_language_without_mutating_paths(cpr, tmp_path):
+    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from qt_dicom_viewer.ui.controller.language_controller import LanguageController
+    from qt_dicom_viewer.i18n.messages import builtin
+    from PySide6.QtTest import QSignalSpy
+    settings = SettingsController(path=tmp_path/'settings.json')
+    language = LanguageController(settings, root=tmp_path/'languages')
+    try:
+        draw(cpr)
+        state = cpr.session_state()
+        cross = cpr.viewForRole('cross')
+        cross._historical = True
+        # Read the public Qt properties before switching, as QML bindings do.
+        assert cpr.message == builtin()['messages']['cpr.viewHint']
+        assert cross.historicalDescription
+        message_spy = QSignalSpy(cpr, cpr.metaObject().property(
+            cpr.metaObject().indexOfProperty('message')).notifySignal())
+        assert language.selectLanguage('en-US')
+        assert message_spy.count() > 0
+        assert cpr.message == builtin('en-US')['messages']['cpr.viewHint']
+        assert not any('\u4e00' <= character <= '\u9fff' for character in cross.historicalDescription)
+        assert cpr.session_state() == state
+    finally:
+        language.shutdown()

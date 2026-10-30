@@ -354,7 +354,9 @@ def slicer_oracle():
             curve_points = curve.GetCurvePointsWorld()
             knots = np.r_[0., np.cumsum([np.linalg.norm(np.array(curve_points.GetPoint(i))-curve_points.GetPoint(i-1))
                                         for i in range(1,curve_points.GetNumberOfPoints())])]
-            near_vertex = np.min(np.abs(data['distances'][:,None]-knots[None,1:-1]),axis=1) < 1e-4
+            # A valid two-point path has no interior vertices.
+            near_vertex = np.min(np.abs(data['distances'][:,None]-knots[None,1:-1]),
+                                 axis=1, initial=np.inf) < 1e-4
             tangent_errors = np.linalg.norm(np.array(tangents)-data['tangents'],axis=1)
             rr = dict(key=run['key'], length_mm=length, length_error_mm=abs(length-float(data['distances'][-1])),
                       position_max_mm=float(np.max(np.linalg.norm(np.array(positions)-data['points'],axis=1))),

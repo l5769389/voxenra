@@ -116,3 +116,20 @@ def test_historical_plane_survives_workspace_restore(cpr_app, tmp_path):
     wait_until(lambda: restored.historicalPlane)
     np.testing.assert_allclose(restored.plane_geometry.image_origin_patient, expected)
     assert restored.measurementController.frame_for(mid) == restored.measurementController.frame_key
+
+
+def test_deleting_last_path_hides_annotations_and_undo_restores_them(cpr_app):
+    _, tab, _ = cpr_app
+    view = tab.viewForRole('curved')
+    text = view.textAnnotationController
+    text.addAnnotation(2., 2., 8., 8.)
+    original = text.selectedAnnotationId
+    tab._edit_history.capture()
+    assert text.annotationItems
+    tab.deletePath()
+    wait_until(lambda: not tab.busy)
+    assert not text.annotationItems
+    assert not text.selectedAnnotationId
+    tab._edit_history.undo()
+    wait_until(lambda: tab.ready)
+    assert [a['annotationId'] for a in text.annotationItems] == [original]

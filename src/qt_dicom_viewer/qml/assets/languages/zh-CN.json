@@ -2807,6 +2807,7 @@
         "cpr.referenceEditHint": "编辑中 · 拖动调整 · 单击线段插点",
         "cpr.referenceViewHint": "查看模式 · 编辑路径后可调整控制点",
         "cpr.referencePausedHint": "布点已暂停 · 返回 CPR 继续",
-        "cpr.previousResult": "保留已有结果 · 完成新路径后更新"
+        "cpr.previousResult": "保留已有结果 · 完成新路径后更新",
+        "manual.cpr.caption": "两个参考平面、曲面图和垂直横截面联动显示。"
     }
 }
