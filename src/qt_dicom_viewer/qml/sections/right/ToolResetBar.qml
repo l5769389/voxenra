@@ -9,6 +9,7 @@ Rectangle {
     objectName: "toolResetBar"
     required property var toolController
     property var voiController: null
+    property var cprController: null
     property bool collapsed: false
     property bool expansionAllowed: true
     property bool playbackActive: false
@@ -18,12 +19,13 @@ Rectangle {
     signal collapseRequested()
     readonly property string panel: toolController?.activePanel ?? ""
     readonly property bool voiActions: !!voiController && ["segmentation", "voi"].includes(panel)
+    readonly property bool cprActions: !!cprController && panel === "cpr-path"
     readonly property bool showReset: collapsed ? resetAvailable : !!toolController?.canResetActiveTool
     implicitHeight: collapsed && showReset ? 80 : 40
     color: Theme.panelBackgroundStrong
     Controls.ToolActionButton {
         objectName: "activeToolReset"
-        visible: !root.collapsed && !root.voiActions && root.showReset
+        visible: !root.collapsed && !root.voiActions && !root.cprActions && root.showReset
         anchors.fill: parent; anchors.margins: 4; anchors.rightMargin: 42
         iconName: "reset"
         label: root.toolController ? root.toolController.resetLabel : qsTrId("text.0576")
@@ -75,6 +77,13 @@ Rectangle {
             enabled: !root.playbackActive && (root.voiController?.items?.length ?? 0) > 0
             onClicked: root.voiController.clear("")
         }
+    }
+    Controls.CprActions {
+        controller: root.cprController
+        visible: !root.collapsed && root.cprActions
+        anchors.fill: parent
+        anchors.margins: 4
+        anchors.rightMargin: 42
     }
     Components.ToolbarAction {
         visible: root.collapsed && root.showReset

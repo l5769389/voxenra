@@ -26,7 +26,7 @@ ApplicationWindow {
     readonly property bool standardShortcutsAllowed: active && !shortcutPopupOpen && !shortcutRecording
     function isCprPanelControl(item) {
         for (let current = item; current; current = current.parent) {
-            if (current.objectName === "cprPanel" || current.objectName === "primaryTool-cpr-path") return true
+            if (["cprPanel", "cprBottomActions", "primaryTool-cpr-path"].includes(current.objectName)) return true
         }
         return false
     }

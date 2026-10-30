@@ -396,9 +396,10 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
     view.resize(280, 1050)
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
-    view.setInitialProperties(dict(controller=cpr))
+    view.setInitialProperties(dict(toolController=cpr.toolController, toolVisible=True,
+                                   viewportController=cpr.activeViewport, tabController=cpr))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        "src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml")))
+        "src/qt_dicom_viewer/qml/sections/RightPanel.qml")))
     assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
     view.show()
     QTest.qWait(40)

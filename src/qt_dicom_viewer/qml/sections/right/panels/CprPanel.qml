@@ -16,12 +16,6 @@ ColumnLayout {
     readonly property bool hasPath: (controller?.selectedPathId ?? "") !== ""
     readonly property int pointCount: controller?.controlPoints.length ?? 0
     readonly property bool results: controller?.resultView ?? false
-    readonly property var shortcutBindings: typeof appController !== "undefined"
-        ? appController.shortcutController?.bindings ?? [] : []
-    function actionHint(label, action) {
-        const key = shortcutBindings.find(binding => binding.action === action)?.display ?? ""
-        return label + (key ? " (" + key + ")" : "")
-    }
     spacing: 8
 
     Components.PanelHeading { title: qsTrId("cpr.title"); explanation: panel.controller?.message ?? "" }
@@ -45,35 +39,6 @@ ColumnLayout {
         currentIndex: model.findIndex(item => item.pathId === panel.controller?.selectedPathId)
         onActivated: panel.controller.selectPath(model[currentIndex].pathId)
     }
-    RowLayout {
-        Layout.fillWidth: true
-        visible: !panel.drawing && !panel.controller?.finishing
-        Components.AppButton {
-            objectName: "cprNewPath"
-            Layout.fillWidth: true
-            text: qsTrId("cpr.new")
-            iconName: "add"
-            compact: true
-            actionRole: panel.hasPath ? "neutral" : "primary"
-            enabled: (panel.controller?.referencesReady ?? false) && !panel.controller?.sourceMismatch
-            onClicked: panel.controller.startPath()
-            Accessible.description: panel.actionHint(text, "cpr-new")
-            Components.AppToolTip { visible: parent.hovered; text: panel.actionHint(qsTrId("cpr.new"), "cpr-new") }
-        }
-        Components.AppButton {
-            objectName: "cprEditPath"
-            Layout.fillWidth: true
-            visible: panel.hasPath && !panel.editing
-            text: qsTrId("cpr.edit")
-            iconName: "cpr-path"
-            compact: true
-            checked: panel.editing
-            enabled: (panel.controller?.referencesReady ?? false) && !panel.controller?.sourceMismatch
-            onClicked: panel.controller.setPathEditing(true)
-            Accessible.description: panel.actionHint(text, "cpr-edit")
-            Components.AppToolTip { visible: parent.hovered; text: panel.actionHint(qsTrId("cpr.edit"), "cpr-edit") }
-        }
-    }
     Text {
         objectName: "cprPathStatus"
         visible: !panel.results
@@ -85,29 +50,6 @@ ColumnLayout {
         color: panel.drawing ? Theme.textPrimary : Theme.textSecondary
         wrapMode: Text.Wrap
         font.pixelSize: 12
-    }
-    RowLayout {
-        Layout.fillWidth: true
-        visible: panel.drawing || (!panel.results && panel.hasPath)
-        Components.AppButton {
-            objectName: "cprFinishPath"
-            Layout.fillWidth: true
-            text: qsTrId("cpr.done")
-            iconName: "check"
-            actionRole: "primary"
-            enabled: panel.controller?.canFinishEditing ?? false
-            onClicked: panel.controller.finishEditing()
-            Accessible.description: qsTrId("cpr.finishHint")
-            Components.AppToolTip { visible: parent.hovered; text: qsTrId("cpr.finishHint") }
-        }
-        Components.AppButton {
-            objectName: "cprCancelPath"
-            Layout.fillWidth: true
-            visible: panel.drawing || panel.editing
-            text: qsTrId(panel.drawing ? "cpr.cancel" : "cpr.exitEdit")
-            iconName: "close"
-            onClicked: panel.controller.cancel_operation()
-        }
     }
     Text {
         objectName: "cprInteractionHint"
