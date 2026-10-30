@@ -107,8 +107,12 @@ Item {
                         Layout.fillWidth: true
                         Layout.leftMargin: 6
                         Layout.bottomMargin: 3
-                        visible: cell.index >= 2
-                        text: cell.modelData.historicalPlane ? cell.modelData.historicalDescription
+                        // Keep reference image bounds stable when modes change.
+                        text: cell.index < 2 ? qsTrId(cell.modelData.cprDrawing ? "cpr.referenceDrawHint"
+                            : cell.modelData.cprEditing ? "cpr.referenceEditHint"
+                            : page.controller?.drawing ? "cpr.referencePausedHint" : "cpr.referenceViewHint")
+                            : page.controller?.drawing ? qsTrId(cell.modelData.imageRows > 0 ? "cpr.previousResult" : "cpr.empty")
+                            : cell.modelData.historicalPlane ? cell.modelData.historicalDescription
                             : page.controller?.busy ? qsTrId("cpr.computing")
                             : !page.controller?.ready ? qsTrId("cpr.empty")
                             : qsTrId("cpr.distance").arg((page.controller?.positionMm ?? 0).toFixed(1)).arg((page.controller?.totalLength ?? 0).toFixed(1))

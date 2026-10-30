@@ -146,6 +146,7 @@ def test_draft_changes_mark_saved_workspace_dirty(cpr_app, tmp_path):
 
 def test_closing_during_drag_retains_committed_path(cpr_app):
     app, tab, _ = cpr_app
+    tab.setPathEditing(True)
     before = tab.session_state()
     view = tab.viewForRole('reference-a')
     assert view.cprBeginDrag(20, 35, 1)

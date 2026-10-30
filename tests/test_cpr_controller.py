@@ -38,6 +38,83 @@ def draw(tab, points=((5, 10), (15, 10), (25, 20))):
     return view
 
 
+def test_confirmed_path_requires_explicit_editing(cpr):
+    view = draw(cpr)
+    original = cpr.current_path
+    assert not cpr.pathEditing
+    assert not view.cprTap(10, 10, .4)
+    assert not view.cprBeginDrag(15, 10, .4)
+    assert cpr.current_path == original
+    cpr.setPathEditing(True)
+    assert view.cprTap(10, 10, .4)
+    assert len(cpr.current_path.control_points) == 4
+    cpr.setPathEditing(False)
+    modified = cpr.current_path
+    assert not view.cprTap(12, 10, .4)
+    assert cpr.current_path == modified
+
+
+def test_finish_and_delete_belong_to_reference_path_input(cpr):
+    ref, cross = cpr.viewForRole('reference-a'), cpr.viewForRole('cross')
+    cpr.startPath()
+    assert not cpr.canFinishPath
+    ref.cprTap(5, 10, .4)
+    assert not cpr.canFinishPath
+    assert cpr.canDeletePoint
+    ref.cprTap(15, 10, .4)
+    assert cpr.canFinishPath
+    assert not cross.cprFinish()
+    assert not cross.cprDelete()
+    assert len(cpr.controlPoints) == 2
+    assert ref.cprFinish()
+    assert not cpr.canFinishPath
+    cpr.setPathEditing(True)
+    cpr.locatePoint(1)
+    assert not cpr.canDeletePoint  # A committed path must retain two points.
+
+
+def test_leaving_edit_mode_cancels_an_uncommitted_drag(cpr):
+    view = draw(cpr)
+    original = cpr.current_path
+    cpr.setPathEditing(True)
+    view.cprBeginDrag(15, 10, .4)
+    view.cprMoveDrag(17, 12)
+    cpr.setPathEditing(False)
+    assert cpr.current_path == original
+    assert not cpr._edit_transaction_active
+    cpr.setPathEditing(True)
+    cpr._tool_controller.activateTool('window')
+    cpr._tool_controller.activateTool('cpr-path')
+    assert not cpr.pathEditing
+
+
+def test_other_tools_cannot_confirm_or_delete_a_suspended_draft(cpr):
+    ref = cpr.viewForRole('reference-a')
+    cpr.startPath()
+    ref.cprTap(5, 10, .4)
+    ref.cprTap(15, 10, .4)
+    cpr._tool_controller.activateTool('measure')
+    assert not ref.cprFinish()
+    assert not ref.cprDelete()
+    assert cpr.drawing and len(cpr.controlPoints) == 2
+    cpr._tool_controller.activateTool('cpr-path')
+    assert ref.cprFinish()
+    assert not cpr.drawing
+
+
+def test_clicking_near_last_draft_point_ignores_jitter_but_allows_a_new_slice(cpr):
+    ref = cpr.viewForRole('reference-a')
+    cpr.startPath()
+    ref.cprTap(5, 10, .4)
+    ref.cprTap(5.1, 10.1, .4)
+    assert len(cpr.controlPoints) == 1
+    ref.setSliceIndex(24)
+    wait_until(lambda: ref._frame_meta.slice_index == 24)
+    ref.cprTap(5.1, 10.1, .4)
+    assert len(cpr.controlPoints) == 2
+    assert cpr.finishPath()
+
+
 def test_create_multiplane_path_and_curve_position_sync(cpr):
     view = cpr.viewForRole("reference-a")
     cpr.startPath()
@@ -83,6 +160,7 @@ def test_overlay_distinguishes_source_thickness_from_displayed_cpr_slab(cpr):
 
 def test_reference_drag_preserves_original_depth_and_cancel_restores(cpr):
     view = draw(cpr)
+    cpr.setPathEditing(True)
     old = cpr.current_path
     view.setSliceIndex(24)
     wait_until(lambda: view._frame_meta.slice_index == 24)
@@ -97,6 +175,7 @@ def test_reference_drag_preserves_original_depth_and_cancel_restores(cpr):
 
 def test_insert_delete_and_multiple_paths_preserve_identity(cpr):
     view = draw(cpr)
+    cpr.setPathEditing(True)
     first = cpr.selectedPathId
     assert view.cprTap(10, 10, .4)
     assert len(cpr.current_path.control_points) == 4
@@ -139,6 +218,7 @@ def test_completed_drag_is_one_undo_transaction_and_whole_path_deletion_is_undoa
     from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
     cpr._edit_history = history = EditHistoryController(cpr)
     view = draw(cpr)
+    cpr.setPathEditing(True)
     history.capture()
     original = cpr.current_path
     before = len(history._undo)

@@ -11,6 +11,7 @@ Item {
     id: interactionLayer
     objectName: "viewportInteractionLayer"
     clip: true
+    property bool cprPathInput: false
 
     signal pointerMoved(point position)
     signal pointerExited()
@@ -76,7 +77,8 @@ Item {
     readonly property bool immediateDrag: registrationInteraction
         || (immediateRoiDrag && (pressTracker.point.pressedButtons & Qt.LeftButton) !== 0)
 
-    readonly property string hoverCursorKind: locatorPressed ? "crosshair-move"
+    readonly property string hoverCursorKind: cprPathInput ? "cpr-path"
+        : locatorPressed ? "crosshair-move"
         : registrationInteraction ? (crosshairHoverTarget === "center" ? "crosshair-move" : "pan")
         : CursorPolicy.resolve(activeInteraction, regionCursorKind, crosshairHoverTarget, measurementCursorKind)
     function dragCursorForButtons(buttons) {
@@ -198,6 +200,9 @@ Item {
         onTapped: (eventPoint, button) => {
             // 只有左键点击执行测量选择等 tapped 逻辑。
             if (button !== Qt.LeftButton)
+                return
+            // The second tap confirms a CPR draft; it is not another point.
+            if (interactionLayer.cprPathInput && tapCount > 1)
                 return
             if (interactionLayer.locatorPressed) {
                 interactionLayer.locatorPressed = false

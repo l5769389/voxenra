@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from PySide6.QtCore import QCoreApplication, QEvent, QPointF, QUrl, Qt
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtQuick import QQuickView
@@ -13,7 +15,8 @@ from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
 from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
 
 
-def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr):
+@pytest.mark.parametrize('completion', ['enter', 'double-click', 'double-click-existing-point'])
+def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completion):
     view = QQuickView()
     provider = DicomImageProvider()
     cpr.imageUpdateRequested.connect(provider.set_array)
@@ -32,20 +35,36 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr):
     view.show()
     QTest.qWait(80)
     try:
-        cpr.startPath()
         target = next((item for item in _visual_children(view.rootObject())
                        if item.objectName() == "cprViewport-reference-a"), None)
         assert target is not None
-        for x, y in ((.35, .35), (.5, .5), (.65, .6)):
+        original_size = target.size()
+        cpr.startPath()
+        QTest.qWait(20)
+        assert target.size() == original_size
+        for x, y in ((.35, .35), (.5, .5)):
             point = target.mapToScene(QPointF(
                 target.width()*x, target.height()*y))
             QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
             QTest.qWait(40)
-        assert len(cpr.controlPoints) == 3
-        QTest.keyClick(view, Qt.Key_Return)
+        assert len(cpr.controlPoints) == 2
+        point = target.mapToScene(QPointF(target.width()*.65, target.height()*.6))
+        if completion == 'enter':
+            QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
+            QTest.keyClick(view, Qt.Key_Return)
+        else:
+            if completion == 'double-click-existing-point':
+                QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
+                point += QPointF(1, 1)
+            # A realistic second press can drift by a pixel. It must confirm,
+            # not add a tiny terminal segment that changes the section normal.
+            end = (point + QPointF(1, 1)).toPoint()
+            QTest.mouseDClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
+            QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
         wait_until(lambda: cpr.ready)
         assert len(cpr.paths) == 1
         assert len(cpr.current_path.control_points) == 3
+        assert target.size() == original_size
         view.rootObject().setProperty("controller", None)
         QCoreApplication.processEvents()
         assert not warnings, "\n".join(warnings)
@@ -75,9 +94,25 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
     try:
         click("cprNewPath")
         assert cpr.drawing
+        fields = {item.objectName(): item for item in _visual_children(view.rootObject())}
+        assert not fields['cprFinishPath'].isEnabled()
+        ref = cpr.viewForRole('reference-a')
+        ref.cprTap(5, 10, .4)
+        assert not fields['cprFinishPath'].isEnabled()
+        ref.cprTap(15, 10, .4)
+        assert fields['cprFinishPath'].isEnabled()
+        click('cprFinishPath')
+        wait_until(lambda: cpr.ready)
+        assert not cpr.drawing and not cpr.pathEditing
+        click('cprEditPath')
+        assert cpr.pathEditing
+        click('cprEditPath')
+        assert not cpr.pathEditing
+        click('cprNewPath')
         click("cprCancelPath")
         assert not cpr.drawing
         draw(cpr)
+        click("cprDetails")
         click("cprPathName")
         QTest.keyClick(view, Qt.Key_A, Qt.ControlModifier)
         QCoreApplication.sendEvent(view, QKeyEvent(QEvent.KeyPress, 0, Qt.NoModifier, "Left artery"))

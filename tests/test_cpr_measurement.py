@@ -48,6 +48,7 @@ def test_old_cross_section_measurement_returns_to_exact_plane_after_path_edit(cp
     source = cross._measure_controller._sources[measurement]
     assert source['cpr']['pathRevision'] == 1
     reference = tab.viewForRole('reference-a')
+    tab.setPathEditing(True)
     reference.cprBeginDrag(20, 35, 1)
     reference.cprEndDrag(25, 30)
     wait_until(lambda: tab.ready)
@@ -99,6 +100,7 @@ def test_historical_plane_survives_workspace_restore(cpr_app, tmp_path):
     source = cross._measure_controller._sources[mid]
     expected = cross.plane_geometry.image_origin_patient
     reference = tab.viewForRole('reference-a')
+    tab.setPathEditing(True)
     reference.cprBeginDrag(20,35,1)
     reference.cprEndDrag(25,30)
     wait_until(lambda: tab.ready)

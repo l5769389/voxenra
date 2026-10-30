@@ -80,6 +80,10 @@ class CprViewportController(Image2DViewportController):
     def cprEditing(self):
         return self._cpr.pathEditing and self.viewportRole.startswith("reference")
 
+    @Property(bool, notify=cprChanged)
+    def cprDrawing(self):
+        return self.cprEditing and self._cpr.drawing
+
     @Property(float, notify=cprChanged)
     def cprMarkerColumn(self):
         result = self._cpr._result
@@ -185,7 +189,7 @@ class CprViewportController(Image2DViewportController):
 
     @Slot(result=bool)
     def cprFinish(self):
-        if self._cpr.drawing:
+        if self.cprDrawing:
             self._cpr.finishPath()
             return True
         return False
@@ -196,7 +200,7 @@ class CprViewportController(Image2DViewportController):
 
     @Slot(result=bool)
     def cprDelete(self):
-        if self._cpr.pathEditing:
+        if self.cprEditing:
             self._cpr.deleteSelectedPoint()
             return True
         return False

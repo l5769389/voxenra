@@ -89,6 +89,8 @@ def observe():
     if tab is not None and hasattr(tab, 'session_state'):
         info.update(session=tab.session_state(), ready=tab.ready, busy=tab.busy,
                     generation=tab._generation, message=str(tab.message), drawing=tab.drawing,
+                    pathEditing=tab.pathEditing, canFinishPath=tab.canFinishPath,
+                    canDeletePoint=tab.canDeletePoint,
                     history=dict(undo=len(tab._edit_history._undo), redo=len(tab._edit_history._redo)),
                     activeRole=tab.activeViewport.viewportRole, focused=tab.focusedViewportId,
                     activePanel=tab.toolController.activePanel, interaction=tab.toolController.activeInteraction,

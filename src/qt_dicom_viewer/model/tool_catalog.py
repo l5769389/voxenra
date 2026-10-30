@@ -20,9 +20,9 @@ class ToolDefinition:
 
 
 TOOL_CATALOG: tuple[ToolDefinition, ...] = (
-    ToolDefinition(ToolType.OPEN_CPR, "CPR", "nav-view-mpr", ToolBehavior.COMMAND,
+    ToolDefinition(ToolType.OPEN_CPR, "CPR", "cpr-path", ToolBehavior.COMMAND,
                    command="workspace:open-cpr", supported_tab_types=frozenset((TabType.MPR,))),
-    ToolDefinition(ToolType.CPR_PATH, "CPR", "nav-view-mpr", ToolBehavior.PANEL,
+    ToolDefinition(ToolType.CPR_PATH, "CPR", "cpr-path", ToolBehavior.PANEL,
                    supported_tab_types=frozenset((TabType.CPR,))),
     ToolDefinition(ToolType.SEGMENTATION, _msg('text.0276'), "segmentation", ToolBehavior.INTERACTION_PANEL,
                    InteractionType.SEGMENTATION, supported_tab_types=frozenset((TabType.MPR, TabType.FOUR_D))),

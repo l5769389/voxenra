@@ -21,6 +21,7 @@ def test_export_is_disabled_for_draft_preview_and_pending_reconstruction(cpr_app
     tab.cancel_operation()
     assert export.canExportPng
     view = tab.viewForRole('reference-a')
+    tab.setPathEditing(True)
     view.cprBeginDrag(20, 35, 1)
     view.cprMoveDrag(25, 30)
     assert not export.canExportPng

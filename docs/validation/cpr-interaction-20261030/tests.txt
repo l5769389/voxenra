@@ -1,0 +1,19 @@
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software .venv/bin/pytest -q tests/test_cpr*.py tests/test_tool_cursors.py tests/test_tool_controller.py tests/test_workspace_interactions.py tests/test_appearance_language.py tests/test_toolbar_priorities.py tests/test_toolbar_customization.py tests/test_right_toolbar_groups.py tests/test_manual.py tests/test_dicom_overlay.py
+
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+........................................................................ [ 80%]
+.....................................................................    [100%]
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+357 passed, 3 warnings in 82.44s (0:01:22)

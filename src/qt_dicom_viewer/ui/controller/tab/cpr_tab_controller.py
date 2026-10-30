@@ -37,6 +37,7 @@ class CprTabController(TabController):
         self._historical_requests = {}
         self._pending_restore_planes = {}
         self._drawing = self._closed = self._edit_transaction_active = False
+        self._path_editing = False
         self._selected_point = -1
         self._generation = 0
         self._message = self._volume_request_id = ""
@@ -108,7 +109,33 @@ class CprTabController(TabController):
 
     @Property(bool, notify=cprChanged)
     def pathEditing(self):
-        return self._tool_controller.activePanel == "cpr-path"
+        return self._tool_controller.activePanel == "cpr-path" and (self._drawing or self._path_editing)
+
+    @Property(bool, notify=cprChanged)
+    def canFinishPath(self):
+        return self._drawing and len(self._session["draft"]) >= 2
+
+    @Property(bool, notify=cprChanged)
+    def canDeletePoint(self):
+        if self._drawing:
+            return bool(self._session["draft"])
+        path = self.current_path
+        return bool(self.pathEditing and path and len(path.control_points) > 2
+                    and 0 <= self._selected_point < len(path.control_points))
+
+    @Slot(bool)
+    def setPathEditing(self, enabled):
+        if self._drawing:
+            return
+        if enabled:
+            if not self.current_path or not self.referencesReady or self._source_mismatch:
+                return
+            self._tool_controller.activateTool("cpr-path")
+            self._path_editing = True
+        else:
+            self.cancel_operation()
+            self._selected_point = -1
+        self._notify()
 
     @Property(bool, notify=cprChanged)
     def referencesReady(self):
@@ -170,7 +197,8 @@ class CprTabController(TabController):
 
     @Property(str, notify=cprChanged)
     def message(self):
-        return self._message or _msg("cpr.drawHint" if self._drawing else "cpr.editHint")
+        return self._message or _msg("cpr.drawHint" if self._drawing else
+                                    "cpr.editHint" if self.pathEditing else "cpr.viewHint")
 
     @Property(float, notify=cprChanged)
     def positionMm(self):
@@ -195,6 +223,8 @@ class CprTabController(TabController):
 
     @Slot()
     def _tool_panel_changed(self):
+        if self._tool_controller.activePanel != "cpr-path" and self._path_editing:
+            self.cancel_operation()
         if self._tool_controller.activePanel == "export":
             self.setExportScope(self._export_scope)
         else:
@@ -425,6 +455,7 @@ class CprTabController(TabController):
         self._session["pathRanges"][path.path_id] = (0., 0.)
         self._session.update(selected=path.path_id, draft=(), positionMm=0., rangeMm=(0., 0.))
         self._drawing, self._message = False, ""
+        self._path_editing, self._selected_point = False, -1
         self._commit()
         return True
 
@@ -469,6 +500,8 @@ class CprTabController(TabController):
 
     @Slot()
     def deleteSelectedPoint(self):
+        if not self.canDeletePoint:
+            return
         if self._drawing:
             self._session["draft"] = self._session["draft"][:-1]
             self._selected_point = len(self._session["draft"])-1
@@ -528,6 +561,12 @@ class CprTabController(TabController):
         point = view.plane_geometry.image_point_to_patient(column=column, row=row)
         if self._drawing:
             draft = self._session["draft"]
+            if draft:
+                # Clicking an existing endpoint to finish must not create a
+                # tiny segment from pointer jitter. A new slice is distinct.
+                last = self.projected_points(view)[-1]
+                if last["near"] and np.hypot(last["column"]-column, last["row"]-row) <= tolerance:
+                    return True
             if len(draft) < 4096 and (not draft or np.linalg.norm(np.asarray(point)-draft[-1]) >= 1e-4):
                 self._session["draft"] = (*draft, point)
                 self._selected_point = len(draft)
@@ -600,7 +639,7 @@ class CprTabController(TabController):
 
     @Slot(result=bool)
     def cancel_operation(self):
-        claimed = self._drawing or self._drag is not None
+        claimed = self._drawing or self._drag is not None or self._path_editing
         if self._drag is not None:
             record = self._drag[0]
             self._selected_record().update(record)
@@ -610,6 +649,7 @@ class CprTabController(TabController):
             self._preview_timer.stop()
             self._request_cpr()
         self._drawing, self._message = False, ""
+        self._path_editing = False
         self._session["draft"] = ()
         if claimed:
             self.persistenceChanged.emit()

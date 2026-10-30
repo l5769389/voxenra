@@ -303,6 +303,7 @@ Item {
     }
 
     CprPathOverlay {
+        id: cprPathOverlay
         anchors.fill: parent
         z: 16
         visible: viewportRoot.viewportController?.isCprViewport === true
@@ -313,6 +314,7 @@ Item {
 
     InteractionLayer {
         id: interactionLayer
+        cprPathInput: viewportRoot.viewportController?.cprEditing ?? false
         mousePreferences: viewportRoot.viewportController?.settingsController?.values.input ?? null
         brushDiameterPixels: viewportRoot.viewportController?.voiController?.brushRelative
             ? Math.min(width, height) * (viewportRoot.viewportController.voiController.brushPercent / 100)
@@ -353,6 +355,7 @@ Item {
         regionCursorKind: viewportRoot.viewportController?.regionCursorKind ?? ""
 
         onPointerExited: {
+            cprPathOverlay.previewPoint = null
             viewportRoot.viewportController?.clearInteractionHover()
         }
 
@@ -513,6 +516,7 @@ Item {
                 interactionLayer,
                 position
             )
+            cprPathOverlay.previewPoint = hit.valid ? hit : null
             viewportRoot.viewportController.updateCursorPosition(
                 position.x,
                 position.y,

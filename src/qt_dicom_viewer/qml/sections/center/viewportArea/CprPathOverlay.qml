@@ -9,6 +9,10 @@ Canvas {
     required property var transformState
     readonly property var points: controller?.cprPoints ?? []
     readonly property real marker: controller?.cprMarkerColumn ?? -1
+    property var previewPoint: null
+    readonly property bool drawing: controller?.cprDrawing ?? false
+    onPreviewPointChanged: if (drawing) requestPaint()
+    onDrawingChanged: requestPaint()
     onPointsChanged: requestPaint()
     onMarkerChanged: requestPaint()
     onTransformStateChanged: requestPaint()
@@ -33,6 +37,15 @@ Canvas {
             ctx.fillStyle = Theme.overlayText
             ctx.font = "11px sans-serif"
             ctx.fillText(String(i+1), p.x+7, p.y-6)
+        }
+        if (drawing && previewPoint && points.length > 0) {
+            const last = points[points.length - 1]
+            const a = coordinateMapper.mapDicomPixelToItem(overlay, last.column, last.row)
+            const b = coordinateMapper.mapDicomPixelToItem(overlay, previewPoint.column, previewPoint.row)
+            ctx.globalAlpha = .65
+            ctx.setLineDash([4, 4])
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()
+            ctx.setLineDash([])
         }
         if (controller.viewportRole === "curved" && marker >= 0) {
             ctx.globalAlpha = 1
