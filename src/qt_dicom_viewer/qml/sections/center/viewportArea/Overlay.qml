@@ -9,6 +9,7 @@ Item {
     property bool hideSensitiveInfo: false
     property bool multiViewport: false
     property string viewMode: ""
+    property string statusText: ""
     readonly property bool hasViewSelector: viewMode !== ""
     readonly property string modeLabel: ({stack: qsTrId("layout.originalSlices"), axial: qsTrId("layout.axialReconstruction"),
         coronal: qsTrId("layout.coronalReconstruction"), sagittal: qsTrId("layout.sagittalReconstruction")})[viewMode] ?? ""
@@ -31,6 +32,13 @@ Item {
             .replace(", ", " · ").replace(/(\d)mm\b/g, "$1 mm")
     }
     TextMetrics { id: modeMetrics; font.pixelSize: root.textPixelSize; font.weight: Font.DemiBold; text: root.modeLabel }
+    TextMetrics {
+        id: positionMetrics
+        font.pixelSize: root.textPixelSize
+        font.features: ({ "tnum": 1 })
+        // Decide CPR wrapping from the available space, never the live value.
+        text: "S: 8888.88 mm"
+    }
     Text {
         id: modeSizing
         visible: false
@@ -70,8 +78,8 @@ Item {
     function field(key) {
         switch (key) {
         case "viewPosition": {
-            if (value("cprReconstruction")) return value("cprReconstruction")
-            if (value("cprRole") === "cross") return qsTrId("cpr.cross")
+            if (value("cprRole") === "curved") return value("cprReconstruction") || "CPR"
+            if (value("cprRole") === "cross") return "CROSS-SECTION"
             const role = value("viewRole")
             if (role === "fusion")
                 return ["FUSION", planePosition()].filter(Boolean).join(" · ")
@@ -138,7 +146,7 @@ Item {
         // CPR uses one source volume. Identity/acquisition metadata belongs to
         // the tab/series context; output indices count path samples, not slices.
         const cprFields = {topLeft: String(overlay.cprRole ?? "").startsWith("reference")
-            ? ["viewPosition", "slice"] : ["viewPosition"], topRight: [], bottomLeft: ["window"], bottomRight: ["cursor"]}
+            ? ["viewPosition", "slice"] : ["viewPosition", "cprDistance"], topRight: [], bottomLeft: ["window"], bottomRight: ["cursor"]}
         return (cprWorkspace ? cprFields[corner] : options[corner] ?? []).filter((key, index) => !(corner === "topLeft" && inlineViewPosition && index === 0))
             .filter(key => !overlay.compactOverlay || compactFields.includes(key))
             .map(key => field(key)).filter(Boolean).join("\n")
@@ -169,6 +177,7 @@ Item {
                     text: corner.rows[index] ?? ""
                     color: root.textColor
                     font.pixelSize: corner.pixelSize
+                    font.features: root.cprWorkspace ? ({ "tnum": 1 }) : ({})
                     font.weight: root.overlay.compactOverlay ? Font.Normal : Font.DemiBold
                     horizontalAlignment: corner.horizontalAlignment
                     verticalAlignment: Text.AlignVCenter
@@ -190,7 +199,8 @@ Item {
         x: 2; y: 2
         width: topLeft.width
         readonly property bool positionOnNextLine: root.inlineViewPosition
-            && positionLabel.implicitWidth > Math.max(0, width - root.selectorWidth - 4)
+            && (root.cprWorkspace ? positionMetrics.advanceWidth : positionLabel.implicitWidth)
+                > Math.max(0, width - root.selectorWidth - 4)
         height: root.selectorHeight + (positionOnNextLine ? root.textRowHeight : 0)
         visible: root.hasViewSelector
         Text {
@@ -216,6 +226,7 @@ Item {
             visible: root.inlineViewPosition
             text: root.inlineViewPosition ? root.positionText : ""
             font.pixelSize: root.textPixelSize; font.weight: Font.Normal
+            font.features: root.cprWorkspace ? ({ "tnum": 1 }) : ({})
             verticalAlignment: Text.AlignVCenter
             color: root.textColor
             style: Text.Outline
@@ -233,7 +244,7 @@ Item {
         reservedHeight: root.hasViewSelector ? modeRow.height : 0
         text: root.lines("topLeft")
     }
-    CornerText { objectName: "overlay-topRight"; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 2; horizontalAlignment: Text.AlignRight; text: root.lines("topRight") }
+    CornerText { objectName: "overlay-topRight"; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 2; horizontalAlignment: Text.AlignRight; text: root.cprWorkspace ? root.statusText : root.lines("topRight") }
     CornerText { id: bottomLeft; objectName: "overlay-bottomLeft"; anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 2; text: root.lines("bottomLeft") }
     CornerText { id: bottomRight; objectName: "overlay-bottomRight"; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 2; horizontalAlignment: Text.AlignRight; text: root.lines("bottomRight") }
 }

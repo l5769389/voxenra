@@ -58,11 +58,16 @@ def test_old_cross_section_measurement_returns_to_exact_plane_after_path_edit(cp
     np.testing.assert_allclose(cross.plane_geometry.image_origin_patient, original.image_origin_patient)
     np.testing.assert_allclose(cross.plane_geometry.image_orientation_patient, original.image_orientation_patient)
     assert cross.historicalPlane
+    assert cross.overlayInfo['cprDistance'] == f"s: {source['cpr']['distanceMm']:.1f} mm"
     assert any(item['measurementId'] == measurement for item in cross.measurementController.measurementItems)
     assert cross._measure_controller.current_source['cpr']['pathRevision'] == 1
+    historical_distance = cross.overlayInfo['cprDistance']
     tab.setPositionMm(5)
+    assert cross.historicalPlane
+    assert cross.overlayInfo['cprDistance'] == historical_distance
     wait_until(lambda: tab.ready)
     assert not cross.historicalPlane
+    assert '/' in cross.overlayInfo['cprDistance']
 
 
 def test_position_link_uses_current_path_during_pending_path_switch(cpr_app):

@@ -311,7 +311,6 @@ class CprTabController(TabController):
             view._independent_measurement_source = deepcopy(source)
             view._latest_request_id = request.request_id
             view.render_pending = True
-            view._historical = False
             view.cancelMeasurement()
             self.activateViewport(view.viewportId)
             self.renderRequested.emit(request)
@@ -341,7 +340,8 @@ class CprTabController(TabController):
         self._historical_requests.clear()
         for view in self._viewport_dict.values():
             view._independent_measurement_source = None
-            view._historical = False
+            # The old plane is still displayed until present_cpr accepts its
+            # replacement. Preserve its historical identity and distance.
         self._generation += 1
         request = CprRenderInput(self._generation, self._volume, self.current_path,
             self.current_settings, self.positionMm,

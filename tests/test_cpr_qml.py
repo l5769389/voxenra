@@ -173,7 +173,11 @@ def test_cpr_overlay_uses_geometry_and_window_without_repeated_patient_or_acquis
         cursor = named_item(item, "overlay-bottomRight").property("text")
         assert "125.5" in cursor and "X:" not in cursor and "Rot:" not in cursor
     curved = named_item(window.rootObject(), "cprViewport-curved")
-    assert "CPR · Thin" in named_item(curved, "overlay-topLeft").property("text")
+    assert "CPR · THIN" in named_item(curved, "overlay-topLeft").property("text")
+    cross = named_item(window.rootObject(), "cprViewport-cross")
+    assert "CROSS-SECTION" in named_item(cross, "overlay-topLeft").property("text")
+    for item in (curved, cross):
+        assert "s: 0.0 /" in named_item(item, "overlay-topLeft").property("text")
     for index in (0, 1):
         selector = named_item(window.rootObject(), "cprPlane-" + str(index))
         reference = named_item(window.rootObject(), "cprViewport-reference-" + ("a" if index == 0 else "b"))
@@ -217,11 +221,54 @@ def test_historical_reference_shows_stored_plane_and_explicit_history_status(cpr
         assert viewport.property("twoDViewMode") == ""
         assert not selector.isVisible()
         assert "Axial" in named_item(viewport, "overlay-topLeft").property("text")
-        status = named_item(window.rootObject(), "cprStatus-reference-a")
-        assert status.property("text") == reference.historicalDescription
+        assert "HISTORICAL" in named_item(viewport, "overlay-topRight").property("text")
         reference.setSliceIndex(reference.sliceIndex + 1)
+        assert reference.historicalPlane and not selector.isVisible()
         wait_until(lambda: not reference.historicalPlane and tab.ready)
         assert selector.isVisible() and selector.property("mode") == "coronal"
+
+
+def test_cpr_no_footer_and_overlay_state_changes_keep_full_image_bounds(cpr_page):
+    window, tab = cpr_page
+    items = [named_item(window.rootObject(), "cprViewport-" + role)
+             for role in ("reference-a", "reference-b", "curved", "cross")]
+    original_sizes = [item.size() for item in items]
+    # Cell borders and grid spacing are the only space outside the images.
+    assert items[0].height() == pytest.approx((window.height() - 4) / 2 - 4)
+    assert not any(item.objectName().startswith("cprStatus-") for item in _visual_children(window.rootObject()))
+    tab.startPath()
+    QCoreApplication.processEvents()
+    assert [item.size() for item in items] == original_sizes
+    assert "PREVIOUS RESULT" in named_item(items[2], "overlay-topRight").property("text")
+    tab.cancel_operation()
+    QCoreApplication.processEvents()
+    assert [item.size() for item in items] == original_sizes
+
+
+def test_reference_position_digit_changes_do_not_move_slice_annotation(cpr_page):
+    window, tab = cpr_page
+    reference = tab.viewForRole("reference-a")
+    viewport = named_item(window.rootObject(), "cprViewport-reference-a")
+    position = named_item(viewport, "twoDModePosition")
+    row = named_item(viewport, "twoDModeInformation")
+    selector = named_item(window.rootObject(), "cprPlane-0")
+    widths = []
+    for index in (1, 39):
+        reference.setSliceIndex(index)
+        wait_until(lambda: tab.ready)
+        widths.append(position.property("implicitWidth"))
+    assert widths[1] > widths[0]
+    # Exercise the boundary where the old content-dependent rule changed rows.
+    desired = selector.width() + 4 + sum(widths)/2
+    window.resize(window.width() + round(4*(desired - row.width())), window.height())
+    QTest.qWait(30)
+    positions = []
+    for index in (1, 39, 1):
+        reference.setSliceIndex(index)
+        wait_until(lambda: tab.ready)
+        corner = named_item(viewport, "overlay-topLeft")
+        positions.append((position.x(), position.y(), row.height(), corner.y(), viewport.size()))
+    assert positions[0] == positions[1] == positions[2]
 
 
 def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):

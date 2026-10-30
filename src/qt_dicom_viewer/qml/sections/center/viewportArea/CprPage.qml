@@ -42,13 +42,11 @@ Item {
                 color: Theme.canvasBackground
                 border.color: page.controller?.activeViewport === modelData ? Theme.primaryColor : Theme.controlBorder
                 border.width: 1
-                ColumnLayout {
+                Item {
                     anchors.fill: parent
                     anchors.margins: 2
-                    spacing: 2
                     Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
+                        anchors.fill: parent
                         Viewport {
                             id: viewport
                             objectName: "cprViewport-" + cell.modelData.viewportRole
@@ -59,6 +57,11 @@ Item {
                             hasTabs: true
                             anonymousExport: page.anonymousExport
                             multiViewport: !cell.focused
+                            overlayStatusText: cell.modelData.historicalPlane ? "HISTORICAL PLANE"
+                                : cell.index < 2 ? ""
+                                : page.controller?.drawing && cell.modelData.imageRows > 0 ? "PREVIOUS RESULT"
+                                : page.controller?.busy ? "UPDATING"
+                                : !page.controller?.ready ? "NO RESULT" : ""
                             TapHandler {
                                 onPressedChanged: if (pressed) page.controller?.activateViewport(cell.modelData.viewportId)
                             }
@@ -82,24 +85,6 @@ Item {
                             onActivationRequested: page.controller?.activateViewport(cell.modelData.viewportId)
                             onModeSelected: mode => page.controller?.setReferencePlane(cell.index, mode)
                         }
-                    }
-                    Text {
-                        objectName: "cprStatus-" + cell.modelData.viewportRole
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 6
-                        Layout.bottomMargin: 3
-                        // Keep reference image bounds stable when modes change.
-                        text: cell.modelData.historicalPlane ? cell.modelData.historicalDescription
-                            : cell.index < 2 ? qsTrId(cell.modelData.cprDrawing ? "cpr.referenceDrawHint"
-                            : cell.modelData.cprEditing ? "cpr.referenceEditHint"
-                            : page.controller?.drawing ? "cpr.referencePausedHint" : "cpr.referenceViewHint")
-                            : page.controller?.drawing ? qsTrId(cell.modelData.imageRows > 0 ? "cpr.previousResult" : "cpr.empty")
-                            : page.controller?.busy ? qsTrId("cpr.computing")
-                            : !page.controller?.ready ? qsTrId("cpr.empty")
-                            : qsTrId("cpr.distance").arg((page.controller?.positionMm ?? 0).toFixed(1)).arg((page.controller?.totalLength ?? 0).toFixed(1))
-                        color: Theme.overlayText
-                        font.pixelSize: 11
-                        elide: Text.ElideRight
                     }
                 }
             }

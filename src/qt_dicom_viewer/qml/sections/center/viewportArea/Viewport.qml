@@ -8,6 +8,7 @@ Item {
     id: viewportRoot
     property bool multiViewport: false
     property bool anonymousExport: false
+    property string overlayStatusText: ""
     // Only independent 2D cells supply a mode; other workspaces retain their overlay.
     property string twoDViewMode: ""
     readonly property alias cornerOverlay: metadataOverlay
@@ -200,6 +201,7 @@ Item {
     // 四角信息
     Overlay {
         id: metadataOverlay
+        statusText: viewportRoot.overlayStatusText
         viewMode: viewportRoot.twoDViewMode
         multiViewport: viewportRoot.multiViewport
         anchors.fill: parent

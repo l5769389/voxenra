@@ -196,8 +196,11 @@ ColumnLayout {
             Layout.fillWidth: true
             text: qsTrId("cpr.distance").arg((panel.controller?.positionMm ?? 0).toFixed(1))
                 .arg((panel.controller?.totalLength ?? 0).toFixed(1))
+            Layout.minimumWidth: 0
+            elide: Text.ElideRight
             color: Theme.textSecondary
             font.pixelSize: 12
+            font.features: ({ "tnum": 1 })
         }
         Components.AppSlider {
             objectName: "cprPosition"

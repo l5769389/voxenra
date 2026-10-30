@@ -158,13 +158,13 @@ def test_overlay_distinguishes_source_thickness_from_displayed_cpr_slab(cpr):
     cpr._volume.representative_instance_meta = replace(cpr._volume.representative_instance_meta, slice_thickness=1.)
     draw(cpr)
     curved = cpr.viewForRole('curved')
-    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Thin'
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · THIN'
     cpr.setParameter('thickness', 12.)
     cpr.setParameter('projection', 'mean')
     # Keep the metadata tied to the image still on screen during reconstruction.
-    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Thin'
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · THIN'
     wait_until(lambda: cpr.ready)
-    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Mean 12 mm'
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · MEAN 12 mm'
     assert curved.overlayInfo['sliceThickness'] == '1'
     assert curved.overlayInfo['cprRole'] == 'curved'
     cross = cpr.viewForRole('cross').overlayInfo
@@ -175,7 +175,22 @@ def test_overlay_distinguishes_source_thickness_from_displayed_cpr_slab(cpr):
     assert curved.overlayInfo['cprReconstruction'] == 'CPR · MIP 12 mm'
     cpr.setParameter('thickness', 0.)
     wait_until(lambda: cpr.ready)
-    assert curved.overlayInfo['cprReconstruction'] == 'CPR · Thin'
+    assert curved.overlayInfo['cprReconstruction'] == 'CPR · THIN'
+
+
+def test_distance_overlay_describes_accepted_section_not_pending_navigation(cpr):
+    draw(cpr)
+    curved, cross = (cpr.viewForRole(role) for role in ('curved', 'cross'))
+    original = cross.overlayInfo['cprDistance']
+    assert original.startswith('s: 0.0 /')
+    cpr.setPositionMm(8)
+    assert cpr.positionMm == pytest.approx(8, abs=cpr.current_settings.step_mm)
+    assert cross.overlayInfo['cprDistance'] == curved.overlayInfo['cprDistance'] == original
+    wait_until(lambda: cpr.ready)
+    result = cpr._result
+    expected = f's: {result.section.distance_mm:.1f} / {result.curve.centerline.length_mm:.1f} mm'
+    assert cross.overlayInfo['cprDistance'] == curved.overlayInfo['cprDistance'] == expected
+    assert expected != original
 
 
 def test_reference_drag_preserves_original_depth_and_cancel_restores(cpr):
