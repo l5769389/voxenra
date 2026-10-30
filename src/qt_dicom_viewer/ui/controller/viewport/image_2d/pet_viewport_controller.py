@@ -233,6 +233,8 @@ class LinkedPetViewport(MprViewportController):
         self._press_captured = True
         self._locator_press = None
         position = PointerPosition(Point(x, y), ImagePoint(column, row))
+        if self.activeInteraction == "rotate":
+            return False
         if buttons & 1 and self._crosshair_hit_test(position, point_tolerance, line_tolerance) == CrosshairTargetKind.CENTER:
             center = self._crosshair_image_position
             self._locator_press = (self._plane_geometry, center.column-column, center.row-row)
@@ -354,7 +356,8 @@ class PetMipViewport(Image2DViewportController):
     @Slot(bool, float, float, float, float, float, float)
     def selectMeasurementAt(self, valid, column, row, *args):
         result = self._mip_result
-        if not valid or result is None or result.preview or self.owner.registrationActive:
+        if (not valid or result is None or result.preview
+                or self.owner.registrationActive or self.activeInteraction == "rotate"):
             return
         self._move_to_peak(result, column, row)
 
@@ -376,7 +379,8 @@ class PetMipViewport(Image2DViewportController):
 
     def _handle_specific_pointer_hover(self, context):
         point = context.position.image
-        hit = bool(point and self._locator_hit(point.column, point.row, context.point_tolerance))
+        hit = bool(self.activeInteraction != "rotate" and point
+                   and self._locator_hit(point.column, point.row, context.point_tolerance))
         if hit != self._locator_hover:
             self._locator_hover = hit
             self.crosshairHoverTargetChanged.emit()
@@ -389,6 +393,8 @@ class PetMipViewport(Image2DViewportController):
     def captureLocatorPress(self, x, y, buttons, valid, column, row, point_tolerance, line_tolerance):
         self._press_captured = True
         self._locator_press = None
+        if self.activeInteraction == "rotate":
+            return False
         if buttons & 1 and self._locator_hit(column, row, point_tolerance):
             center = self.crosshairImagePosition
             self._locator_press = (self._mip_result, center.x()-column, center.y()-row)

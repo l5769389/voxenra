@@ -22,6 +22,7 @@ ColumnLayout {
 
             delegate: Components.ToolActionButton {
                 required property var modelData
+                objectName: "rotateAction-" + modelData.action
 
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1

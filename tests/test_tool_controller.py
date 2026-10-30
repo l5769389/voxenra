@@ -26,14 +26,14 @@ def test_interaction_tool_closes_panel_and_selects_interaction() -> None:
     assert controller.activeInteraction == "pan"
 
 
-def test_panel_tool_disables_pointer_interaction() -> None:
+def test_rotation_tool_enables_drag_and_keeps_action_panel() -> None:
     controller = ToolController()
 
     controller.activateTool("rotate")
 
     assert controller.activeTool == "rotate"
     assert controller.activePanel == "rotate"
-    assert controller.activeInteraction == ""
+    assert controller.activeInteraction == "rotate"
 
 
 def test_secondary_tool_can_select_concrete_interaction() -> None:

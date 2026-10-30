@@ -354,6 +354,7 @@ class InteractionType(StrEnum):
     SCROLL = "scroll"
     PAN = "pan"
     ZOOM = "zoom"
+    ROTATE = "rotate"
     MEASURE_LENGTH = "measure:length"
     ANNOTATE_ARROW = "annotate:arrow"
     MEASURE_ANGLE = "measure:angle"

@@ -1,4 +1,5 @@
 from pathlib import Path
+from math import cos, radians, sin
 import numpy as np
 import pytest
 from PySide6.QtCore import QUrl, QPoint, QPointF, Qt
@@ -22,6 +23,35 @@ from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
 from qt_dicom_viewer.core.volume_manager import VolumeManager
 from PySide6.QtCore import QObject
 ROOT=Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize("mirrored", [False, True])
+def test_crosshair_lines_match_hits_after_free_rotation(mpr_scene, mirrored):
+    view, vp, layer, _ = mpr_scene
+    vp.crosshairRotationRequested.emit(vp.viewport_config.viewport_type, radians(20))
+    assert vp.crosshairRotationDegrees == pytest.approx(20)
+    vp.apply_rotation(37)
+    vp.apply_zoom(1.3)
+    vp.apply_pan(12, -8)
+    if mirrored:
+        vp.applyTransformAction("rotate:mirror-h")
+    vp._tool_controller.activateTool("pan")
+    QTest.qWait(40)
+    crosshair = next(item for item in _visual_children(view.rootObject())
+                     if item.objectName() == "mprCrosshairLayer" and _owner(item) is vp)
+    expected_angle = 17 if mirrored else 57
+    assert crosshair.property("rotationDegrees") % 180 == pytest.approx(expected_angle)
+    center = vp._crosshair_image_position
+    origin = _scene(layer, center.column, center.row)
+    target = origin + QPoint(round(60 * cos(radians(expected_angle))),
+                             round(60 * sin(radians(expected_angle))))
+    QTest.mouseMove(view, target)
+    QTest.qWait(40)
+    assert vp.crosshairHoverTarget == "horizontalLine"
+    vp._tool_controller.activateTool("rotate")
+    QTest.mouseMove(view, target + QPoint(1, 1))
+    QTest.qWait(40)
+    assert vp.crosshairHoverTarget == ""
 
 @pytest.fixture(params=[(.5, .5), (1., 1.), (2., 2.), (.5, 2.)])
 def mpr_scene(qt_app,tmp_path,request):

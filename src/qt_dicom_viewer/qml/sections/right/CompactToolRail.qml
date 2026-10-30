@@ -229,7 +229,8 @@ Flickable {
                                 required property var modelData
                                 width: subbuttons.width; height: rail.showToolLabels ? 48 : 32
                                 showLabel: rail.showToolLabels
-                                shortLabel: modelData.shortLabel ?? modelData.face ?? modelData.label
+                                shortLabel: ["rotate:cw90", "rotate:ccw90"].includes(modelData.action)
+                                    ? "90°" : modelData.shortLabel ?? modelData.face ?? modelData.label
                                 buttonObjectName: "compactAction-" + modelData.action
                                 label: group.modelData.toolType === "measure" && !rail.viewportController?.hasPhysicalSpacing
                                     ? qsTrId("measurement.noCalibration") : modelData.label

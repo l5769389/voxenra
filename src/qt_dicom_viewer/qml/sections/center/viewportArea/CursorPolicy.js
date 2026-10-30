@@ -3,6 +3,8 @@
 // Match interaction dispatch: region handles first, then crosshair handles,
 // then the current tool. A drag latches this result until mouse release.
 function resolve(interaction, region, crosshair, measurement) {
+    // Display rotation takes precedence over MPR crosshair handles.
+    if (interaction === "rotate") return "rotate"
     if (interaction === "mpr:voi" || interaction === "mpr:segmentation")
         return region || interaction.slice(4)
     if (interaction === "annotate:text") return "annotate-text"

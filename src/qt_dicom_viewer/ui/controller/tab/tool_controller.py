@@ -304,6 +304,7 @@ class ToolController(QObject):
                 InteractionType.WINDOW,
                 InteractionType.PAN,
                 InteractionType.ZOOM,
+                InteractionType.ROTATE,
             }
         ):
             logger.warning(

@@ -94,7 +94,8 @@ TOOL_CATALOG: tuple[ToolDefinition, ...] = (
         tool_type=ToolType.ROTATE,
         label=_msg('text.0294'),
         icon_name="rotate",
-        behavior=ToolBehavior.PANEL,
+        behavior=ToolBehavior.INTERACTION_PANEL,
+        default_interaction=InteractionType.ROTATE,
         reset_label=_msg('text.0295'),
     ),
     ToolDefinition(

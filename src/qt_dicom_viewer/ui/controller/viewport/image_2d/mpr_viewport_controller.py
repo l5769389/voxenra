@@ -387,7 +387,7 @@ class MprViewportController(Image2DViewportController):
         if kind != self.regionCursorKind:
             self._region_cursor_kind = kind
             self.regionCursorKindChanged.emit()
-        target = None if self._voi_mode() else self._crosshair_hit_test(
+        target = None if (self._voi_mode() or self.activeInteraction == "rotate") else self._crosshair_hit_test(
             position=context.position,
             center_tolerance=context.point_tolerance,
             line_tolerance=context.line_tolerance,

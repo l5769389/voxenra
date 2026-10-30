@@ -17,6 +17,36 @@ from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceControll
 from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
 
 
+@pytest.mark.parametrize("role", ["ct", "pet", "fusion", "mip"])
+def test_rotation_takes_precedence_over_pet_locator(fusion_scene, role):
+    _, tab, _, requests = fusion_scene
+    view = next(v for v in tab.viewports_by_id.values() if v.viewportRole == role)
+    view.setViewportSize(400, 400)
+    tab.toolController.activateTool("rotate")
+    point = view.crosshairImagePosition
+    original = tab._target_mpr_state
+    before_requests = len(requests)
+    assert not view.captureLocatorPress(200, 200, 1, True, point.x(), point.y(), .1, .1)
+    view.beginInteraction(200, 200, 1, True, point.x(), point.y(), .1, .1)
+    for current in (QPointF(300, 200), QPointF(270, 270)):
+        view.updateInteraction(QPointF(200, 200), current, QPointF(),
+                               current - QPointF(200, 200), True, point.x(), point.y())
+    view.endInteraction(270, 270, True, point.x(), point.y())
+    assert view.rotationDegrees == pytest.approx(45)
+    assert view._locator_drag is None
+    assert tab._target_mpr_state == original
+    assert len(requests) == before_requests
+
+
+def test_pet_mip_tap_in_rotation_mode_keeps_patient_location(fusion_scene):
+    _, tab, _, _ = fusion_scene
+    view = next(v for v in tab.viewports_by_id.values() if v.viewportRole == "mip")
+    tab.toolController.activateTool("rotate")
+    original = tab._target_mpr_state
+    view.selectMeasurementAt(True, 0, 0, .1, .1)
+    assert tab._target_mpr_state == original
+
+
 @pytest.mark.parametrize("tool", ["ct-window", "pet-window"])
 @pytest.mark.parametrize("role", ["ct", "pet", "fusion", "mip"])
 def test_window_tool_changes_only_eligible_modality(fusion_scene, tool, role):

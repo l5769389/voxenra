@@ -53,6 +53,8 @@ from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
 from qt_dicom_viewer.ui.controller.viewport.operation.drag_operation import (
     DragOperation,
 )
+from qt_dicom_viewer.model.interaction import RotationChange, RotationContext
+from qt_dicom_viewer.ui.controller.viewport.operation.rotation_operation import RotationOperation
 from qt_dicom_viewer.ui.controller.viewport.operation.pan_operation import (
     PanOperation,
 )
@@ -227,6 +229,7 @@ class MontageViewportController(ViewportController):
         )
         self._pan_operation = PanOperation()
         self._zoom_operation = ZoomOperation()
+        self._rotation_operation = RotationOperation()
         self._tool_controller.activeInteractionChanged.connect(
             self.activeInteractionChanged.emit
         )
@@ -741,6 +744,13 @@ class MontageViewportController(ViewportController):
                     ),
                     current_zoom=self._state.zoom,
                 )
+            case InteractionType.ROTATE:
+                self._active_drag_operation = self._rotation_operation
+                context = RotationContext(
+                    center=Point((0.5 + self._state.pan_x) * self._interaction_width,
+                                 (0.5 + self._state.pan_y) * self._interaction_height),
+                    current_degrees=self._state.rotation_degrees,
+                )
         if self._active_drag_operation is not None and context is not None:
             self._active_drag_operation.begin(self._active_drag_start, context)
 
@@ -795,6 +805,10 @@ class MontageViewportController(ViewportController):
                 self.apply_pan(x, y)
             case ZoomChange(zoom=zoom):
                 self.apply_zoom(zoom)
+            case RotationChange(degrees=angle):
+                if isfinite(angle) and angle % 360.0 != self._state.rotation_degrees:
+                    self._state = replace(self._state, rotation_degrees=angle % 360.0)
+                    self.transformChanged.emit()
             case _:
                 return
 

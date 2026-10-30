@@ -271,10 +271,7 @@ Item {
             imageCanvas.crosshairViewportPosition
         crosshairStyle: viewportRoot.viewportController
             ? viewportRoot.viewportController.crosshairStyle : ({})
-        rotationDegrees:
-            viewportRoot.viewportController
-                ? viewportRoot.viewportController.crosshairRotationDegrees
-                : 0
+        rotationDegrees: imageCanvas.crosshairViewportRotation
         z: 10
     }
 

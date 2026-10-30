@@ -20,6 +20,7 @@ from qt_dicom_viewer.model import ViewportState, ViewportConfig, RenderRequest, 
     PointerHoverContext
 from qt_dicom_viewer.model.interaction import InteractionResult, SliceIndexChange, WindowLevelChange, PanChange, \
     ZoomChange, WindowLevelContext, ScrollContext, PanContext, ZoomContext, MeasureContext
+from qt_dicom_viewer.model.interaction import RotationChange, RotationContext
 from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
 from qt_dicom_viewer.ui.controller.viewport.controller.cursor_controller import CursorController
 from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
@@ -40,6 +41,7 @@ from qt_dicom_viewer.ui.controller.viewport.operation.window_level_operation imp
     WindowLevelOperation,
 )
 from qt_dicom_viewer.ui.controller.viewport.operation.zoom_operation import ZoomOperation
+from qt_dicom_viewer.ui.controller.viewport.operation.rotation_operation import RotationOperation
 from qt_dicom_viewer.ui.controller.viewport.viewport_controller import ViewportController
 
 from qt_dicom_viewer.ui.controller.viewport.controller.pet_display_controller import PetDisplayController
@@ -190,6 +192,7 @@ class Image2DViewportController(ViewportController):
         self._scroll_operation = ScrollOperation()
         self._pan_operation = PanOperation()
         self._zoom_operation = ZoomOperation()
+        self._rotation_operation = RotationOperation()
         self._cursor_controller = CursorController(viewport_config=self.viewport_config, parent=self)
         self._overlay_presenter = OverlayPresenter()
         self._active_drag_operation: DragOperation | None = None
@@ -731,7 +734,8 @@ class Image2DViewportController(ViewportController):
         # Crosshair and region handles use the primary button; a right drag
         # remains zoom even when it starts over a handle.
         specific_interaction = None
-        if buttons & (Qt.MouseButton.LeftButton.value | Qt.MouseButton.MiddleButton.value):
+        if (interaction != InteractionType.ROTATE
+                and buttons & (Qt.MouseButton.LeftButton.value | Qt.MouseButton.MiddleButton.value)):
             specific_interaction = self._begin_specific_interaction(
                 position, endpoint_tolerance, line_tolerance
             )
@@ -774,6 +778,14 @@ class Image2DViewportController(ViewportController):
                     context = ZoomContext(
                         viewport_size=self.viewport_size,
                         current_zoom=self._state.zoom,
+                    )
+                case InteractionType.ROTATE:
+                    self._active_drag_operation = self._rotation_operation
+                    width, height = self.viewport_size
+                    context = RotationContext(
+                        center=Point(width / 2 + self._state.pan_x,
+                                     height / 2 + self._state.pan_y),
+                        current_degrees=self._state.rotation_degrees,
                     )
                 case (InteractionType.MEASURE_LENGTH | InteractionType.MEASURE_ANGLE
                       | InteractionType.MEASURE_RECT | InteractionType.MEASURE_ELLIPSE | InteractionType.MEASURE_FREEHAND | InteractionType.MEASURE_CURVE
@@ -1048,6 +1060,9 @@ class Image2DViewportController(ViewportController):
             case ZoomChange(zoom=zoom):
                 self.apply_zoom(zoom)
 
+            case RotationChange(degrees=angle):
+                self.apply_rotation(angle)
+
             case None:
                 return
 
@@ -1310,6 +1325,17 @@ class Image2DViewportController(ViewportController):
         self.transformChanged.emit()
 
         # overlayInfo 中显示了 zoom，因此也要更新
+        self.overlayChanged.emit()
+
+    def apply_rotation(self, angle: float) -> None:
+        if not isfinite(angle):
+            return
+        angle %= 360.0
+        if abs(angle - self._state.rotation_degrees) < 1e-6:
+            return
+        self._state = replace(self._state, rotation_degrees=angle)
+        self.transformChanged.emit()
+        self.directionLabelsChanged.emit()
         self.overlayChanged.emit()
 
     def reset_tool_state(self, tool_type: ToolType) -> None:

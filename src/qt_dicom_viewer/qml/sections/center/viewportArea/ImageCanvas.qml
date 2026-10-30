@@ -71,6 +71,18 @@ Rectangle {
     readonly property real lineHitToleranceInImagePixels:
         hitToleranceInImagePixels(6)
 
+    readonly property real crosshairViewportRotation: {
+        const controller = imageCanvasRoot.viewportController
+        if (!controller || !controller.hasCrosshair) return 0
+        // The crosshair angle is in the image's physical plane. Apply the
+        // same flips and display rotation as the pixels (spacing is already
+        // accounted for by imageScene's millimeter coordinates).
+        const angle = controller.crosshairRotationDegrees * Math.PI / 180
+        const x = Math.cos(angle) * (controller.horizontalFlip ? -1 : 1)
+        const y = Math.sin(angle) * (controller.verticalFlip ? -1 : 1)
+        return Math.atan2(y, x) * 180 / Math.PI + controller.rotationDegrees
+    }
+
     readonly property point crosshairViewportPosition: {
     const controller = imageCanvasRoot.viewportController
 
