@@ -1,0 +1,88 @@
+........................................................................ [ 18%]
+........................................................................ [ 36%]
+...............F........................................................ [ 55%]
+........ss..........................................................s... [ 73%]
+.........................................................sss..F...s..... [ 92%]
+...............................                                          [100%]
+=================================== FAILURES ===================================
+_____ test_slow_reconstruction_keeps_gui_timer_and_tab_actions_responsive ______
+
+opening_scene = (<PySide6.QtQuick.QQuickWindow(0x76a39cce00 active exposed, visibility=QWindow::Windowed, flags=QFlags<Qt::WindowType>...se, revision=1)], <qt_dicom_viewer.ui.workers.dicom_render_worker.DicomRenderWorker(0x76a4695f40) at 0x1250ca980>, ...)
+
+    def test_slow_reconstruction_keeps_gui_timer_and_tab_actions_responsive(opening_scene):
+        window, workspace, ct, pet, requests, worker, warnings = opening_scene
+        entered, release = Event(), Event()
+    
+        class SlowVolumes(VolumeManager):
+            def get_or_build(self, *args, **kwargs):
+                entered.set()
+                if not release.wait(5):
+                    raise TimeoutError("test did not release the worker")
+                return super().get_or_build(*args, **kwargs)
+    
+        service = RenderService(workspace._series_catalog, SlowVolumes())
+        workspace.renderRequested.connect(service.submit)
+        service.rendered.connect(workspace.handleRenderResult)
+        service.failed.connect(workspace.handleRenderFailure)
+        timer, ticks = QTimer(), []
+        timer.setInterval(10)
+        timer.timeout.connect(lambda: ticks.append(True))
+        timer.start()
+        try:
+            workspace.createTab(pet.series_instance_uid, "PET", "mpr")
+            wait_until(entered.is_set)
+            QTest.qWait(100)
+            assert len(ticks) >= 4
+>           assert visible(window, "workspaceBusyIndicator")
+E           assert False
+E            +  where False = visible(<PySide6.QtQuick.QQuickWindow(0x76a39cce00 active exposed, visibility=QWindow::Windowed, flags=QFlags<Qt::WindowType>(...ckgroundHint|WindowCloseButtonHint|WindowFullscreenButtonHint), title="Voxenra", geometry=2,2 1440x900) at 0x151bd2dc0>, 'workspaceBusyIndicator')
+
+tests/test_view_opening.py:194: AssertionError
+_____________ test_inline_favorites_many_resize_manage_and_reload ______________
+
+scene = (<PySide6.QtQuick.QQuickWindow(0x76a3a0c900 exposed, visibility=QWindow::Windowed, flags=QFlags<Qt::WindowType>(Window...y=239,89 1440x900) at 0x124d98980>, <qt_dicom_viewer.ui.app_controller.AppController(0x76a4697e30) at 0x12507de00>, [])
+tmp_path = PosixPath('/private/var/folders/cm/56fnt4dx3zd4kzn92m5dfz_c0000gn/T/pytest-of-jun/pytest-1497/test_inline_favorites_many_res0')
+
+    def test_inline_favorites_many_resize_manage_and_reload(scene, tmp_path):
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QApplication
+        window, app, warnings = scene
+        favorites = app.panelController.favoriteDirectories
+        for i in range(12):
+            directory = tmp_path / ('Directory-' + str(i))
+            directory.mkdir()
+            assert favorites.add(str(directory))
+        app.settingsController.setValue('appearance', 'theme', 'light')
+        picker = LocalImportDialog(str(tmp_path), favorites=favorites)
+        picker.show()
+        try:
+            wait_until(lambda: not picker._loading)
+            for width in (880, 620):
+                picker.resize(width, 560)
+                QTest.qWait(60)
+                listing = picker.favorite_list
+                assert listing.height() <= 80
+                assert listing.verticalScrollBar().maximum() > 0
+>               assert listing.horizontalScrollBar().maximum() == 0
+E               assert 3 == 0
+E                +  where 3 = <built-in method maximum of PySide6.QtWidgets.QScrollBar object at 0x151bf8840>()
+E                +    where <built-in method maximum of PySide6.QtWidgets.QScrollBar object at 0x151bf8840> = <PySide6.QtWidgets.QScrollBar(0x76a5e17ae0) at 0x151bf8840>.maximum
+E                +      where <PySide6.QtWidgets.QScrollBar(0x76a5e17ae0) at 0x151bf8840> = <built-in method horizontalScrollBar of PySide6.QtWidgets.QListWidget object at 0x153c9de40>()
+E                +        where <built-in method horizontalScrollBar of PySide6.QtWidgets.QListWidget object at 0x153c9de40> = <PySide6.QtWidgets.QListWidget(0x76a7997100, name="importFavorites") at 0x153c9de40>.horizontalScrollBar
+
+tests/test_favorite_directories_ui.py:193: AssertionError
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_view_opening.py::test_slow_reconstruction_keeps_gui_timer_and_tab_actions_responsive
+FAILED tests/test_favorite_directories_ui.py::test_inline_favorites_many_resize_manage_and_reload
+2 failed, 382 passed, 7 skipped, 3 warnings in 92.86s (0:01:32)

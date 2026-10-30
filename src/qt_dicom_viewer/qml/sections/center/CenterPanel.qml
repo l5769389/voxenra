@@ -162,6 +162,7 @@ Rectangle {
             }
             WorkspaceLoadingState {
                 anchors.fill: parent
+                activityKey: centerPanel.workspaceController.activeTabId
                 visible: centerPanel.hasTabs && (workspaceLoader.status !== Loader.Ready
                     || centerPanel.opening?.status === "loading" || centerPanel.opening?.status === "error")
                 loading: workspaceLoader.status !== Loader.Error && centerPanel.opening?.status !== "error"

@@ -15,6 +15,9 @@ ColumnLayout {
     readonly property var dicomResults: exportController?.dicomResults ?? null
     signal manualRequested()
     spacing: 10
+    Components.DelayedActivity { id: imageFeedback; active: root.visible && (root.exportController?.busy ?? false) }
+    Components.DelayedActivity { id: reportFeedback; active: root.visible && (root.report?.busy ?? false) }
+    Components.DelayedActivity { id: resultFeedback; active: root.visible && (root.dicomResults?.busy ?? false) }
     component ExportOption: Components.AppCheckBox {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
@@ -97,7 +100,7 @@ ColumnLayout {
     }
     Basic.ProgressBar {
         Layout.fillWidth: true
-        visible: !!root.exportController && root.exportController.busy
+        visible: imageFeedback.showing
         value: root.exportController ? root.exportController.progress : 0
         indeterminate: value === 0
     }
@@ -106,7 +109,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: root.exportController ? root.exportController.message : ""
         textFormat: Text.PlainText
-        visible: text !== ""
+        visible: text !== "" && (!root.exportController?.busy || imageFeedback.showing)
         wrapMode: Text.WrapAnywhere
         font.pixelSize: 12
         color: root.exportController && root.exportController.isError ? Theme.dangerColor : Theme.textSecondary
@@ -121,7 +124,7 @@ ColumnLayout {
     }
     Components.AppButton {
         text: qsTrId("text.0656")
-        visible: !!root.exportController && root.exportController.busy
+        visible: imageFeedback.showing
         onClicked: root.exportController.cancel()
     }
     Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.borderDefault }
@@ -164,10 +167,10 @@ ColumnLayout {
             onClicked: root.report.exportReport("pdf", allTabs.checked, anonymous.checked, reportImages.checked)
         }
     }
-    Basic.ProgressBar { Layout.fillWidth: true; visible: root.report?.busy ?? false; value: root.report?.progress ?? 0; indeterminate: value === 0 }
+    Basic.ProgressBar { Layout.fillWidth: true; visible: reportFeedback.showing; value: root.report?.progress ?? 0; indeterminate: value === 0 }
     Components.AppButton {
         text: qsTrId("text.0656")
-        visible: root.report?.busy ?? false
+        visible: reportFeedback.showing
         onClicked: root.report.cancel()
     }
     Text {
@@ -175,7 +178,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: root.report?.message ?? ""
         textFormat: Text.PlainText
-        visible: text !== ""
+        visible: text !== "" && (!root.report?.busy || reportFeedback.showing)
         wrapMode: Text.WrapAnywhere
         font.pixelSize: 12
         color: root.report?.isError ? Theme.dangerColor : Theme.textSecondary
@@ -228,20 +231,20 @@ ColumnLayout {
         onClicked: root.dicomResults.exportNrrd()
     }
 
-    Basic.ProgressBar { Layout.fillWidth: true; visible: root.dicomResults?.busy ?? false; indeterminate: true }
+    Basic.ProgressBar { Layout.fillWidth: true; visible: resultFeedback.showing; indeterminate: true }
     Text {
         objectName: "dicomResultsMessage"
         Layout.fillWidth: true
         text: root.dicomResults?.operation === "export" ? root.dicomResults.message : ""
         textFormat: Text.PlainText
-        visible: text !== ""
+        visible: text !== "" && (!root.dicomResults?.busy || resultFeedback.showing)
         wrapMode: Text.WrapAnywhere
         font.pixelSize: 12
         color: root.dicomResults?.isError ? Theme.dangerColor : Theme.textSecondary
     }
     Components.AppButton {
         text: qsTrId("text.0656")
-        visible: root.dicomResults?.busy ?? false
+        visible: resultFeedback.showing
         onClicked: root.dicomResults.cancel()
     }
     Components.AppLinkButton {

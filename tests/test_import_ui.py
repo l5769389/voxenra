@@ -271,7 +271,11 @@ def test_slow_directory_keeps_dialog_responsive_and_ignores_stale_result(qt_app,
         wait_until(entered.is_set)
         assert dialog.isVisible() and dialog._loading
         assert not dialog.open_button.isEnabled()
+        QTest.qWait(60)
+        assert dialog.selection_label.text() == ""
+        wait_until(lambda: bool(dialog.selection_label.text()))
         dialog.navigate(str(fast))
+        assert dialog.selection_label.text() == ""
         wait_until(lambda: not dialog._loading)
         assert dialog._directory == str(fast)
         assert dialog.model.index(str(fast / 'new.dcm')).isValid()

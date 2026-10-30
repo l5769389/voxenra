@@ -17,6 +17,7 @@ Basic.Dialog {
     readonly property bool recovery: controller?.recoveryAvailable ?? false
     readonly property bool named: !!controller?.path
     readonly property bool manualProgress: working && controller?.recoveryState !== "saving"
+    Components.DelayedActivity { id: feedback; active: dialog.visible && dialog.manualProgress }
     signal manualRequested()
     // Keep a native window above VTK hosts, with the OS caption as the only close control.
     popupType: Basic.Popup.Window
@@ -71,12 +72,12 @@ Basic.Dialog {
                     iconName: "workspace"
                     iconSize: 22
                     iconColor: Theme.primaryColor
-                    visible: !dialog.manualProgress
+                    visible: !feedback.showing
                 }
                 Basic.BusyIndicator {
                     objectName: "workspaceDocumentProgress"
                     anchors.fill: parent
-                    visible: dialog.manualProgress
+                    visible: feedback.showing
                     running: visible && dialog.visible
                 }
             }

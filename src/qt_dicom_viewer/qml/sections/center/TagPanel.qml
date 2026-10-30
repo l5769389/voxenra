@@ -22,6 +22,11 @@ Rectangle {
     readonly property real tableWidth: Math.max(width - 30, treeWidth + vrWidth + 220)
     readonly property real vrWidth: 66
     color: Theme.workspaceBackground
+    Components.DelayedActivity {
+        id: readFeedback
+        active: panel.active && panel.tagController.loading
+        activityKey: panel.tagController.currentPage
+    }
 
     function restoreScroll() {
         panel.restoring = true
@@ -425,8 +430,8 @@ Rectangle {
                         anchors.centerIn: parent
                         width: Math.max(100, parent.width - 60)
                         spacing: 12
-                        visible: panel.tagController.loading || panel.tagController.errorMessage !== ""
-                            || panel.tagController.tagModel.matchCount === 0
+                        visible: readFeedback.showing || (!panel.tagController.loading
+                            && (panel.tagController.errorMessage !== "" || panel.tagController.tagModel.matchCount === 0))
                         Basic.BusyIndicator {
                             Layout.alignment: Qt.AlignHCenter
                             visible: panel.tagController.loading

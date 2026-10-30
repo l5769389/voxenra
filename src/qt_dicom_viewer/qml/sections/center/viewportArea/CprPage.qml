@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import "../../../components" as Components
 import "../../../theme"
 
 Item {
@@ -8,6 +9,11 @@ Item {
     objectName: "cprPage"
     required property var controller
     property bool anonymousExport: false
+    Components.DelayedActivity {
+        id: rebuildFeedback
+        active: page.visible && (page.controller?.busy ?? false)
+        activityKey: page.controller
+    }
     function activeExportItem() {
         if (!controller) return null
         if (controller.exportScope === "combined") return page
@@ -60,7 +66,7 @@ Item {
                             overlayStatusText: cell.modelData.historicalPlane ? "HISTORICAL PLANE"
                                 : cell.index < 2 ? ""
                                 : page.controller?.drawing && cell.modelData.imageRows > 0 ? "PREVIOUS RESULT"
-                                : page.controller?.busy ? "UPDATING"
+                                : page.controller?.busy ? (rebuildFeedback.showing ? "UPDATING" : "")
                                 : !page.controller?.ready ? "NO RESULT" : ""
                             TapHandler {
                                 onPressedChanged: if (pressed) page.controller?.activateViewport(cell.modelData.viewportId)

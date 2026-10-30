@@ -72,6 +72,23 @@ def visible(window, name):
     return any(i.objectName() == name and i.isVisible() for i in descendants(window.contentItem()))
 
 
+def test_loading_surface_blocks_immediately_but_feedback_waits(opening_scene):
+    window, workspace, ct, pet, requests, worker, warnings = opening_scene
+    workspace.createTab(ct.series_instance_uid, "CT", "2d")
+    wait_until(lambda: visible(window, "workspaceLoadingState"))
+    QTest.qWait(60)
+    assert workspace.activeLoadState.loading
+    assert not visible(window, "workspaceLoadingMessage")
+    assert not visible(window, "workspaceBusyIndicator")
+    assert not visible(window, "tabLoading-" + workspace.activeTabId)
+    wait_until(lambda: visible(window, "workspaceLoadingMessage"))
+    assert visible(window, "cancelWorkspaceLoad")
+    drain(requests, worker)
+    wait_until(lambda: not visible(window, "workspaceLoadingState"))
+    assert not visible(window, "tabLoading-" + workspace.activeTabId)
+    assert not warnings
+
+
 @pytest.mark.parametrize("view_type,pet_only", [("2d", False), ("mpr", False), ("montage", False),
                                                ("3d", False), ("2d", True), ("mpr", True), ("fusion", False)])
 def test_opening_waits_for_all_required_frames(opening_scene, view_type, pet_only, tmp_path):
@@ -174,7 +191,8 @@ def test_slow_reconstruction_keeps_gui_timer_and_tab_actions_responsive(opening_
         wait_until(entered.is_set)
         QTest.qWait(100)
         assert len(ticks) >= 4
-        assert visible(window, "workspaceBusyIndicator")
+        assert not visible(window, "workspaceBusyIndicator")
+        wait_until(lambda: visible(window, "workspaceBusyIndicator"))
         waiting = workspace.activeTabId
         workspace.openManual()
         wait_until(lambda: not visible(window, "workspaceLoadingState"))

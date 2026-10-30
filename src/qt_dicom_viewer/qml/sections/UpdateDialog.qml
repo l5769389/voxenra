@@ -7,6 +7,7 @@ import "../theme"
 
 Components.AppDialog {
     id: dialog
+    Components.DelayedActivity { id: feedback; active: dialog.visible && dialog.controller.busy }
     objectName: "applicationUpdateDialog"
     required property var controller
     width: Math.min(600, parent ? parent.width - 32 : 600)
@@ -19,7 +20,8 @@ Components.AppDialog {
         spacing: 12
         Text {
             objectName: "applicationUpdateStatus"
-            visible: dialog.controller.state !== "available" || !dialog.controller.supportsInstallation
+            visible: (!dialog.controller.busy || feedback.showing)
+                && (dialog.controller.state !== "available" || !dialog.controller.supportsInstallation)
             Layout.fillWidth: true
             text: dialog.controller.message
             textFormat: Text.PlainText
@@ -30,7 +32,7 @@ Components.AppDialog {
         Basic.ProgressBar {
             objectName: "applicationUpdateProgress"
             Layout.fillWidth: true
-            visible: dialog.controller.busy
+            visible: feedback.showing
             indeterminate: dialog.controller.state !== "downloading"
             value: dialog.controller.progress
             background: Rectangle { implicitHeight: 5; color: Theme.controlBackground; radius: 2 }
@@ -41,7 +43,7 @@ Components.AppDialog {
         }
         Text {
             Layout.fillWidth: true
-            visible: dialog.controller.state === "downloading"
+            visible: feedback.showing && dialog.controller.state === "downloading"
             text: Math.round(dialog.controller.progress * 100) + "%"
             color: Theme.textMuted
             font.pixelSize: 12

@@ -318,12 +318,17 @@ Basic.TabBar {
             contentItem: RowLayout {
                 id: tabContent
                 spacing: 7
+                Components.DelayedActivity {
+                    id: tabFeedback
+                    active: workspaceTabs.workspaceController.loadingStates[tabButton.modelData.tabId] === "loading"
+                    activityKey: tabButton.modelData.tabId
+                }
 
                 Basic.BusyIndicator {
                     objectName: "tabLoading-" + tabButton.modelData.tabId
                     Layout.preferredWidth: 14
                     Layout.preferredHeight: 14
-                    visible: workspaceTabs.workspaceController.loadingStates[tabButton.modelData.tabId] === "loading"
+                    visible: tabFeedback.showing
                     running: visible
                 }
 

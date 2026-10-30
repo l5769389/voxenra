@@ -145,6 +145,13 @@ class VolumeViewportHost(QWidget):
         self.message = QLabel(_msg('text.0008'), self.status_page)
         self.message.setWordWrap(True)
         self.message.setAlignment(Qt.AlignCenter)
+        self.message.hide()
+        self._feedback_pending = False
+        self._feedback_timer = QTimer(self)
+        self._feedback_timer.setSingleShot(True)
+        self._feedback_timer.setInterval(300)
+        self._feedback_timer.timeout.connect(
+            lambda: self.message.setVisible(self._feedback_pending and not self._disposed))
         status_layout.addWidget(self.message)
         self.close_button = QPushButton(_msg('text.0897'), self.status_page)
         self.close_button.clicked.connect(controller.closeTab)
@@ -220,9 +227,20 @@ class VolumeViewportHost(QWidget):
                 self.request_render()
         else:
             self._surface_wait_started = None
+            self._set_wait_feedback(False)
             self._timer.stop()
             self._settle.stop()
             self.hide()
+
+    def _set_wait_feedback(self, waiting):
+        waiting = bool(waiting and self._active and not self._disposed)
+        if waiting == self._feedback_pending:
+            return
+        self._feedback_pending = waiting
+        self._feedback_timer.stop()
+        self.message.hide()
+        if waiting:
+            self._feedback_timer.start()
 
     def sync_status(self):
         if self._disposed:
@@ -230,6 +248,7 @@ class VolumeViewportHost(QWidget):
         if self.controller.loadState == "ready":
             key = self.backend.preparation_key(self.controller.volume)
             if key == self._prepared_key:
+                self._set_wait_feedback(False)
                 self.stack.setCurrentWidget(self.vtk_widget)
                 self.request_render()
                 return
@@ -242,6 +261,7 @@ class VolumeViewportHost(QWidget):
             if not keep_frame:
                 self.stack.setCurrentWidget(self.status_page)
             self.message.setText(_msg('text.0011'))
+            self._set_wait_feedback(not keep_frame)
             self.close_button.setVisible(False)
             if not self._active or key == self._preparing_key:
                 return
@@ -258,6 +278,9 @@ class VolumeViewportHost(QWidget):
             self._prepare_task = None
             self.stack.setCurrentWidget(self.status_page)
             failed = self.controller.loadState == "error"
+            self._set_wait_feedback(not failed)
+            if failed:
+                self.message.show()
             self.message.setText(_msg('text.0010')+self.controller.errorMessage
                                  if failed else _msg('text.0011'))
             self.close_button.setVisible(failed)
@@ -278,6 +301,7 @@ class VolumeViewportHost(QWidget):
         try:
             self.backend.set_volume(self.controller.volume, prepared)
             self._prepared_key = key
+            self._set_wait_feedback(False)
             self.stack.setCurrentWidget(self.vtk_widget)
             self.request_render()
         except Exception as error:
@@ -377,6 +401,7 @@ class VolumeViewportHost(QWidget):
         if self._disposed:
             return
         self._disposed = True
+        self._set_wait_feedback(False)
         self._prepare_token += 1
         self._prepare_task = None
         self._exposed_windows.clear()

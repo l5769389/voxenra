@@ -7,6 +7,7 @@ import "../../theme"
 
 Rectangle {
     id: browser
+    Components.DelayedActivity { id: feedback; active: browser.visible && browser.pacsController.busy }
     objectName: "pacsBrowser"
     required property var pacsController
     required property var workspaceController
@@ -537,7 +538,7 @@ Rectangle {
         }
         RowLayout {
             Layout.fillWidth: true
-            visible: browser.pacsController.message !== "" || browser.pacsController.busy
+            visible: feedback.showing || (!browser.pacsController.busy && browser.pacsController.message !== "")
             Text {
                 objectName: "pacsBrowserMessage"
                 Layout.fillWidth: true
@@ -556,7 +557,7 @@ Rectangle {
         }
         Basic.ProgressBar {
             Layout.fillWidth: true
-            visible: browser.pacsController.busy
+            visible: feedback.showing
             value: browser.pacsController.progress
             indeterminate: browser.pacsController.operation !== "import" || value === 0
         }
