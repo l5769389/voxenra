@@ -153,7 +153,7 @@ class LocalImportDialog(QDialog):
         self._directory_feedback.timeout.connect(self._show_directory_feedback)
         self._apply_theme()
         from qt_dicom_viewer.ui.controller import appearance_controller
-        appearance = appearance_controller._current() if appearance_controller._current else None
+        appearance = appearance_controller.current_appearance()
         if appearance is not None: appearance.changed.connect(self._apply_theme)
         QGuiApplication.styleHints().colorSchemeChanged.connect(self._apply_theme)
         layout = QVBoxLayout(self)

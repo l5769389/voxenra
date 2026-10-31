@@ -12,10 +12,15 @@ LIGHT = palette_for("light")
 _current = None
 
 
-def current_colors():
+def current_appearance():
     from shiboken6 import isValid
     owner = _current() if _current is not None else None
-    return owner.colors if owner is not None and isValid(owner) else dict(DARK)
+    return owner if owner is not None and isValid(owner) else None
+
+
+def current_colors():
+    owner = current_appearance()
+    return owner.colors if owner is not None else dict(DARK)
 
 
 class AppearanceController(QObject):

@@ -125,7 +125,7 @@ class VolumeViewportHost(QWidget):
         self.resize(640, 480)
         self._apply_theme()
         from qt_dicom_viewer.ui.controller import appearance_controller
-        appearance = appearance_controller._current() if appearance_controller._current else None
+        appearance = appearance_controller.current_appearance()
         if appearance is not None:
             appearance.changed.connect(self._apply_theme)
         self._timer = QTimer(self)

@@ -516,3 +516,19 @@ def test_corner_labels_stay_english_and_old_orientation_pack_cannot_override(sid
     assert path.read_bytes() == original  # No user translation files are overwritten.
     assert window.grabWindow().save(str(tmp_path / ('english-corners-' + kind + '.png')))
     assert not warnings, warnings
+
+
+def test_import_dialog_after_previous_theme_owner_is_destroyed(qt_app, tmp_path):
+    from shiboken6 import delete, isValid
+    parent = QObject()
+    settings = SettingsController(path=tmp_path / 'appearance.json')
+    previous = AppearanceController(settings, parent)
+    delete(parent)
+    assert not isValid(previous)
+    dialog = LocalImportDialog(str(tmp_path))
+    try:
+        wait_until(lambda: not dialog._loading)
+        assert dialog.cancel_button.isEnabled()
+    finally:
+        dialog.close()
+        delete(dialog)
