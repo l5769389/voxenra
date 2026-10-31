@@ -38,9 +38,7 @@ ColumnLayout {
             topPadding: 6
             bottomPadding: 6
             Layout.minimumWidth: 0
-            checked: pseudoColorPanel.viewportController
-                && pseudoColorPanel.viewportController.activeColorMap
-                    === modelData.colorMap
+            checked: pseudoColorPanel.viewportController?.activeColorMap === modelData.colorMap
             onClicked: {
                 pseudoColorPanel.viewportController?.applyColorMap(modelData.colorMap)
                 pseudoColorPanel.colorSelected()

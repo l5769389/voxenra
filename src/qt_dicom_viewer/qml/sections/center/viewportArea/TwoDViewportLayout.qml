@@ -50,7 +50,7 @@ Item {
                         active: !!cell.view
                         sourceComponent: Component {
                             Viewport {
-                                objectName: "imageViewport-" + cell.view.viewportId
+                                objectName: "imageViewport-" + (cell.view?.viewportId ?? "empty")
                                 viewportController: cell.view
                                 twoDViewMode: cell.modelData.mode
                                 hasTabs: true
