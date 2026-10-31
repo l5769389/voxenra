@@ -24,11 +24,22 @@ ColumnLayout {
         }
         Text {
             Layout.fillWidth: true
+            objectName: "settingsUpdateMessage"
             text: page.updater.message
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
             font.pixelSize: 13
             color: page.updater.state === "error" ? Theme.dangerColor : Theme.textSecondary
+        }
+        Text {
+            objectName: "settingsCachedUpdateMessage"
+            Layout.fillWidth: true
+            visible: text !== ""
+            text: page.updater.cachedResultMessage
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            font.pixelSize: 12
+            color: Theme.textSecondary
         }
         RowLayout {
             Components.AppButton {

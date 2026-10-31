@@ -105,7 +105,8 @@ JUnit 报告、容器信息、镜像摘要及截图位于 `docker/pacs/artifacts
 
 ### 已知范围与差异
 
-当前应用实现 DICOMweb，不含传统 DIMSE 的 C-ECHO / C-FIND / C-MOVE / C-GET。
+本节记录 DICOMweb 联调范围。应用现已另外实现 DIMSE 的 C-ECHO、C-FIND 和 C-MOVE，
+配置与验证见 [DIMSE 联调说明](pacs-dimse-lab.md)。C-GET 不在当前支持范围。
 上述结果覆盖这组本地版本及合成的未压缩单帧 CT/MR，不代表其他服务器配置或数据格式已经验证。
 
 本次实测中，Orthanc 对中文姓名查询 `测试*` 返回空结果，而 dcm4chee 能匹配；

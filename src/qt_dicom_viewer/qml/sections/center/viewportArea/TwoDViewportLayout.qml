@@ -132,7 +132,8 @@ Item {
                     keys: ["application/x-voxenra-series"]
                     onEntered: drag => drag.accept(Qt.CopyAction)
                     onDropped: drop => {
-                        if (root.controller.loadSeries(cell.modelData.index, drop.getDataAsString("application/x-voxenra-series")))
+                        const uid = drop.source?.seriesUid ?? drop.getDataAsString("application/x-voxenra-series")
+                        if (root.controller.loadSeries(cell.modelData.index, uid))
                             drop.accept(Qt.CopyAction)
                     }
                 }

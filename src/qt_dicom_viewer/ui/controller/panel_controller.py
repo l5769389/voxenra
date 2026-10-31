@@ -6,8 +6,8 @@ from dataclasses import replace
 
 from qt_dicom_viewer.core.local_import import LocalImportStore
 
-from PySide6.QtCore import QObject, Signal, QThread, QTimer, Slot, Property, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QObject, Signal, QThread, QTimer, Slot, Property, QUrl, QPointF
+from PySide6.QtGui import QDesktopServices, QGuiApplication
 from qt_dicom_viewer.ui.dialogs.local_import_dialog import select_import_paths
 
 from qt_dicom_viewer.model import DicomFolderScanSnapshot, DicomSeriesRecord
@@ -699,6 +699,11 @@ class PanelController(QObject):
     def scanning(self) -> bool:
         return self._scanning
 
+
+    @Slot(QObject, QPointF, result=bool)
+    def dragOverOtherWindow(self, source_window, global_position):
+        target = QGuiApplication.topLevelAt(global_position.toPoint())
+        return target is not None and target != source_window
 
     @Slot(str)
     def startSeriesDrag(self, uid):

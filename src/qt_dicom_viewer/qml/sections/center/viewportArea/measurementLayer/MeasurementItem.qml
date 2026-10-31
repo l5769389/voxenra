@@ -15,6 +15,7 @@ Item {
     property var settingsController: null
     property bool showRoiMetrics: true
     property string roiLabel: ""
+    property var avoidanceRegions: []
     z: isSelected ? 2 : 1
 
     readonly property Item labelItem: (root.measurement?.type === "length" || root.measurement?.type === "arrow" || root.measurement?.type === "curve")
@@ -25,7 +26,7 @@ Item {
         if (!root.measurement || root.isDraft || !root.visible || !root.labelItem || !root.labelItem.visible)
             return null
         // 标签处于不缩放的屏幕层；与 InteractionLayer 统一坐标，不能拿图像坐标判断。
-        const position = root.labelItem.mapToItem(targetItem, 0, 0)
+        const position = root.labelItem.parent.mapToItem(targetItem, root.labelItem.x, root.labelItem.y)
         const anchor = root.coordinateMapper.mapToDicomPixel(root.labelItem, Qt.point(0, 0))
         return {
             labelColumn: anchor.column, labelRow: anchor.row,
@@ -97,6 +98,7 @@ Item {
         settingsController: root.settingsController
         showMetrics: root.showRoiMetrics
         shortLabel: root.roiLabel
+        avoidanceRegions: root.avoidanceRegions
         anchors.fill: parent
         visible: root.measurement?.type === "rect" || root.measurement?.type === "ellipse" || root.measurement?.type === "freehand"
         preferences: root.preferences

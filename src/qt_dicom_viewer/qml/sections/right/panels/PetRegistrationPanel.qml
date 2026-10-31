@@ -15,8 +15,16 @@ ColumnLayout {
     function discardDraft() {
         for (let i = 0; i < parameters.count; ++i) parameters.itemAt(i)?.input.sync()
     }
+    readonly property bool draftValid: {
+        if (parameters.count !== 6) return false
+        for (let i = 0; i < parameters.count; ++i) {
+            const input = parameters.itemAt(i)?.input
+            if (!input || !input.acceptableInput || !input.text.trim() || !Number.isFinite(Number(input.text))) return false
+        }
+        return true
+    }
     function applyDraft() {
-        if (!panel.controller?.ready || !panel.controller.registrationActive) return
+        if (!panel.controller?.ready || !panel.controller.registrationActive || !panel.draftValid) return
         const values = Array(6)
         for (let i = 0; i < parameters.count; ++i) {
             const row = parameters.itemAt(i), input = row.input
@@ -71,6 +79,9 @@ ColumnLayout {
                     required property var modelData
                     readonly property alias input: parameterInput
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 1
+                    Layout.alignment: Qt.AlignTop
                     Text { text: parameterRow.modelData.label; color: Theme.textMuted; font.pixelSize: 11 }
                     Components.AppNumberField {
                         id: parameterInput
@@ -83,8 +94,19 @@ ColumnLayout {
                         minimum: -10000
                         maximum: 10000
                         decimals: 2
+                        Accessible.description: acceptableInput ? qsTrId("numeric.applyHint") : qsTrId("registration.invalidParameter")
                         onAccepted: panel.applyDraft()
                         Keys.onEscapePressed: panel.discardDraft()
+                    }
+                    Text {
+                        objectName: "registrationParameterError-" + parameterRow.modelData.parameter
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        visible: parameterInput.enabled && !parameterInput.acceptableInput
+                        text: qsTrId("registration.invalidParameter")
+                        color: Theme.dangerColor
+                        wrapMode: Text.Wrap
+                        font.pixelSize: 11
                     }
                 }
             }
@@ -98,7 +120,7 @@ ColumnLayout {
             objectName: "applyRegistrationParameters"
             Layout.fillWidth: true
             text: qsTrId("text.1090")
-            enabled: panel.controller?.ready === true && panel.controller.registrationActive
+            enabled: panel.controller?.ready === true && panel.controller.registrationActive && panel.draftValid
             onClicked: panel.applyDraft()
         }
         RowLayout {

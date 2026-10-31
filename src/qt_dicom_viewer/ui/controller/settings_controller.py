@@ -250,6 +250,8 @@ class SettingsController(QObject):
                        for p in self._window_entries if p["presetId"] in preset_file.BUILTIN_IDS]
             return self._save_window_entries(entries + state["custom"], favorites=state["favorites"])
         if not self._persist_settings(candidate):
+            # Restore controls that optimistically changed before requesting a save.
+            self.changed.emit()
             return False
         self._data = candidate
         self._error("")

@@ -467,6 +467,7 @@ class Image2DViewportController(ViewportController):
             source_context = ("projection", str(projection or "mip"),
                               getattr(result, "slab_thickness_mm", 0.0))
         phase_identifier = getattr(result, "phase_identifier", None)
+        self._displayed_phase_identifier = phase_identifier
         if phase_identifier is not None:
             source_context += ("phase", phase_identifier)
         source = dict(getattr(self, "_measurement_requests", {}).get(result.response_id, {}))
@@ -687,12 +688,18 @@ class Image2DViewportController(ViewportController):
             # follow its live display intent, not the last worker response.
             frame = replace(frame, window=self.current_window, inverted=self.inverted)
 
-        return self._overlay_presenter.build(
+        info = self._overlay_presenter.build(
             viewport_config=self.viewport_config,
             series=series,
             frame=frame,
             state=self._state,
         )
+        # Label accepted pixels, never a phase requested while a worker runs.
+        phases = series.phase_identifiers
+        phase = getattr(self, "_displayed_phase_identifier", None)
+        if frame is not None and len(phases) > 1 and phase in phases:
+            info.update(phaseNumber=phases.index(phase) + 1, phaseCount=len(phases))
+        return info
 
     @Slot(float, float, int, bool, float, float, float, float)
     def beginInteraction(

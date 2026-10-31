@@ -836,3 +836,59 @@ def test_analysis_info_stays_with_recalculate_before_results(workspace):
         from PySide6.QtCore import Qt
         QTest.keyClick(view, Qt.Key_Escape)
     assert not warnings, warnings
+
+
+def test_small_viewport_analysis_label_leaves_roi_clear_and_keeps_results(workspace, tmp_path):
+    """Catch full three-line badges and clamped side placement over a small ROI."""
+    from PySide6.QtCore import QRectF
+    view, controller, pixels, warnings = workspace
+    controller._tool_controller.selectInteraction("measure:length")
+    _mouse_drag(view, _scene(pixels, 20, 120), _scene(pixels, 100, 120))
+    assert len(controller.measurementController.measurementItems) == 1
+    _click(view, _find(view, "primaryTool-service"))
+    _click(view, _find(view, "serviceEntry-mtf"))
+    assert controller.mtfController.applyRoi(64, 64, 10, 10)
+    wait_result(controller.mtfController)
+    full_label = controller.mtfController.roiMetricLabel
+    full_result = controller.mtfController.currentResult
+    view.resize(567, 420)
+    QTest.qWait(150)
+    badge = _find(view, "mtfRoiMetricBadge")
+    label = _find(view, "mtfRoiLabel")
+    assert "\n" not in label.property("text")
+    assert "ROI" in label.property("text")
+    assert badge.height() < 40
+    roi_item = badge.parentItem()
+    corners = roi_item.property("corners").toVariant()
+    xs, ys = [p.x() for p in corners], [p.y() for p in corners]
+    roi_rect = QRectF(min(xs), min(ys), max(xs)-min(xs), max(ys)-min(ys))
+    assert not QRectF(badge.x(), badge.y(), badge.width(), badge.height()).intersects(roi_rect)
+    length_label = _find(view, "measurementLabel")
+    length_position = length_label.mapToItem(roi_item, QPointF())
+    length_rect = QRectF(length_position.x(), length_position.y(),
+                         length_label.width(), length_label.height())
+    assert not QRectF(badge.x(), badge.y(), badge.width(), badge.height()).intersects(length_rect)
+    regions = roi_item.property("avoidanceRegions").toVariant()
+    assert len(regions) == 1
+    assert regions[0]["x"] == pytest.approx(length_rect.x())
+    assert regions[0]["y"] == pytest.approx(length_rect.y())
+    # Moving another label into the preferred position must trigger a new
+    # placement, including when its size and measurement count are unchanged.
+    target = roi_item.mapToItem(length_label.parentItem(), QPointF(badge.x(), badge.y()))
+    length_label.setX(target.x())
+    length_label.setY(target.y())
+    QTest.qWait(60)
+    moved = length_label.mapToItem(roi_item, QPointF())
+    assert not QRectF(badge.x(), badge.y(), badge.width(), badge.height()).intersects(
+        QRectF(moved.x(), moved.y(), length_label.width(), length_label.height()))
+    assert badge.x() >= 24
+    assert badge.x() + badge.width() <= roi_item.width() - 24
+    assert controller.mtfController.status == "ready"
+    assert controller.mtfController.currentResult == full_result
+    assert controller.mtfController.roiMetricLabel == full_label
+    assert float(_find(view, "mtfMetric-1").property("text")) > 0
+    assert view.grabWindow().save(str(tmp_path / "small-analysis-label.png"))
+    view.resize(1200, 820)
+    QTest.qWait(100)
+    assert label.property("text") == full_label
+    assert not warnings

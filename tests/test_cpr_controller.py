@@ -372,3 +372,74 @@ def test_cpr_messages_follow_language_without_mutating_paths(cpr, tmp_path):
         assert cpr.session_state() == state
     finally:
         language.shutdown()
+
+
+@pytest.mark.parametrize('index, start', [(1, (15, 10)), (2, (25, 20))])
+def test_delete_during_drag_ends_transaction_without_moving_successor(cpr, index, start):
+    view = draw(cpr)
+    before = cpr.current_path.control_points
+    cpr.setPathEditing(True)
+    assert view.cprBeginDrag(*start, .4)
+    view.cprMoveDrag(start[0]+1, start[1]+1)
+    assert view.cprDelete()
+    view.cprMoveDrag(start[0]+2, start[1]+2)
+    view.cprEndDrag(start[0]+2, start[1]+2)
+    wait_until(lambda: cpr.ready)
+    assert cpr.current_path.control_points == before[:index] + before[index+1:]
+    assert not cpr._edit_transaction_active and cpr._drag is None
+    assert cpr.canFinishEditing
+
+
+def test_locked_reference_browsing_and_sample_navigation(cpr):
+    ref = draw(cpr)
+    assert cpr.finishEditing()
+    original = cpr.current_path
+    cpr.setReferenceBrowsing(True)
+    assert not cpr.resultView and not cpr.pathEditing
+    cpr.locatePoint(1)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    cpr.navigate_view(ref, ref.sliceIndex + 1)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    assert not ref.cprTap(10, 10, .4)
+    assert not ref.cprBeginDrag(15, 10, .4)
+    cpr.deleteSelectedPoint()
+    assert cpr.current_path == original
+    cpr.setReferenceBrowsing(False)
+    assert cpr.resultView and not cpr.pathEditing
+    cpr.setPositionMm(12.34)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    spacing = cpr._result.curve.centerline.spacing_mm
+    position = cpr.positionMm
+    cpr.stepPosition(1)
+    assert cpr.positionMm == pytest.approx(position + spacing)
+    cpr.stepPosition(-1)
+    assert cpr.positionMm == pytest.approx(position)
+    cpr.setPositionMm(-100)
+    cpr.stepPosition(-1)
+    assert cpr.positionMm == 0
+    cpr.setPositionMm(cpr.totalLength + 100)
+    cpr.stepPosition(1)
+    assert cpr.positionMm == pytest.approx(cpr.totalLength)
+    cpr.setPathEditing(True)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    cpr.setReferencePlane(0, 'axial')
+    cpr.locatePoint(1)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    point = cpr.projected_points(ref)[1]
+    assert ref.cprBeginDrag(point['column'], point['row'], .4)
+    ref.cprEndDrag(point['column'] + 1, point['row'])
+    assert cpr.current_path.revision > original.revision
+
+
+def test_position_jump_on_long_path_uses_actual_sampling_grid(cpr):
+    draw(cpr, ((5, 10), (2005.125, 10)))
+    cpr.setParameter('step', 2.3)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    for requested in (0., 1234.567, cpr.totalLength, cpr.totalLength + 1):
+        cpr.setPositionMm(requested)
+        wait_until(lambda: cpr.ready and not cpr.busy)
+        assert cpr.positionMm == pytest.approx(cpr._result.section.distance_mm)
+        assert 0 <= cpr.positionMm <= cpr.totalLength
+    cpr.stepPosition(-1)
+    wait_until(lambda: cpr.ready and not cpr.busy)
+    assert cpr.positionMm == pytest.approx(cpr.totalLength - cpr._result.curve.centerline.spacing_mm)

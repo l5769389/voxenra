@@ -18,6 +18,43 @@ Item {
     required property bool isSelected
     property bool showMetrics: true
     property string shortLabel: ""
+    property var avoidanceRegions: []
+    readonly property bool compactAnalysis: width < 420 || height < 360
+    readonly property string analysisLabel: compactAnalysis
+        ? shortLabel.split("\n")[0].split(" · ")[0] : shortLabel
+
+    // Keep automatic badges inside the direction markers and choose the least
+    // obstructed side. Explicit user placement is retained by the bindings below.
+    function analysisLabelPosition(labelWidth, labelHeight) {
+        const margin = 28, gap = 10
+        const maxX = Math.max(4, width - labelWidth - margin)
+        const maxY = Math.max(4, height - labelHeight - margin)
+        const clamp = p => ({x: Math.max(Math.min(margin, maxX), Math.min(maxX, p.x)),
+                             y: Math.max(Math.min(margin, maxY), Math.min(maxY, p.y))})
+        const bottom = (corners?.length ?? 0) ? Math.max(...corners.map(p => p.y)) : topEdge
+        const center = (leftEdge + rightEdge - labelWidth) / 2
+        const candidates = [
+            {x: rightEdge + gap, y: topEdge},
+            {x: leftEdge - labelWidth - gap, y: topEdge},
+            {x: center, y: bottom + gap},
+            {x: center, y: topEdge - labelHeight - gap},
+            {x: margin, y: margin}, {x: maxX, y: margin},
+            {x: margin, y: maxY}, {x: maxX, y: maxY}
+        ].map(clamp)
+        const obstacles = [{x: leftEdge - gap, y: topEdge - gap,
+                            width: rightEdge - leftEdge + 2 * gap,
+                            height: bottom - topEdge + 2 * gap}].concat(avoidanceRegions)
+        let best = candidates[0], bestScore = Infinity
+        for (const candidate of candidates) {
+            let score = 0
+            for (const obstacle of obstacles) {
+                score += Math.max(0, Math.min(candidate.x + labelWidth, obstacle.x + obstacle.width) - Math.max(candidate.x, obstacle.x))
+                    * Math.max(0, Math.min(candidate.y + labelHeight, obstacle.y + obstacle.height) - Math.max(candidate.y, obstacle.y))
+            }
+            if (score < bestScore) { best = candidate; bestScore = score }
+        }
+        return best
+    }
     readonly property Item labelItem: showMetrics ? metricCard : compactLabel
     readonly property color lineColor: draftStyle ? (styleSettings.editingColor ?? Theme.measurementSelected) : (styleSettings.completedColor ?? Theme.measurementPrimary)
 
@@ -96,11 +133,13 @@ Item {
         objectName: "mtfRoiMetricBadge"
         visible: !root.showMetrics && (root.corners?.length ?? 0) >= 3 && root.shortLabel.length > 0
         implicitWidth: compactText.implicitWidth + 14
-        width: Math.min(implicitWidth, Math.max(0, root.width - 8))
+        width: Math.min(implicitWidth, Math.max(0, root.width - 56))
         implicitHeight: compactText.implicitHeight + 8
-        x: Math.max(4, Math.min(root.width - width - 4,
-            root.labelPosition ? root.labelPosition.x : root.rightEdge + width + 8 <= root.width ? root.rightEdge + 8 : root.leftEdge - width - 8))
-        y: Math.max(4, Math.min(root.height - height - 4, root.labelPosition ? root.labelPosition.y : root.topEdge))
+        readonly property var automaticPosition: root.analysisLabelPosition(width, height)
+        x: root.labelPosition ? Math.max(4, Math.min(root.width - width - 4, root.labelPosition.x)) : automaticPosition.x
+        y: root.labelPosition ? Math.max(4, Math.min(root.height - height - 4, root.labelPosition.y)) : automaticPosition.y
+        Accessible.role: Accessible.StaticText
+        Accessible.name: root.shortLabel
         color: Qt.rgba(0.035, 0.065, 0.095, 1 - (root.styleSettings.cardTransparency ?? 8) / 100)
         border.width: 1
         border.color: root.lineColor
@@ -109,10 +148,11 @@ Item {
         Text {
             id: compactText
             width: Math.max(0, compactLabel.width - 14)
-            wrapMode: Text.Wrap
+            wrapMode: root.compactAnalysis ? Text.NoWrap : Text.Wrap
+            elide: root.compactAnalysis ? Text.ElideRight : Text.ElideNone
             objectName: "mtfRoiLabel"
             anchors.centerIn: parent
-            text: root.shortLabel
+            text: root.analysisLabel
             color: Theme.overlayText
             font.pixelSize: root.styleSettings.fontSize ?? 13
             font.weight: Font.DemiBold

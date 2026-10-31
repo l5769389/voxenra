@@ -182,3 +182,22 @@ def test_saved_workspace_tracks_reference_navigation(cpr_app, tmp_path, action):
     wait_until(lambda: restored.ready)
     assert restored.session_state()['referencePlanes'] == expected['referencePlanes']
     assert restored.session_state()['referenceCenters'] == expected['referenceCenters']
+
+
+def test_delete_during_drag_is_one_undoable_edit(cpr_app):
+    _, tab, _ = cpr_app
+    before = tab.current_path.control_points
+    tab.setPathEditing(True)
+    view = tab.viewForRole('reference-a')
+    assert view.cprBeginDrag(45, 40, 1)
+    view.cprMoveDrag(46, 41)
+    assert view.cprDelete()
+    view.cprEndDrag(47, 42)
+    wait_until(lambda: tab.ready)
+    assert tab.current_path.control_points == (before[0], before[2])
+    tab._edit_history.undo()
+    wait_until(lambda: tab.ready)
+    assert tab.current_path.control_points == before
+    tab._edit_history.redo()
+    wait_until(lambda: tab.ready)
+    assert tab.current_path.control_points == (before[0], before[2])

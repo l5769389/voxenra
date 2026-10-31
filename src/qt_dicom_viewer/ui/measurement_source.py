@@ -20,7 +20,8 @@ def validate_cpr_source(source):
     role = metadata.get("role")
     index, count = metadata.get("frameIndex"), metadata.get("frameCount")
     if (role not in ("reference-a", "reference-b", "cross") or type(index) is not int
-            or type(count) is not int or not 0 <= index < count <= 4097
+            or type(count) is not int or not 0 <= index < count
+            or role == "cross" and count > 4097
             or not isinstance(metadata.get("fingerprint"), str)
             or re.fullmatch(r"[a-f0-9]{64}", metadata["fingerprint"]) is None):
         raise ValueError("Invalid CPR plane provenance")

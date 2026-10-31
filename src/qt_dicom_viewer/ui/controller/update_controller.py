@@ -1,6 +1,7 @@
 """Asynchronous release checking, streamed downloads, and an exit-safe handoff."""
 from __future__ import annotations
 
+from datetime import datetime
 import hashlib
 import json
 import logging
@@ -28,6 +29,7 @@ class UpdateController(QObject):
     exitRequested = Signal()
     _i18n_message = Signal()
     _i18n_releaseNotes = Signal()
+    _i18n_cachedResultMessage = Signal()
 
     def __init__(self, settings, parent=None, *, installation=None, network=None, cache=None, version=__version__):
         super().__init__(parent)
@@ -37,6 +39,8 @@ class UpdateController(QObject):
         self._network = network
         self._cache = Path(cache) if cache else Path(QStandardPaths.writableLocation(QStandardPaths.CacheLocation)) / "updates"
         self._release = None
+        self._last_checked_at = ""
+        self._failed_check = False
         self._state = "idle"
         self._message = _msg("updates.idle")
         self._progress = 0.0
@@ -61,6 +65,7 @@ class UpdateController(QObject):
             if cached.stat().st_size <= 1024 * 1024:
                 self._release = parse_release(json.loads(cached.read_bytes()), self._version, self._installation.kind)
                 if self._release:
+                    self._last_checked_at = datetime.fromtimestamp(cached.stat().st_mtime).astimezone().isoformat(timespec="seconds")
                     self._state = "available"
                     self._message = _msg("updates.available", version=self.latestVersion)
         except (OSError, ValueError, TypeError, KeyError):
@@ -101,6 +106,12 @@ class UpdateController(QObject):
 
     @translated_property(str, notify=_i18n_message, notify_name="_i18n_message", source_notify="changed")
     def message(self): return self._message
+
+    @translated_property(str, notify=_i18n_cachedResultMessage, notify_name="_i18n_cachedResultMessage", source_notify="changed")
+    def cachedResultMessage(self):
+        if self._state == "error" and self._failed_check and self._release:
+            return _msg("updates.cachedResult", version=self.latestVersion, time=self._last_checked_at)
+        return ""
 
     def _set_state(self, state, message):
         self._state, self._message = state, message
@@ -233,6 +244,7 @@ class UpdateController(QObject):
                 payload = json.loads(self._buffer)
                 release = parse_release(payload, self._version, self._installation.kind)
                 self._release = release
+                self._last_checked_at = datetime.now().astimezone().isoformat(timespec="seconds")
                 # Keep the badge available offline and after an opted-out restart.
                 try:
                     if release:
@@ -334,8 +346,9 @@ class UpdateController(QObject):
             self._lock = None
 
     def _fail(self, key):
+        self._failed_check = self._state == "checking" and self._manual
         self._discard_download()
-        if self._state == "checking":
+        if self._state == "checking" and not self._manual:
             logger.info("Update check ended silently: %s", key)
             self._set_state("available" if self._release else "idle",
                             _msg("updates.available", version=self.latestVersion) if self._release else _msg("updates.idle"))

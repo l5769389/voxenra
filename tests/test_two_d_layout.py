@@ -195,7 +195,33 @@ def test_mode_selector_keeps_its_view_on_pointer_interaction(sidebar_scene, tmp_
 
 
 @pytest.mark.parametrize('collapsed', [False, True])
-def test_sidebar_starts_native_series_drag(sidebar_scene, monkeypatch, collapsed):
+@pytest.mark.parametrize("cancel", [False, True])
+def test_sidebar_drops_series_in_second_viewport(sidebar_scene, collapsed, cancel):
+    window, app, records, warnings = sidebar_scene
+    tab, layout = open_scene(app, records)
+    layout.setLayout('1x2')
+    uid = records[1].series_instance_uid
+    if collapsed:
+        click(window, find(window, 'sidebarToggle'))
+    entry = find(window, ('compactSeries-' if collapsed else 'series-') + uid)
+    target = find(window, 'twoDSeriesDrop-1')
+    point = entry.mapToScene(QPointF(entry.width()/2, entry.height()/2)).toPoint()
+    end = target.mapToScene(QPointF(target.width()/2, target.height()/2)).toPoint()
+    QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, point)
+    QTest.mouseMove(window, end, delay=30)
+    if cancel:
+        QTest.keyClick(window, Qt.Key_Escape)
+    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
+    if cancel:
+        assert layout.cells[1]['viewport'] is None
+        return
+    wait_until(lambda: layout.cells[1]['viewport'] is not None and tab.activeViewport.loadState == 'ready')
+    assert tab.activeViewport.viewport_config.series_uid == uid
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('collapsed', [False, True])
+def test_sidebar_hands_drag_outside_window_to_native(sidebar_scene, monkeypatch, collapsed):
     window, app, records, warnings = sidebar_scene
     uid = records[0].series_instance_uid
     captured = []
@@ -210,9 +236,9 @@ def test_sidebar_starts_native_series_drag(sidebar_scene, monkeypatch, collapsed
     point = entry.mapToScene(QPointF(entry.width()/2, entry.height()/2)).toPoint()
     from PySide6.QtCore import QPoint
     QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, point)
-    QTest.mouseMove(window, point + QPoint(30, 0), delay=30)
+    QTest.mouseMove(window, QPoint(window.width() + 35, point.y()), delay=30)
     wait_until(lambda: bool(captured))
-    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, point + QPoint(30, 0))
+    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, QPoint(window.width() + 35, point.y()))
     assert captured == [uid]
     assert not warnings, warnings
 
@@ -277,3 +303,30 @@ def test_pet_orthogonal_cells_preserve_display_units(qt_app, paired_series, tmp_
         assert tab.activeViewport is view and view.pet_active_unit_id == 'kbqml'
     finally:
         app.shutdown()
+
+
+@pytest.mark.parametrize('collapsed', [False, True])
+def test_sidebar_does_not_start_queued_drag_after_release(sidebar_scene, monkeypatch, collapsed):
+    """A fast move/release may finish before Qt.callLater starts native dragging."""
+    from PySide6.QtGui import QDrag, QMouseEvent
+    from PySide6.QtCore import QEvent
+    window, app, records, warnings = sidebar_scene
+    uid = records[0].series_instance_uid
+    captured = []
+    monkeypatch.setattr(QDrag, 'exec', lambda *args: captured.append(True) or Qt.IgnoreAction)
+    if collapsed:
+        click(window, find(window, 'sidebarToggle'))
+    entry = find(window, ('compactSeries-' if collapsed else 'series-') + uid)
+    point = entry.mapToScene(QPointF(entry.width()/2, entry.height()/2))
+    end = QPointF(window.width() + 35, point.y())
+    for kind, position, button, buttons in (
+        (QEvent.MouseButtonPress, point, Qt.LeftButton, Qt.LeftButton),
+        (QEvent.MouseMove, end, Qt.NoButton, Qt.LeftButton),
+        (QEvent.MouseButtonRelease, end, Qt.LeftButton, Qt.NoButton),
+    ):
+        event = QMouseEvent(kind, position, window.mapToGlobal(position.toPoint()),
+                            button, buttons, Qt.NoModifier)
+        QCoreApplication.sendEvent(window, event)
+    QTest.qWait(50)
+    assert captured == []
+    assert not warnings, warnings

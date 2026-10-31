@@ -46,6 +46,19 @@ class CprViewportController(Image2DViewportController):
         info = Image2DViewportController.overlayInfo.fget(self)
         info.update(cprRole=self.viewportRole, cprReconstruction='', cprDistance='')
         result = self._cpr._result
+        source = self._measure_controller.current_source.get('cpr', {})
+        path_id, revision = source.get('pathId'), source.get('pathRevision')
+        if not self._historical and result is not None and result.section is not None:
+            path_id, revision = result.section.path_id, result.section.path_revision
+        # Never include custom names or raw IDs in privacy-safe context.
+        path_number = source.get('pathIndex') if self._historical else None
+        if type(path_number) is not int or path_number < 1:
+            path_number = next((i + 1 for i, path in enumerate(self._cpr.paths)
+                                if path["pathId"] == path_id), None)
+        info['cprPathContext'] = (f'Path {path_number} · r{revision}'
+                                  if path_number is not None and revision is not None
+                                  else f'r{revision}' if revision is not None else '')
+        info['cprHistorical'] = self._historical
         if self.viewportRole == 'curved' and result is not None and result.curve is not None:
             # Describe the accepted raster, not controls awaiting reconstruction.
             settings = result.curve.settings
@@ -89,8 +102,8 @@ class CprViewportController(Image2DViewportController):
         from qt_dicom_viewer.i18n import message
         source = self._measure_controller.current_source.get("cpr", {})
         if source.get("role") == "cross":
-            return message("cpr.historicalDescription", revision=source["pathRevision"],
-                           distance=f'{source["distanceMm"]:.1f}')
+            return message("cpr.historicalSource", path=source.get("pathName") or source.get("pathId", ""),
+                           revision=source["pathRevision"], distance=f'{source["distanceMm"]:.1f}')
         return message("cpr.historical")
 
     @Property(bool, notify=cprChanged)
@@ -139,6 +152,9 @@ class CprViewportController(Image2DViewportController):
             source = capture_request(request)
             source["cpr"] = dict(provenance or {}, frameIndex=index, frameCount=count,
                                   role=self.viewportRole, fingerprint=self._cpr._fingerprint)
+            if provenance and provenance.get("pathId"):
+                source["cpr"]["pathIndex"] = next((i + 1 for i, path in enumerate(self._cpr.paths)
+                    if path["pathId"] == provenance["pathId"]), None)
         self._measurement_requests = {request_id: source}
         result = StackRenderResult(response_id=request_id, viewport_id=self.viewportId,
             series_uid=volume.series_uid, view_type=self.viewport_config.viewport_type,

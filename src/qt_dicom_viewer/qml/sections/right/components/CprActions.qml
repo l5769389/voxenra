@@ -37,8 +37,16 @@ RowLayout {
         onClicked: actions.controller.setPathEditing(true)
     }
     PathAction {
+        objectName: "cprReferenceBrowse"
+        visible: actions.hasPath && !actions.drawing && !actions.editing
+        iconName: actions.results ? "layout-quad" : "layout-columns"
+        label: qsTrId(actions.results ? "cpr.referenceBrowse" : "cpr.showResults")
+        enabled: actions.canStart
+        onClicked: actions.controller.setReferenceBrowsing(actions.results)
+    }
+    PathAction {
         objectName: "cprFinishPath"
-        visible: actions.drawing || actions.editing || (actions.hasPath && !actions.results)
+        visible: actions.drawing || actions.editing
         iconName: "check"
         label: qsTrId("cpr.done")
         tooltipText: qsTrId("cpr.finishHint")

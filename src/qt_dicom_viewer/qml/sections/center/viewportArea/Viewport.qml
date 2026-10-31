@@ -210,11 +210,11 @@ Item {
         z: 10
         anchors.margins: 8
         viewportController: viewportRoot.viewportController
-        visible: !viewportRoot.anonymousExport
+        technicalOnly: viewportRoot.anonymousExport || !viewportRoot.viewportController?.showWindowAnnotations
+        visible: (technicalContext.length > 0 || !technicalOnly)
             && (viewportRoot.viewportController?.isCprViewport !== true
                 || viewportRoot.viewportController.imageRows > 0)
-            && (viewportRoot.viewportController
-            ? viewportRoot.viewportController.showWindowAnnotations : false)
+
         hideSensitiveInfo: viewportRoot.viewportController
             ? viewportRoot.viewportController.hideSensitiveInfo : false
 

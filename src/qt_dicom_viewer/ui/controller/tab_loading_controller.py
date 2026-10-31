@@ -48,7 +48,11 @@ class TabLoadingController(QObject):
         return _msg('text.0439')
 
     def finish(self):
-        self._status, self._error = "ready", ""
+        tab = self.parent()
+        if hasattr(tab, "cprLoaded") and tab.hasError:
+            self._status, self._error = "error", tab.message
+        else:
+            self._status, self._error = "ready", ""
         self._pending.clear()
         self.changed.emit()
 

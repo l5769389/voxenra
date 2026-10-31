@@ -14,6 +14,8 @@ Rectangle {
     property bool compact: false
     property var pacsController: null
     property var workspaceController: null
+    readonly property bool nativeViewportPresent: workspaceController?.activeViewport?.viewportType === "volume"
+        || workspaceController?.activeTab?.mprLayout?.layout === "quad"
     property var exportController: null
     property var documentController: null
     readonly property bool showNavigationLabels: typeof appController !== "undefined"
@@ -827,10 +829,13 @@ Rectangle {
     CompareSeriesDialog {
         controller: leftPanel.panelController.compareController
         thumbnails: leftPanel.panelController.fusionThumbnails
-        nativePopup: leftPanel.workspaceController?.activeViewport?.viewportType === "volume"
+        nativePopup: leftPanel.nativeViewportPresent
     }
 
-    FusionSeriesDialog { controller: leftPanel.panelController }
+    FusionSeriesDialog {
+        controller: leftPanel.panelController
+        nativePopup: leftPanel.nativeViewportPresent
+    }
 
     Components.AppDialog {
         id: directoryErrorDialog

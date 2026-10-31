@@ -256,3 +256,29 @@ def test_space_starts_and_stops_slice_playback(sidebar_scene, tmp_path):
     assert play.parentItem().property('iconName') == 'cine-play'
     assert window.grabWindow().save(str(tmp_path / 'space-stopped.png'))
     assert not sidebar_scene[3], sidebar_scene[3]
+
+
+@pytest.mark.parametrize('initial', [False, True])
+def test_privacy_failed_save_restores_visible_and_persisted_value(sidebar_scene, tmp_path, initial):
+    window, app, _, warnings = sidebar_scene
+    settings = app.settingsController
+    assert settings.setValue('privacy', 'hideIdentity', initial)
+    original_path = settings._path
+    app.workspaceController.openSettings()
+    settings.selectCategory('privacy')
+    QTest.qWait(60)
+    checkbox = find(window, 'privacyHideIdentity')
+    assert checkbox.property('checked') == initial
+    settings._path = tmp_path  # QSaveFile cannot replace a directory.
+    click(window, checkbox)
+    assert settings.messageIsError
+    assert settings.section('privacy')['hideIdentity'] == initial
+    assert checkbox.property('checked') == initial
+    assert window.grabWindow().save(str(tmp_path / 'privacy-save-failure.png'))
+    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    assert SettingsController(path=original_path).section('privacy')['hideIdentity'] == initial
+    settings._path = original_path
+    click(window, checkbox)
+    assert checkbox.property('checked') != initial
+    assert SettingsController(path=original_path).section('privacy')['hideIdentity'] != initial
+    assert not warnings, warnings

@@ -264,3 +264,31 @@ def test_number_equivalent_context_array_notification_preserves_draft(number_sce
     QTest.keyClick(view, Qt.Key_Return)
     assert root.property('value') == 125 and root.property('commits') == 1
     assert not warnings, warnings
+
+
+def test_registration_invalid_draft_explains_error_and_preserves_transform(fusion_scene, pet_numeric_panel, tmp_path):
+    workspace, controller, renderer, requests = fusion_scene
+    controller.setRegistrationActive(True)
+    view, warnings = pet_numeric_panel(controller, 'PetRegistrationPanel.qml')
+    field = find(view, 'registrationParameter-0')
+    original = list(controller.registrationParameters)
+    type_text(view, field, '')
+    apply = find(view, 'applyRegistrationParameters')
+    assert not field.property('acceptableInput')
+    assert not apply.isEnabled()
+    error = find(view, 'registrationParameterError-0')
+    assert error.isVisible() and error.property('text')
+    other = find(view, 'registrationParameter-3')
+    assert abs(field.width() - other.width()) <= 1
+    assert view.grabWindow().save(str(tmp_path / 'registration-invalid.png'))
+    QTest.keyClick(view, Qt.Key_Return)
+    assert list(controller.registrationParameters) == original
+    type_text(view, field, '12.5')
+    assert not error.isVisible() and apply.isEnabled()
+    click(view, apply)
+    assert controller.registrationParameters[0] == 12.5
+    type_text(view, field, '')
+    QTest.keyClick(view, Qt.Key_Escape)
+    assert field.property('text') == '12.5'
+    assert not error.isVisible() and apply.isEnabled()
+    assert not warnings, warnings

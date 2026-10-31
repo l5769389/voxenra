@@ -291,7 +291,8 @@ def test_cpr_overlay_uses_geometry_and_window_without_repeated_patient_or_acquis
         item = named_item(window.rootObject(), "cprViewport-" + role)
         controller = tab.viewForRole(role)
         controller.cursorController.clearPosition()
-        assert named_item(item, "overlay-topRight").property("text") == ""
+        assert named_item(item, "overlay-topRight").property("text") == (
+            "" if role.startswith("reference") else QCoreApplication.translate("", "cpr.statusCurrentResult") + "\nPath 1 · r1")
         assert named_item(item, "overlay-bottomRight").property("text") == ""
         window_text = named_item(item, "overlay-bottomLeft").property("text")
         assert "WW:" in window_text and "WL:" in window_text
@@ -353,7 +354,7 @@ def test_historical_reference_shows_stored_plane_and_explicit_history_status(cpr
         assert viewport.property("twoDViewMode") == ""
         assert not selector.isVisible()
         assert "Axial" in named_item(viewport, "overlay-topLeft").property("text")
-        assert "HISTORICAL" in named_item(viewport, "overlay-topRight").property("text")
+        assert QCoreApplication.translate("", "cpr.statusHistoricalPlane") in named_item(viewport, "overlay-topRight").property("text")
         reference.setSliceIndex(reference.sliceIndex + 1)
         assert reference.historicalPlane and not selector.isVisible()
         wait_until(lambda: not reference.historicalPlane and tab.ready)
@@ -371,7 +372,7 @@ def test_cpr_no_footer_and_overlay_state_changes_keep_full_image_bounds(cpr_page
     tab.startPath()
     QCoreApplication.processEvents()
     assert [item.size() for item in items] == original_sizes
-    assert "PREVIOUS RESULT" in named_item(items[2], "overlay-topRight").property("text")
+    assert QCoreApplication.translate("", "cpr.statusPreviousResult") in named_item(items[2], "overlay-topRight").property("text")
     tab.cancel_operation()
     QCoreApplication.processEvents()
     assert [item.size() for item in items] == original_sizes
@@ -475,8 +476,8 @@ def test_panel_syncs_saved_values_when_loader_assigns_controller_late(cpr):
         QCoreApplication.processEvents()
         fields = {item.objectName(): item for item in _visual_children(view.rootObject())}
         assert fields["cprPathName"].property("text") == "Saved vessel"
-        assert fields["cprParameter-angle"].property("text") == "35.0"
-        assert fields["cprParameter-thickness"].property("text") == "12.0"
+        assert fields["cprParameter-angle"].property("text") == "35"
+        assert fields["cprParameter-thickness"].property("text") == "12"
         assert fields["cprParameter-step"].property("text") == "0.75"
     finally:
         delete(view)
@@ -531,3 +532,103 @@ def test_empty_cpr_results_do_not_show_unavailable_corner_values(cpr):
     finally:
         view.hide()
         delete(view)
+
+
+def test_numeric_position_history_return_and_locked_browse_ui(cpr_app, tmp_path):
+    from copy import deepcopy
+    from test_workspace_persistence import draw_length
+    _, tab, _ = cpr_app
+    cross = tab.viewForRole('cross')
+    mid = draw_length(cross)
+    source = deepcopy(cross.measurementController._sources[mid])
+    saved_items = deepcopy(cross.measurementController.measurementItems)
+    tab.setPositionMm(27.0)
+    tab.setParameter('angle', 45)
+    wait_until(lambda: tab.ready and not tab.busy)
+    tab.finishEditing()
+    tab.navigate_measurement(cross, source)
+    wait_until(lambda: cross.historicalPlane and not cross.render_pending)
+    view = QQuickView()
+    view.engine().addImageProvider('navigation', SvgIconProvider())
+    view.setResizeMode(QQuickView.SizeRootObjectToView)
+    view.resize(320, 1050)
+    warnings = []
+    view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
+    view.setInitialProperties(dict(toolController=tab.toolController, toolVisible=True,
+                                   viewportController=cross, tabController=tab))
+    view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
+        'src/qt_dicom_viewer/qml/sections/RightPanel.qml')))
+    assert view.status() == QQuickView.Ready
+    view.show()
+    QTest.qWait(40)
+    def item(name):
+        return named_item(view.rootObject(), name)
+    def click(name):
+        target = item(name)
+        QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier,
+                        target.mapToScene(QPointF(target.width()/2, target.height()/2)).toPoint())
+        QTest.qWait(30)
+    try:
+        assert item('cprHistoricalSource').isVisible()
+        assert '0.0' in item('cprHistoricalSource').property('text')
+        assert item('cprCurrentParameters').isVisible()
+        assert item('cprParameter-angle').property('text') == '45'
+        assert view.grabWindow().save(str(tmp_path/'historical-current-panel.png'))
+        click('cprReturnCurrent')
+        wait_until(lambda: tab.ready and not tab.busy and not cross.historicalPlane)
+        assert tab.activeViewport == cross
+        assert tab.positionMm > 26
+        assert cross.measurementController._sources[mid] == source
+        tab.navigate_measurement(cross, source)
+        wait_until(lambda: cross.historicalPlane and not cross.render_pending)
+        assert cross.measurementController.measurementItems == saved_items
+        click('cprPositionInput')
+        QTest.keyClick(view, Qt.Key_A, Qt.ControlModifier)
+        QCoreApplication.sendEvent(view, QKeyEvent(QEvent.KeyPress, 0, Qt.NoModifier, '12.34'))
+        QTest.keyClick(view, Qt.Key_Return)
+        wait_until(lambda: tab.ready and not tab.busy and not cross.historicalPlane)
+        assert abs(tab.positionMm - 12.34) < tab.current_settings.step_mm
+        assert float(item('cprPositionInput').property('text')) == pytest.approx(tab.positionMm, abs=1e-6)
+        before = tab.positionMm
+        click('cprNextSample')
+        wait_until(lambda: tab.ready and not tab.busy)
+        assert tab.positionMm > before
+        click('cprPreviousSample')
+        wait_until(lambda: tab.ready and not tab.busy)
+        assert tab.positionMm == pytest.approx(before)
+        original = tab.current_path
+        click('cprReferenceBrowse')
+        assert not tab.resultView and not tab.pathEditing
+        assert not item('cprFinishPath').isVisible()
+        assert view.grabWindow().save(str(tmp_path/'reference-locked-panel.png'))
+        click('cprReferenceBrowse')
+        assert tab.resultView and tab.current_path == original
+        assert not warnings, '\n'.join(warnings)
+    finally:
+        view.hide()
+        delete(view)
+
+
+def test_locked_reference_layout_pointer_and_wheel_preserve_path(cpr_page):
+    window, tab = cpr_page
+    tab.finishEditing()
+    tab.setReferenceBrowsing(True)
+    QTest.qWait(30)
+    original = tab.current_path
+    target = named_item(window.rootObject(), 'cprViewport-reference-a')
+    assert target.isVisible() and not tab.pathEditing
+    point = target.mapToScene(QPointF(target.width() * .5, target.height() * .5)).toPoint()
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, point)
+    QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, point)
+    QTest.mouseMove(window, point + QPoint(15, 5), 20)
+    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, point + QPoint(15, 5))
+    ref = tab.viewForRole('reference-a')
+    before = ref.sliceIndex
+    wheel = QWheelEvent(QPointF(point), QPointF(window.mapToGlobal(point)), QPoint(), QPoint(0, 120),
+                        Qt.NoButton, Qt.NoModifier, Qt.NoScrollPhase, False)
+    QCoreApplication.sendEvent(window, wheel)
+    wait_until(lambda: tab.ready and not tab.busy)
+    assert ref.sliceIndex != before
+    assert tab.current_path == original
+    tab.setPathEditing(True)
+    assert ref.cprEditing and tab.pathEditing

@@ -161,7 +161,7 @@ def validate_volume_series(series: DicomSeriesRecord) -> None:
         item.image_position_patient is None for item in instances
     ):
         raise ValueError(_msg('text.0228'))
-    orientation = np.asarray(first.image_orientation_patient).reshape(2, 3)
+    orientation = np.asarray(first.image_orientation_patient, dtype=float).reshape(2, 3)
     if not np.all(np.isfinite(orientation)) or not np.allclose(
         orientation @ orientation.T, np.eye(2), atol=1e-4
     ):
@@ -170,8 +170,15 @@ def validate_volume_series(series: DicomSeriesRecord) -> None:
     if not np.all(np.isfinite(positions)):
         raise ValueError(_msg('text.0230'))
     normal = np.cross(*orientation)
+    normal /= np.linalg.norm(normal)
     positions = positions[np.argsort(positions @ normal)]
     steps = np.diff(positions, axis=0)
     spacing = float(np.median(steps @ normal))
     if spacing <= 1e-6 or not np.allclose(steps, normal*spacing, rtol=1e-3, atol=1e-3):
+        raise ValueError(_msg('text.0231'))
+    # The texture represents one affine grid anchored at the first slice.
+    # Small neighbour errors must not accumulate along a long series. Keep
+    # this tolerance independent of patient origin and number of slices.
+    expected = positions[0] + np.arange(len(positions))[:, None] * normal * spacing
+    if np.any(np.linalg.norm(positions - expected, axis=1) > 1e-3 + spacing * 1e-3):
         raise ValueError(_msg('text.0231'))

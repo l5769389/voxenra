@@ -243,7 +243,7 @@ def test_startup_setting_and_dismissal_survive_restart(updater):
     assert len(prompts) == 2
 
 
-def test_check_failures_are_silent_for_automatic_and_manual_checks(updater):
+def test_check_failure_is_silent_only_for_automatic_checks(updater):
     controller, _, network = updater
     prompts = []
     controller.showDialog.connect(lambda: prompts.append(True))
@@ -254,7 +254,10 @@ def test_check_failures_are_silent_for_automatic_and_manual_checks(updater):
     controller.check()
     network.last.code = 403
     network.last.deliver(b'rate limit')
-    assert controller.state == 'idle' and not prompts
+    assert controller.state == 'error' and not prompts
+    from qt_dicom_viewer.i18n import message
+    assert controller.message == str(message('updates.networkError'))
+    assert not controller.busy
     controller.check()
     network.last.deliver(json.dumps(release_payload('1.6.0')).encode())
     assert controller.state == 'current' and not prompts
@@ -337,7 +340,8 @@ def test_redirect_and_timeout_are_bounded(updater):
     assert controller.state == 'error'
     controller.check()
     controller._timeout()
-    assert controller.state == 'available'
+    assert controller.state == 'error'
+    assert controller.hasUpdate and controller.cachedResultMessage
 
 
 def test_development_runtime_cannot_replace_python(qt_app, tmp_path):
@@ -383,7 +387,8 @@ def test_cached_badge_survives_disabled_and_offline_restart(updater):
     restarted.check()
     restarted._network.last.code = 503
     restarted._network.last.deliver(b'unavailable')
-    assert restarted.hasUpdate and restarted.state == 'available'
+    assert restarted.hasUpdate and restarted.state == 'error'
+    assert restarted._last_checked_at in restarted.cachedResultMessage
     restarted.shutdown()
     from shiboken6 import delete
     delete(restarted._network)
@@ -427,3 +432,26 @@ def test_runtime_detection_never_confuses_installer_portable_or_source(tmp_path,
     assert module.detect_installation().kind == 'windows_installer'
     monkeypatch.setattr(module.sys, 'frozen', False)
     assert module.detect_installation().reason == 'updates.development'
+
+
+@pytest.mark.parametrize('failure', ['http', 'timeout', 'malformed'])
+def test_manual_check_failure_preserves_cached_release_but_reports_error(updater, failure):
+    controller, _, network = updater
+    available(updater)
+    controller.check()
+    if failure == 'http':
+        network.last.code = 403
+        network.last.deliver(b'rate limit')
+    elif failure == 'timeout':
+        controller._timeout()
+    else:
+        network.last.deliver(b'not json')
+    assert controller.state == 'error'
+    assert controller.hasUpdate and controller.latestVersion == '1.7.0'
+    assert controller.cachedResultMessage
+    assert '1.7.0' in controller.cachedResultMessage
+    assert not controller.busy
+    controller.check()
+    network.last.deliver(json.dumps(release_payload('1.6.0')).encode())
+    assert controller.state == 'current' and not controller.hasUpdate
+    assert not controller.cachedResultMessage

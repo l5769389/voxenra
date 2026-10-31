@@ -239,7 +239,10 @@ def _validate_tab(tab):
                 if not isinstance(source, dict) or source.get("kind") != "mpr":
                     raise ValueError("Invalid independent plane")
                 request = restore_request(source, "validate")
-                validate_cpr_source(source)
+                metadata = validate_cpr_source(source)
+                if (tab["type"] == "cpr" and metadata is not None
+                        and metadata["fingerprint"] != session["source"]["fingerprint"]):
+                    raise ValueError("Invalid CPR source identity")
                 if (request.series_uid not in tab["series"] or not isinstance(request.mpr_frame, MprFrame)
                         or source.get("navigation") is not None and not isinstance(source["navigation"], MprState)):
                     raise ValueError("Invalid independent source")
@@ -268,7 +271,10 @@ def _validate_tab(tab):
             raise ValueError(_msg('text.0225'))
         from qt_dicom_viewer.ui.measurement_source import validate_cpr_source
         for source in sources.values():
-            if validate_cpr_source(source) is not None and source["parameters"].get("series_uid") not in tab["series"]:
+            metadata = validate_cpr_source(source)
+            if metadata is not None and (
+                    source["parameters"].get("series_uid") not in tab["series"]
+                    or tab["type"] == "cpr" and metadata["fingerprint"] != session["source"]["fingerprint"]):
                 raise ValueError(_msg('text.0225'))
         for field, classes in (("measurements", (LengthMeasurement, AngleMeasurement, RoiMeasurement)),
                                ("annotations", (TextAnnotation,))):

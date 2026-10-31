@@ -67,6 +67,29 @@ def make_tab(tab_id="tab", series_uid="test-series"):
     return TabController(TabConfig(tab_id, "3D", TabType.THREE_D, (meta,)))
 
 
+@pytest.mark.parametrize('drift', ['lateral', 'spacing', 'regular', 'roundoff'])
+def test_grid_validation_bounds_total_position_error(series, drift):
+    n = 1001
+    positions = np.column_stack((np.zeros(n), np.zeros(n), np.arange(n, dtype=float)))
+    if drift == 'lateral':
+        positions[:, 0] = np.arange(n) * .0009
+    elif drift == 'spacing':
+        positions[:, 2] = np.r_[0., np.cumsum([.9985]*500 + [1.0015]*500)]
+    elif drift == 'roundoff':
+        positions[1::2, 0] = .0001
+    # Large patient origins must not enlarge the allowed residual.
+    positions += (10000, -20000, 30000)
+    records = tuple(replace(series.instances[0], image_position_patient=tuple(p),
+                           image_orientation_patient=(1, 0, 0, 0, 1, 0))
+                    for p in positions[::-1])
+    candidate = replace(series, instances=records)
+    if drift in ('lateral', 'spacing'):
+        with pytest.raises(ValueError):
+            validate_volume_series(candidate)
+    else:
+        validate_volume_series(candidate)
+
+
 def test_vtk_preserves_physical_coordinates_and_signed_scalar_values(volume):
     image, backing = volume_to_vtk(volume)
     assert image.GetDimensions() == (5, 4, 3)

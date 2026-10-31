@@ -16,6 +16,7 @@ ColumnLayout {
     readonly property bool hasPath: (controller?.selectedPathId ?? "") !== ""
     readonly property int pointCount: controller?.controlPoints.length ?? 0
     readonly property bool results: controller?.resultView ?? false
+    readonly property bool historical: controller?.activeViewport?.historicalPlane ?? false
     spacing: 8
 
     Components.PanelHeading { title: qsTrId("cpr.title"); explanation: panel.controller?.message ?? "" }
@@ -27,6 +28,26 @@ ColumnLayout {
         color: Theme.warningColor
         wrapMode: Text.Wrap
         font.pixelSize: Theme.bodyFontSize
+    }
+    Text {
+        objectName: "cprHistoricalSource"
+        Layout.fillWidth: true
+        visible: panel.historical
+        text: panel.controller?.activeViewport?.historicalDescription ?? ""
+        textFormat: Text.PlainText
+        Accessible.name: text
+        color: Theme.textPrimary
+        wrapMode: Text.Wrap
+        font.pixelSize: 12
+    }
+    Components.AppButton {
+        objectName: "cprReturnCurrent"
+        Layout.fillWidth: true
+        visible: panel.historical
+        enabled: !panel.editing && !panel.drawing
+        text: qsTrId("cpr.returnCurrent")
+        compact: true
+        onClicked: panel.controller.returnToCurrentResult()
     }
     Components.AppComboBox {
         objectName: "cprPathSelector"
@@ -46,6 +67,7 @@ ColumnLayout {
         Accessible.name: text
         Layout.fillWidth: true
         text: panel.drawing ? qsTrId("cpr.draftCount").arg(panel.pointCount)
+            : panel.hasPath && !panel.editing ? qsTrId("cpr.referenceBrowse")
             : qsTrId("cpr.pathSummary").arg(panel.pointCount)
         color: panel.drawing ? Theme.textPrimary : Theme.textSecondary
         wrapMode: Text.Wrap
@@ -143,22 +165,64 @@ ColumnLayout {
         visible: panel.hasPath && !panel.drawing
         spacing: 6
         Text {
+            objectName: "cprCurrentParameters"
             Layout.fillWidth: true
             Layout.topMargin: 6
-            text: qsTrId("cpr.sectionPosition")
+            text: qsTrId("cpr.currentParameters")
+            wrapMode: Text.Wrap
             font.weight: Font.DemiBold
             color: Theme.textPrimary
             font.pixelSize: 12
         }
         Text {
             Layout.fillWidth: true
-            text: qsTrId("cpr.distance").arg((panel.controller?.positionMm ?? 0).toFixed(1))
-                .arg((panel.controller?.totalLength ?? 0).toFixed(1))
-            Layout.minimumWidth: 0
-            elide: Text.ElideRight
-            color: Theme.textSecondary
+            text: qsTrId("cpr.sectionPosition")
+            font.weight: Font.DemiBold
+            color: Theme.textPrimary
             font.pixelSize: 12
-            font.features: ({ "tnum": 1 })
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Components.AppNumberField {
+                objectName: "cprPositionInput"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                numberValue: panel.controller?.positionMm ?? 0
+                minimum: 0
+                maximum: panel.controller?.totalLength ?? 0
+                decimals: 6
+                editContext: panel.controller?.selectedPathId ?? ""
+                Accessible.name: qsTrId("cpr.positionInput")
+                Accessible.description: qsTrId("cpr.positionSamplingHint").arg((panel.controller?.totalLength ?? 0).toFixed(3))
+                onEdited: value => panel.controller.setPositionMm(value)
+            }
+            Text { text: "mm"; color: Theme.textSecondary; font.pixelSize: 12 }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Components.AppButton {
+                objectName: "cprPreviousSample"
+                Layout.fillWidth: true
+                compact: true
+                text: qsTrId("cpr.previousSample")
+                enabled: (panel.controller?.positionMm ?? 0) > 0
+                onClicked: panel.controller.stepPosition(-1)
+            }
+            Components.AppButton {
+                objectName: "cprNextSample"
+                Layout.fillWidth: true
+                compact: true
+                text: qsTrId("cpr.nextSample")
+                enabled: (panel.controller?.positionMm ?? 0) < (panel.controller?.totalLength ?? 0)
+                onClicked: panel.controller.stepPosition(1)
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: "0–" + (panel.controller?.totalLength ?? 0).toFixed(3) + " mm"
+            color: Theme.textSecondary
+            wrapMode: Text.Wrap
+            font.pixelSize: 11
         }
         Components.AppSlider {
             objectName: "cprPosition"

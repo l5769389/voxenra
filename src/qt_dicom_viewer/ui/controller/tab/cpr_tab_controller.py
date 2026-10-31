@@ -209,6 +209,30 @@ class CprTabController(TabController):
         return True
 
     @Slot(bool)
+    def setReferenceBrowsing(self, enabled):
+        if self._drawing or self._path_editing or self._pending_results or not self.current_path:
+            return
+        self._set_result_view(not enabled)
+
+    @Slot()
+    def returnToCurrentResult(self):
+        if self.current_path is None or self._drawing or self._path_editing:
+            return
+        self._pending_restore_planes = {}
+        self._request_cpr()
+        self._set_result_view(True)
+        self.activateViewport(self.viewForRole("cross").viewportId)
+
+    @Slot(int)
+    def stepPosition(self, direction):
+        if self.current_path is None or direction not in (-1, 1):
+            return
+        count = max(1, int(np.ceil(self.totalLength / self.current_settings.step_mm)))
+        spacing = self.totalLength / count
+        index = round(self.positionMm / spacing)
+        self.setPositionMm((index + direction) * spacing)
+
+    @Slot(bool)
     def setPathEditing(self, enabled):
         if self._drawing:
             return
@@ -481,15 +505,19 @@ class CprTabController(TabController):
         else:
             for role in ROLES[2:]:
                 self.viewForRole(role).clear_cpr()
-        self.cprLoaded.emit()
-        self._notify()
         if self._pending_results and self.ready:
             self._pending_results = False
             self._set_result_view(True)
         if self._pending_restore_planes and not result.preview:
             planes, self._pending_restore_planes = self._pending_restore_planes, {}
-            self._start_historical_planes([(self._viewport_dict[key], source) for key, source in planes.items()],
-                                          activate=False)
+            try:
+                self._start_historical_planes([(self._viewport_dict[key], source) for key, source in planes.items()],
+                                              activate=False)
+            except (CprError, KeyError, TypeError, ValueError) as error:
+                self._fail_cpr(self._generation, str(error))
+                return
+        self.cprLoaded.emit()
+        self._notify()
 
     def _reject_source(self):
         self._pending_results = False
@@ -620,6 +648,10 @@ class CprTabController(TabController):
         points = list(path.control_points)
         del points[self._selected_point]
         if self._replace_points(points):
+            # Delete completes the active gesture. Later pointer events must
+            # not reuse its index against the shortened control-point list.
+            self._drag = None
+            self._edit_transaction_active = False
             self._selected_point = min(self._selected_point, len(points)-1)
             self._commit()
 

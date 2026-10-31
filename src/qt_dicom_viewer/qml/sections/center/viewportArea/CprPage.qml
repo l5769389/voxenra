@@ -107,11 +107,11 @@ Item {
                             hasTabs: true
                             anonymousExport: page.anonymousExport
                             multiViewport: !cell.focused
-                            overlayStatusText: cell.modelData.historicalPlane ? "HISTORICAL PLANE"
+                            overlayStatusText: cell.modelData.historicalPlane ? qsTrId("cpr.statusHistoricalPlane")
                                 : cell.index < 2 ? ""
-                                : page.controller?.drawing && cell.modelData.imageRows > 0 ? "PREVIOUS RESULT"
-                                : page.controller?.busy ? (rebuildFeedback.showing ? "UPDATING" : "")
-                                : !page.controller?.ready ? "NO RESULT" : ""
+                                : page.controller?.drawing && cell.modelData.imageRows > 0 ? qsTrId("cpr.statusPreviousResult")
+                                : page.controller?.busy ? (rebuildFeedback.showing ? qsTrId("cpr.statusUpdating") : "")
+                                : !page.controller?.ready ? qsTrId("cpr.statusNoResult") : ""
                             TapHandler {
                                 onPressedChanged: if (pressed) page.controller?.activateViewport(cell.modelData.viewportId)
                             }

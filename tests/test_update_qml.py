@@ -10,7 +10,7 @@ from qt_dicom_viewer.i18n import message
 from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
 from test_app_updates import release_payload, Network, PAYLOAD, DIGEST
 from test_pacs_qml import scene
-from test_tag_qml import find, click
+from test_tag_qml import find, click, descendants
 from test_dicom_tags import qt_app, wait_until
 
 
@@ -84,4 +84,40 @@ def test_workspace_cancel_prevents_installer_handoff(scene, tmp_path, monkeypatc
     assert window.isVisible()
     updater.dismiss()
     assert updater._command is None
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('cached', [False, True])
+def test_manual_update_failure_visible_with_retry_and_cached_timestamp(scene, tmp_path, cached):
+    import json
+    window, app, warnings = scene
+    updater = app.updateController
+    updater._cache = tmp_path / 'updates'
+    updater._version = '1.6.0'
+    updater._network = Network()
+    if cached:
+        updater._session_dismissed = '1.7.0'
+        updater._check(False)
+        updater._network.last.deliver(json.dumps(release_payload()).encode())
+    app.workspaceController.openSettings()
+    app.settingsController.selectCategory('updates')
+    QTest.qWait(60)
+    check = find(window, 'settingsCheckUpdate')
+    click(window, check)
+    updater._network.last.code = 403
+    updater._network.last.deliver(b'rate limit')
+    QTest.qWait(30)
+    status = find(window, 'settingsUpdateMessage')
+    assert status.isVisible() and status.property('text') == str(message('updates.networkError'))
+    assert updater.state == 'error' and check.isEnabled()
+    cache_notice = next(item for item in descendants(window.contentItem())
+                        if item.objectName() == 'settingsCachedUpdateMessage')
+    assert cache_notice.isVisible() == cached
+    if cached:
+        assert '1.7.0' in cache_notice.property('text')
+        assert updater._last_checked_at in cache_notice.property('text')
+    assert window.grabWindow().save(str(tmp_path / 'manual-update-failure.png'))
+    click(window, check)
+    updater._network.last.deliver(json.dumps(release_payload('1.6.0')).encode())
+    assert updater.state == 'current' and not cache_notice.isVisible()
     assert not warnings, warnings

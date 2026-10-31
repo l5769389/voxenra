@@ -9,10 +9,15 @@ Components.AppDialog {
     id: dialog
     objectName: "fusionSeriesDialog"
     required property var controller
+    property bool nativePopup: false
+    property bool nativeWindowActive: false
+    closeButtonVisible: !nativeWindowActive
     parent: Basic.Overlay.overlay
     anchors.centerIn: parent
-    width: Math.min(780, parent ? parent.width - 32 : 780)
-    height: Math.min(640, parent ? parent.height - 32 : 640)
+    implicitWidth: 780
+    implicitHeight: 640
+    width: Math.min(implicitWidth, parent ? parent.width - 32 : implicitWidth)
+    height: Math.min(implicitHeight, parent ? parent.height - 32 : implicitHeight)
     padding: 16
     modal: true
     Basic.Overlay.modal: Rectangle { color: Theme.modalScrim }
@@ -21,7 +26,12 @@ Components.AppDialog {
     subtitle: qsTrId("text.0659")
 
     function syncVisibility() {
-        if (controller.fusionDialogOpen && !visible) open()
+        if (controller.fusionDialogOpen && !visible) {
+            // Match the comparison picker above native VTK child windows.
+            nativeWindowActive = nativePopup
+            popupType = nativeWindowActive ? Basic.Popup.Window : Basic.Popup.Item
+            open()
+        }
         else if (!controller.fusionDialogOpen && visible) close()
     }
     Component.onCompleted: syncVisibility()

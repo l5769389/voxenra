@@ -27,25 +27,27 @@ Basic.TabBar {
     }
 
     function widthForTab(tab) {
-        return ["settings", "manual"].includes(tab.tabType) ? Math.min(160, tabWidth) : tabWidth
+        return ["settings", "manual"].includes(tab?.tabType) ? Math.min(160, tabWidth) : tabWidth
     }
 
     function insertionOffset(index) {
+        const tabs = workspaceController.tabs
         let offset = 0
-        for (let i = 0; i < index; ++i)
-            offset += widthForTab(workspaceController.tabs[i]) + spacing
+        for (let i = 0; i < Math.min(index, tabs.length); ++i)
+            offset += widthForTab(tabs[i]) + spacing
         return offset
     }
 
     function insertionIndex(position) {
+        const tabs = workspaceController.tabs
         let offset = 0
-        for (let i = 0; i < tabCount; ++i) {
-            const width = widthForTab(workspaceController.tabs[i])
+        for (let i = 0; i < tabs.length; ++i) {
+            const width = widthForTab(tabs[i])
             if (position < offset + width / 2)
                 return i
             offset += width + spacing
         }
-        return tabCount
+        return tabs.length
     }
     function revealActiveTab() {
         if (dropPosition >= 0 || windowManager?.dragging) return
