@@ -22,7 +22,7 @@ Item {
         if (!page.visible) return
         for (let i = 0; i < cells.count; ++i) {
             const cell = cells.itemAt(i)
-            if (cell?.visible && cell.modelData === controller?.activeViewport)
+            if (cell?.visible && cell.modelData.viewportId === controller?.activeViewport?.viewportId)
                 cell.imageItem.forceActiveFocus()
         }
     }
@@ -36,7 +36,13 @@ Item {
         }
     }
     property var focusBeforeResultChange: null
+    property bool pendingResultFocus: false
+    onVisibleChanged: if (visible && pendingResultFocus) Qt.callLater(focusAfterResultChange)
     function focusAfterResultChange() {
+        // The workspace can still be showing its loading page when the CPR
+        // result arrives. An invisible item cannot take keyboard focus.
+        pendingResultFocus = !visible
+        if (pendingResultFocus) return
         const focused = page.Window.window?.activeFocusItem
         // Hiding the focused footer button may give another button focus on
         // Windows. Restore reading focus if the original action disappeared.

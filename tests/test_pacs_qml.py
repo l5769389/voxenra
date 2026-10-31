@@ -16,7 +16,7 @@ from test_tag_qml import descendants, find, click, type_text
 @pytest.fixture
 def scene(qt_app, tmp_path):
     provider = DicomImageProvider()
-    controller = AppController(provider, settings_path=tmp_path / "settings.json", pacs_config_path=tmp_path / "pacs.json", pacs_import_root=tmp_path / "imports")
+    controller = AppController(provider, settings_path=tmp_path / "display-settings.json", pacs_config_path=tmp_path / "pacs.json", pacs_import_root=tmp_path / "imports")
     engine = QQmlApplicationEngine()
     from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
     engine.addImageProvider("navigation", SvgIconProvider())

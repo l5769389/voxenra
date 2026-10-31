@@ -102,7 +102,12 @@ def test_cpr_commands_work_from_non_text_panel_controls(sidebar_scene, control_n
     if control_name == 'cprFinishPath':
         assert not control.isVisible()
         curved = find(window, 'cprViewport-curved')
-        wait_until(curved.hasActiveFocus)
+        try:
+            wait_until(curved.hasActiveFocus)
+        except AssertionError:
+            focus = window.activeFocusItem()
+            pytest.fail(f"CPR focus was {focus}, visible={curved.isVisible()}, "
+                        f"active view={tab.activeViewport.viewportRole}, window active={window.isActive()}")
     assert not warnings, warnings
 
 
