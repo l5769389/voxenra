@@ -1,7 +1,7 @@
 {
-  "version": "2.1.5",
-  "tag": "v2.1.5",
-  "macos": "Voxenra-2.1.5-macos-arm64.dmg",
-  "windows_installer": "Voxenra-2.1.5-windows-x64-setup.exe",
-  "windows_portable": "Voxenra-2.1.5-windows-x64-portable.exe"
+  "version": "2.2.0",
+  "tag": "v2.2.0",
+  "macos": "Voxenra-2.2.0-macos-arm64.dmg",
+  "windows_installer": "Voxenra-2.2.0-windows-x64-setup.exe",
+  "windows_portable": "Voxenra-2.2.0-windows-x64-portable.exe"
 }
