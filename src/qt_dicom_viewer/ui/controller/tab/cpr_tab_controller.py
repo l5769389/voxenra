@@ -25,6 +25,7 @@ class CprTabController(TabController):
     cprChanged = Signal()
     cprLoaded = Signal()
     snapshotCommitted = Signal()
+    resultViewAboutToChange = Signal()
     resultViewChanged = Signal()
     resultSplitChanged = Signal()
     pathInputStarted = Signal()
@@ -160,6 +161,7 @@ class CprTabController(TabController):
 
     def _set_result_view(self, enabled, *, preserve_view=False):
         enabled = bool(enabled and self.current_path)
+        self.resultViewAboutToChange.emit()
         self._session['resultView'] = enabled
         focused = self._viewport_dict.get(self.focusedViewportId)
         if not preserve_view or (enabled and focused and focused.viewportRole.startswith('reference')):

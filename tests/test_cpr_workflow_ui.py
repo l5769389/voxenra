@@ -101,7 +101,8 @@ def test_cpr_commands_work_from_non_text_panel_controls(sidebar_scene, control_n
     assert tab.resultView and not tab.pathEditing
     if control_name == 'cprFinishPath':
         assert not control.isVisible()
-        assert find(window, 'cprViewport-curved').hasActiveFocus()
+        curved = find(window, 'cprViewport-curved')
+        wait_until(curved.hasActiveFocus)
     assert not warnings, warnings
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import QPointF, QUrl
+from PySide6.QtCore import QCoreApplication, QEvent, QPointF, QUrl
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from shiboken6 import delete
@@ -16,7 +16,7 @@ from test_tag_qml import descendants, find, click, type_text
 @pytest.fixture
 def scene(qt_app, tmp_path):
     provider = DicomImageProvider()
-    controller = AppController(provider, pacs_config_path=tmp_path / "pacs.json", pacs_import_root=tmp_path / "imports")
+    controller = AppController(provider, settings_path=tmp_path / "settings.json", pacs_config_path=tmp_path / "pacs.json", pacs_import_root=tmp_path / "imports")
     engine = QQmlApplicationEngine()
     from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
     engine.addImageProvider("navigation", SvgIconProvider())
@@ -33,7 +33,14 @@ def scene(qt_app, tmp_path):
     finally:
         window.hide()
         controller.shutdown()
+        # In tests there is no QApplication.exec() between engine lifetimes.
+        # Destroy the scene before its context objects and drain deferred Qt
+        # deletions before the next parametrized case constructs a new scene.
+        delete(window)
+        QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
         delete(engine)
+        delete(controller)
+        QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
 
 
 def test_ui_configure_test_save_query_and_import(scene, pacs_server, tmp_path):

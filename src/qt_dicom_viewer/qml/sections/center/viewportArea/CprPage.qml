@@ -35,8 +35,17 @@ Item {
             }
         }
     }
+    property var focusBeforeResultChange: null
     function focusAfterResultChange() {
         const focused = page.Window.window?.activeFocusItem
+        // Hiding the focused footer button may give another button focus on
+        // Windows. Restore reading focus if the original action disappeared.
+        const previous = focusBeforeResultChange
+        focusBeforeResultChange = null
+        if (previous && !previous.visible && focused?.selectByMouse === undefined) {
+            focusActiveViewport()
+            return
+        }
         // Reconstruction can finish while the user is typing or operating a
         // control. Only redirect focus if it no longer belongs to that control.
         if (focused?.visible && (focused.selectByMouse !== undefined
@@ -46,6 +55,7 @@ Item {
     }
     Connections {
         target: page.controller ?? null
+        function onResultViewAboutToChange() { page.focusBeforeResultChange = page.Window.window?.activeFocusItem ?? null }
         function onResultViewChanged() { Qt.callLater(page.focusAfterResultChange) }
         function onPathInputStarted() { Qt.callLater(page.focusActiveViewport) }
         function onViewLayoutChanged() { Qt.callLater(page.restoreVisibleFocus) }
