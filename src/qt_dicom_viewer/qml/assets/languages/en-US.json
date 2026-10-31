@@ -2808,7 +2808,7 @@
         "cpr.referenceViewHint": "Scroll to browse · Double-click to expand/restore",
         "cpr.referencePausedHint": "Drawing paused · Return to CPR to continue",
         "cpr.previousResult": "Previous result · Finish the new path to update",
-        "manual.cpr.caption": "Two reference planes, the curved image, and a perpendicular cross-section stay linked.",
+        "manual.cpr.caption": "With the path locked, the reference planes show the aortic arch path. The marker on the curved view locates the cross-section at the lower right.",
         "cpr.exitEdit": "Exit editing",
         "cpr.done": "Done",
         "cpr.finishHint": "Finish and view results · Enter / double-click",

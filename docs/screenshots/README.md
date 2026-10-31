@@ -57,9 +57,11 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ## 曲面重建 CPR
 
-[中文界面](59-cpr-2.2.0.png) · [English](en/59-cpr-2.2.0.png)
+[中文界面](61-cpr-reference-2.2.0.png) · [English](en/61-cpr-reference-2.2.0.png)
 
-![CPR 曲面图与垂直横截面](59-cpr-2.2.0.png)
+[结果双视图（中文）](60-cpr-results-2.2.0.png) · [Results (English)](en/60-cpr-results-2.2.0.png)
+
+![CPR 曲面图与垂直横截面](61-cpr-reference-2.2.0.png)
 
 ## 三维与融合
 

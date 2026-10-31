@@ -41,7 +41,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-mtf.png": "28-mtf-analysis.png",
 }
 for media, source in {
-    'feature-cpr.png': '59-cpr-2.2.0.png',
+    'feature-cpr-reference.png': '61-cpr-reference-2.2.0.png',
     'feature-dimse-settings.png': '51-dimse-settings.png',
     'feature-dimse-import.gif': '52-dimse-import.gif',
     'feature-dimse-import.png': '52-dimse-import.png',
@@ -399,7 +399,7 @@ PRODUCT_COPY = {
         ),
         "workflow_images": (("拖拽 ZIP 压缩包导入", "feature-zip-drag.gif"), ("PACS 检索与序列选择", "feature-pacs.png"), ("保存与恢复工作区", "feature-workspace-overview.png")),
         "cpr_title": "沿路径查看曲面与横截面",
-        "cpr_body": "在参考影像中逐点绘制三维折线路径，联动查看 CPR 曲面图与垂直横截面。路径支持编辑、撤销与工作区保存；物理测量在参考图和横截面完成。",
+        "cpr_body": "在 CT 或 MR 参考影像中逐点绘制路径，按毫米定位横截面。锁定路径查看参考图，或返回已有测量的历史切面。路径支持编辑、撤销与工作区保存；物理测量在参考图和横截面完成。",
         "cpr_caption": "手动 CPR：参考平面、曲面图和横截面联动",
         "alt_cpr": "CPR 曲面重建与路径编辑界面",
         "viewing_title": "从二维切片到三维重建",
@@ -458,7 +458,7 @@ PRODUCT_COPY = {
         ),
         "workflow_images": (("Drag a ZIP archive to import", "feature-zip-drag.gif"), ("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace-overview.png")),
         "cpr_title": "Follow a path through curved and cross-sectional views",
-        "cpr_body": "Draw a manual 3D polyline on reference images and explore linked CPR and perpendicular cross-sections. Edit or undo path changes and save them in a workspace. Physical measurements use reference planes and cross-sections.",
+        "cpr_body": "Trace a path on CT or MR images and enter a distance in mm to locate a cross-section. Browse locked reference images or return to the original plane of a saved measurement. Edit or undo path changes and save them in a workspace. Physical measurements use reference planes and cross-sections.",
         "cpr_caption": "Manual CPR with linked reference planes, curved image, and cross-section",
         "alt_cpr": "CPR reconstruction and path editing interface",
         "viewing_title": "From 2D slices to 3D reconstruction",
@@ -534,7 +534,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
                             f'<div class="product-feature-copy"><h2>{escape(copy[key + "_title"])}</h2><p>{escape(copy[key + "_body"])}</p></div>'
                             f'<div class="feature-media-grid">{"".join(figures)}</div><div class="ai-details">{extra}'
                                  f'<a href="{prefix}{code}/{guide}">{escape(copy[key + "_link"])}</a></div></section>')
-    for key, image in (("viewing", "feature-mr-reading.png"), ("cpr", media_prefix + "feature-cpr.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
+    for key, image in (("viewing", "feature-mr-reading.png"), ("cpr", media_prefix + "feature-cpr-reference.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
         title = escape(copy[key + "_title"])
         image_url = product_image_asset(prefix, image)
         if key in ("viewing", "analysis"):

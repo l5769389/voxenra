@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 
 ## Features
@@ -79,11 +79,11 @@ Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F1
 ## MPR, CPR, 3D, and 4D
 
 - **MPR:** linked axial, coronal, and sagittal planes, oblique reconstruction, seven layouts, and MIP / MinIP / Mean / Sum thick slabs; four-up layouts add 3D spatial references and linked rotation.
-- **CPR:** open from a CT / MR series context menu or MPR **More → CPR**. Draw and edit multiple manual 3D paths with undo, two linked reference planes, a curved image and a perpendicular cross-section. Thin / maximum / mean projections, workspace restoration and three anonymous PNG export scopes are available. Ordinary quantitative measurements use the physical reference planes and cross-section; the curved image provides 3D centerline distances. See **Operation manual → Curved planar reformation (CPR)** in the app.
+- **CPR:** open from a CT / MR series context menu or MPR **More → CPR**. Draw and edit multiple manual 3D paths with undo, two linked reference planes, a curved image and a perpendicular cross-section. Thin / maximum / mean projections, workspace restoration and three anonymous PNG export scopes are available. Enter a distance in mm to locate a cross-section, browse the locked reference images, or select a saved measurement to return to its original plane. Ordinary quantitative measurements use the physical reference planes and cross-section; the curved image provides 3D centerline distances. See **Operation manual → Curved planar reformation (CPR)** in the app.
 - **3D:** CT, MR, and PET volume rendering with presets, windowing, orientation, rotation, and region cropping; 20 CT presets and CT bed removal.
-- **4D:** synchronized multi-phase CT playback, with segmentation and VOI stored by phase; separate slice playback within the current phase.
+- **4D:** synchronized multi-phase CT playback, with segmentation and VOI stored by phase; separate slice playback within the current phase. The image and exported PNG identify the displayed phase.
 
-![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/59-cpr-2.2.0.png)
+![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/61-cpr-reference-2.2.0.png)
 
 **Dual-series MPR comparison** keeps position, rotation, CT windowing, and physical display-scale switches visible. Groups start independently. Enabling window/scale sync uses the selected group; position/rotation linking preserves existing offsets and synchronizes subsequent changes. Double-click to enlarge corresponding planes side by side. Linking does not perform automatic registration.
 

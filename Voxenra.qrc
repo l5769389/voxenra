@@ -1,7 +1,7 @@
 <RCC>
     <qresource>
-        <file>src/qt_dicom_viewer/qml/assets/help/cpr-2.2.0.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/cpr-2.2.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/cpr-reference-2.2.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/cpr-reference-2.2.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/cpr-path.svg</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/CprParameterField.qml</file>
 

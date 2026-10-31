@@ -2808,7 +2808,7 @@
         "cpr.referenceViewHint": "滚轮翻页 · 双击放大/还原",
         "cpr.referencePausedHint": "布点已暂停 · 返回 CPR 继续",
         "cpr.previousResult": "保留已有结果 · 完成新路径后更新",
-        "manual.cpr.caption": "两个参考平面、曲面图和垂直横截面联动显示。",
+        "manual.cpr.caption": "路径已锁定。参考平面显示主动脉弓路径，曲面图的位置线对应右下方横截面。",
         "cpr.exitEdit": "退出编辑",
         "cpr.done": "完成",
         "cpr.finishHint": "完成并查看结果 · Enter / 双击",

@@ -10,7 +10,7 @@
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.1.5/Voxenra-2.1.5-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
 
 
 ## 功能概览
@@ -79,11 +79,11 @@
 ## MPR、CPR、3D 与 4D
 
 - **MPR**：轴位、冠状位、矢状位联动，支持斜面重建、七种布局及 MIP / MinIP / Mean / Sum 厚层投影；四宫格可显示 3D 空间参考并联动旋转。
-- **CPR**：从 CT / MR 序列右键菜单或 MPR 的 **更多 → CPR** 进入。手动绘制三维多路径，联动两个参考平面、曲面图与垂直横截面；支持路径编辑与撤销、薄层 / 最大 / 平均投影、工作区恢复及三种匿名 PNG 导出。普通定量测量限于参考平面和横截面，曲面图显示三维中心线距离。详见应用内 **操作手册 → 曲面重建 CPR**。
+- **CPR**：从 CT / MR 序列右键菜单或 MPR 的 **更多 → CPR** 进入。手动绘制三维多路径，联动两个参考平面、曲面图与垂直横截面；支持路径编辑与撤销、薄层 / 最大 / 平均投影、工作区恢复及三种匿名 PNG 导出。完成路径后可输入沿线距离（mm）定位横截面，或打开锁定参考图核对位置。点击已有测量可回到记录时的切面。普通定量测量限于参考平面和横截面，曲面图显示三维中心线距离。详见应用内 **操作手册 → 曲面重建 CPR**。
 - **3D**：CT、MR、PET 体绘制，支持模板、调窗、方向、旋转和圈选裁剪；CT 提供 20 个模板及去床板。
-- **4D**：CT 多时相同步播放，分割和 VOI 按时相保存；可独立播放当前时相切片。
+- **4D**：CT 多时相同步播放，分割和 VOI 按时相保存；可独立播放当前时相切片。影像及导出 PNG 标明实际显示的时相。
 
-![CPR 曲面重建：参考视图、曲面图和垂直横截面](docs/screenshots/59-cpr-2.2.0.png)
+![CPR 曲面重建：参考视图、曲面图和垂直横截面](docs/screenshots/61-cpr-reference-2.2.0.png)
 
 **双序列 MPR 对比**提供常驻的位置、旋转、CT 调窗与物理显示比例开关，默认独立操作。开启调窗／比例同步以当前组为准；位置／旋转同步保留原有偏移并同步后续操作。双击切面可并排放大对应平面，联动不执行自动配准。
 
