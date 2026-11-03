@@ -21,6 +21,25 @@ def sha256(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+@contextmanager
+def temporary_upgrade_directory(parent):
+    directory = TemporaryDirectory(prefix='Voxenra upgrade ', dir=parent)
+    try:
+        yield Path(directory.name).resolve()
+    finally:
+        # Inno's uninstall process can return before its temporary cleanup child
+        # releases _unins-done.tmp. Wait for the lock without hiding cleanup errors.
+        deadline = time.monotonic() + 30
+        while True:
+            try:
+                directory.cleanup()
+                break
+            except PermissionError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(.25)
+
+
 def require_clean_runner():
     if (sys.platform != 'win32' or os.environ.get('GITHUB_ACTIONS') != 'true'
             or os.environ.get('VOXENRA_RUNNER_ENVIRONMENT') != 'github-hosted'):
@@ -163,8 +182,7 @@ def main():
                 'windows_installer': Path(f'dist/installers/Voxenra-{__version__}-windows-x64-setup.exe')}
     reports = Path('build/test-results/installer').resolve()
     reports.mkdir(parents=True, exist_ok=True)
-    with TemporaryDirectory(prefix='Voxenra upgrade ', dir=os.environ['RUNNER_TEMP']) as temporary:
-        root = Path(temporary).resolve()
+    with temporary_upgrade_directory(os.environ['RUNNER_TEMP']) as root:
         releases = {}
         for kind in packages:
             old = parse_release(metadata, '0.0.0', kind)

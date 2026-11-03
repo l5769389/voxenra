@@ -26,6 +26,41 @@ finally:
     sys.path.pop(0)
 
 
+@pytest.mark.parametrize('locked_attempts', [0, 2])
+def test_upgrade_smoke_waits_for_temporary_file_locks(tmp_path, monkeypatch, locked_attempts):
+    from manual import verify_windows_package_updates as smoke
+    original_cleanup = smoke.TemporaryDirectory.cleanup
+    attempts = []
+
+    def cleanup(directory):
+        attempts.append(directory.name)
+        if len(attempts) <= locked_attempts:
+            raise PermissionError('Uninstaller is releasing its temporary file')
+        original_cleanup(directory)
+
+    monkeypatch.setattr(smoke.TemporaryDirectory, 'cleanup', cleanup)
+    monkeypatch.setattr(smoke.time, 'sleep', lambda _: None)
+    with smoke.temporary_upgrade_directory(tmp_path) as folder:
+        (folder / 'runtime.tmp').write_text('temporary')
+    assert len(attempts) == locked_attempts + 1
+    assert not folder.exists()
+
+
+def test_upgrade_smoke_reports_persistent_cleanup_failure(tmp_path, monkeypatch):
+    from manual import verify_windows_package_updates as smoke
+
+    def cleanup():
+        raise PermissionError('Still locked')
+
+    directory = SimpleNamespace(name=str(tmp_path), cleanup=cleanup)
+    monkeypatch.setattr(smoke, 'TemporaryDirectory', lambda **_: directory)
+    clock = iter([0, 31])
+    monkeypatch.setattr(smoke.time, 'monotonic', lambda: next(clock, 31))
+    with pytest.raises(PermissionError, match='Still locked'):
+        with smoke.temporary_upgrade_directory(tmp_path):
+            pass
+
+
 def test_onefile_build_keeps_package_resource_layout() -> None:
     command = build_windows.pyinstaller_command(PROJECT_ROOT)
 
