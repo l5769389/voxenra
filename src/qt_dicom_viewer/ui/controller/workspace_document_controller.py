@@ -262,16 +262,19 @@ class WorkspaceDocumentController(QObject):
     def recoveryAvailable(self):
         return self._previous_recovery and self._recovery_path.is_file()
 
+    @Slot(object)
     def _set_message(self, message):
         if not self._closed:
             self._message = message
             self.changed.emit()
 
+    @Slot()
     def mark_dirty(self, *args):
         if not self._restoring and not self._closed:
             self._dirty = self._recovery_dirty = True
             self.changed.emit()
 
+    @Slot()
     def _tabs_changed(self):
         for tab in self.workspace._tab_dict.values():
             if tab in self._wired:
@@ -721,6 +724,7 @@ class WorkspaceDocumentController(QObject):
         self.changed.emit()
         return True
 
+    @Slot()
     def _advance_restore(self):
         if self._closed:
             return
@@ -853,6 +857,7 @@ class WorkspaceDocumentController(QObject):
     def cancel(self):
         self._cancel.set()
 
+    @Slot()
     def _save_recovery(self):
         if (self._autosave_enabled and not self._previous_recovery and self._recovery_dirty
                 and not self._busy and not self.hasMissingSources

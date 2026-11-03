@@ -47,6 +47,7 @@ class TabLoadingController(QObject):
             return _msg('text.0438', value1=len(self._completed), value2=len(self._expected))
         return _msg('text.0439')
 
+    @Slot()
     def finish(self):
         tab = self.parent()
         if hasattr(tab, "cprLoaded") and tab.hasError:

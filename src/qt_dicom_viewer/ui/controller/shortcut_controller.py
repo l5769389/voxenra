@@ -17,6 +17,7 @@ class ShortcutController(QObject):
             QGuiApplication.instance().focusWindowChanged.connect(self.focusWindowChanged)
         settings.sectionChanged.connect(self._settings_changed)
 
+    @Slot(str)
     def _settings_changed(self, section):
         if section == 'shortcuts': self.changed.emit()
 

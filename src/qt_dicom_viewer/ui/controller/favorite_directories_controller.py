@@ -135,6 +135,7 @@ class FavoriteDirectoriesController(QObject):
             self.busyChanged.emit()
             self._feedback()
 
+    @Slot()
     def _finish_validation(self):
         while True:
             try:

@@ -152,6 +152,7 @@ class LanguageController(QObject):
             return False
         return self.settings.setValue('appearance', 'language', locale)
 
+    @Slot(str)
     def _setting_changed(self, section):
         if section == 'appearance':
             locale = self.settings.section('appearance')['language']

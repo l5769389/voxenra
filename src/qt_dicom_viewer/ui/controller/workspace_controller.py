@@ -593,6 +593,7 @@ class WorkspaceController(QObject):
         self.createMultiCompareTab([first_uid, second_uid])
 
     @Slot('QVariantList')
+    @Slot(object)
     def createMultiCompareTab(self, series_uids):
         from qt_dicom_viewer.core.compare import supports_compare
         from .tab.compare_tab_controller import CompareTabController

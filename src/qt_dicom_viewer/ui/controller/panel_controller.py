@@ -340,6 +340,7 @@ class PanelController(QObject):
         if self._thumbnail_service is not None:
             self._thumbnail_timer.start()
 
+    @Slot()
     def _refresh_sidebar_model(self):
         # Models keep message IDs; only their data() method localizes values.
         rows = build_sidebar_rows(self._scan_series_record.values(), self._patient_search,

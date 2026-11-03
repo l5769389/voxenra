@@ -145,6 +145,7 @@ class CompareSeriesController(QObject):
             self._partners = []
             self.changed.emit()
 
+    @Slot()
     def _catalog_changed(self):
         self._partners = [uid for uid in self._partners if self._supports(self._record(uid))]
         if not self._supports(self._record(self._anchor)):

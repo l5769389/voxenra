@@ -46,6 +46,7 @@ class AppearanceController(QObject):
     @Property('QVariantMap', notify=changed)
     def colors(self): return palette_for(self._palette_theme)
 
+    @Slot(str)
     def _setting_changed(self, section):
         if section != 'appearance':
             return

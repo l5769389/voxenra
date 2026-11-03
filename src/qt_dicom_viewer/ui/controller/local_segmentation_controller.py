@@ -144,6 +144,7 @@ class LocalSegmentationController(QObject):
     @Property(str,notify=changed)
     def weightsPath(self): return self._configuration()[1]
 
+    @Slot(str)
     def _settings_changed(self, section):
         if section=='services':
             config=self._configuration()

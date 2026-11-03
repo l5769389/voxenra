@@ -91,6 +91,7 @@ class RenderService(QObject):
         if pending is not None and not self._closing:
             self.submit(pending)
 
+    @Slot(object)
     def submit(self, request: RenderRequest) -> None:
         if self._closing:
             return

@@ -89,6 +89,7 @@ class WindowManager(QObject):
         return [self.registry._tab_dict[key] for session in self.sessions.values()
                 for key in session._ids if key in self.registry._tab_dict]
 
+    @Slot()
     def _sync_tabs(self):
         if self._press and self.dragTabId not in self.registry._tab_dict:
             self.cancelDrag()
@@ -183,6 +184,7 @@ class WindowManager(QObject):
             window.raise_()
             window.requestActivate()
 
+    @Slot()
     def _show_document(self):
         self.sessions.get(self._focused, self.mainWorkspace).showDocumentRequested.emit()
 

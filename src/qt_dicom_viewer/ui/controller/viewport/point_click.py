@@ -1,5 +1,5 @@
 """Distinguish a point placement from the first half of a finish gesture."""
-from PySide6.QtCore import QEvent, QObject, Qt, QTimer
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer, Slot
 from PySide6.QtGui import QGuiApplication
 from shiboken6 import isValid
 
@@ -34,6 +34,7 @@ class PendingPointClick(QObject):
         if cancel is not None:
             cancel()
 
+    @Slot()
     def confirm(self):
         apply = self._apply
         self._reset()
