@@ -14,7 +14,7 @@ from test_series_sidebar import (
     sidebar_scene as sidebar_scene,  # noqa: PLC0414 - shared pytest fixture
 )
 from test_tab_windows import detached
-from test_tag_qml import click, find
+from test_tag_qml import click, find, settled_point
 from test_two_d_layout import open_scene
 
 from qt_dicom_viewer.ui.window_geometry import WindowGeometry
@@ -32,6 +32,7 @@ def test_destroying_sized_windows_does_not_invalidate_shared_screens(qt_app):
 
 def assert_reading_area(window):
     area = find(window, 'workspaceLoader')
+    settled_point(area)
     assert area.width() >= window.property('minimumReadingWidth')
     assert area.height() >= window.property('minimumReadingHeight')
     corner = area.mapToScene(QPointF(area.width(), area.height()))
@@ -52,8 +53,7 @@ def test_default_and_minimum_window_keep_four_viewports_usable(sidebar_scene, tm
         wait_until(lambda: tab.activeViewport.loadState == 'ready')
     assert window.grabWindow().save(str(tmp_path / 'default-four-views.png'))
     window.resize(1, 1)
-    QTest.qWait(100)
-    assert (window.width(), window.height()) == (1280, 720)
+    wait_until(lambda: (window.width(), window.height()) == (1280, 720))
     assert_reading_area(window)
     for index in range(4):
         cell = find(window, f'twoDCell-{index}')
@@ -136,8 +136,7 @@ def test_detached_window_uses_same_reading_minimum(sidebar_scene, tmp_path):
     assert (other.width(), other.height()) == (1120, 840)
     assert (other.minimumWidth(), other.minimumHeight()) == (960, 720)
     other.resize(1, 1)
-    QTest.qWait(80)
-    assert (other.width(), other.height()) == (960, 720)
+    wait_until(lambda: (other.width(), other.height()) == (960, 720))
     assert_reading_area(other)
     assert other.grabWindow().save(str(tmp_path / 'detached-minimum.png'))
     app.windowManager.moveToMain(tab.tab_config.tab_id)

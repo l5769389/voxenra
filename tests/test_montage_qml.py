@@ -1,5 +1,8 @@
 from pathlib import Path
 
+from PySide6.QtQml import QQmlEngine, QQmlExpression
+from PySide6.QtTest import QTest
+
 from test_dicom_tags import qt_app
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click
@@ -21,6 +24,36 @@ def test_montage_entry_and_center_loader_are_wired(sidebar_scene) -> None:
     click(window, button)
     assert app.workspaceController.activeTabType == "montage"
     assert find(window, "montageGrid").isVisible()
+    assert not warnings, warnings
+
+
+def test_montage_details_tooltip_handles_detached_anchor(sidebar_scene) -> None:
+    window, app, records, warnings = sidebar_scene
+    app.workspaceController.createTab(records[0].series_instance_uid, "Montage", "montage")
+    button = find(window, "montageDetailsToggle")
+    tooltip = next(child for child in button.children()
+                   if child.inherits("QQuickToolTip") and child.objectName() != "montageDetailsToggle-hint")
+    initial_text = tooltip.property("text")
+    assert initial_text
+    click(window, button)
+    toggled_text = tooltip.property("text")
+    assert toggled_text and toggled_text != initial_text
+
+    # A Popup's visual anchor can disappear before the tooltip during a page
+    # transfer. Exercise that lifecycle directly instead of relying on timing.
+    detach = QQmlExpression(QQmlEngine.contextForObject(tooltip), tooltip, "parent = null")
+    detach.evaluate()
+    assert not detach.hasError(), detach.error().toString()
+    assert tooltip.property("parent") is None
+    click(window, button)
+    QTest.qWait(50)
+    assert not warnings, warnings
+    assert not tooltip.property("visible")
+    assert tooltip.property("text") == ""
+    assert tooltip.setProperty("parent", button)
+    assert tooltip.property("text") == initial_text
+    click(window, button)
+    assert tooltip.property("text") == toggled_text
     assert not warnings, warnings
 
 

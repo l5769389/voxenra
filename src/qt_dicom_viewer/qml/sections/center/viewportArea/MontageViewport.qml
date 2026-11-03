@@ -139,7 +139,7 @@ Item {
                             Components.AppToolTip {
                                 requested: (parent?.hovered ?? false)
                                 delay: 500
-                                text: parent.Accessible.name
+                                text: parent?.Accessible.name ?? ""
                             }
                         }
                     }
