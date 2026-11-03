@@ -10,7 +10,7 @@ from qt_dicom_viewer.model import DicomFolderScanSnapshot
 from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
 from test_pacs_qml import scene
 from test_pet_fusion import paired_series, qt_app
-from test_tag_qml import find, click, descendants, type_text
+from test_tag_qml import find, click, descendants, type_text, settled_point
 from test_dicom_tags import wait_until
 
 
@@ -83,17 +83,25 @@ def test_pet_panel_and_narrow_corner_lines(scene, paired_series, tmp_path, monke
     assert find(window, "pet3dUpper").width() > 100
     load_pet(scene, paired_series, tmp_path, "mpr")
     window.resize(1000, 600)
-    QTest.qWait(150)
-    wait_until(lambda: len([i for i in descendants(window.contentItem())
-                          if i.objectName() == "viewportMetadataOverlay"]) == 3)
-    corners = [i for i in descendants(window.contentItem()) if i.objectName() == "viewportMetadataOverlay"]
+    # A ready image can precede asynchronous QML incubation and layout. Inspect
+    # the three presented overlays only after each has a real viewport size.
+    def presented_corners():
+        return [i for i in descendants(window.contentItem())
+                if i.objectName() == "viewportMetadataOverlay" and i.isVisible()
+                and i.width() > 0 and i.height() > 0]
+    wait_until(lambda: len(presented_corners()) == 3)
+    corners = presented_corners()
+    for corner in corners:
+        settled_point(corner)
     assert len(corners) == 3 and all(i.property("fontScale") == .85 for i in corners)
-    text_lines = [i for i in descendants(window.contentItem()) if i.objectName() == "cornerInformationLine"]
+    text_lines = [i for corner in corners for i in descendants(corner)
+                  if i.objectName() == "cornerInformationLine"]
     assert text_lines
     for line in text_lines:
         assert line.property("maximumLineCount") == 1 and line.property("lineCount") == 1
         assert line.property("font").pixelSize() == 10
-    for scale in [i for i in descendants(window.contentItem()) if i.objectName() == "imageScaleBar"]:
+    for scale in [i for i in descendants(window.contentItem())
+                  if i.objectName() == "imageScaleBar" and i.isVisible()]:
         assert scale.property("barPixels") <= min(160, scale.width() * .25) + .001
     corner = find(window, "overlay-topRight")
     corner.setProperty("text", "Patient: " + "测试很长的患者姓名" * 8 + "\nID: " + "ABC-1234567890-" * 12)

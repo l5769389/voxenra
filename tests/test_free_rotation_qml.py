@@ -7,7 +7,7 @@ from PySide6.QtTest import QTest
 
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
-from test_tag_qml import find, click, descendants
+from test_tag_qml import find, click, descendants, settled_point
 from test_sidebar_style_polish import reveal
 from test_measurement_qml import _mouse_drag
 from test_mpr_voi_qml import _owner
@@ -24,7 +24,7 @@ def test_toolbar_rotation_is_continuous_and_children_are_one_shot(sidebar_scene,
     ws.createTab(records[0].series_instance_uid, "Rotation check", tab_type)
     wait_until(lambda: ws.activeViewport.loadState == "ready")
     vp = ws.activeViewport
-    QTest.qWait(100)
+    viewport = find(window, "imageViewport-" + vp.viewportId)
     rotate = find(window, ("compactTool-" if compact else "primaryTool-") + "rotate")
     if compact:
         rail = find(window, "compactToolRail")
@@ -32,9 +32,13 @@ def test_toolbar_rotation_is_continuous_and_children_are_one_shot(sidebar_scene,
     else:
         click(window, rotate)
     assert vp.activeInteraction == "rotate"
-    layer = next(item for item in descendants(window.contentItem())
-                 if item.objectName() == "dicomPixelLayer" and item.isVisible()
-                 and _owner(item) is vp)
+    def pixel_layer():
+        return next((item for item in descendants(viewport)
+                     if item.objectName() == "dicomPixelLayer" and item.isVisible()
+                     and item.width() > 0 and item.height() > 0 and _owner(item) is vp), None)
+    wait_until(lambda: pixel_layer() is not None)
+    layer = pixel_layer()
+    settled_point(layer)
     # The right-hand point on the initial MPR crosshair is deliberately used:
     # this must roll the display, not rotate a reconstruction plane.
     pivot = layer.mapToScene(QPointF(layer.width() / 2, layer.height() / 2))
