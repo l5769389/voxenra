@@ -13,6 +13,27 @@
 [macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
 
 
+## 贡献者与致谢
+
+感谢所有为 Voxenra 提供贡献与支持的朋友。
+
+<table>
+<tr>
+<td align="center">
+  <a href="https://github.com/JennyTuan">
+    <img src="https://avatars.githubusercontent.com/u/124764964?v=4&amp;s=128" width="64" height="64" alt="JennyTuan 的 GitHub 头像"><br>
+    <strong>JennyTuan</strong>
+  </a>
+</td>
+<td align="center">
+  <a href="https://github.com/bjmvictor">
+    <img src="https://avatars.githubusercontent.com/u/62158808?v=4&amp;s=128" width="64" height="64" alt="bjmvictor 的 GitHub 头像"><br>
+    <strong>bjmvictor</strong>
+  </a>
+</td>
+</tr>
+</table>
+
 ## 功能概览
 
 | 模块 | 功能 |
