@@ -90,6 +90,27 @@ def test_shortcut_binding_persists_after_reopen(qt_app, tmp_path):
     assert SettingsController(path=path).section('shortcuts')['bindings']['pan'] == 'Shift+P'
 
 
+def test_scroll_and_zoom_upgrade_preserves_remaps_and_cleared_keys(qt_app, tmp_path):
+    import json
+    path = tmp_path / 'settings.json'
+    def load_old(changes):
+        keys = {'scroll-first': 'Home', 'scroll-last': 'End', **changes}
+        path.write_text(json.dumps({'schemaVersion': 2, 'shortcuts': {'bindings': keys}}))
+        return SettingsController(path=path)
+
+    settings = load_old({})
+    keys = settings.section('shortcuts')['bindings']
+    assert (keys['scroll-first'], keys['scroll-last']) == ('H', 'L')
+    # A deliberate choice of the former default after upgrade survives the next launch.
+    assert settings.setValue('shortcuts', 'bindings', {**keys, 'scroll-first': 'Home'})
+    assert SettingsController(path=path).section('shortcuts')['bindings']['scroll-first'] == 'Home'
+    keys = load_old({'scroll-next': 'H', 'pan': 'L', 'zoom-2': '3'}).section('shortcuts')['bindings']
+    assert (keys['scroll-first'], keys['scroll-last']) == ('Home', 'End')
+    assert keys['zoom-2'] == '3' and keys['zoom-3'] == ''
+    keys = load_old({'scroll-first': 'F7', 'scroll-last': ''}).section('shortcuts')['bindings']
+    assert keys['scroll-first'] == 'F7' and keys['scroll-last'] == ''
+
+
 def test_montage_identity_notifies_on_restored_display(qt_app):
     from test_montage_controller import _controller
     from dataclasses import replace
@@ -120,3 +141,29 @@ def test_scale_does_not_compound_in_child_restart(tmp_path):
     path.write_text(json.dumps({'appearance': {'interfaceScale': 100}}))
     apply_interface_scale(path, env)
     assert float(env['QT_SCALE_FACTOR']) == 1.25
+
+
+def test_panel_bindings_share_keys_across_menus_and_migrate_retired_actions(qt_app):
+    from qt_dicom_viewer.settings.preferences import normalize_settings
+    from qt_dicom_viewer.settings.shortcuts import validate_bindings
+    raw = {'pan': 'F9', 'paint': 'F9', 'cpr-new': 'F9', 'cpr-edit': ''}
+    bindings = normalize_settings({'shortcuts': {'bindings': dict(raw, **{'cpr-details': 'D'})}})['shortcuts']['bindings']
+    assert set(raw.items()) <= set(bindings.items())
+    assert 'cpr-details' not in bindings
+    with pytest.raises(ValueError):
+        validate_bindings(dict(raw, erase='F9'))
+
+
+def test_view_reset_conflicts_only_in_its_member_menus_and_keeps_older_remaps(qt_app, tmp_path):
+    path = tmp_path / 'settings.json'
+    import json
+    path.write_text(json.dumps({'shortcuts': {'bindings': {'pan': 'R', 'cpr-next': 'L'}}}))
+    settings = SettingsController(path=path)
+    values = settings.section('shortcuts')['bindings']
+    assert values['pan'] == 'R' and values['view-reset'] == ''
+    assert values['cpr-next'] == values['measure:length'] == 'L'
+    assert not settings.setValue('shortcuts', 'bindings', dict(values, **{'view-reset': 'J'}))
+    assert not settings.setValue('shortcuts', 'bindings', dict(values, **{'view-reset': 'L'}))
+    # Free L in Scroll; the same key can still belong to CPR and Measure.
+    assert settings.setValue('shortcuts', 'bindings', dict(values, **{'scroll-last': '', 'view-reset': 'L'}))
+    assert SettingsController(path=path).section('shortcuts')['bindings']['view-reset'] == 'L'

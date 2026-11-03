@@ -280,6 +280,8 @@ def test_four_d_buttons_and_consistent_footer_in_real_qml(temporal):
             _click(view, slice_button)
             assert tab.playing and tab.playbackMode == 'slice'
             assert slice_button.parentItem().property('iconName') == 'cine-stop'
+            assert slice_button.parentItem().property('shortcutAction') == 'play'
+            assert not phase_button.parentItem().property('shortcutAction')
             assert phase_button.parentItem().property('iconName') == 'cine-4d-play'
             assert not phase_button.isEnabled() and slice_button.isEnabled()
             _click(view, phase_button)
@@ -289,6 +291,8 @@ def test_four_d_buttons_and_consistent_footer_in_real_qml(temporal):
             _click(view, phase_button)
             assert tab.playing and tab.playbackMode == 'phase'
             assert phase_button.parentItem().property('iconName') == 'cine-4d-stop'
+            assert phase_button.parentItem().property('shortcutAction') == 'play'
+            assert not slice_button.parentItem().property('shortcutAction')
             assert not slice_button.isEnabled() and phase_button.isEnabled()
             _click(view, slice_button)
             assert tab.playing and tab.playbackMode == 'phase'

@@ -32,15 +32,14 @@ ColumnLayout {
         title: qsTrId("appearance.theme")
         GridLayout {
             Layout.fillWidth: true
-            columns: page.width >= 540 ? 3 : page.width >= 340 ? 2 : 1
+            columns: page.width >= 600 ? 4 : page.width >= 304 ? 2 : 1
             columnSpacing: 12
             rowSpacing: 12
             Repeater {
-                model: ["dark", "graphite", "light"]
+                model: ["dark", "graphite", "light", "system"]
                 delegate: Components.AppButton {
                     id: choice
                     required property string modelData
-                    readonly property var previewPalette: Theme.previewColors(modelData)
                     objectName: "themeChoice-" + modelData
                     Layout.fillWidth: true
                     Layout.minimumWidth: 136
@@ -48,18 +47,35 @@ ColumnLayout {
                     Layout.preferredHeight: 92
                     checked: page.settingsController.values.appearance.theme === modelData
                     Accessible.name: modelData === "dark" ? qsTrId("appearance.dark")
-                        : modelData === "graphite" ? qsTrId("appearance.graphite") : qsTrId("appearance.light")
+                        : modelData === "graphite" ? qsTrId("appearance.graphite")
+                        : modelData === "light" ? qsTrId("appearance.light") : qsTrId("appearance.system")
                     onClicked: page.settingsController.setValue("appearance", "theme", modelData)
                     contentItem: ColumnLayout {
                         spacing: 8
-                        Rectangle {
+                        RowLayout {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-                            radius: 4
-                            color: choice.previewPalette.panelBackground
-                            border.color: choice.previewPalette.borderStrong
-                            Rectangle { x: 8; y: 8; width: 24; height: 20; radius: 2; color: choice.previewPalette.selectionBackground }
-                            Rectangle { x: 38; y: 8; width: parent.width - 46; height: 20; radius: 2; color: choice.previewPalette.canvasBackground }
+                            spacing: 2
+                            Repeater {
+                                model: choice.modelData === "system" ? ["dark", "light"] : [choice.modelData]
+                                delegate: Rectangle {
+                                    id: sample
+                                    required property string modelData
+                                    readonly property var colors: Theme.previewColors(modelData)
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
+                                    Layout.preferredHeight: 36
+                                    radius: 4
+                                    color: colors.panelBackground
+                                    border.color: colors.borderStrong
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 8
+                                        spacing: 4
+                                        Rectangle { Layout.preferredWidth: Math.min(24, parent.width / 3); Layout.fillHeight: true; radius: 2; color: sample.colors.selectionBackground }
+                                        Rectangle { Layout.fillWidth: true; Layout.fillHeight: true; radius: 2; color: sample.colors.canvasBackground }
+                                    }
+                                }
+                            }
                         }
                         Text {
                             Layout.fillWidth: true

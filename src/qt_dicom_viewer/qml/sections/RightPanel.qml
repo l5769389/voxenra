@@ -17,6 +17,10 @@ Rectangle {
     required property bool toolVisible
     required property var viewportController
     property bool collapsed: false
+    readonly property string readingMenu: visible && enabled && toolVisible && !compactPanel.visible
+        && (!collapsed || (compactRail.visible && compactRail.expandedTool === toolController?.activePanel))
+        ? toolController?.activePanel ?? "" : ""
+    readonly property var listPanel: collapsed ? compactRail.visiblePalette : toolDetailPanel.loadedPanel
     property bool expansionAllowed: true
     signal collapseRequested()
     property var tabController: null
@@ -53,13 +57,16 @@ Rectangle {
     onViewportControllerChanged: compactPanel.close()
     onVisibleChanged: if (!visible) compactPanel.close()
     function syncCompactTool() {
-        if (collapsed && toolController) {
-            const direct = ["window", "ct-window", "pet-window", "scroll", "pan", "zoom", "volume-rotate", "mpr-rotate-3d"]
-            const panels = (toolController.tools ?? []).some(t => t.toolType === "volume-preset")
-                ? ["volume-preset", "volume-direction", "mpr-layout", "viewport-settings"] : ["mpr-layout", "viewport-settings"]
-            if (!["measure", "rotate", "pseudocolor", "annotate", "play", "slice-play", ...panels].includes(toolController.activeTool))
-                toolController.activateDirectTool(direct.includes(toolController.activeTool) ? toolController.activeTool : "pan")
-        }
+        const tool = toolController?.activeTool
+        if (!visible || !compactRail.directTools.includes(tool)) return
+        if (collapsed && toolController.activePanel)
+            toolController.activateDirectTool(tool)
+        else if (!collapsed && !toolController.activePanel)
+            toolController.activateTool(tool)
+    }
+    function selectPrimaryTool(tool) {
+        if (visible && collapsed) compactRail.selectFromShortcut(tool)
+        else toolController?.activateTool(tool)
     }
     ColumnLayout {
         anchors.fill: parent
@@ -80,6 +87,7 @@ Rectangle {
             verticalAlignment: Text.AlignVCenter
         }
         Right.CompactToolRail {
+            id: compactRail
             visible: rightPanel.collapsed
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -102,9 +110,7 @@ Rectangle {
             tabController: rightPanel.tabController
 
             onToolTriggered: toolDefinition => {
-                rightPanel.toolController?.activateTool(
-                    toolDefinition.toolType
-                )
+                rightPanel.selectPrimaryTool(toolDefinition.toolType)
                 if (["play", "slice-play"].includes(toolDefinition.toolType))
                     rightPanel.tabController?.togglePlaybackMode(toolDefinition.toolType === "slice-play"
                         || !rightPanel.tabController.temporalPlayback ? "slice" : "phase")
@@ -232,6 +238,27 @@ Rectangle {
             contentWidth: width
             contentHeight: compactDetails.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
+            Components.ReadingShortcuts {
+                controller: typeof appController !== "undefined" ? appController.shortcutController : null
+                toolController: rightPanel.toolController
+                tabController: rightPanel.tabController
+                listPanel: compactDetails.loadedPanel
+                ownerPopup: compactPanel
+                menuOnly: true
+                activeMenu: compactPanel.opened && rightPanel.visible && rightPanel.enabled
+                    && compactPanel.panelTool === rightPanel.toolController?.activePanel ? compactPanel.panelTool : ""
+                cprPanelFocused: compactPanel.cprActions
+                controlFocused: Window.window?.activeFocusItem?.checkable !== undefined
+                function ownsFocus(item) {
+                    for (let current = item; current; current = current.parent) {
+                        if (current.selectByMouse !== undefined) return false
+                        if (current === compactPanel.contentItem || current === compactPanel.contentItem.parent) return true
+                    }
+                    return false
+                }
+                allowed: !!activeMenu
+                    && !controller?.recordingAction && ownsFocus(Window.window?.activeFocusItem)
+            }
             Right.ToolDetailPanel {
                 id: compactDetails
                 availableHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48)

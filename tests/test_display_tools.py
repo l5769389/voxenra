@@ -24,8 +24,8 @@ def test_all_reference_color_maps_have_renderable_luts() -> None:
     options = color_map_options()
 
     assert [option["label"] for option in options[:8]] == [
-        "BW", "BW Inverse (1)", "Black Body (1)", "Cardiac",
-        "Flow", "French", "GrayRainbow", "HotGreen",
+        "BW", "BW Inverse", "Black Body", "Cardiac",
+        "Flow", "French", "Gray Rainbow", "Hot Green",
     ]
     assert {option["colorMap"] for option in options} == set(COLOR_MAP_SPECS)
 

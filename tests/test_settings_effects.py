@@ -10,6 +10,7 @@ from PySide6.QtTest import QTest
 
 from qt_dicom_viewer.settings.preferences import DEFAULTS, normalize_settings
 from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from test_dicom_tags import wait_until
 from test_measurement_qml import qt_app, viewport, _scene, _mouse_drag, _visual_children
 from test_pacs_qml import scene
 from test_settings_redesign import open_page
@@ -31,7 +32,7 @@ def test_measurement_settings_update_existing_geometry_and_labels(viewport, kind
     if kind == 'angle':
         for point in [(30, 35), (95, 35), (95, 95)]:
             QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(pixels, *point))
-            QTest.qWait(20)
+        wait_until(lambda: bool(controller.measurementController.measurementItems))
     else:
         _mouse_drag(view, _scene(pixels, 30, 35), _scene(pixels, 95, 95))
     saved = deepcopy(controller.measurementController.measurementItems)

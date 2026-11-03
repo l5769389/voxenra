@@ -196,6 +196,7 @@ def test_every_preference_survives_process_restart(tmp_path):
                    'settingsNavigationWidth': 210, 'manualNavigationWidth': 320, 'rememberedMprLayout': 'quad',
                    'rememberedFourDLayout': 'rows', 'settingsCollapsedGroups': ['measurement-cards', 'appearance-theme']},
         'export': {'directory': str(tmp_path)},
+        'paletteList': {'favorites': ['hotIron', 'blackBody']},
         'colormap': {'gray': 'bwInverse', 'pet': 'hotIron'},
         'window': {'hidden': ['ct-lung'], 'custom': [dict(presetId='custom-restart', label='Restart',
                                                        width=900.0, center=-400.0, enabled=False)],

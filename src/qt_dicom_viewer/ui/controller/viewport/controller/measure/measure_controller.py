@@ -404,12 +404,14 @@ class MeasurementController(QObject):
         self._path_preview = None
         self.activeTransactionChanged.emit()
 
-    def finish_path(self):
+    def finish_path(self, *, exit_incomplete=False):
         if not self._creating_path():
             return False
         transaction = self._active_transaction
         if len(transaction.draft.points) < 3:
-            return True  # Keep the unfinished path available for more clicks.
+            if exit_incomplete:
+                self.cancel_transaction()
+            return True
         if not self._valid_path_points(transaction.draft.points, transaction.draft.kind,
                                        getattr(transaction.draft, 'smooth', False)):
             self._path_invalid = True

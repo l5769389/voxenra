@@ -41,7 +41,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-mtf.png": "28-mtf-analysis.png",
 }
 for media, source in {
-    'feature-cpr-reference.png': '61-cpr-reference-2.2.0.png',
+    'feature-cpr-reference.png': '61-cpr-reference-2.3.0.png',
     'feature-dimse-settings.png': '51-dimse-settings.png',
     'feature-dimse-import.gif': '52-dimse-import.gif',
     'feature-dimse-import.png': '52-dimse-import.png',
@@ -399,7 +399,7 @@ PRODUCT_COPY = {
         ),
         "workflow_images": (("拖拽 ZIP 压缩包导入", "feature-zip-drag.gif"), ("PACS 检索与序列选择", "feature-pacs.png"), ("保存与恢复工作区", "feature-workspace-overview.png")),
         "cpr_title": "沿路径查看曲面与横截面",
-        "cpr_body": "在 CT 或 MR 参考影像中逐点绘制路径，按毫米定位横截面。锁定路径查看参考图，或返回已有测量的历史切面。路径支持编辑、撤销与工作区保存；物理测量在参考图和横截面完成。",
+        "cpr_body": "在 CT 或 MR 参考影像中逐点绘制路径，按毫米定位横截面。完成路径后按 V 在参考图和结果间切换。可标记沿线距离区间，查看采样范围，或返回已有测量的历史切面。路径支持编辑、撤销与工作区保存；物理测量在参考图和横截面完成。",
         "cpr_caption": "手动 CPR：参考平面、曲面图和横截面联动",
         "alt_cpr": "CPR 曲面重建与路径编辑界面",
         "viewing_title": "从二维切片到三维重建",
@@ -426,7 +426,7 @@ PRODUCT_COPY = {
         "alt_analysis": "Voxenra 中的 MPR 分割与统计面板",
         "measurement_caption": "ROI 统计与测量结果列表",
         "appearance_title": "适合你的外观与操作习惯",
-        "appearance_body": "支持深色、中性深灰与浅色主题；可调整界面大小、鼠标操作和工具快捷键，偏好在重启后保留。",
+        "appearance_body": "界面可跟随系统切换深浅色，也可固定为深色、中性深灰或浅色。可调整界面大小、鼠标操作和工具快捷键。",
         "appearance_captions": ("深色", "中性深灰", "浅色"),
     },
     "en": {
@@ -458,7 +458,7 @@ PRODUCT_COPY = {
         ),
         "workflow_images": (("Drag a ZIP archive to import", "feature-zip-drag.gif"), ("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace-overview.png")),
         "cpr_title": "Follow a path through curved and cross-sectional views",
-        "cpr_body": "Trace a path on CT or MR images and enter a distance in mm to locate a cross-section. Browse locked reference images or return to the original plane of a saved measurement. Edit or undo path changes and save them in a workspace. Physical measurements use reference planes and cross-sections.",
+        "cpr_body": "Trace a path on CT or MR images and enter a distance in mm to locate a cross-section. Press V to switch between references and results, mark a centerline interval, or inspect sampling guides. Select a saved measurement to return to its original plane. Edit or undo path changes and save them in a workspace. Physical measurements use reference planes and cross-sections.",
         "cpr_caption": "Manual CPR with linked reference planes, curved image, and cross-section",
         "alt_cpr": "CPR reconstruction and path editing interface",
         "viewing_title": "From 2D slices to 3D reconstruction",
@@ -485,7 +485,7 @@ PRODUCT_COPY = {
         "alt_analysis": "MPR segmentation and statistics panel in Voxenra",
         "measurement_caption": "ROI statistics and measurement list",
         "appearance_title": "Appearance and controls",
-        "appearance_body": "Choose dark, neutral gray, or light, and customize interface size, mouse bindings, and tool shortcuts. Preferences persist after restart.",
+        "appearance_body": "Follow the system appearance or choose a fixed dark, neutral gray, or light theme. Customize interface size, mouse bindings, and tool shortcuts. Preferences persist after restart.",
         "appearance_captions": ("Dark", "Neutral gray", "Light"),
     },
 }

@@ -74,11 +74,7 @@ ColumnLayout {
                     )
                 }
 
-                Components.AppToolTip {
-                    visible: (parent?.hovered ?? false) || (parent?.pressed ?? false)
-                    delay: 250
-                    text: Math.round(parent.value) + " FPS"
-                }
+                Accessible.name: qsTrId("playback.frameRate")
 
                 background: Rectangle {
                     x: fpsSlider.leftPadding
@@ -206,7 +202,7 @@ ColumnLayout {
                 }
 
                 Components.AppToolTip {
-                    visible: (parent?.hovered ?? false) || (parent?.pressed ?? false)
+                    requested: phaseSlider.pressed && Math.round(phaseSlider.value) !== (playbackPanel.tabController?.currentPhaseIndex ?? 0) + 1
                     delay: 250
                     text: qsTrId("playback.phasePosition").arg(Math.round(parent.value))
                 }

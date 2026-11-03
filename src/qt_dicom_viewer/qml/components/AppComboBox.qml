@@ -67,6 +67,8 @@ Basic.ComboBox {
         }
     }
     popup: Basic.Popup {
+        id: options
+        readonly property PopupScope shortcutScope: PopupScope { popup: options }
         y: control.height + 4
         width: Math.max(control.width, control.minimumPopupWidth)
         implicitHeight: Math.min(contentItem.implicitHeight + 8, 320)

@@ -7,6 +7,9 @@ import "../theme"
 
 Components.AppDialog {
     id: dialog
+    // Downloading or restarting needs an explicit choice.
+    defaultButton: controller.busy ? null : controller.hasUpdate ? cancelButton : checkButton
+    escapeButton: cancelButton
     Components.DelayedActivity { id: feedback; active: dialog.visible && dialog.controller.busy }
     objectName: "applicationUpdateDialog"
     required property var controller
@@ -102,6 +105,7 @@ Components.AppDialog {
             onClicked: dialog.controller.openLog()
         }
         Components.AppButton {
+            id: cancelButton
             objectName: "applicationUpdateCancel"
             text: qsTrId("updates.cancel")
             onClicked: dialog.reject()
@@ -115,6 +119,7 @@ Components.AppDialog {
             onClicked: dialog.controller.canInstall ? dialog.controller.install() : dialog.controller.openDownloads()
         }
         Components.AppButton {
+            id: checkButton
             visible: !dialog.controller.hasUpdate && !dialog.controller.busy
             text: qsTrId("updates.check")
             onClicked: dialog.controller.check()

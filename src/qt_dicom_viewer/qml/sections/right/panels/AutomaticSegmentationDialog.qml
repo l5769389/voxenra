@@ -7,6 +7,8 @@ import "../../../theme"
 
 Components.AppDialog {
     id: dialog
+    defaultButton: controller?.busy ? null : startButton
+    escapeButton: controller?.busy ? startButton : null
     Components.DelayedActivity { id: feedback; active: dialog.visible && (dialog.controller?.busy ?? false) }
     objectName: "automaticSegmentationDialog"
     property var controller: null
@@ -127,6 +129,7 @@ Components.AppDialog {
             }
             Item { Layout.fillWidth: true }
             Components.AppButton {
+                id: startButton
                 objectName: "automaticSegmentationStart"
                 text: dialog.controller?.busy ? qsTrId("autoSeg.cancel") : qsTrId("autoSeg.start")
                 enabled: !!dialog.controller && (dialog.controller.busy || (dialog.controller.ready && dialog.controller.hasTarget))

@@ -12,7 +12,8 @@ Basic.Popup {
     // Keep the link and card in one hover surface; native popups grab the mouse.
     popupType: Basic.Popup.Item
     modal: false
-    focus: false
+    focus: true
+    DialogKeys { popup: card; defaultButton: openLocation }
     closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutside
     width: 340
     height: content.implicitHeight + padding * 2
@@ -52,6 +53,7 @@ Basic.Popup {
             Layout.fillWidth: true
             spacing: 8
             AppButton {
+                id: openLocation
                 objectName: "workspaceRecoveryOpen"
                 Layout.fillWidth: true
                 compact: true

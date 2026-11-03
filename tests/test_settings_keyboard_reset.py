@@ -87,7 +87,15 @@ def test_shortcut_reset_requires_confirmation_and_preserves_mouse_settings(sideb
     QTest.keyClick(window, Qt.Key_Escape)
     assert settings.values == before
     click(window, reset)
-    click(window, find(window, 'confirmSettingsReset'))
+    confirm = find(window, 'confirmSettingsReset')
+    assert confirm.property('dialogKeyHint') == 'Enter'
+    cancel = find(window, 'cancelSettingsReset')
+    assert cancel.property('dialogKeyHint') == 'Esc'
+    cancel.forceActiveFocus(Qt.TabFocusReason)
+    QTest.keyClick(window, Qt.Key_Return)
+    assert settings.values == before and not cancel.isVisible()
+    click(window, reset)
+    QTest.keyClick(window, Qt.Key_Enter, Qt.KeypadModifier)
     assert app.shortcutController.hint('window') == 'W'
     assert settings.section('input') == before['input']
     restored = SettingsController(path=settings._path)

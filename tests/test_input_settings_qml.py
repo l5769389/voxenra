@@ -123,8 +123,11 @@ def test_mpr_brush_erase_shortcuts_and_history(sidebar_scene):
     window.requestActivate(); QTest.qWait(80)
     viewport=visible_viewport(window)
     click(window,viewport)
-    QTest.keyClick(window,Qt.Key_B)
     tab=ws.activeTab
+    QTest.keyClick(window,Qt.Key_B)
+    assert tab.toolController.activePanel != 'segmentation'
+    click(window, find(window, 'primaryTool-segmentation'))
+    QTest.keyClick(window,Qt.Key_B)
     assert tab.toolController.activeTool=='segmentation'
     assert tab.voiController.editMode=='paint'
     QTest.keyClick(window,Qt.Key_E)
@@ -133,6 +136,8 @@ def test_mpr_brush_erase_shortcuts_and_history(sidebar_scene):
     count=len(tab.voiController.items)
     QTest.keyClick(window,Qt.Key_W)
     assert tab.toolController.activeInteraction=='window'
+    QTest.keyClick(window,Qt.Key_B)
+    assert tab.toolController.activeInteraction=='window' and tab.voiController.editMode=='erase'
     assert len(tab.voiController.items)==count
     assert not warnings,warnings
 

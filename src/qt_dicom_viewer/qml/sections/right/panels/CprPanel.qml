@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import "../../../components/ShortcutCaption.js" as KeysText
 import "../../../components" as Components
 import "../../../theme"
 
@@ -8,13 +9,15 @@ ColumnLayout {
     id: panel
     objectName: "cprPanel"
     required property var controller
-    property bool advanced: false
-    property bool details: false
-    property bool interval: false
+    readonly property var shortcuts: typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : []
+
+    property bool advanced: controller?.panelSections.includes("cpr-advanced") ?? false
+    property bool details: controller?.panelSections.includes("cpr-details") ?? false
+    property bool interval: controller?.panelSections.includes("cpr-interval") ?? false
     readonly property bool drawing: controller?.drawing ?? false
     readonly property bool editing: !drawing && ((controller?.pathEditing ?? false) || (controller?.finishing ?? false))
     readonly property bool hasPath: (controller?.selectedPathId ?? "") !== ""
-    readonly property int pointCount: controller?.controlPoints.length ?? 0
+    readonly property int pointCount: controller?.pointCount ?? 0
     readonly property bool results: controller?.resultView ?? false
     readonly property bool historical: controller?.activeViewport?.historicalPlane ?? false
     spacing: 8
@@ -60,6 +63,25 @@ ColumnLayout {
         currentIndex: model.findIndex(item => item.pathId === panel.controller?.selectedPathId)
         onActivated: panel.controller.selectPath(model[currentIndex].pathId)
     }
+    RowLayout {
+        Layout.fillWidth: true
+        visible: panel.hasPath && !panel.results && !panel.drawing && !panel.editing
+        enabled: !!panel.controller?.referencesReady && !panel.controller?.sourceMismatch
+        Components.AppButton {
+            objectName: "cprAdditionalPath"
+            Layout.fillWidth: true
+            shortcutTitle: qsTrId("cpr.new")
+            captionKey: KeysText.hint("cpr-new", panel.shortcuts)
+            onClicked: panel.controller.startPath()
+        }
+        Components.AppButton {
+            objectName: "cprEditPath"
+            Layout.fillWidth: true
+            shortcutTitle: qsTrId("cpr.edit")
+            captionKey: KeysText.hint("cpr-edit", panel.shortcuts)
+            onClicked: panel.controller.setPathEditing(true)
+        }
+    }
     Text {
         objectName: "cprPathStatus"
         visible: !panel.results
@@ -89,7 +111,8 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.drawing || panel.editing
         compact: true
-        text: qsTrId(panel.drawing ? "cpr.undoPoint" : "cpr.deletePoint")
+        shortcutTitle: qsTrId(panel.drawing ? "cpr.undoPoint" : "cpr.deletePoint")
+        captionKey: panel.drawing ? "Backspace" : "Delete"
         iconName: panel.drawing ? "undo" : "delete"
         enabled: panel.controller?.canDeletePoint ?? false
         onClicked: panel.controller.deleteSelectedPoint()
@@ -103,7 +126,7 @@ ColumnLayout {
         iconName: panel.details ? "chevron-up" : "chevron-down"
         checkable: true
         checked: panel.details
-        onClicked: panel.details = !panel.details
+        onClicked: panel.controller.togglePanelSection("cpr-details")
     }
     ColumnLayout {
         Layout.fillWidth: true
@@ -137,7 +160,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.min(120, count * 30)
             clip: true
-            model: panel.controller?.controlPoints ?? []
+            model: panel.details && !panel.results ? panel.controller?.controlPoints ?? [] : []
             delegate: Components.AppButton {
                 required property var modelData
                 width: pointList.width
@@ -164,22 +187,9 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.hasPath && !panel.drawing
         spacing: 6
-        Text {
-            objectName: "cprCurrentParameters"
-            Layout.fillWidth: true
-            Layout.topMargin: 6
-            text: qsTrId("cpr.currentParameters")
-            wrapMode: Text.Wrap
-            font.weight: Font.DemiBold
-            color: Theme.textPrimary
-            font.pixelSize: 12
-        }
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("cpr.sectionPosition")
-            font.weight: Font.DemiBold
-            color: Theme.textPrimary
-            font.pixelSize: 12
+        Components.PanelHeading {
+            title: qsTrId("cpr.navigate")
+            explanation: qsTrId("cpr.navigationHelp")
         }
         RowLayout {
             Layout.fillWidth: true
@@ -204,7 +214,8 @@ ColumnLayout {
                 objectName: "cprPreviousSample"
                 Layout.fillWidth: true
                 compact: true
-                text: qsTrId("cpr.previousSample")
+                shortcutTitle: qsTrId("cpr.previousSample")
+                captionKey: KeysText.hint("cpr-prev", panel.shortcuts)
                 enabled: (panel.controller?.positionMm ?? 0) > 0
                 onClicked: panel.controller.stepPosition(-1)
             }
@@ -212,7 +223,8 @@ ColumnLayout {
                 objectName: "cprNextSample"
                 Layout.fillWidth: true
                 compact: true
-                text: qsTrId("cpr.nextSample")
+                shortcutTitle: qsTrId("cpr.nextSample")
+                captionKey: KeysText.hint("cpr-next", panel.shortcuts)
                 enabled: (panel.controller?.positionMm ?? 0) < (panel.controller?.totalLength ?? 0)
                 onClicked: panel.controller.stepPosition(1)
             }
@@ -234,12 +246,10 @@ ColumnLayout {
             Accessible.name: qsTrId("cpr.position")
             onMoved: panel.controller.setPositionMm(value)
         }
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("cpr.reconstruction")
-            font.weight: Font.DemiBold
-            color: Theme.textPrimary
-            font.pixelSize: 12
+        Components.PanelHeading {
+            objectName: "cprCurrentParameters"
+            title: qsTrId("cpr.currentParameters")
+            explanation: qsTrId("cpr.projectionHelp")
         }
         Components.AppComboBox {
             objectName: "cprProjection"
@@ -267,10 +277,18 @@ ColumnLayout {
             checked: panel.advanced
             iconName: panel.advanced ? "chevron-up" : "chevron-down"
             text: qsTrId("cpr.advanced")
-            onClicked: panel.advanced = !panel.advanced
+            onClicked: panel.controller.togglePanelSection("cpr-advanced")
+        }
+        Text {
+            visible: panel.advanced
+            Layout.fillWidth: true
+            text: qsTrId("cpr.samplingHelp")
+            color: Theme.textSecondary
+            wrapMode: Text.Wrap
+            font.pixelSize: 11
         }
         Repeater {
-            model: ["width", "crossWidth", "step"]
+            model: ["width", "step", "crossWidth"]
             delegate: CprParameterField {
                 required property string modelData
                 visible: panel.advanced
@@ -280,13 +298,53 @@ ColumnLayout {
         }
         Components.AppButton {
             Layout.fillWidth: true
+            objectName: "cprSamplingGuides"
+            compact: true
+            checkable: true
+            checked: panel.controller?.showSamplingGuides ?? false
+            iconName: checked ? "visible" : "hidden"
+            text: qsTrId("cpr.showGuides")
+            onClicked: panel.controller.setShowSamplingGuides(!panel.controller.showSamplingGuides)
+            Components.AppToolTip { requested: parent.hovered; text: qsTrId("cpr.guidesHelp") }
+        }
+        Components.AppButton {
+            Layout.fillWidth: true
             objectName: "cprInterval"
             compact: true
             checkable: true
             checked: panel.interval
             iconName: panel.interval ? "chevron-up" : "chevron-down"
             text: qsTrId("cpr.intervalSection")
-            onClicked: panel.interval = !panel.interval
+            onClicked: panel.controller.togglePanelSection("cpr-interval")
+        }
+        Text {
+            visible: panel.interval
+            Layout.fillWidth: true
+            text: qsTrId(panel.historical ? "cpr.intervalHistoryHelp" : "cpr.intervalHelp")
+            color: Theme.textSecondary
+            wrapMode: Text.Wrap
+            font.pixelSize: 11
+        }
+        RowLayout {
+            visible: panel.interval
+            Layout.fillWidth: true
+            enabled: (panel.controller?.intervalPositionReady ?? false) && !panel.historical
+            Components.AppButton {
+                objectName: "cprMarkStart"
+                Layout.fillWidth: true
+                compact: true
+                shortcutTitle: qsTrId("cpr.markStart")
+                captionKey: KeysText.hint("cpr-start", panel.shortcuts)
+                onClicked: panel.controller.setParameter("rangeStart", panel.controller.positionMm)
+            }
+            Components.AppButton {
+                objectName: "cprMarkEnd"
+                Layout.fillWidth: true
+                compact: true
+                shortcutTitle: qsTrId("cpr.markEnd")
+                captionKey: KeysText.hint("cpr-end", panel.shortcuts)
+                onClicked: panel.controller.setParameter("rangeEnd", panel.controller.positionMm)
+            }
         }
         Repeater {
             model: ["rangeStart", "rangeEnd"]
@@ -300,10 +358,15 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             visible: panel.interval
-            text: qsTrId("cpr.interval").arg(((panel.controller?.parameters.rangeEnd ?? 0) - (panel.controller?.parameters.rangeStart ?? 0)).toFixed(1))
+            text: qsTrId("cpr.interval").arg(((panel.controller?.parameters.rangeEnd ?? 0) - (panel.controller?.parameters.rangeStart ?? 0)).toFixed(2))
             color: Theme.textSecondary
             font.pixelSize: 12
             wrapMode: Text.Wrap
+        }
+        Components.AppLinkButton {
+            visible: panel.interval && (panel.controller?.hasInterval ?? false)
+            text: qsTrId("cpr.clearInterval")
+            onClicked: panel.controller.clearInterval()
         }
     }
 }

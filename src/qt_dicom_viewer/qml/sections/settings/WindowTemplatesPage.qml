@@ -83,6 +83,7 @@ ColumnLayout {
                     Layout.fillWidth: true; spacing: 12
                     Components.AppButton {
                         objectName: "settingWindowFavorite-" + entry.modelData.presetId
+                        hintText: qsTrId(checked ? "window.favoriteRemove" : "window.favoriteAdd")
                         Layout.preferredWidth: 28; Layout.preferredHeight: 28
                         minimumButtonWidth: 28; compact: true
                         iconName: checked ? "star-filled" : "star"

@@ -60,7 +60,7 @@ Item {
                     }
                     HoverHandler { id: serviceHover }
                     Components.AppToolTip {
-                        visible: serviceHover.hovered && !serviceButton.enabled
+                        requested: serviceHover.hovered && !serviceButton.enabled
                         delay: 400
                         text: serviceEntry.modelData.label
                     }

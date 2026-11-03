@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Event
 import time
+from uuid import uuid4
 from weakref import WeakSet
 
 from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer, QStandardPaths, QCoreApplication, QEvent
@@ -670,7 +671,7 @@ class WorkspaceDocumentController(QObject):
             and (tab["type"] == "cpr" or all(uid in available for uid in tab["series"]))}
         for tab in doc["tabs"]:
             if tab["type"] == "cpr" and "closedId" not in tab and any(uid not in available for uid in tab["series"]):
-                self.workspace._closed_tab_snapshots[f'{tab["series"][0]}_cpr'] = dumps(tab)
+                self.workspace._closed_tab_snapshots[str(uuid4())] = dumps(tab)
         self._load_queue = [(index, tab) for index, tab in enumerate(doc["tabs"])
                             if "closedId" not in tab and all(uid in available for uid in tab["series"])]
         self._load_queue.sort(key=lambda item: 0 if "fusionSource" in item[1] else 1)
@@ -780,7 +781,7 @@ class WorkspaceDocumentController(QObject):
                 self.workspace.createFusionTab(*uids, isolated=bool(fusion_volume and self._reopening_key))
             else:
                 self.workspace.createTab(uids[0], record["label"], kind,
-                                         phase_identifiers=record.get("phaseIdentifiers"))
+                                         phase_identifiers=record.get("phaseIdentifiers"), restore_cpr=kind == "cpr")
             tab = self.workspace.activeTab
             if tab is None:
                 raise ValueError(_msg('text.0430'))

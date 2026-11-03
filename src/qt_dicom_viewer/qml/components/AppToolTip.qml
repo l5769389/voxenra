@@ -45,6 +45,15 @@ Basic.ToolTip {
     x: popupPosition.x
     y: popupPosition.y
     onAboutToShow: geometryRevision++
+    property bool requested: false
+    property string displayedCaption: {
+        if (parent?.displayedButtonCaption !== undefined) return parent.displayedButtonCaption
+        const label = parent?.contentItem
+        return label?.visible && !label.truncated ? label.text ?? "" : ""
+    }
+    visible: requested && parent?.visible === true && anchorWindow?.visible === true
+        && text.length > 0 && text !== displayedCaption && Qt.application.state === Qt.ApplicationActive
+        && (anchorWindow?.active || anchorWindow?.transientParent?.active || false)
     // Explicit styling also applies to controls backed by the system light palette.
     popupType: Basic.Popup.Window
     focus: false
@@ -70,6 +79,7 @@ Basic.ToolTip {
     }
     contentItem: Text {
         id: label
+        readonly property bool passiveToolTip: true
         text: tip.text
         textFormat: Text.PlainText
         color: Theme.textPrimary

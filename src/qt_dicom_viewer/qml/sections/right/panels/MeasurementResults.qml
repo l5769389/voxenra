@@ -68,9 +68,9 @@ ColumnLayout {
                     checkable: true
                     checked: !row.modelData.hidden
                     iconName: checked ? "visible" : "hidden"
-                    Accessible.name: qsTrId("results.visible")
+                    Accessible.name: qsTrId(checked ? "action.hideMeasurement" : "action.showMeasurement")
+                    hintText: Accessible.name
                     onClicked: root.controller.setHidden(row.modelData.key, !checked)
-                    Widgets.AppToolTip { visible: visibilityButton.hovered; text: qsTrId("results.visible") }
                 }
                 Widgets.AppButton {
                     id: lockButton
@@ -81,20 +81,20 @@ ColumnLayout {
                     checkable: true
                     checked: row.modelData.locked
                     iconName: checked ? "locked" : "unlocked"
-                    Accessible.name: qsTrId("results.lock")
+                    Accessible.name: qsTrId(checked ? "action.unlockMeasurement" : "action.lockMeasurement")
+                    hintText: Accessible.name
                     onClicked: root.controller.setLocked(row.modelData.key, checked)
-                    Widgets.AppToolTip { visible: lockButton.hovered; text: qsTrId("results.lock") }
                 }
                 Widgets.AppButton {
                     id: deleteButton
                     objectName: "deleteMeasurement-" + row.index
                     iconName: "delete"
                     Accessible.name: qsTrId("results.delete")
+                    hintText: Accessible.name
                     minimumButtonWidth: 28
                     Layout.preferredWidth: 28
                     compact: true
                     onClicked: root.controller.remove(row.modelData.key)
-                    Widgets.AppToolTip { visible: deleteButton.hovered; text: qsTrId("results.delete") }
                 }
             }
             Widgets.AppButton {

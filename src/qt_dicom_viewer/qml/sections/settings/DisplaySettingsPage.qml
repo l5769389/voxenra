@@ -33,6 +33,8 @@ Item {
     }
     Components.AppDialog {
         id: resetDialog
+        defaultButton: confirmReset
+        escapeButton: cancelReset
         objectName: "settingsResetDialog"
         property string section: ""
         property string sectionTitle: ""
@@ -50,11 +52,13 @@ Item {
         }
         footer: Components.AppDialogFooter {
             Components.AppButton {
+                id: cancelReset
                 objectName: "cancelSettingsReset"
                 text: qsTrId("text.0539")
                 onClicked: resetDialog.reject()
             }
             Components.AppButton {
+                id: confirmReset
                 objectName: "confirmSettingsReset"
                 text: qsTrId("settings.reset.confirm")
                 actionRole: resetDialog.section === "window" ? "danger" : "primary"

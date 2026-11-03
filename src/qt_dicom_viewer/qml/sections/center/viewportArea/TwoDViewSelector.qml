@@ -54,7 +54,7 @@ Basic.ComboBox {
         radius: 4
     }
     Components.AppToolTip {
-        visible: control.hovered && !control.popup.visible && !control.pressed
+        requested: control.hovered && !control.popup.visible && !control.pressed
         text: control.currentText + "\n" + control.modeHint + (control.seriesLabel ? "\n" + control.seriesLabel : "")
         placement: "right"
     }
@@ -100,6 +100,8 @@ Basic.ComboBox {
         }
     }
     popup: Basic.Popup {
+        id: options
+        readonly property Components.PopupScope shortcutScope: Components.PopupScope { popup: options }
         y: control.height + 4
         width: 220
         padding: 4

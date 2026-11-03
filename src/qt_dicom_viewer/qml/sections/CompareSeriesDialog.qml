@@ -7,6 +7,8 @@ import "../theme"
 
 Components.AppDialog {
     id: dialog
+    defaultButton: confirmButton
+    escapeButton: cancelButton
     objectName: "compareSeriesDialog"
     required property var controller
     required property var thumbnails
@@ -37,7 +39,7 @@ Components.AppDialog {
         target: dialog.controller
         function onChanged() { dialog.syncVisibility() }
     }
-    onClosed: controller.cancel()
+    onClosed: if (controller.dialogOpen) controller.cancel()
 
     component SeriesSummary: RowLayout {
         id: summary
@@ -135,12 +137,14 @@ Components.AppDialog {
     }
     footer: Components.AppDialogFooter {
         Components.AppButton {
+            id: cancelButton
             objectName: "cancelCompare"
             text: qsTrId("text.0539")
             minimumButtonWidth: 80
             onClicked: dialog.controller.cancel()
         }
         Components.AppButton {
+            id: confirmButton
             objectName: "confirmCompare"
             text: qsTrId("compare.open")
             iconName: dialog.controller.mode === "mpr" ? "nav-compare-mpr" : "nav-compare-2d"

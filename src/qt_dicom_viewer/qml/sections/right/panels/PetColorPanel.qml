@@ -11,6 +11,8 @@ ColumnLayout {
     property bool fusionTarget: false
     property bool showAllPalettes: false
     readonly property var commonPalettes: ["grayscale-inverted", "grayscale", "hotIron", "hotMetal", "pet", "rainbow"]
+    readonly property alias shortcutCount: palette.shortcutCount
+    function selectShortcutIndex(index) { palette.selectShortcutIndex(index) }
     spacing: 12
 
     Text { text: qsTrId("text.0309"); color: Theme.textPrimary; font.pixelSize: 14; font.bold: true }
@@ -35,13 +37,14 @@ ColumnLayout {
         }
     }
     PseudoColorPanel {
+        id: palette
         Layout.fillWidth: true
         description: panel.fusionTarget
             ? qsTrId("text.1043")
             : qsTrId("text.1044")
         viewportController: QtObject {
             readonly property var colorMapOptions: panel.controller.petController.colorMapOptions.filter(
-                entry => panel.showAllPalettes || panel.commonPalettes.includes(entry.colorMap)
+                entry => panel.showAllPalettes || panel.commonPalettes.includes(entry.colorMap) || palette.favorites.includes(entry.colorMap)
                     || entry.colorMap === activeColorMap)
             readonly property string activeColorMap: panel.fusionTarget
                 ? panel.controller.fusionColorMap : panel.controller.petColorMap

@@ -27,6 +27,7 @@ Basic.Popup {
     popupType: Basic.Popup.Window
     modal: false
     focus: true
+    DialogKeys { popup: flyout }
     padding: 8
     margins: 8
     background: Rectangle {

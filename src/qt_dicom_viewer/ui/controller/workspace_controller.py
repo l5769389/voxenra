@@ -3,6 +3,7 @@ from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 import logging
 from dataclasses import replace
 from weakref import WeakKeyDictionary
+from uuid import uuid4
 
 from PySide6.QtCore import QObject, Slot, Property, Signal
 
@@ -126,7 +127,9 @@ class WorkspaceController(QObject):
                 if any(getattr(v, "editBusy", False) for v in tab.viewports_by_id.values()):
                     raise ValueError(_msg('text.0410'))
                 if self._has_editing_work(tab):
-                    snapshots[key] = dumps(tab_snapshot(tab))
+                    # Closing several CPR sessions for one series must retain each result.
+                    snapshot_key = str(uuid4()) if tab.tab_config.tab_type == TabType.CPR else key
+                    snapshots[snapshot_key] = dumps(tab_snapshot(tab))
         except Exception as error:
             if document is not None:
                 document._message, document._error = error_message(error), True
@@ -348,7 +351,7 @@ class WorkspaceController(QObject):
     def createTab(self,series_uid: str,
                         tab_label: str,
                         tab_type: TabType,
-                        *, phase_identifiers=None,
+                        *, phase_identifiers=None, restore_cpr=False,
                    ):
         try:
             tab_type = TabType(tab_type)
@@ -357,12 +360,25 @@ class WorkspaceController(QObject):
             return
         if tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL, TabType.COMPARE_2D, TabType.COMPARE_MPR):
             return
-        if self._reopen_retained(f'{series_uid}_{tab_type}'):
+        tab_id = f'{series_uid}_{tab_type}'
+        if tab_type == TabType.CPR:
+            if restore_cpr:
+                if tab_id in self._tab_dict:
+                    tab_id = f'{tab_id}:{uuid4()}'
+            else:
+                for key in self._tab_mru:
+                    existing = self._tab_dict.get(key)
+                    if (existing is not None and existing.tab_config.tab_type == TabType.CPR
+                            and existing.tab_config.series_metas[0].series_uid == series_uid):
+                        self.activateTabId(key)
+                        return
+        elif self._reopen_retained(tab_id):
             return
         tab, created = self._create_or_activate_tab(
             series_uid,
             tab_label,
             tab_type,
+            tab_id=tab_id,
             phase_identifiers=phase_identifiers,
         )
         if created and tab is not None:
@@ -376,9 +392,9 @@ class WorkspaceController(QObject):
         series_uid: str,
         tab_label: str,
         tab_type: TabType,
-        *, phase_identifiers=None,
+        *, tab_id=None, phase_identifiers=None,
     ) -> tuple[TabController | None, bool]:
-        tab_id = f'{series_uid}_{tab_type}'
+        tab_id = tab_id or f'{series_uid}_{tab_type}'
         if tab_id == self._active_tab_id:
             self.activateTabId(tab_id)
             return self._tab_dict.get(tab_id), False

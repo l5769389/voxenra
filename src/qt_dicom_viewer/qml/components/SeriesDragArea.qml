@@ -62,7 +62,7 @@ MouseArea {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: marker.Drag.active
+        enabled: (root.Window.window?.standardShortcutsAllowed ?? true) && marker.Drag.active
         onActivated: {
             marker.Drag.cancel()
             root.internalFinished = true

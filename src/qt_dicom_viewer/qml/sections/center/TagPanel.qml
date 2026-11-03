@@ -112,7 +112,7 @@ Rectangle {
                             enabled: panel.tagController.currentPage > 1
                             onClicked: panel.tagController.setPage(panel.tagController.currentPage - 1)
                             Components.AppToolTip {
-                                visible: (parent?.hovered ?? false)
+                                requested: (parent?.hovered ?? false)
                                 text: qsTrId("text.0900")
                             }
                         }
@@ -138,7 +138,7 @@ Rectangle {
                             enabled: panel.tagController.currentPage < panel.tagController.pageCount
                             onClicked: panel.tagController.setPage(panel.tagController.currentPage + 1)
                             Components.AppToolTip {
-                                visible: (parent?.hovered ?? false)
+                                requested: (parent?.hovered ?? false)
                                 text: qsTrId("text.0901")
                             }
                         }

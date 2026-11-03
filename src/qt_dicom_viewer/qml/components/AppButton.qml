@@ -21,6 +21,18 @@ Basic.Button {
     property real cornerRadius: Theme.controlRadius
     property real fontPixelSize: 13
     property int fontWeight: actionRole === "primary" ? Font.DemiBold : Font.Normal
+    property string shortcutTitle: ""
+    property string captionKey: ""
+    property string dialogKeyHint: ""
+    property string hintText: ""
+    readonly property string keyboardHintText: dialogKeyHint && enabled
+        ? (hintText || text || Accessible.name) + " (" + dialogKeyHint + ")" : hintText || text
+    readonly property string displayedButtonCaption: {
+        const label = contentItem === defaultContent ? contentLabel : contentItem
+        return label?.visible && !label.truncated ? label.text ?? "" : ""
+    }
+    // Keep the full text for accessibility and the hover/focus tooltip.
+    text: captionKey ? shortcutTitle + " (" + captionKey + ")" : shortcutTitle
 
     property color normalColor: actionRole === "primary" ? Theme.primaryButtonBackground
         : actionRole === "danger" ? Theme.dangerSurface : Theme.controlBackground
@@ -63,7 +75,7 @@ Basic.Button {
 
     implicitWidth: Math.max(
         minimumButtonWidth,
-        contentLabel.implicitWidth + (hasIcon ? iconSize + (hasText ? 7 : 0) : 0) + leftPadding + rightPadding
+        contentLabel.preferredWidth + (hasIcon ? iconSize + (hasText ? 7 : 0) : 0) + leftPadding + rightPadding
     )
 
     implicitHeight: compact ? Theme.compactControlHeight : Theme.controlHeight
@@ -115,7 +127,7 @@ Basic.Button {
 
     contentItem: Item {
         id: defaultContent
-        implicitWidth: contentLabel.implicitWidth + (control.hasIcon ? control.iconSize + (control.hasText ? 7 : 0) : 0)
+        implicitWidth: contentLabel.preferredWidth + (control.hasIcon ? control.iconSize + (control.hasText ? 7 : 0) : 0)
         implicitHeight: contentRow.implicitHeight
 
         Row {
@@ -148,15 +160,18 @@ Basic.Button {
                 opacity: control.enabled ? 1 : 0.45
             }
 
-            Basic.Label {
+            ShortcutLabel {
                 id: contentLabel
+                objectName: control.shortcutTitle ? "buttonCaption" : ""
                 visible: control.hasText
-                width: Math.max(0, Math.min(implicitWidth, control.availableWidth
+                width: Math.max(0, Math.min(preferredWidth, control.availableWidth
                     - (control.hasIcon ? control.iconSize + contentRow.spacing : 0)))
-                elide: Text.ElideRight
 
                 anchors.verticalCenter: parent.verticalCenter
-                text: control.text
+                title: control.shortcutTitle || control.text
+                keyHint: control.captionKey || (control.enabled && control.hasText ? control.dialogKeyHint : "")
+                maximumLineCount: control.shortcutTitle ? 1 : 2147483647
+                textFormat: control.shortcutTitle ? Text.PlainText : Text.AutoText
                 color: control.enabled
                     ? control.textColor
                     : control.disabledTextColor
@@ -172,8 +187,10 @@ Basic.Button {
     }
 
     AppToolTip {
-        visible: control.contentItem === defaultContent && contentLabel.truncated
-            && (control.hovered || control.visualFocus)
-        text: control.text
+        objectName: control.objectName ? control.objectName + "-hint" : ""
+        requested: (control.hovered || control.visualFocus)
+            && (control.hintText !== "" || (control.contentItem === defaultContent
+                && (contentLabel.truncated || contentLabel.text !== control.keyboardHintText)))
+        text: control.keyboardHintText
     }
 }

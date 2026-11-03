@@ -66,8 +66,16 @@ def edit_signature(state):
     return fingerprint(state)
 
 
-def apply_edits(tab, state, *, restore_qa=True):
+def apply_edits(tab, state, *, restore_qa=True, previous_signature=None):
     if "cpr" in state and hasattr(tab, "restore_session"):
+        if previous_signature is not None:
+            target = state["cpr"]
+            current_ranges = tab.session_state()["pathRanges"]
+            if target["pathRanges"] != current_ranges:
+                previous_ranges = dict(state, cpr=dict(target, pathRanges=current_ranges))
+                if edit_signature(previous_ranges) == previous_signature:
+                    tab.restore_intervals(target["pathRanges"])
+                    return
         tab.restore_session(state["cpr"])
     for view in tab.viewports_by_id.values():
         record = state.get("views", {}).get(view_key(view), {})

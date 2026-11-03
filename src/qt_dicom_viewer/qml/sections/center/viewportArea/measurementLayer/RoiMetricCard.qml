@@ -128,7 +128,7 @@ Rectangle {
                         Accessible.name: modelData.label + " " + modelData.value
                         Components.AppToolTip {
                             text: geometryValue.modelData.label + " " + geometryValue.modelData.value
-                            visible: hover.hovered
+                            requested: hover.hovered
                         }
                         HoverHandler { id: hover }
                     }

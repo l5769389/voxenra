@@ -3,11 +3,15 @@ import QtQuick
 import QtQuick.Layouts
 import "../../../components" as Components
 import "../../../theme"
+import "../../../components/ShortcutCaption.js" as KeysText
 
 ColumnLayout {
     id: panel
     objectName: "mprLayoutPanel"
     required property var controller
+    readonly property var bindings: typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : []
+    readonly property int shortcutCount: Math.min(9, layouts.count)
+    function selectShortcutIndex(index) { layouts.itemAt(index)?.click() }
     spacing: 10
 
     Components.PanelHeading {
@@ -20,9 +24,11 @@ ColumnLayout {
         columns: 2
         columnSpacing: 6; rowSpacing: 6
         Repeater {
+            id: layouts
             model: panel.controller?.options ?? []
             delegate: Components.AppButton {
                 id: choice
+                required property int index
                 required property var modelData
                 objectName: "mprLayout-" + modelData.value
                 Layout.fillWidth: true
@@ -31,6 +37,12 @@ ColumnLayout {
                 checkable: true
                 checked: panel.controller?.layout === modelData.value
                 Accessible.name: modelData.label
+                readonly property string hint: KeysText.hint("list-" + (index + 1), panel.bindings)
+                Accessible.description: choice.hint
+                Components.AppToolTip {
+                    requested: (choice.hovered || choice.visualFocus) && (caption.truncated || caption.text !== caption.fullCaption)
+                    text: caption.fullCaption
+                }
                 onClicked: panel.controller.setLayout(modelData.value)
                 contentItem: Column {
                     spacing: 4
@@ -40,9 +52,11 @@ ColumnLayout {
                         iconSize: 28
                         iconColor: choice.checked ? Theme.primaryColor : Theme.textSecondary
                     }
-                    Text {
+                    Components.ShortcutLabel {
+                        id: caption
                         width: parent.width
-                        text: choice.modelData.label
+                        title: choice.modelData.label
+                        keyHint: choice.hint
                         color: Theme.textPrimary
                         font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter

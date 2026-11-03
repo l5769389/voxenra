@@ -114,6 +114,13 @@ jobs:
           VOXENRA_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_import_dialog_chrome.py tests/test_import_ui.py --junitxml=build/test-results/windows-native-import.xml --basetemp=build/test-results/windows-native-import
 
+      - name: Verify native popup keyboard isolation
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_QUICK_BACKEND: software
+          VOXENRA_NATIVE_QA: "1"
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_dialog_default_actions.py tests/test_popup_shortcut_isolation.py --output build/test-results/windows-native-popup-keys
+
       - name: Verify native Chinese PDF report
         env:
           QT_QPA_PLATFORM: windows
@@ -212,6 +219,14 @@ jobs:
           $setup = Get-ChildItem dist/installers/*-setup.exe | Select-Object -First 1
           uv run --locked --python 3.13 --no-dev --group build python tests/manual/verify_windows_installer.py $setup.FullName
           exit $LASTEXITCODE
+
+      - name: Verify real updates from the latest stable Windows packages
+        if: inputs.console != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VOXENRA_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+          QT_QUICK_BACKEND: software
+        run: uv run --locked --python 3.13 --no-dev --group build python tests/manual/verify_windows_package_updates.py
 
       - name: Upload installer diagnostics
         if: always()

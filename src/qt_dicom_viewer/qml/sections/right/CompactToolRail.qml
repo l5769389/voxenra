@@ -15,6 +15,9 @@ Flickable {
     property var tabController: null
     readonly property bool showToolLabels: toolController?.settingsController?.values.appearance.toolLabels ?? false
     property string expandedTool: ""
+    readonly property var visiblePalette: palettePopup.opened ? palette : null
+    readonly property bool paletteUsesToolPanel: !!viewportController?.reconstructionController
+        || viewportController?.displayMappingEditor === "palette"
     property var panelPopup: null
     signal panelRequested(string tool, bool closeOnly)
     readonly property var directTools: ["window", "ct-window", "pet-window", "scroll", "pan", "zoom", "volume-rotate", "mpr-rotate-3d"]
@@ -34,22 +37,22 @@ Flickable {
     onMovementStarted: palettePopup.close()
     onExpandedToolChanged: if (expandedTool !== "pseudocolor") palettePopup.close()
     onVisibleChanged: if (!visible) expandedTool = ""
-    function revealFocusedAction(view) {
-        const item = rail.Window.window?.activeFocusItem
+    function revealItem(view, item) {
         if (!item) return
         let ancestor = item
         while (ancestor && ancestor !== view.contentItem) ancestor = ancestor.parent
         if (!ancestor) return
         const top = item.mapToItem(view.contentItem, 0, 0).y
-        const target = top < view.contentY ? top
-            : top + item.height > view.contentY + view.height ? top + item.height - view.height : view.contentY
+        const bottom = top + Math.min(item.height, view.height)
+        const target = top < view.contentY ? top : Math.max(view.contentY, bottom - view.height)
         view.contentY = Math.max(view.originY, Math.min(target, view.originY + Math.max(0, view.contentHeight - view.height)))
     }
     Connections {
         target: rail.Window.window
         function onActiveFocusItemChanged() {
-            rail.revealFocusedAction(rail)
-            rail.revealFocusedAction(paletteScroll)
+            const focus = rail.Window.window?.activeFocusItem
+            rail.revealItem(rail, focus)
+            rail.revealItem(paletteScroll, focus)
         }
     }
     Connections {
@@ -63,7 +66,8 @@ Flickable {
         if (tool === "volume-direction") return (viewportController?.directionOptions ?? []).map(d => ({
             action: d.face, label: d.label, iconName: "volume-direction", face: d.face, color: d.color}))
         if (tool === "measure") return toolController?.measureActions ?? []
-        if (tool === "rotate") return toolController?.rotateActions ?? []
+        if (tool === "rotate") return [...(toolController?.rotateActions ?? []),
+            {action: "view-reset", label: toolController.resetLabel, shortLabel: qsTrId("tools.short.reset"), iconName: "reset"}]
         if (tool === "annotate") return [
             {action: "annotate:arrow", label: qsTrId("text.0377"), shortLabel: qsTrId("tools.action.annotate:arrow"), iconName: "annotate-arrow"},
             {action: "annotate:text", label: qsTrId("text.0378"), shortLabel: qsTrId("tools.action.annotate:text"), iconName: "annotate-text"}]
@@ -71,11 +75,22 @@ Flickable {
             action: c.colorMap, label: c.label, iconName: "pseudocolor", stops: c.stops}))
         return []
     }
+    function selectFromShortcut(tool) {
+        if (tabController?.playing) return
+        const index = tools.findIndex(entry => entry.toolType === tool)
+        const group = groups.itemAt(index)
+        // A shortcut always selects. Clicking an open group can also fold it.
+        if (expandedTool !== tool) activateGroup(tool, group?.button, false)
+        Qt.callLater(function() {
+            if (rail.visible && rail.toolController?.activeTool === tool)
+                rail.revealItem(rail, groups.itemAt(index))
+        })
+    }
     function activateGroup(tool, anchor, closeOnly) {
         if (["play", "slice-play"].includes(tool)) {
             toolController.activateTool(tool)
             tabController?.togglePlaybackMode(tool === "slice-play" || !tabController.temporalPlayback ? "slice" : "phase")
-        } else if (panelTools.includes(tool)) {
+        } else if (panelTools.includes(tool) || (tool === "pseudocolor" && paletteUsesToolPanel)) {
             expandedTool = ""
             toolController.activateTool(tool)
             rail.panelRequested(tool, closeOnly)
@@ -92,9 +107,12 @@ Flickable {
                 if (rail.expandedTool === "pseudocolor") palettePopup.open()
             })
         } else if (groupedTools.includes(tool)) {
-            const close = expandedTool === tool
-            toolController.activateTool(tool)
-            expandedTool = close ? "" : tool
+            if (expandedTool === tool) {
+                expandedTool = ""
+            } else {
+                if (toolController.activePanel !== tool) toolController.activateTool(tool)
+                expandedTool = tool
+            }
         } else {
             expandedTool = ""
             if (directTools.includes(tool)) toolController.activateDirectTool(tool)
@@ -102,7 +120,8 @@ Flickable {
         }
     }
     function activateChild(tool, action) {
-        if (tool === "volume-direction") viewportController.setViewFace(action)
+        if (action === "view-reset") toolController.resetActiveTool()
+        else if (tool === "volume-direction") viewportController.setViewFace(action)
         else if (tool === "rotate") viewportController.applyTransformAction(action)
         else if (tool === "pseudocolor") viewportController.applyColorMap(action)
         else if (tool === "annotate") viewportController.setAnnotationMode(action === "annotate:text")
@@ -126,6 +145,19 @@ Flickable {
             y = Math.max(8 - railPosition.y,
                 Math.min(position.y, (rail.Window.window?.height ?? 640) - height - 8 - railPosition.y))
             paletteScroll.contentY = 0
+        }
+        Components.ReadingShortcuts {
+            controller: typeof appController !== "undefined" ? appController.shortcutController ?? null : null
+            toolController: rail.toolController
+            tabController: rail.tabController
+            ownerPopup: palettePopup
+            menuOnly: true
+            activeMenu: "pseudocolor"
+            controlFocused: Window.window?.activeFocusItem?.checkable !== undefined
+            listPanel: palette
+            allowed: palettePopup.opened && rail.visible && rail.enabled
+                && rail.toolController?.activePanel === activeMenu && palettePopup.activeFocus
+                && !!Window.window?.active
         }
         onClosed: if (rail.expandedTool === "pseudocolor") rail.expandedTool = ""
         Flickable {
@@ -152,10 +184,12 @@ Flickable {
         width: rail.width
         spacing: 4
         Repeater {
+            id: groups
             model: rail.tools
             delegate: Column {
                 id: group
                 required property var modelData
+                readonly property alias button: primaryButton
                 property bool closePopupOnRelease: false
                 readonly property bool playback: ["play", "slice-play"].includes(modelData.toolType)
                 readonly property bool bedAction: modelData.toolType === "volume-bed"
@@ -167,13 +201,15 @@ Flickable {
                 Components.ToolbarAction {
                     id: primaryButton
                     width: rail.showToolLabels ? group.width : 40
-                    height: rail.showToolLabels ? (group.modelData.toolType === "import" ? 68 : 54) : 38
+                    height: rail.showToolLabels ? 54 : 38
                     showLabel: rail.showToolLabels
-                    labelMaximumLines: group.modelData.toolType === "import" ? 2 : 1
+                    showInlineShortcut: false
+                    explanation: ToolLabels.explanation(group.modelData.toolType)
                     shortLabel: group.running ? qsTrId("tools.short.stop")
                         : ToolLabels.label(group.modelData, rail.viewportController?.displayMappingEditor, true)
                     x: (group.width - width) / 2
                     buttonObjectName: "compactTool-" + group.modelData.toolType
+                    shortcutAction: ToolLabels.shortcutAction(group.modelData.toolType, rail.tabController?.playbackShortcutTool)
                     tooltipPlacement: "left"
                     label: group.running
                         ? qsTrId("playback.stop") : ToolLabels.label(group.modelData, rail.viewportController?.displayMappingEditor, false)
@@ -190,7 +226,7 @@ Flickable {
                         && (!group.playback || group.running || (group.playMode === "phase" ? !!rail.tabController?.phasePlaybackAvailable : !!rail.tabController?.slicePlaybackAvailable))
                     onPressed: {
                         const tool = group.modelData.toolType
-                        group.closePopupOnRelease = tool === "pseudocolor"
+                        group.closePopupOnRelease = tool === "pseudocolor" && !rail.paletteUsesToolPanel
                             ? palettePopup.wasOpenOnPress()
                             : !!rail.panelPopup && rail.panelPopup.panelTool === tool
                                 && rail.panelPopup.wasOpenOnPress()
@@ -229,6 +265,8 @@ Flickable {
                                 required property var modelData
                                 width: subbuttons.width; height: rail.showToolLabels ? 48 : 32
                                 showLabel: rail.showToolLabels
+                                showInlineShortcut: false
+                                shortcutAction: modelData.action
                                 shortLabel: ["rotate:cw90", "rotate:ccw90"].includes(modelData.action)
                                     ? "90°" : modelData.shortLabel ?? modelData.face ?? modelData.label
                                 buttonObjectName: "compactAction-" + modelData.action
@@ -241,7 +279,8 @@ Flickable {
                                 tooltipPlacement: "left"
                                 actionEnabled: !!rail.viewportController && !rail.tabController?.playing
                                     && (group.modelData.toolType !== "volume-direction" || rail.viewportController.loadState === "ready")
-                                    && (group.modelData.toolType !== "measure" || !!rail.viewportController.hasPhysicalSpacing)
+                                    && (group.modelData.toolType !== "measure" || (!!rail.viewportController.hasPhysicalSpacing
+                                        && rail.viewportController.viewportRole !== "curved"))
                                 checked: group.modelData.toolType === "volume-direction"
                                     ? rail.viewportController?.currentFace === modelData.action
                                     : group.modelData.toolType === "pseudocolor"

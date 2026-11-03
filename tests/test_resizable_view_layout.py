@@ -164,11 +164,12 @@ def test_native_volume_sidebar_drag_and_png(scene, paired_series, tmp_path, kind
         assert not any(i.objectName() == "invertWindowButton" and i.isVisible()
                        for i in descendants(window.contentItem()))
     tools.activateTool("zoom")
-    click(window, find(window, "zoomShortcut-5"))
+    QTest.keyClick(window, Qt.Key_5)
     assert view.zoom == 5
-    click(window, find(window, "zoomShortcut-1"))
+    QTest.keyClick(window, Qt.Key_1)
     assert view.zoom == 1
     view.setViewFace("L")
+    wait_until(lambda: view._host.frame_ready and view._host.surface_ready())
     original = view.snapshot_image()
     backend = view._host.backend
     assert backend.marker.GetEnabled()

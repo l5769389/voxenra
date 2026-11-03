@@ -7,6 +7,8 @@ import "../theme"
 
 Components.AppDialog {
     id: dialog
+    defaultButton: confirmButton
+    escapeButton: cancelButton
     objectName: "fusionSeriesDialog"
     required property var controller
     property bool nativePopup: false
@@ -241,12 +243,14 @@ Components.AppDialog {
             elide: Text.ElideRight
         }
         Components.AppButton {
+            id: cancelButton
             objectName: "cancelFusion"
             text: qsTrId("text.0539")
             minimumButtonWidth: 80
             onClicked: dialog.controller.cancelFusion()
         }
         Components.AppButton {
+            id: confirmButton
             objectName: "confirmFusion"
             text: qsTrId("text.0675")
             iconName: "fusion"

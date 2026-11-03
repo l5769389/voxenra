@@ -80,7 +80,7 @@ def test_release_uses_completed_style_while_remaining_selected(viewport, tmp_pat
     if kind == "angle":
         for p in [(35, 40), (70, 105), (155, 85)]:
             QTest.mouseClick(view, Qt.LeftButton, pos=_scene(image_layer, *p))
-            QTest.qWait(25)
+        wait_until(lambda: bool(c.measurementController.measurementItems))
     else:
         start, end = _scene(image_layer, 35, 40), _scene(image_layer, 140, 115)
         QTest.mousePress(view, Qt.LeftButton, pos=start)
@@ -115,7 +115,7 @@ def test_release_uses_completed_style_while_remaining_selected(viewport, tmp_pat
         original = measure.measurementItems
         # Clicking even the already-selected result changes styling, not its geometry.
         QTest.mouseClick(view, Qt.LeftButton, pos=_scene(image_layer, 35, 40))
-        QTest.qWait(40)
+        wait_until(lambda: measure.selectedMeasurementState == "draft")
         geometry = rendered_geometry(view, kind)
         assert measure.selectedMeasurementState == "draft"
         assert geometry.property("isSelected") and not geometry.property("isDraft")

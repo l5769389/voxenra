@@ -7,11 +7,12 @@ RowLayout {
     id: actions
     objectName: "cprBottomActions"
     required property var controller
+
     readonly property bool drawing: controller?.drawing ?? false
-    readonly property bool editing: (controller?.pathEditing ?? false) || (controller?.finishing ?? false)
+    readonly property bool editing: controller?.pathEditing ?? false
     readonly property bool hasPath: (controller?.selectedPathId ?? "") !== ""
     readonly property bool results: controller?.resultView ?? false
-    readonly property bool canStart: (controller?.referencesReady ?? false) && !controller?.sourceMismatch
+    readonly property bool canStart: (controller?.referencesReady ?? false) && !controller?.sourceMismatch && !controller?.finishing
     spacing: 8
 
     component PathAction: ToolActionButton {
@@ -19,28 +20,23 @@ RowLayout {
         Layout.preferredWidth: 1
         Layout.preferredHeight: 32
         iconSize: 20
+        showLabel: true
     }
     PathAction {
         objectName: "cprNewPath"
-        visible: !actions.drawing && !actions.editing && (actions.results || !actions.hasPath)
+        visible: !actions.drawing && !actions.editing && !actions.hasPath
         iconName: "add"
         label: qsTrId("cpr.new")
+        shortcutAction: "cpr-new"
         enabled: actions.canStart
         onClicked: actions.controller.startPath()
     }
     PathAction {
-        objectName: "cprEditPath"
-        visible: actions.hasPath && !actions.drawing && !actions.editing
-        iconName: "cpr-path"
-        label: qsTrId("cpr.edit")
-        enabled: actions.canStart
-        onClicked: actions.controller.setPathEditing(true)
-    }
-    PathAction {
         objectName: "cprReferenceBrowse"
         visible: actions.hasPath && !actions.drawing && !actions.editing
-        iconName: actions.results ? "layout-quad" : "layout-columns"
-        label: qsTrId(actions.results ? "cpr.referenceBrowse" : "cpr.showResults")
+        iconName: actions.results ? "layout-quad" : "cpr-results"
+        label: qsTrId(actions.results ? "cpr.openReferences" : "cpr.showResults")
+        shortcutAction: "cpr-view"
         enabled: actions.canStart
         onClicked: actions.controller.setReferenceBrowsing(actions.results)
     }
@@ -49,6 +45,7 @@ RowLayout {
         visible: actions.drawing || actions.editing
         iconName: "check"
         label: qsTrId("cpr.done")
+        shortcutHint: "Enter"
         tooltipText: qsTrId("cpr.finishHint")
         enabled: actions.controller?.canFinishEditing ?? false
         normalColor: Theme.primaryButtonBackground
@@ -63,7 +60,7 @@ RowLayout {
         visible: actions.drawing
         iconName: "close"
         label: qsTrId("cpr.cancel")
-        tooltipText: label + " (Esc)"
+        shortcutHint: "Esc"
         onClicked: actions.controller.cancel_operation()
     }
 }

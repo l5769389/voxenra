@@ -157,7 +157,7 @@ Item {
         // CPR uses one source volume. Identity/acquisition metadata belongs to
         // the tab/series context; output indices count path samples, not slices.
         const cprFields = {topLeft: String(overlay.cprRole ?? "").startsWith("reference")
-            ? ["viewPosition", "slice"] : ["viewPosition", "cprDistance"], topRight: [], bottomLeft: ["window"], bottomRight: ["cursor"]}
+            ? ["viewPosition", "slice"] : ["viewPosition", "cprDistance", "cprSampling"], topRight: [], bottomLeft: ["window"], bottomRight: ["cursor"]}
         return (cprWorkspace ? cprFields[corner] : options[corner] ?? []).filter((key, index) => !(corner === "topLeft" && inlineViewPosition && index === 0))
             .filter(key => !overlay.compactOverlay || compactFields.includes(key))
             .map(key => field(key)).filter(Boolean).join("\n")

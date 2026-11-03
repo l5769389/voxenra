@@ -137,9 +137,9 @@ Item {
         groupAction.forceActiveFocus()
         Qt.callLater(() => (selectedGroup === "more" ? moreBoard : primaryBoard).reveal(selectedKey))
     }
-    Shortcut { sequence: "Escape"; enabled: page.visible && page.dragging; onActivated: page.cancelDrag() }
-    Shortcut { sequence: "Alt+Left"; enabled: page.visible && !!page.selectedEntry; onActivated: page.moveSelected(-1) }
-    Shortcut { sequence: "Alt+Right"; enabled: page.visible && !!page.selectedEntry; onActivated: page.moveSelected(1) }
+    Shortcut { sequence: "Escape"; enabled: (page.Window.window?.standardShortcutsAllowed ?? true) && page.visible && page.dragging; onActivated: page.cancelDrag() }
+    Shortcut { sequence: "Alt+Left"; enabled: (page.Window.window?.standardShortcutsAllowed ?? true) && page.visible && !!page.selectedEntry; onActivated: page.moveSelected(-1) }
+    Shortcut { sequence: "Alt+Right"; enabled: (page.Window.window?.standardShortcutsAllowed ?? true) && page.visible && !!page.selectedEntry; onActivated: page.moveSelected(1) }
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16

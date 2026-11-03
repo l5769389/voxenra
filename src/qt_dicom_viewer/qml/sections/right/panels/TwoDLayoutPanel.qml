@@ -3,9 +3,20 @@ import QtQuick
 import QtQuick.Layouts
 import "../../../components" as Components
 import "../../../theme"
+import "../../../components/ShortcutCaption.js" as KeysText
 ColumnLayout {
     id: root
     required property var controller
+    readonly property var bindings: typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : []
+    readonly property int shortcutCount: Math.min(9, layouts.count)
+    function selectShortcutIndex(index) { layouts.itemAt(index)?.click() }
+    function layoutName(id, short) {
+        const sides = {top: "layout.mainTop", left: "layout.mainLeft", right: "layout.mainRight", bottom: "layout.mainBottom"}
+        const [side, count] = id.split("-")
+        if (count) return qsTrId(sides[side] + (short ? "Short" : "")).arg(count)
+        const [rows, columns] = id.split("x")
+        return short ? rows + "×" + columns : qsTrId("layout.gridShape").arg(rows).arg(columns)
+    }
     spacing: 10
     Components.PanelHeading {
         objectName: "TwoDLayoutPanelHeading"
@@ -17,32 +28,55 @@ ColumnLayout {
         columns: 4
         columnSpacing: 4; rowSpacing: 4
         Repeater {
+            id: layouts
             model: root.controller?.options ?? []
             delegate: Components.AppButton {
                 id: preset
+                required property int index
                 required property var modelData
                 objectName: "twoDLayout-" + modelData.id
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 40
-                Layout.preferredHeight: 42
+                Layout.preferredHeight: 54
                 minimumButtonWidth: 0
+                leftPadding: 4; rightPadding: 4
                 checked: root.controller?.layout === modelData.id
-                Accessible.name: modelData.id
+                readonly property string title: root.layoutName(modelData.id, false)
+                readonly property string hint: KeysText.hint("list-" + (index + 1), root.bindings)
+                Accessible.name: title
+                Accessible.description: hint
+                Components.AppToolTip {
+                    requested: (preset.hovered || preset.visualFocus) && (caption.truncated || caption.text !== text)
+                    text: preset.title + (preset.hint ? " (" + preset.hint + ")" : "")
+                }
                 onClicked: root.controller.setLayout(modelData.id)
                 contentItem: Item {
-                    Repeater {
-                        model: preset.modelData.cells
-                        delegate: Rectangle {
-                            required property var modelData
-                            x: modelData.column / preset.modelData.columns * parent.width + 1
-                            y: modelData.row / preset.modelData.rows * parent.height + 1
-                            width: modelData.columnSpan / preset.modelData.columns * parent.width - 2
-                            height: modelData.rowSpan / preset.modelData.rows * parent.height - 2
-                            color: "transparent"
-                            border.color: preset.checked ? Theme.primaryColor : Theme.iconDefault
-                            border.width: 1
-                            antialiasing: true
+                    Components.ShortcutLabel {
+                        id: caption
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        font.pixelSize: 11
+                        title: root.layoutName(preset.modelData.id, true)
+                        keyHint: preset.hint
+                        color: preset.checked ? Theme.primaryColor : Theme.textSecondary
+                    }
+                    Item {
+                        anchors { top: parent.top; bottom: caption.top; left: parent.left; right: parent.right; bottomMargin: 2 }
+                        Repeater {
+                            model: preset.modelData.cells
+                            delegate: Rectangle {
+                                required property var modelData
+                                x: modelData.column / preset.modelData.columns * parent.width + 1
+                                y: modelData.row / preset.modelData.rows * parent.height + 1
+                                width: modelData.columnSpan / preset.modelData.columns * parent.width - 2
+                                height: modelData.rowSpan / preset.modelData.rows * parent.height - 2
+                                color: "transparent"
+                                border.color: preset.checked ? Theme.primaryColor : Theme.iconDefault
+                                border.width: 1
+                                antialiasing: true
+                            }
                         }
                     }
                 }

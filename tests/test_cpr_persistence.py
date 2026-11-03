@@ -56,6 +56,36 @@ def test_v2_roundtrip_and_closed_path_retention_after_history_reset(cpr_app, tmp
     assert restored.session_state() == session
 
 
+def test_new_cpr_does_not_consume_closed_session(cpr_app, tmp_path):
+    from test_cpr_controller import draw
+    app, first, record = cpr_app
+    ws, doc = app.workspaceController, app.workspaceDocumentController
+    old_path = first.current_path
+    assert ws.closeTab(first.tab_config.tab_id)
+    uid = record.series_instance_uid
+    ws.createTab(uid, 'CPR', 'cpr')
+    fresh = ws.activeTab
+    wait_until(lambda: fresh.referencesReady)
+    assert not fresh.paths and doc.closedTabCount == 1
+    draw(fresh)
+    new_path = fresh.current_path
+    ws.createTab(uid, 'CPR', 'cpr')
+    assert ws.activeTab is fresh
+    assert doc.reopenLastClosed()
+    wait_until(lambda: not doc.busy)
+    assert not doc.isError and ws.activeTab is not fresh
+    assert ws.activeTab.current_path == old_path and fresh.current_path == new_path
+    path = tmp_path / 'two-cpr.voxworkspace'
+    save(app, path)
+    assert doc.restore_from(path)
+    wait_until(lambda: not doc.busy, timeout=10000)
+    sessions = [t for t in app.windowManager.ordered_tabs() if t.tab_config.tab_type.value == 'cpr']
+    assert sorted(t.current_path.path_id for t in sessions) == sorted([old_path.path_id, new_path.path_id])
+    for t in sessions:
+        assert ws.closeTab(t.tab_config.tab_id)
+    assert doc.closedTabCount == 2
+
+
 def test_version_one_migrates_without_mutating_input_and_invalid_cpr_is_rejected(cpr_app, tmp_path):
     app, _, _ = cpr_app
     document = save(app, tmp_path/'source.voxworkspace')

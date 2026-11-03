@@ -278,7 +278,8 @@ def test_window_preset_content_is_centered_and_actions_remain_distinct(display_p
     assert rows
     for row in rows:
         labels = [item for item in descendants(row)
-                  if item.metaObject().className().startswith("QQuickText") and item.isVisible()]
+                  if item.objectName().startswith(("windowPresetName-", "windowPresetWW-", "windowPresetWL-"))
+                  and item.isVisible()]
         assert len(labels) == 3
         for label in labels:
             center = label.mapToItem(row, QPointF(0, label.height() / 2)).y()

@@ -10,6 +10,10 @@ import numpy as np
 from .dicom_core import Vector3, MprImageGeometry
 
 ALGORITHM_VERSION = 1
+MIN_STEP_MM = 0.05
+MAX_STEP_MM = 10.0
+MAX_FIELD_MM = 500.0
+MAX_SLAB_MM = 100.0
 MAX_AXIS_SAMPLES = 4097
 MAX_OUTPUT_PIXELS = 4_194_304
 MAX_SLAB_SAMPLES = 1001
@@ -101,11 +105,11 @@ class CprSettings:
     def __post_init__(self):
         for name in ("step_mm", "width_mm", "angle_radians", "thickness_mm"):
             object.__setattr__(self, name, finite_number(getattr(self, name), name))
-        if not .05 <= self.step_mm <= 10:
+        if not MIN_STEP_MM <= self.step_mm <= MAX_STEP_MM:
             raise CprError("Sampling step must be between 0.05 and 10 mm")
-        if not 0 < self.width_mm <= 500:
+        if not 0 < self.width_mm <= MAX_FIELD_MM:
             raise CprError("Field width must be between 0 and 500 mm")
-        if not 0 <= self.thickness_mm <= 100:
+        if not 0 <= self.thickness_mm <= MAX_SLAB_MM:
             raise CprError("Slab thickness must be between 0 and 100 mm")
         if self.projection not in ("thin", "mip", "mean"):
             raise CprError("Projection must be thin, mip or mean")

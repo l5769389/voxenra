@@ -88,7 +88,7 @@ Item {
                         HoverHandler { id: positionHover }
                         Components.AppToolTip {
                             objectName: "twoDPositionToolTip-" + cell.modelData.index
-                            visible: positionHover.hovered && !plane.popup.visible
+                            requested: positionHover.hovered && !plane.popup.visible
                             text: qsTrId("layout.positionHint")
                         }
                     }
@@ -112,6 +112,7 @@ Item {
                     TapHandler {
                         onPressedChanged: if (pressed) root.controller.activateCell(cell.modelData.index)
                         onDoubleTapped: {
+                            if (imageLoader.item?.doubleClickEditsPoints) return
                             const p = plane.mapFromItem(surface, point.position)
                             if (plane.visible && plane.contains(p)) return
                             if (cell.view && cells.count > 1)

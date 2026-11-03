@@ -149,7 +149,7 @@ Rectangle {
                         onCanceled: listing.surface.cancelDrag()
                     }
                     Components.AppToolTip {
-                        visible: (pointer.containsMouse || tile.activeFocus) && !listing.surface.dragging
+                        requested: (pointer.containsMouse || tile.activeFocus) && !listing.surface.dragging
                         text: tile.modelData.label + (tile.modelData.available === false ? " · " + qsTrId("toolbar.unavailable") : "")
                     }
                 }

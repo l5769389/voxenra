@@ -162,7 +162,7 @@ Item {
         font.pixelSize: 11
         elide: Text.ElideRight
         Components.AppToolTip {
-            visible: compareNoticeHover.hovered
+            requested: compareNoticeHover.hovered && compareNotice.truncated
             text: compareNotice.text
         }
         HoverHandler { id: compareNoticeHover }
@@ -244,7 +244,7 @@ Item {
                     elide: Text.ElideRight
                     TapHandler { onTapped: viewportLayout.viewportActivated(viewportCell.modelData.viewportId) }
                     HoverHandler { id: compareHeadingHover }
-                    Components.AppToolTip { visible: compareHeadingHover.hovered; text: compareHeading.text }
+                    Components.AppToolTip { requested: compareHeadingHover.hovered && compareHeading.truncated; text: compareHeading.text }
                 }
                 Rectangle {
                     id: viewportSurface
@@ -292,7 +292,7 @@ Item {
                         }
 
                         onDoubleTapped: {
-                            if (["measure:freehand", "measure:curve"].includes(viewportCell.modelData.activeInteraction)) return
+                            if (imageViewport.doubleClickEditsPoints) return
                             viewportLayout.toggleSingleView(
                                 viewportCell.modelData.viewportId
                             )

@@ -1,7 +1,7 @@
 """Theme-aware exit confirmation for new and existing workspace documents."""
-from PySide6.QtCore import QEvent, QTimer, Qt
+from PySide6.QtCore import Qt
 
-from qt_dicom_viewer.i18n import localize, message as _msg
+from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.widgets import QCheckBox, QMessageBox
 
 
@@ -15,9 +15,6 @@ class WorkspaceExitDialog(QMessageBox):
         super().__init__(QMessageBox.NoIcon, _msg(title), _msg(question),
                          QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
         self.setObjectName("workspaceNewConfirmation" if new_workspace else "workspaceExitConfirmation")
-        self._button_text_timer = QTimer(self)
-        self._button_text_timer.setSingleShot(True)
-        self._button_text_timer.timeout.connect(self._translate_buttons)
         # A platform-native alert can ignore the application's selected palette.
         self.setOption(QMessageBox.Option.DontUseNativeDialog, True)
         self.setTextFormat(Qt.PlainText)
@@ -37,25 +34,14 @@ class WorkspaceExitDialog(QMessageBox):
         appearance.changed.connect(self._apply_theme)
         self._apply_theme()
 
-    def changeEvent(self, event):
-        super().changeEvent(event)
-        if event.type() == QEvent.LanguageChange and hasattr(self, '_button_text_timer'):
-            # QDialogButtonBox may reset its standard labels in a queued event.
-            self._button_text_timer.start(0)
-
-    def _translate_buttons(self):
-        super()._translate_buttons()
+    def _button_message_ids(self):
         if self._new_workspace:
             save, discard = 'workspace.new.save', 'workspace.new.discard'
         elif self._workspace_name:
             save, discard = 'workspace.exit.update', 'workspace.exit.dontUpdate'
         else:
             save, discard = 'workspace.exit.save', 'common.dontSave'
-        for role, key in ((QMessageBox.Save, save), (QMessageBox.Discard, discard),
-                          (QMessageBox.Cancel, 'workspace.exit.cancel')):
-            button = self.button(role)
-            if button is not None:
-                button.setText(localize(_msg(key)))
+        return {QMessageBox.Save: save, QMessageBox.Discard: discard, QMessageBox.Cancel: 'workspace.exit.cancel'}
 
     def _apply_theme(self):
         style = """

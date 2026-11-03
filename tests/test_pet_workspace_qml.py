@@ -445,15 +445,14 @@ def test_fusion_dialog_previews_and_confirmation(qt_app, paired_series, tmp_path
             image = read_series_thumbnail(path)
             assert not image.isNull()
             panel._accept_thumbnail(ThumbnailRequest(record.series_instance_uid, path), image)
-        QTest.qWait(50)
         assert find(window, "fusionCandidate-" + pet.series_instance_uid) is candidate
         assert identity.property("checked")
         assert panel.fusionPartnerUid == pet.series_instance_uid
         for record in (ct, pet):
             preview = find(window, "fusionPreview-" + record.series_instance_uid)
             assert preview.property("source").toString() == panel.fusionThumbnails[record.series_instance_uid]
-            assert preview.property("progress") == 1.0
-            assert preview.property("paintedWidth") > 0
+            # QML decodes the image asynchronously even after its URL is published.
+            wait_until(lambda: preview.property("progress") == 1.0 and preview.property("paintedWidth") > 0)
         assert confirm.property("normalColor") != find(window, "cancelFusion").property("normalColor")
         for name in ("fusionCandidates", "fusionIdentityConfirmation", "cancelFusion", "confirmFusion"):
             item = find(window, name)

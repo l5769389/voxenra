@@ -240,7 +240,7 @@ ColumnLayout {
                             modelData.unitId
                         )
                         Components.AppToolTip {
-                            visible: unitButton.hovered
+                            requested: unitButton.hovered
                                 && unitButton.modelData.warning !== ""
                             delay: 350
                             text: unitButton.modelData.warning

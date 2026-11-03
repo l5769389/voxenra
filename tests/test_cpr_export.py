@@ -47,7 +47,7 @@ def test_export_scope_selects_required_view_and_restores_combined_layout(cpr_app
 def test_three_scopes_write_real_anonymous_pngs_and_reject_changed_scope(cpr_app, tmp_path, monkeypatch, results):
     app, tab, record = cpr_app
     if results:
-        tab.finishEditing()
+        tab.setReferenceBrowsing(False)
     for instance in record.instances:
         dataset = pydicom.dcmread(instance.path)
         dataset.BurnedInAnnotation = 'NO'
@@ -87,8 +87,11 @@ def test_three_scopes_write_real_anonymous_pngs_and_reject_changed_scope(cpr_app
             assert not image.isNull() and not image.textKeys()
             images[scope] = image
             assert not window.rootObject().property('anonymousExport')
-        assert images['combined'].size().width() == 1000
-        assert images['combined'].size().height() == 700
+        # PNG captures physical pixels; the fixture window uses logical units.
+        # Retina must retain its full 2000 × 1400 image at 2×.
+        dpr = window.effectiveDevicePixelRatio()
+        assert images['combined'].width() == round(window.width() * dpr)
+        assert images['combined'].height() == round(window.height() * dpr)
         assert images['curved'].width() < images['combined'].width()
         assert images['curved'] != images['cross']
         target = tmp_path/'stale.png'

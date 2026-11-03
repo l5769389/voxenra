@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.2.0/Voxenra-2.2.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 
 ## Features
@@ -79,11 +79,11 @@ Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F1
 ## MPR, CPR, 3D, and 4D
 
 - **MPR:** linked axial, coronal, and sagittal planes, oblique reconstruction, seven layouts, and MIP / MinIP / Mean / Sum thick slabs; four-up layouts add 3D spatial references and linked rotation.
-- **CPR:** open from a CT / MR series context menu or MPR **More → CPR**. Draw and edit multiple manual 3D paths with undo, two linked reference planes, a curved image and a perpendicular cross-section. Thin / maximum / mean projections, workspace restoration and three anonymous PNG export scopes are available. Enter a distance in mm to locate a cross-section, browse the locked reference images, or select a saved measurement to return to its original plane. Ordinary quantitative measurements use the physical reference planes and cross-section; the curved image provides 3D centerline distances. See **Operation manual → Curved planar reformation (CPR)** in the app.
+- **CPR** opens from a CT or MR series context menu or MPR **More → CPR**. Draw multiple 3D paths, edit control points, and undo edits. Finishing a path keeps the reference planes visible. Press `V` to switch to the curved image and cross-section, `J` / `K` to step along the centerline, or `S` / `E` to mark an interval. Choose thin, maximum, or mean projection and display the sampling width and slab thickness. Measure on the reference planes or cross-section and select a saved measurement to revisit its original plane. Save paths and measurements in a workspace or export the curved image, cross-section, or layout as an anonymous PNG.
 - **3D:** CT, MR, and PET volume rendering with presets, windowing, orientation, rotation, and region cropping; 20 CT presets and CT bed removal.
 - **4D:** synchronized multi-phase CT playback, with segmentation and VOI stored by phase; separate slice playback within the current phase. The image and exported PNG identify the displayed phase.
 
-![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/61-cpr-reference-2.2.0.png)
+![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/61-cpr-reference-2.3.0.png)
 
 **Dual-series MPR comparison** keeps position, rotation, CT windowing, and physical display-scale switches visible. Groups start independently. Enabling window/scale sync uses the selected group; position/rotation linking preserves existing offsets and synchronizes subsequent changes. Double-click to enlarge corresponding planes side by side. Linking does not perform automatic registration.
 
@@ -125,11 +125,11 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 - **Segmentation and VOI:** CT/PET thresholding and spherical/ellipsoidal VOIs; CT/MR/PET masks support paint/erase and keep/remove connected regions. Convert free-shape ROIs to single-slice segments, adjust outline/fill and opacity, manage regions, undo and redo.
 - **Results:** export measurements as CSV/PDF or DICOM SR, with matching reference images in PDFs; exchange segments through DICOM SEG or NRRD / Slicer, preserving overlap, names, and colors.
 
-**Free-shape measurement:** click to place control points and create a smooth closed contour.
+**Free-shape measurement.** Click to place at least three control points, then press Enter or double-click to close the contour and view its statistics. Double-clicking finishes at the last point placed.
 
 ![Free-shape ROI drawing and statistics](docs/screenshots/01-freehand-measurement.gif)
 
-**Curve measurement:** place a few controls to measure the physical arc length of a smooth path.
+**Curve measurement.** Click at least three control points, then press Enter or double-click to measure the physical arc length of the smooth path.
 
 ![Curve measurement and control points](docs/screenshots/33-curve-measurement.gif)
 
@@ -160,7 +160,7 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 Import source DICOM images on the left and associated SEG / NRRD masks through **Import segmentation** on the right (named “Import” in v2.1.3). Export source series as PNG or DICOM, or save the current view as a PNG screenshot. Series export and viewport screenshots have different content scopes; see [export details](docs/export.md).
 
-Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Start a blank workspace; closing a tab retains editing results, reopenable from the workspace panel or Ctrl+Shift+T / ⇧⌘T. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose dark, neutral gray, or light themes; use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
+Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Start a blank workspace; closing a tab retains editing results, reopenable from the workspace panel or Ctrl+Shift+T / ⇧⌘T. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
 
 ![Offline manual and workflow demos](docs/screenshots/en/50-offline-manual-2.1.2.png)
 
@@ -181,15 +181,15 @@ Favorite frequently used folders in the image picker and click a card at the top
 
 ## Appearance and controls
 
-Choose **dark, neutral gray, or light** in **Settings → Appearance & language**. Neutral gray combines graphite panels with restrained cyan accents. Theme changes apply immediately and persist after restart; image windowing and color maps remain independent.
+Choose **Follow system** in **Settings → Theme & language** to follow the operating system’s light or dark appearance. You can also select a fixed dark, neutral gray, or light theme. Neutral gray combines graphite panels with restrained cyan accents. Theme changes apply immediately and persist after restart; image windowing and color maps remain independent.
 
 ![MR viewing in the neutral gray theme](docs/screenshots/37-theme-graphite.png)
 
 [Dark theme](docs/screenshots/25-theme-dark.png) · [Light theme](docs/screenshots/26-theme-light.png)
 
-Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Conflicting or reserved shortcuts are rejected. Edit corner information directly with sample values, drag within or between corners, and add or remove fields; changes save on release. Crosshairs, scales, measurement styles, and ROI metrics remain configurable. Chinese, English, and Brazilian Portuguese are built in, with support for additional local JSON language packs. Independent switches show labels for sidebar actions and right-side tools. Privacy options control identity overlays in new views and let you clear recent workspace entries.
+Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Button labels show the current shortcuts. Number keys select items in supported menus. Conflicting or reserved shortcuts are rejected. Edit corner information directly with sample values, drag within or between corners, and add or remove fields; changes save on release. Crosshairs, scales, measurement styles, and ROI metrics remain configurable. Chinese, English, and Brazilian Portuguese are built in, with support for additional local JSON language packs. Independent switches show labels for sidebar actions and right-side tools. Privacy options control identity overlays in new views and let you clear recent workspace entries.
 
-![Theme, language and independent button labels](docs/screenshots/en/44-appearance-2.1.1.png)
+![Theme, language and independent button labels](docs/screenshots/en/62-appearance-2.3.0.png)
 
 ![Direct corner editing and moves between corners](docs/screenshots/en/58-corner-editor-2.1.5.gif)
 

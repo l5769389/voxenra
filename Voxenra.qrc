@@ -1,8 +1,11 @@
 <RCC>
     <qresource>
-        <file>src/qt_dicom_viewer/qml/assets/help/cpr-reference-2.2.0.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/cpr-reference-2.2.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/cpr-reference-2.3.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/cpr-reference-2.3.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/cpr-path.svg</file>
+        <file>src/qt_dicom_viewer/qml/assets/icons/cpr-results.svg</file>
+        <file>src/qt_dicom_viewer/qml/components/ShortcutCaption.js</file>
+        <file>src/qt_dicom_viewer/qml/components/ShortcutLabel.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/CprParameterField.qml</file>
 
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPage.qml</file>
@@ -40,6 +43,7 @@
         <file>src/qt_dicom_viewer/qml/sections/WorkspaceDialog.qml</file>
         <file>src/qt_dicom_viewer/qml/components/AppDialog.qml</file>
         <file>src/qt_dicom_viewer/qml/components/AppDialogFooter.qml</file>
+        <file>src/qt_dicom_viewer/qml/components/DialogKeys.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/ScrollToolPanel.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/ZoomToolPanel.qml</file>
         <file>src/qt_dicom_viewer/qml/assets/cursors/annotate-arrow.svg</file>
@@ -246,10 +250,10 @@
         <file>src/qt_dicom_viewer/qml/assets/icons/crosshair-rotate.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/save.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/help/manual.json</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/appearance-2.1.1.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/appearance-2.3.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/export-complete-2.1.1.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/ai-workflow-2.1.1.gif</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/appearance-2.1.1.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/appearance-2.3.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/export-complete-2.1.1.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/ai-workflow-2.1.1.gif</file>
         <file>src/qt_dicom_viewer/qml/assets/help/chapters/start.json</file>
@@ -351,6 +355,8 @@
     <file>src/qt_dicom_viewer/qml/sections/right/CompactToolRail.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/TwoDViewSelector.qml</file>
       <file>src/qt_dicom_viewer/qml/components/ReadingShortcuts.qml</file>
+      <file>src/qt_dicom_viewer/qml/components/PopupShortcuts.js</file>
+      <file>src/qt_dicom_viewer/qml/components/PopupScope.qml</file>
     <file>src/qt_dicom_viewer/qml/components/DelayedActivity.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/right/components/CprActions.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/settings/InputSettingsPage.qml</file>

@@ -7,6 +7,8 @@ import "../../theme"
 
 Components.AppDialog {
     id: dialog
+    defaultButton: saveButton
+    escapeButton: cancelButton
     objectName: "pacsProfileDialog"
     title: profileId ? qsTrId("text.0877") : qsTrId("text.0878")
     closeEnabled: true
@@ -104,7 +106,6 @@ Components.AppDialog {
                     placeholderText: qsTrId("text.0880")
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
-                    onAccepted: dialog.save()
                 }
                 Text {
                     text: qsTrId("dimse.protocol")
@@ -137,7 +138,6 @@ Components.AppDialog {
 
                             enabled: !dialog.pacsController.busy
                             onTextEdited: dialog.pacsController.clearDraftTest()
-                            onAccepted: dialog.save()
                         }
                     }
                     ColumnLayout {
@@ -153,7 +153,6 @@ Components.AppDialog {
                             validator: IntValidator { bottom: 1; top: 65535 }
                             enabled: !dialog.pacsController.busy
                             onTextEdited: dialog.pacsController.clearDraftTest()
-                            onAccepted: dialog.save()
                         }
                     }
                 }
@@ -174,7 +173,6 @@ Components.AppDialog {
 
                             enabled: !dialog.pacsController.busy
                             onTextEdited: dialog.pacsController.clearDraftTest()
-                            onAccepted: dialog.save()
                         }
                     }
                     ColumnLayout {
@@ -190,7 +188,6 @@ Components.AppDialog {
 
                             enabled: !dialog.pacsController.busy
                             onTextEdited: dialog.pacsController.clearDraftTest()
-                            onAccepted: dialog.save()
                         }
                     }
                 }
@@ -211,7 +208,6 @@ Components.AppDialog {
 
                             enabled: !dialog.pacsController.busy
                             onTextEdited: dialog.pacsController.clearDraftTest()
-                            onAccepted: dialog.save()
                         }
                     }
                     ColumnLayout {
@@ -227,7 +223,6 @@ Components.AppDialog {
                             validator: IntValidator { bottom: 1; top: 65535 }
                             enabled: !dialog.pacsController.busy
                             onTextEdited: dialog.pacsController.clearDraftTest()
-                            onAccepted: dialog.save()
                         }
                     }
                 }
@@ -256,7 +251,6 @@ Components.AppDialog {
                     placeholderText: "http://127.0.0.1:8042/dicom-web"
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
-                    onAccepted: dialog.save()
                 }
                 Text {
                     Layout.fillWidth: true
@@ -299,7 +293,6 @@ Components.AppDialog {
                     Layout.fillWidth: true
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
-                    onAccepted: dialog.save()
                 }
                 Text {
                     visible: !dialog.isDimse && authField.currentIndex > 0
@@ -318,7 +311,6 @@ Components.AppDialog {
                     placeholderText: dialog.existingSecret ? qsTrId("text.0889") : qsTrId("text.0890")
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
-                    onAccepted: dialog.save()
                 }
                 Text {
                     visible: !dialog.isDimse && authField.currentIndex > 0
@@ -346,7 +338,6 @@ Components.AppDialog {
                     }
                     enabled: !dialog.pacsController.busy
                     onTextEdited: dialog.pacsController.clearDraftTest()
-                    onAccepted: dialog.save()
                 }
 
             }
@@ -377,11 +368,13 @@ Components.AppDialog {
             onClicked: { dialog.saveError = ""; dialog.pacsController.testDraft(dialog.values()) }
         }
         Components.AppButton {
+            id: cancelButton
             objectName: "pacsCancelProfile"
             text: qsTrId("text.0539")
             onClicked: dialog.reject()
         }
         Components.AppButton {
+            id: saveButton
             objectName: "pacsSaveProfile"
             text: qsTrId("text.0893")
             actionRole: "primary"

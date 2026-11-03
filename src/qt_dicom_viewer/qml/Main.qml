@@ -5,6 +5,7 @@ import "sections" as Sections
 import "sections/center" as CenterSections
 import "theme"
 import "components" as Components
+import "components/PopupShortcuts.js" as PopupShortcuts
 
 ApplicationWindow {
     id: window
@@ -20,8 +21,11 @@ ApplicationWindow {
     readonly property var editHistory: workspaceController.activeTab?.historyController ?? null
     readonly property bool editingText: !!activeFocusItem && activeFocusItem.selectByMouse !== undefined
     readonly property var shortcuts: appController.shortcutController ?? null
+    readonly property alias shortcutPopupRegistry: nativePopupRegistry
+    Item { id: nativePopupRegistry; visible: false }
     // All popup contents (including non-modal menus) own their keyboard input.
-    readonly property bool shortcutPopupOpen: Overlay.overlay.children.some(item => item.visible)
+    readonly property bool shortcutPopupOpen: PopupShortcuts.blocked(window, shortcuts?.focusWindow, Overlay.overlay, null)
+    onShortcutPopupOpenChanged: if (shortcutPopupOpen && shortcutRecording) shortcuts.cancelRecording()
     readonly property bool shortcutRecording: (shortcuts?.recordingAction ?? "").length > 0
     readonly property bool standardShortcutsAllowed: active && !shortcutPopupOpen && !shortcutRecording
     function isCprPanelControl(item) {
@@ -30,11 +34,16 @@ ApplicationWindow {
         }
         return false
     }
+    readonly property string activeReadingMenu: rightPanel.readingMenu
+    readonly property int readingListCount: rightPanel.listPanel?.shortcutCount ?? 0
     Components.ReadingShortcuts {
+        listPanel: rightPanel.listPanel
         controller: window.shortcuts
+        activeMenu: window.activeReadingMenu
         toolController: window.toolController
         tabController: window.workspaceController.activeTab
-        controlFocused: window.activeFocusItem?.checkable !== undefined
+        controlFocused: window.activeFocusItem?.checkable !== undefined || window.activeFocusItem instanceof Slider
+        onPrimaryToolRequested: tool => rightPanel.selectPrimaryTool(tool)
         cprPanelFocused: window.isCprPanelControl(window.activeFocusItem)
         allowed: window.standardShortcutsAllowed && !window.editingText && !!window.viewportController
             && !window.documentController?.busy && !(window.windowManager?.dragging ?? false)
@@ -126,7 +135,7 @@ ApplicationWindow {
     Shortcut {
         sequence: "Escape"
         context: Qt.WindowShortcut
-        enabled: window.active && !window.shortcutRecording && (window.windowManager?.dragging ?? false)
+        enabled: window.standardShortcutsAllowed && (window.windowManager?.dragging ?? false)
         onActivated: window.windowManager.cancelDrag()
     }
     Shortcut {

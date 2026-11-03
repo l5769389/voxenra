@@ -13,6 +13,8 @@ Item {
     property string twoDViewMode: ""
     readonly property alias cornerOverlay: metadataOverlay
     property bool outsideImageRange: false
+    readonly property alias doubleClickEditsPoints: interactionLayer.pointInput
+    property bool cprKeysActive: false
     property bool cprDragging: false
     readonly property real imageFitScale: imageCanvas.fitScale
     signal returnToVolumeRequested()
@@ -27,8 +29,9 @@ Item {
         .arg(viewportController?.windowCenter ?? "—")
         .arg(viewportController?.loadState ?? "")
         + (viewportController?.errorMessage ? " · " + viewportController.errorMessage : "")
+    Keys.enabled: !viewportRoot.Window.window?.shortcutPopupOpen
     Keys.onEscapePressed: event => {
-        if (viewportRoot.viewportController?.cprCancel?.()) {
+        if (viewportRoot.cprKeysActive && viewportRoot.viewportController?.cprCancel?.()) {
             viewportRoot.cprDragging = false
             event.accepted = true
             return
@@ -40,14 +43,14 @@ Item {
         event.accepted = true
     }
     Keys.onDeletePressed: event => {
-        if (viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
+        if (viewportRoot.cprKeysActive && viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
         if (viewportRoot.viewportController)
             viewportRoot.viewportController.deleteSelectedMeasurement()
         event.accepted = true
     }
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            if (viewportRoot.viewportController?.cprFinish?.()) { event.accepted = true; return }
+            if (viewportRoot.cprKeysActive && viewportRoot.viewportController?.cprFinish?.()) { event.accepted = true; return }
             event.accepted = viewportRoot.viewportController?.finishMeasurement() ?? false
             return
         }
@@ -60,7 +63,7 @@ Item {
             return
         }
         if (event.key === Qt.Key_Backspace && viewportRoot.viewportController) {
-            if (viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
+            if (viewportRoot.cprKeysActive && viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
             viewportRoot.viewportController.deleteSelectedMeasurement()
             event.accepted = true
         }
@@ -106,6 +109,7 @@ Item {
     onHeightChanged: syncViewportSize()
     onViewportControllerChanged: syncViewportSize()
     onVisibleChanged: {
+        if (!visible) viewportController?.discardPointClick?.()
         if (!visible && viewportRoot.cprDragging) {
             viewportRoot.viewportController?.cprCancel?.()
             viewportRoot.cprDragging = false
@@ -368,8 +372,9 @@ Item {
         }
 
         onFinishMeasurementRequested: {
+            viewportRoot.viewportController?.discardPointClick?.()
             if (!viewportRoot.viewportController?.cprDoubleClick?.())
-                viewportRoot.viewportController?.finishMeasurement()
+                viewportRoot.viewportController?.finishMeasurement(true)
         }
         onTapped: position => {
             viewportRoot.forceActiveFocus()
@@ -386,6 +391,12 @@ Item {
             const lineTolerance =
                 imageCanvas.lineHitToleranceInImagePixels
 
+            if (interactionLayer.pointInput) {
+                viewportRoot.viewportController.queuePointClick(viewportRoot.Window.window,
+                    interactionLayer.mapToItem(null, position), hit.valid, hit.column, hit.row,
+                    endpointTolerance, lineTolerance, position.x, position.y)
+                return
+            }
             if (hit.valid && viewportRoot.viewportController?.cprTap?.(hit.column, hit.row, endpointTolerance)) return
             viewportRoot.viewportController.selectMeasurementAt(
                 hit.valid,

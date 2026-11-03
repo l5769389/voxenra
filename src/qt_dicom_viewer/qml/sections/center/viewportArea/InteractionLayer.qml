@@ -12,6 +12,8 @@ Item {
     objectName: "viewportInteractionLayer"
     clip: true
     property bool cprPathInput: false
+    readonly property bool pointInput: cprPathInput
+        || ["measure:curve", "measure:freehand", "measure:angle"].includes(activeInteraction)
     property bool cprPointPressed: false
 
     signal pointerMoved(point position)
@@ -203,8 +205,8 @@ Item {
             // 只有左键点击执行测量选择等 tapped 逻辑。
             if (button !== Qt.LeftButton)
                 return
-            // The second tap confirms a CPR draft; it is not another point.
-            if (interactionLayer.cprPathInput && tapCount > 1)
+            // A finish gesture owns both taps; never dispatch its second tap as a point.
+            if (interactionLayer.pointInput && tapCount > 1)
                 return
             if (interactionLayer.locatorPressed) {
                 interactionLayer.locatorPressed = false

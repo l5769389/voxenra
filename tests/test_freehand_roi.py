@@ -16,6 +16,7 @@ from qt_dicom_viewer.model.measure import RoiMeasurement
 from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import (
     MeasurementController,
 )
+from test_dicom_tags import wait_until
 from test_measurement_controller import _context, _position, _drag
 from test_measurement_qml import (
     qt_app as qt_app,
@@ -123,14 +124,16 @@ def test_real_pointer_freehand_outline_and_metrics(viewport):
     assert layer_item.property("hoverCursorKind") == "measure-freehand"
     assert layer_item.property("immediateRoiDrag")
     path = [(30, 35), (95, 35), (110, 65), (80, 80), (95, 110), (30, 95), (30, 35)]
-    for p in path[:-1]:
+    for index, p in enumerate(path[:-1], 1):
         QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, *p))
         QTest.qWait(30)
+        wait_until(lambda: controller._measure_controller.has_active_transaction and
+                   len(controller._measure_controller._active_transaction.draft.points) == index)
         before = len(controller._measure_controller._active_transaction.draft.points)
         QTest.mouseMove(view, _scene(layer, p[0] + 2, p[1] + 2), 25)
         assert len(controller._measure_controller._active_transaction.draft.points) == before
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, *path[-1]))
-    QTest.qWait(50)
+    wait_until(lambda: bool(controller._measure_controller.committed_measurements))
     item = controller._measure_controller.committed_measurements[0]
     assert item.kind == MeasurementKind.FREEHAND and item.smooth and item.metrics.perimeter_mm > 0
     assert len(controller._measure_controller.measurementItems[0]["renderPoints"]) > len(item.points)
@@ -355,6 +358,7 @@ def test_real_pointer_rejects_crossing_preview_and_click(viewport, tmp_path):
     for p in [(30,35),(95,35),(95,95)]:
         QTest.mouseClick(view,Qt.LeftButton,Qt.NoModifier,_scene(layer,*p))
         QTest.qWait(30)
+    wait_until(lambda: len(controller._measure_controller._active_transaction.draft.points) == 3)
     QTest.mouseMove(view,_scene(layer,30,95),30)
     QTest.qWait(30)
     measure = controller._measure_controller

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Qt
 from PySide6.QtTest import QTest
 
 from qt_dicom_viewer.core.nrrd_exchange import write_nrrd
@@ -135,9 +135,29 @@ def test_deferred_import_keeps_dialog_open_then_closes_selection_and_logs(automa
         click(window, find(window, 'automaticSegmentationDetails'))
         details = window.findChild(QObject, 'automaticSegmentationLogDialog')
         assert details is not None and details.property('visible')
+        QTest.keyClick(window, Qt.Key_Return)
+        assert dialog.property('visible') and not details.property('visible')
+        assert c.state == 'pending'
+        click(window, find(window, 'automaticSegmentationDetails'))
     finally:
         tab.voiController._draft = None
     c._poll_target()
     verify_result(window, tab, c, dialog, tmp_path / 'deferred-success.png')
     wait_until(lambda: not details.property('visible'))
     assert not warnings, warnings
+
+
+def test_segmentation_enter_starts_once_escape_cancels_then_dismisses(automatic_scene):
+    window, app, tab, c, job, warnings = automatic_scene
+    dialog = open_selection(window, app, 'zh-CN')
+    QTest.keyClick(window, Qt.Key_Enter)
+    wait_until(job.entered.is_set)
+    QTest.keyClick(window, Qt.Key_Return)
+    assert c.busy and not c._cancel.is_set()
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert c._cancel.is_set() and dialog.property('visible')
+    job.release.set()
+    wait_until(lambda: not c.busy)
+    assert not tab.voiController.records
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert not dialog.property('visible') and not warnings, warnings

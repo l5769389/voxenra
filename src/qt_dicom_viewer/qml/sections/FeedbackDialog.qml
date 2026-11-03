@@ -7,6 +7,7 @@ import "../theme"
 
 Components.AppDialog {
     id: dialog
+    defaultButton: draftButton
     objectName: "feedbackDialog"
     required property var controller
     readonly property bool hasAttachments: controller.attachments.length > 0
@@ -114,6 +115,7 @@ Components.AppDialog {
                     }
                     Components.AppButton {
                         objectName: "feedbackRemoveAttachment-" + attachmentRow.index
+                        hintText: qsTrId("feedback.removeAttachment")
                         iconName: "close"
                         compact: true
                         Accessible.name: qsTrId("feedback.removeAttachment") + " " + attachmentRow.modelData.name
@@ -230,6 +232,7 @@ Components.AppDialog {
                     onClicked: dialog.send("email")
                 }
                 Components.AppButton {
+                    id: draftButton
                     objectName: "feedbackGitHub"
                     text: qsTrId("feedback.github")
                     iconName: "github"

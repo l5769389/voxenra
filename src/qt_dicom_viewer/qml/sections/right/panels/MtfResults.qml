@@ -53,7 +53,7 @@ ColumnLayout {
             Accessible.description: panel.qualityWarnings.join("\n")
             cornerRadius: Theme.controlRadius
             onClicked: infoPopup.visible ? infoPopup.close() : infoPopup.open()
-            Components.AppToolTip { text: qsTrId("mtf.details"); visible: infoButton.hovered }
+            Components.AppToolTip { text: qsTrId("mtf.details"); requested: infoButton.hovered }
         }
     }
 

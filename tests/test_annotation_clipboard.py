@@ -51,8 +51,9 @@ def items(controller, kind):
 def test_copy_paste_selected_geometry_with_real_keyboard(viewport, kind):
     view, controller, pixels, warnings = viewport
     draw(view, controller, pixels, kind)
-    original = items(controller, kind)[0]
+    # Copy also confirms the pending final single click on a point-based measurement.
     QTest.keySequence(view, QKeySequence(QKeySequence.Copy))
+    original = items(controller, kind)[0]
     payload = read_annotation()
     assert payload and payload["kind"] == kind
     assert set(payload) <= {"kind", "points", "text", "color", "fontSize", "version"}

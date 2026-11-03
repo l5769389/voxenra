@@ -65,6 +65,7 @@ class PanelController(QObject):
         self._last_import_directory = ""
         self._import_store = LocalImportStore()
         self._last_import_snapshot = None
+        self._select_after_local_import = False
         self._scan_series_record: Dict[str, DicomSeriesRecord] = {}
         self._removed_series_uids: set[str] = set()
         self._local_import_restorable_uids: set[str] = set()
@@ -116,6 +117,7 @@ class PanelController(QObject):
         self._last_import_snapshot = None
         self._import_clean_success = False
         self._last_import_paths = list(paths)
+        self._select_after_local_import = not self._selected_series_uids
         self._import_task_open = True
         self._import_progress = -1.0
         self._set_status(_msg('text.0472'))
@@ -228,10 +230,18 @@ class PanelController(QObject):
         elif final is None or not final.dicom_file_count:
             self._set_status(_msg('text.0475'), True)
         else:
+            if self._select_after_local_import and not self._selected_series_uids:
+                requested = final.incoming_series_uids
+                if requested is None:
+                    requested = {s.series_instance_uid for s in final.series}
+                first_uid = self._first_imported_series(requested)
+                if first_uid:
+                    self.selectSeries(first_uid)
             self._set_status(_msg('text.0476', value1=len(final.series), value2=final.dicom_file_count)
                              + (_msg('text.0477', value1=final.skipped_file_count) if final.skipped_file_count else "")
                              + (_msg('import.alreadyLoaded', count=final.existing_file_count) if final.existing_file_count else ""))
             self._import_clean_success = not (final.skipped_file_count or final.existing_file_count)
+        self._select_after_local_import = False
 
     @Slot(object)
     def _handle_scan_failed(self, error) -> None:
@@ -400,6 +410,7 @@ class PanelController(QObject):
     @Slot(str)
     def selectSeries(self, series_uid):
         if series_uid in self._scan_series_record:
+            self._select_after_local_import = False
             self._active_series_uid = series_uid
             self._selected_series_uids = [series_uid]
             self.selectionChanged.emit()
@@ -413,6 +424,7 @@ class PanelController(QObject):
         if not additive:
             self.selectSeries(uid)
         elif uid in self._scan_series_record:
+            self._select_after_local_import = False
             if uid in self._selected_series_uids:
                 self._selected_series_uids.remove(uid)
             else:
@@ -679,11 +691,20 @@ class PanelController(QObject):
         self.setPatientSearch("")
         self._collapsed_groups.clear()
         self.sidebarItemsChanged.emit()
-        first_uid = next((s.series_instance_uid for s in snapshot.series
-                          if s.series_instance_uid in requested and s.series_instance_uid in self._scan_series_record), None)
-        if first_uid is not None:
+        first_uid = self._first_imported_series(requested)
+        if first_uid:
             self.selectSeries(first_uid)
             self.openSeriesView(first_uid, "2d")
+
+    def _first_imported_series(self, requested):
+        # The sidebar already sorts patients, studies and series. Folded groups
+        # are still available on the compact rail; both models honor search.
+        for model in (self._sidebar_model, self._compact_sidebar_model):
+            for index in range(model.rowCount()):
+                uid = model.keyAt(index)
+                if uid in requested:
+                    return uid
+        return ""
 
     @_TextProperty('QVariantList', notify=_i18n_seriesItems, notify_name='_i18n_seriesItems', source_notify='seriesItemsChanged')
     def seriesItems(self):

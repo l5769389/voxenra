@@ -13,7 +13,8 @@ from qt_dicom_viewer.core.cpr_session import (
 from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from qt_dicom_viewer.model import MprPlane, TwoDViewType, ViewportConfig
-from qt_dicom_viewer.model.cpr import CprError, CprPath, CprSettings
+from qt_dicom_viewer.model.cpr import (CprError, CprPath, CprSettings, MAX_FIELD_MM,
+                                      MAX_SLAB_MM, MAX_STEP_MM, MIN_STEP_MM, finite_number)
 from qt_dicom_viewer.model.render_models import VolumeLoadRequest, VolumeLoadResult
 from qt_dicom_viewer.ui.controller.viewport.image_2d.cpr_viewport_controller import CprViewportController
 from qt_dicom_viewer.ui.workers.cpr_render_task import CprRenderInput, CprRenderQueue
@@ -29,6 +30,8 @@ class CprTabController(TabController):
     resultViewChanged = Signal()
     resultSplitChanged = Signal()
     pathInputStarted = Signal()
+    pathInputFinished = Signal()
+    panelSectionsChanged = Signal()
 
     def __init__(self, tab_config, parent=None):
         meta = tab_config.series_metas[0]
@@ -44,9 +47,14 @@ class CprTabController(TabController):
         self._pending_restore_planes = {}
         self._drawing = self._closed = self._edit_transaction_active = False
         self._path_editing = False
+        self._draft_feedback = None
+        self._panel_sections = []
+        self._start_first_path = True
+        self._show_sampling_guides = True
         self._pending_results = self._path_return_results = False
         self._selected_point = -1
         self._generation = 0
+        self._position_only_generation = None
         self._message = self._volume_request_id = ""
         super().__init__(tab_config, parent, enable_mpr_layout=False)
         self._queue = CprRenderQueue(self)
@@ -104,10 +112,22 @@ class CprTabController(TabController):
         return [dict(pathId=r["id"], name=r["name"], selected=r["id"] == self.selectedPathId)
                 for r in self._session["paths"]]
 
+    def _display_points(self):
+        if self._drawing:
+            draft = self._session["draft"]
+            return (*draft, self._draft_feedback[1]) if self._draft_feedback else draft
+        record = self._selected_record()
+        return record["points"] if record else ()
+
+    @Property(int, notify=cprChanged)
+    def pointCount(self):
+        return len(self._display_points())
+
     @Property('QVariantList', notify=cprChanged)
     def controlPoints(self):
-        points = self._session["draft"] if self._drawing else self.current_path.control_points if self.current_path else ()
-        return [dict(index=i, x=p[0], y=p[1], z=p[2], selected=i == self._selected_point)
+        points = self._display_points()
+        selected = len(points) - 1 if self._draft_feedback else self._selected_point
+        return [dict(index=i, x=p[0], y=p[1], z=p[2], selected=i == selected)
                 for i, p in enumerate(points)]
 
     @Property(bool, notify=cprChanged)
@@ -120,7 +140,7 @@ class CprTabController(TabController):
 
     @Property(bool, notify=cprChanged)
     def canFinishPath(self):
-        return self._drawing and len(self._session["draft"]) >= 2
+        return self._drawing and self.pointCount >= 2
 
     @Property(bool, notify=cprChanged)
     def finishing(self):
@@ -129,7 +149,7 @@ class CprTabController(TabController):
     @Property(bool, notify=cprChanged)
     def canFinishEditing(self):
         return (not self._source_mismatch and self._drag is None and not self._pending_results
-                and not self.resultView and (self.canFinishPath if self._drawing else bool(self.current_path)))
+                and not self.resultView and (self.canFinishPath if self._drawing else self._path_editing))
 
     @Property(bool, notify=cprChanged)
     def canCancelPath(self):
@@ -138,7 +158,7 @@ class CprTabController(TabController):
     @Property(bool, notify=cprChanged)
     def canDeletePoint(self):
         if self._drawing:
-            return bool(self._session["draft"])
+            return self.pointCount > 0
         path = self.current_path
         return bool(self.pathEditing and path and len(path.control_points) > 2
                     and 0 <= self._selected_point < len(path.control_points))
@@ -192,29 +212,32 @@ class CprTabController(TabController):
 
     @Slot(result=bool)
     def finishEditing(self):
-        if self._pending_results:
-            return True
         if self._drag is not None or self._source_mismatch:
             return False
-        if self._drawing and not self.finishPath():
-            return False
-        if not self.current_path:
+        if self._drawing:
+            finished = self.finishPath()
+            if finished:
+                self.pathInputFinished.emit()
+            return finished
+        if not self._path_editing:
             return False
         self._path_editing, self._selected_point = False, -1
-        self._pending_results = True
-        if self.ready:
-            self._pending_results = False
-            self._set_result_view(True)
-        elif not self.busy:
-            self._request_cpr()
+        self._path_return_results = False
         self._notify()
+        self.pathInputFinished.emit()
         return True
 
     @Slot(bool)
     def setReferenceBrowsing(self, enabled):
         if self._drawing or self._path_editing or self._pending_results or not self.current_path:
             return
-        self._set_result_view(not enabled)
+        if enabled or self.ready:
+            self._set_result_view(not enabled)
+        else:
+            self._pending_results = True
+            if not self.busy:
+                self._request_cpr()
+            self._notify()
 
     @Slot()
     def returnToCurrentResult(self):
@@ -264,7 +287,17 @@ class CprTabController(TabController):
 
     @Property(bool, notify=cprChanged)
     def ready(self):
-        return (self._result is not None and self._result.generation == self._generation
+        return self._current_curve(allow_pending_position=False)
+
+    @Property(bool, notify=cprChanged)
+    def intervalPositionReady(self):
+        # Markers use the selected arc distance; exports and pixel measurements
+        # still require the new cross-section image to have been presented.
+        return self._current_curve(allow_pending_position=True)
+
+    def _current_curve(self, *, allow_pending_position):
+        navigating = allow_pending_position and self._position_only_generation == self._generation and self.busy
+        return (self._result is not None and (self._result.generation == self._generation or navigating)
                 and self._result.curve is not None and not self._result.preview
                 and not self._edit_transaction_active and not self._drawing and not self._source_mismatch)
 
@@ -309,7 +342,8 @@ class CprTabController(TabController):
 
     def export_revision(self):
         views = list(self._viewport_dict.values()) if self._export_scope == "combined" else [self.viewForRole(self._export_scope)]
-        return repr((self._generation, self._export_scope, self.resultView, self.resultSplitRatio, self.focusedViewportId,
+        return repr((self._generation, self._session["rangeMm"], self.hasInterval, self._show_sampling_guides,
+                     self._export_scope, self.resultView, self.resultSplitRatio, self.focusedViewportId,
                      [(view.viewportId, view._image_revision, view.viewport_state) for view in views]))
 
     @_TextProperty(str, notify=_i18n_message, notify_name='_i18n_message', source_notify='cprChanged')
@@ -332,9 +366,71 @@ class CprTabController(TabController):
     def parameters(self):
         settings = self.current_settings
         return dict(step=settings.step_mm, width=settings.width_mm,
-                    angle=degrees(settings.angle_radians), projection=settings.projection,
-                    thickness=settings.thickness_mm, crossWidth=self._session["crossWidthMm"],
+                    angle=degrees(settings.angle_radians),
+                    projection=settings.projection if settings.thickness_mm > 0 else "thin",
+                    thickness=settings.thickness_mm if settings.projection != "thin" else 0.,
+                    crossWidth=self._session["crossWidthMm"],
                     rangeStart=self._session["rangeMm"][0], rangeEnd=self._session["rangeMm"][1])
+
+    @Property("QVariantMap", constant=True)
+    def parameterLimits(self):
+        return dict(minStep=MIN_STEP_MM, maxStep=MAX_STEP_MM, maxWidth=MAX_FIELD_MM, maxThickness=MAX_SLAB_MM)
+
+    @Property("QStringList", notify=panelSectionsChanged)
+    def panelSections(self):
+        return list(self._panel_sections)
+
+    @Slot(str)
+    def togglePanelSection(self, action):
+        if action not in ("cpr-details", "cpr-advanced", "cpr-interval"):
+            return
+        if action in self._panel_sections:
+            self._panel_sections.remove(action)
+        else:
+            self._panel_sections.append(action)
+        self.panelSectionsChanged.emit()
+
+    @Property(bool, notify=cprChanged)
+    def showSamplingGuides(self):
+        return self._show_sampling_guides
+
+    @Slot(bool)
+    def setShowSamplingGuides(self, enabled):
+        self._show_sampling_guides = enabled
+        self._notify()
+
+    @property
+    def interval_mm(self):
+        return self._session["rangeMm"]
+
+    @Property(bool, notify=cprChanged)
+    def hasInterval(self):
+        return self.selectedPathId in self._session["pathRanges"]
+
+    def restore_intervals(self, ranges):
+        self._session["pathRanges"] = dict(ranges)
+        self._session["rangeMm"] = ranges.get(self.selectedPathId, (0., 0.))
+        self.persistenceChanged.emit()
+        self._notify()
+
+    def _set_interval(self, start, end):
+        if self.hasInterval and self.interval_mm == (start, end):
+            return
+        self._session["rangeMm"] = (start, end)
+        self._session["pathRanges"][self.selectedPathId] = (start, end)
+        self._interval_edited()
+
+    def _interval_edited(self):
+        self.snapshotCommitted.emit()
+        self.persistenceChanged.emit()
+        self._notify()
+
+    @Slot()
+    def clearInterval(self):
+        if self.hasInterval and not self._drawing:
+            del self._session["pathRanges"][self.selectedPathId]
+            self._session["rangeMm"] = (0., 0.)
+            self._interval_edited()
 
     @Property('QVariantList', notify=cprChanged)
     def referencePlanes(self):
@@ -342,8 +438,10 @@ class CprTabController(TabController):
 
     @Slot()
     def _tool_panel_changed(self):
-        if self._tool_controller.activePanel != "cpr-path" and (self._path_editing or self._drawing or self._pending_results):
-            self.cancel_operation()
+        if self._tool_controller.activePanel != "cpr-path":
+            self._start_first_path = False
+            if self._path_editing or self._drawing or self._pending_results:
+                self.cancel_operation()
         if self._tool_controller.activePanel == "export":
             self.setExportScope(self._export_scope)
         else:
@@ -456,7 +554,7 @@ class CprTabController(TabController):
             self._message = _msg("cpr.error", reason=str(failure.error))
             self._notify()
 
-    def _request_cpr(self, *, preview=False):
+    def _request_cpr(self, *, preview=False, position_only=False):
         if self._volume is None or self._closed or self._source_mismatch:
             return
         self._message = ""
@@ -465,7 +563,9 @@ class CprTabController(TabController):
             view._independent_measurement_source = None
             # The old plane is still displayed until present_cpr accepts its
             # replacement. Preserve its historical identity and distance.
+        keep_centerline = position_only and self.intervalPositionReady
         self._generation += 1
+        self._position_only_generation = self._generation if keep_centerline else None
         request = CprRenderInput(self._generation, self._volume, self.current_path,
             self.current_settings, self.positionMm,
             tuple(MprPlane(p) for p in self._session["referencePlanes"]),
@@ -507,6 +607,10 @@ class CprTabController(TabController):
         else:
             for role in ROLES[2:]:
                 self.viewForRole(role).clear_cpr()
+        if self._start_first_path:
+            # Arm the first click without modifying the document or moving focus.
+            self._start_first_path = False
+            self._drawing = True
         if self._pending_results and self.ready:
             self._pending_results = False
             self._set_result_view(True)
@@ -576,6 +680,8 @@ class CprTabController(TabController):
     def finishPath(self):
         if not self._drawing:
             return False
+        if self._draft_feedback:
+            self._draft_feedback[0]._point_click.confirm()
         if len(self._session["draft"]) < 2:
             self._message = _msg("cpr.needTwoPoints")
             self._notify()
@@ -587,7 +693,6 @@ class CprTabController(TabController):
             self._notify()
             return False
         self._session["paths"].append(path_record(path, self.current_settings))
-        self._session["pathRanges"][path.path_id] = (0., 0.)
         self._session.update(selected=path.path_id, draft=(), positionMm=0., rangeMm=(0., 0.))
         self._drawing, self._message = False, ""
         self._path_editing, self._selected_point = False, -1
@@ -636,6 +741,8 @@ class CprTabController(TabController):
 
     @Slot()
     def deleteSelectedPoint(self):
+        if self._draft_feedback:
+            self._draft_feedback[0]._point_click.confirm()
         if not self.canDeletePoint:
             return
         if self._drawing:
@@ -667,28 +774,100 @@ class CprTabController(TabController):
             return False
         self._selected_record().update(path_record(path, self.current_settings))
         interval = tuple(min(value, self.totalLength) for value in self._session["rangeMm"])
-        self._session["rangeMm"] = self._session["pathRanges"][path.path_id] = interval
+        if self.hasInterval:
+            self._session["rangeMm"] = self._session["pathRanges"][path.path_id] = interval
         return True
 
     def projected_points(self, view):
         geometry = view.plane_geometry
         if geometry is None or not view.viewportRole.startswith("reference"):
             return []
-        points = self._session["draft"] if self._drawing else self.current_path.control_points if self.current_path else ()
-        items = []
-        for i, point in enumerate(points):
-            normal, row, column, _ = geometry.patient_to_image_index @ (*point, 1.)
-            items.append(dict(column=float(column), row=float(row), index=i,
-                              near=abs(normal) <= .65, selected=i == self._selected_point))
-        return items
+        points = self._display_points()
+        if not points:
+            return []
+        matrix = geometry.patient_to_image_index
+        coords = np.asarray(points) @ matrix[:3, :3].T + matrix[:3, 3]
+        selected = len(points) - 1 if self._draft_feedback else self._selected_point
+        return [dict(column=float(col), row=float(row), index=i,
+                     near=bool(abs(depth) <= .65), selected=i == selected)
+                for i, (depth, row, col) in enumerate(coords)]
 
     def _hit_point(self, view, column, row, tolerance):
-        items = self.projected_points(view)
-        if not items:
+        points = [p for p in self.projected_points(view) if self.pathEditing or p["near"]]
+        if not points:
             return -1
-        distances = [np.hypot(item["column"]-column, item["row"]-row) for item in items]
-        index = int(np.argmin(distances))
-        return index if distances[index] <= tolerance else -1
+        nearest = min(points, key=lambda p: (p["column"] - column)**2 + (p["row"] - row)**2)
+        return nearest["index"] if np.hypot(nearest["column"]-column, nearest["row"]-row) <= tolerance else -1
+
+    def _segment_hit(self, view, column, row, tolerance):
+        projected = self.projected_points(view)
+        best, distance = None, tolerance
+        for i, (a, b) in enumerate(zip(projected, projected[1:])):
+            if not self.pathEditing and not (a["near"] and b["near"]):
+                continue
+            start = np.array((a["column"], a["row"]))
+            delta = np.array((b["column"], b["row"])) - start
+            length_sq = delta @ delta
+            if length_sq < 1e-8:
+                continue
+            t = float(np.clip(((column, row) - start) @ delta / length_sq, 0, 1))
+            error = np.linalg.norm(start + t * delta - (column, row))
+            if error <= distance:
+                best, distance = (i, t), error
+        return best
+
+    def can_select_path(self, view):
+        return (self._tool_controller.activePanel == "cpr-path" and not self.resultView
+                and not self._drawing and not self._source_mismatch and bool(self.selectedPathId)
+                and view.viewportRole.startswith("reference") and not view.historicalPlane
+                and view.plane_geometry is not None)
+
+    def _select_for_editing(self, view, index):
+        self._pending_results = False
+        self.activateViewport(view.viewportId)
+        if not self._path_editing:
+            self._path_return_results = False
+        self._path_editing = True
+        self._selected_point = index
+        self._notify()
+
+    def _draft_candidate(self, view, column, row, tolerance):
+        draft = self._session["draft"]
+        geometry = view.plane_geometry
+        if len(draft) >= 4096 or geometry is None:
+            return None
+        if draft:
+            depth, y, x, _ = geometry.patient_to_image_index @ (*draft[-1], 1.)
+            if abs(depth) <= .65 and np.hypot(x-column, y-row) <= tolerance:
+                return None
+        point = geometry.image_point_to_patient(column=column, row=row)
+        if draft and np.linalg.norm(np.asarray(point)-draft[-1]) < 1e-4:
+            return None
+        return point
+
+    def queue_draft_point(self, view, window, position, column, row, tolerance):
+        if self._draft_feedback:
+            self._draft_feedback[0]._point_click.confirm()
+        point = self._draft_candidate(view, column, row, tolerance)
+        if point is None:
+            return
+        def resolve(commit):
+            self._draft_feedback = None
+            if commit and self._drawing:
+                self._append_draft(point, already_displayed=True)
+            else:
+                self._notify()
+        view._point_click.queue(window, position, lambda: resolve(True), lambda: resolve(False))
+        self._draft_feedback = (view, point)
+        self._notify()
+
+    def _append_draft(self, point, *, already_displayed=False):
+        draft = self._session["draft"]
+        self._session["draft"] = (*draft, point)
+        self._selected_point, self._message = len(draft), ""
+        self.persistenceChanged.emit()
+        if not already_displayed:
+            self._notify()
 
     def path_tap(self, view, column, row, tolerance):
         if view.viewportRole == "curved" and self._result and self._result.curve:
@@ -696,54 +875,44 @@ class CprTabController(TabController):
                 return False
             self.setPositionMm(column*self._result.curve.centerline.spacing_mm)
             return True
-        if not self.pathEditing or view.plane_geometry is None or not view.viewportRole.startswith("reference"):
+        if view.plane_geometry is None or not view.viewportRole.startswith("reference") or view.historicalPlane:
             return False
-        point = view.plane_geometry.image_point_to_patient(column=column, row=row)
-        if self._drawing:
-            draft = self._session["draft"]
-            if draft:
-                # Clicking an existing endpoint to finish must not create a
-                # tiny segment from pointer jitter. A new slice is distinct.
-                last = self.projected_points(view)[-1]
-                if last["near"] and np.hypot(last["column"]-column, last["row"]-row) <= tolerance:
-                    return True
-            if len(draft) < 4096 and (not draft or np.linalg.norm(np.asarray(point)-draft[-1]) >= 1e-4):
-                self._session["draft"] = (*draft, point)
-                self._selected_point = len(draft)
-                self._message = ""
-                self.persistenceChanged.emit()
-                self._notify()
+        if self._drawing and self.pathEditing:
+            point = self._draft_candidate(view, column, row, tolerance)
+            if point is not None:
+                self._append_draft(point)
             return True
+        if not self.can_select_path(view):
+            return False
         hit = self._hit_point(view, column, row, tolerance)
         if hit >= 0:
-            self._selected_point = hit
-            self._notify()
+            self._select_for_editing(view, hit)
             return True
-        projected = self.projected_points(view)
-        for i, (a, b) in enumerate(zip(projected, projected[1:])):
-            start, end = np.array((a["column"], a["row"])), np.array((b["column"], b["row"]))
-            delta = end-start
-            if np.dot(delta, delta) < 1e-8:
-                continue
-            t = float(np.clip(np.dot(np.array((column, row))-start, delta)/np.dot(delta, delta), 0, 1))
-            if np.linalg.norm(start+t*delta-(column, row)) <= tolerance:
-                points = list(self.current_path.control_points)
-                patient = np.asarray(points[i])*(1-t)+np.asarray(points[i+1])*t
-                points.insert(i+1, tuple(patient))
-                if self._replace_points(points):
-                    self._selected_point = i+1
-                    self._commit()
-                break
+        segment = self._segment_hit(view, column, row, tolerance)
+        if segment is None:
+            return self.pathEditing
+        if not self.pathEditing:
+            self._select_for_editing(view, -1)
+            return True
+        i, fraction = segment
+        points = list(self.current_path.control_points)
+        a, b = np.asarray(points[i:i+2])
+        points.insert(i+1, tuple(a + (b-a)*fraction))
+        if self._replace_points(points):
+            self._selected_point = i+1
+            self._commit()
         return True
 
     def begin_path_drag(self, view, column, row, tolerance):
-        if not self.pathEditing or not view.viewportRole.startswith("reference"):
-            return False
         if self._drawing:
-            return True
+            return self.pathEditing and view.viewportRole.startswith("reference")
+        if not self.can_select_path(view):
+            return False
         hit = self._hit_point(view, column, row, tolerance)
         if hit < 0:
-            return True
+            return self.pathEditing
+        if not self.pathEditing:
+            self._select_for_editing(view, hit)
         history = getattr(self, "_edit_history", None)
         if history is not None:
             history.capture()
@@ -779,13 +948,16 @@ class CprTabController(TabController):
 
     @Slot(result=bool)
     def cancel_operation(self):
+        if self._draft_feedback:
+            self._draft_feedback[0]._point_click.discard()
         return_to_results = (self._drawing or self._path_editing) and self._path_return_results
         claimed = self._drawing or self._drag is not None or self._path_editing or self._pending_results
         self._pending_results = False
         if self._drag is not None:
             record = self._drag[0]
             self._selected_record().update(record)
-            self._session["rangeMm"] = self._session["pathRanges"][record["id"]] = self._drag[4]
+            if self.hasInterval:
+                self._session["rangeMm"] = self._session["pathRanges"][record["id"]] = self._drag[4]
             self._drag = None
             self._edit_transaction_active = False
             self._preview_timer.stop()
@@ -804,6 +976,8 @@ class CprTabController(TabController):
 
     @Slot(int)
     def locatePoint(self, index):
+        if self._draft_feedback:
+            self._draft_feedback[0]._point_click.confirm()
         points = self._session["draft"] if self._drawing else self.current_path.control_points if self.current_path else ()
         if not 0 <= index < len(points):
             return
@@ -832,7 +1006,7 @@ class CprTabController(TabController):
         center = tuple(points[index]*(1-fraction)+points[index+1]*fraction)
         self._session["positionMm"] = float(value)
         self._session["referenceCenters"] = (center, center)
-        self._request_cpr()
+        self._request_cpr(position_only=True)
         self.persistenceChanged.emit()
 
     def navigate_view(self, view, index):
@@ -875,19 +1049,29 @@ class CprTabController(TabController):
         try:
             if key in fields:
                 values[fields[key]] = radians(float(value)) if key == "angle" else value
+                if key == "projection" and value in ("mip", "mean") and not values["thickness_mm"]:
+                    values["thickness_mm"] = 3.
+                elif key == "thickness" and value == 0:
+                    # Keep the last positive slab with the path for the next projection.
+                    values.update(projection="thin", thickness_mm=self.current_settings.thickness_mm)
+                elif key == "thickness" and values["projection"] == "thin":
+                    values["projection"] = "mip"
                 record.update(path_record(self.current_path, CprSettings(**values)))
             elif key == "crossWidth":
                 width = float(value)
-                if not np.isfinite(width) or not 0 < width <= 500:
+                if not np.isfinite(width) or not 0 < width <= MAX_FIELD_MM:
                     raise CprError("Cross-section width must be between 0 and 500 mm")
                 self._session["crossWidthMm"] = width
             elif key in ("rangeStart", "rangeEnd"):
-                interval = list(self._session["rangeMm"])
-                interval[0 if key == "rangeStart" else 1] = float(value)
-                if not 0 <= interval[0] <= interval[1] <= self.totalLength:
+                mark = finite_number(value, "interval position")
+                if not 0 <= mark <= self.totalLength:
                     raise CprError("Interval must lie on the centerline")
-                self._session["rangeMm"] = tuple(interval)
-                self._session["pathRanges"][self.selectedPathId] = tuple(interval)
+                start, end = self.interval_mm
+                if key == "rangeStart":
+                    self._set_interval(mark, max(mark, end))
+                else:
+                    self._set_interval(min(start, mark), mark)
+                return
             else:
                 return
         except (CprError, ValueError, TypeError) as error:
@@ -901,7 +1085,8 @@ class CprTabController(TabController):
         if self._drag is not None:
             original, _, _, _, interval = self._drag
             state["paths"] = [original if record["id"] == original["id"] else record for record in state["paths"]]
-            state["rangeMm"] = state["pathRanges"][original["id"]] = interval
+            if self.hasInterval:
+                state["rangeMm"] = state["pathRanges"][original["id"]] = interval
         return validate_cpr_session(state)
 
     def restore_session(self, state):
@@ -909,6 +1094,7 @@ class CprTabController(TabController):
         if state["source"]["seriesUid"] != self._tab_config.series_metas[0].series_uid:
             raise CprError("Saved CPR paths belong to another series")
         self.cancel_operation()
+        self._start_first_path = False
         self._session = state
         self.resultSplitChanged.emit()
         self._set_result_view(state['resultView'], preserve_view=True)

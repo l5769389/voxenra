@@ -66,7 +66,8 @@ Item {
             showLabel: rail.showLabels
             shortLabel: qsTrId("sidebar.short.images")
             label: rail.panelController.scanning ? qsTrId("text.0620") : qsTrId("text.0532")
-            tooltipText: label
+            showInlineShortcut: false
+            fixedShortcutAction: rail.panelController.scanning ? "" : "open"
             iconName: "nav-load-file"
             iconSize: 20
             actionEnabled: true
@@ -134,6 +135,10 @@ Item {
             Accessible.checked: selected
             Accessible.onPressAction: rail.panelController.openSeriesView(uid, "2d")
             Accessible.onToggleAction: rail.panelController.selectSeriesWithModifiers(uid, true)
+            Keys.onShortcutOverride: event => {
+                if (event.modifiers === Qt.NoModifier && (event.key === Qt.Key_Home || event.key === Qt.Key_End))
+                    event.accepted = true
+            }
             Keys.onPressed: event => {
                 const backward = event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))
                 if (event.key === Qt.Key_Tab || backward || event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
@@ -216,7 +221,7 @@ Item {
                 }
             }
             Components.AppToolTip {
-                visible: mouse.containsMouse
+                requested: mouse.containsMouse
                 delay: 700
                 text: entry.modelData.label + " · " + entry.modelData.modality
                     + (entry.modelData.subtitle ? "\n" + entry.modelData.subtitle : "")

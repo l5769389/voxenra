@@ -45,28 +45,33 @@ Item {
                     font.pixelSize: 13
                     verticalAlignment: Text.AlignVCenter
                 }
-                Components.AppButton {
-                    id: presetButton
-                    objectName: "volumePreset-" + entry.modelData.presetId
+                Item {
                     width: parent.width
                     height: 40
-                    enabled: root.controller && root.controller.loadState === "ready" && entry.modelData.available
-                    checked: root.controller && root.controller.currentPresetId === entry.modelData.presetId
-                    Accessible.name: entry.modelData.label
-                    onClicked: root.controller.applyVolumePreset(entry.modelData.presetId)
+                    HoverHandler { id: rowHover; enabled: !entry.modelData.available }
                     Components.AppToolTip {
-                        visible: (parent?.hovered ?? false) && !entry.modelData.available
+                        requested: rowHover.hovered && !entry.modelData.available
                         text: qsTrId("text.1087")
                     }
-                    contentItem: Text {
-                        text: (presetButton.checked ? "✓  " : "    ") + entry.modelData.label
-                        leftPadding: 10
-                        font.pixelSize: 14
-                        color: presetButton.enabled ? Theme.textPrimary : Theme.textDisabled
-                        verticalAlignment: Text.AlignVCenter
+                    Components.AppButton {
+                        id: presetButton
+                        objectName: "volumePreset-" + entry.modelData.presetId
+                        anchors.fill: parent
+                        enabled: root.controller && root.controller.loadState === "ready" && entry.modelData.available
+                        checked: root.controller && root.controller.currentPresetId === entry.modelData.presetId
+                        Accessible.name: entry.modelData.label
+                        onClicked: root.controller.applyVolumePreset(entry.modelData.presetId)
+                        Accessible.description: !entry.modelData.available ? qsTrId("text.1087") : ""
+                        contentItem: Text {
+                            text: (presetButton.checked ? "✓  " : "    ") + entry.modelData.label
+                            leftPadding: 10
+                            font.pixelSize: 14
+                            color: presetButton.enabled ? Theme.textPrimary : Theme.textDisabled
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        normalColor: "transparent"
+                        cornerRadius: 5
                     }
-                    normalColor: "transparent"
-                    cornerRadius: 5
                 }
             }
         }

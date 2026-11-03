@@ -29,6 +29,7 @@ Rectangle {
         anchors.fill: parent; anchors.margins: 4; anchors.rightMargin: 42
         iconName: "reset"
         label: root.toolController ? root.toolController.resetLabel : qsTrId("text.0576")
+        shortcutAction: (shortcutOwner?.bindings ?? []).some(b => b.action === "view-reset" && b.menus.includes(root.panel)) ? "view-reset" : ""
         shortLabel: qsTrId("tools.short.reset")
         enabled: root.showReset && !root.playbackActive
         hoverColor: Theme.resetActionHover

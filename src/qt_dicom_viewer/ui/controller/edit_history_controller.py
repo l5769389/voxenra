@@ -118,7 +118,7 @@ class EditHistoryController(QObject):
         self._restoring = True
         try:
             state = loads(target)
-            apply_edits(self.tab, state)
+            apply_edits(self.tab, state, previous_signature=self._signature)
             source.pop()
             destination.append(before)
             self._current, self._signature = target, edit_signature(state)

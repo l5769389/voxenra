@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic as Basic
 import "../../../theme"
+import "../../../components/ShortcutCaption.js" as KeysText
 import "../../../components" as Components
 
 ColumnLayout {
@@ -34,6 +35,22 @@ ColumnLayout {
     property string errorText: ""
     readonly property bool ready: contextReady && Number.isFinite(currentCenter) && Number.isFinite(currentWidth)
     spacing: 8
+
+    readonly property int listGutter: width < 240 ? 4 : 8
+    readonly property bool hasDeleteColumn: allowEditing && presets.some(preset => preset.builtin === false)
+    readonly property int shortcutCount: ready && allowTemplates ? Math.min(9, presets.length) : 0
+    readonly property var bindings: typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : []
+    function selectShortcutIndex(index) {
+        if (index < 0 || index >= shortcutCount) return
+        presetList.positionViewAtIndex(index, ListView.Contain)
+        applyPreset(presets[index])
+    }
+    function applyPreset(preset) {
+        dirty = false
+        errorText = ""
+        actionTriggered(preset.presetId, Number(preset.center), Number(preset.width))
+        syncInputs()
+    }
 
     function roundedValue(value) { const scale = Math.pow(10, inputPrecision); return Math.round(value * scale) / scale }
 
@@ -281,9 +298,9 @@ ColumnLayout {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                spacing: 8
+                anchors.leftMargin: windowPanel.listGutter
+                anchors.rightMargin: windowPanel.listGutter
+                spacing: windowPanel.listGutter
 
                 Item { Layout.preferredWidth: 22; visible: !!windowPanel.settingsController && windowPanel.allowTemplates }
 
@@ -309,7 +326,7 @@ ColumnLayout {
                     color: Theme.textMuted
                     horizontalAlignment: Text.AlignRight
                 }
-                Item { Layout.preferredWidth: 22; visible: windowPanel.allowEditing }
+                Item { Layout.preferredWidth: 22; visible: windowPanel.hasDeleteColumn }
             }
         }
     }
@@ -349,6 +366,9 @@ ColumnLayout {
         delegate: Components.AppButton
         {
             id: presetItem
+            required property int index
+            readonly property string hint: index < windowPanel.shortcutCount ? KeysText.hint("list-" + (index + 1), windowPanel.bindings) : ""
+            Accessible.description: presetItem.hint
 
             required property var modelData
             objectName: "windowPreset-" + modelData.presetId
@@ -356,8 +376,8 @@ ColumnLayout {
 
             width: presetList.width
             height: 36
-            leftPadding: 10
-            rightPadding: 10
+            leftPadding: windowPanel.listGutter
+            rightPadding: windowPanel.listGutter
             topPadding: 0
             bottomPadding: 0
             hoverEnabled: true
@@ -365,24 +385,18 @@ ColumnLayout {
                 && Math.abs(windowPanel.currentCenter - Number(modelData.center)) < 0.01
                 && Math.abs(windowPanel.currentWidth - Number(modelData.width)) < 0.01
 
-            onClicked: {
-                windowPanel.dirty = false
-                windowPanel.errorText = ""
-                windowPanel.actionTriggered(
-                    modelData.presetId,
-                    Number(modelData.center),
-                    Number(modelData.width)
-                )
-                windowPanel.syncInputs()
-            }
+            enabled: windowPanel.ready
+            onClicked: windowPanel.applyPreset(modelData)
 
             contentItem: Item {
                 RowLayout {
                     anchors.fill: parent
-                    spacing: 8
+                    spacing: windowPanel.listGutter
 
                     Components.AppButton {
+                        id: favoriteButton
                         objectName: "windowFavorite-" + presetItem.modelData.presetId
+                        hintText: qsTrId(checked ? "window.favoriteRemove" : "window.favoriteAdd")
                         visible: !!windowPanel.settingsController && windowPanel.allowTemplates
                         Layout.preferredWidth: 22
                         Layout.preferredHeight: 28
@@ -413,12 +427,16 @@ ColumnLayout {
                         }
                     }
 
-                    Text {
+                    Components.ShortcutLabel {
+                        id: presetCaption
+                        objectName: "windowPresetName-" + presetItem.modelData.presetId
                         Layout.fillHeight: true
                         verticalAlignment: Text.AlignVCenter
                         font.pixelSize: Theme.bodyFontSize
                         Layout.fillWidth: true
-                        text: presetItem.modelData.label
+                        Layout.minimumWidth: 0
+                        title: presetItem.modelData.label
+                        keyHint: presetItem.hint
                         color: Theme.textPrimary
                         elide: Text.ElideRight
                     }
@@ -448,7 +466,7 @@ ColumnLayout {
                         Layout.preferredWidth: 22
                         Layout.preferredHeight: 24
                         Layout.alignment: Qt.AlignVCenter
-                        visible: windowPanel.allowEditing
+                        visible: windowPanel.hasDeleteColumn
                         Components.ToolbarAction {
                             anchors.fill: parent
                             visible: presetItem.modelData.builtin === false
@@ -467,6 +485,11 @@ ColumnLayout {
                 }
             }
 
+            Components.AppToolTip {
+                requested: (presetItem.hovered || presetItem.visualFocus) && !favoriteButton.hovered && !favoriteButton.visualFocus
+                    && (presetCaption.truncated || presetCaption.text !== presetCaption.fullCaption)
+                text: presetCaption.fullCaption
+            }
             normalColor: "transparent"
             cornerRadius: 5
         }

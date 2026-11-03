@@ -57,11 +57,13 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ## 曲面重建 CPR
 
-[中文界面](61-cpr-reference-2.2.0.png) · [English](en/61-cpr-reference-2.2.0.png)
+完成路径后留在参考视图。按 `V` 切换到结果双视图，曲面图上 A、B 标出沿中心线测量的区间，横截面上的实线和虚线标出采样宽度与投影厚度。
 
-[结果双视图（中文）](60-cpr-results-2.2.0.png) · [Results (English)](en/60-cpr-results-2.2.0.png)
+[参考四视图（中文）](61-cpr-reference-2.3.0.png) · [English](en/61-cpr-reference-2.3.0.png)
 
-![CPR 曲面图与垂直横截面](61-cpr-reference-2.2.0.png)
+[结果双视图（中文）](60-cpr-results-2.3.0.png) · [Results (English)](en/60-cpr-results-2.3.0.png)
+
+![CPR 曲面图与垂直横截面](61-cpr-reference-2.3.0.png)
 
 ## 三维与融合
 
@@ -145,11 +147,11 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ## 外观与预设
 
-在 **设置 → 外观与语言** 切换深色、中性深灰或浅色。下图为中性深灰主题的完整 MR 阅片界面，主题偏好会在重启后保留。
+在 **设置 → 外观与语言** 选择跟随系统，也可固定为深色、中性深灰或浅色。下图为中性深灰主题的完整 MR 阅片界面，主题偏好会在重启后保留。
 
 ![中性深灰主题下的 MR 阅片](37-theme-graphite.png)
 
-- [主题与语言设置](44-appearance-2.1.1.png)
+- [跟随系统主题（中文）](62-appearance-2.3.0.png) · [Follow system (English)](en/62-appearance-2.3.0.png)
 - [本地 JSON 窗模板](39-window-presets.png)
 
 ## 设置与开始页面
@@ -161,6 +163,6 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 - [自动分割失败与重试](47-ai-error-2.1.1.png) · [English](en/47-ai-error-2.1.1.png)
 - [自动分割成功导入](48-ai-complete-2.1.1.png) · [English](en/48-ai-complete-2.1.1.png)
 
-2.1.1 重新采集外观与说明文字、导入后入口、导出完成及自动分割反馈；中英文均使用应用自身窗口捕获。自动分割为合成模体及模拟推理输出的流程演示，不表示模型精度或耗时。
+CPR、外观与语言使用 2.3.0 的中英文界面。其他示例沿用相应版本的界面，按钮文字及快捷键提示可能不同。自动分割为合成模体及模拟推理输出的流程演示，不表示模型精度或耗时。
 
 - [更新摘要（中文）](43-update-summary.png) · [Update summary (English)](en/43-update-summary.png)

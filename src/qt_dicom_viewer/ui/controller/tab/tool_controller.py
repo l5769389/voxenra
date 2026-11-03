@@ -241,6 +241,12 @@ class ToolController(QObject):
             )
             return
 
+        # Re-selecting an open group must not replace its current subtool:
+        # changing the interaction cancels any in-progress image gesture.
+        if (tool_type == self._active_tool == self._active_panel
+                and definition.behavior in (ToolBehavior.PANEL, ToolBehavior.INTERACTION_PANEL)):
+            return
+
         match definition.behavior:
             case ToolBehavior.INTERACTION:
                 self._set_active_tool(definition.tool_type)

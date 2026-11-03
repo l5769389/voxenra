@@ -16,7 +16,7 @@ def test_path_shortcuts_work_after_clicking_panel_button(sidebar_scene, action, 
     tab = app.workspaceController.activeTab
     wait_until(lambda: tab.referencesReady)
     draw(tab, ((35, 48), (65, 48)))
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     if action in ('finish', 'cancel'):
         tab.setPathEditing(True)
     window.requestActivate()
@@ -46,7 +46,7 @@ def test_path_shortcuts_work_after_clicking_panel_button(sidebar_scene, action, 
     elif action == 'edit':
         assert tab.pathEditing and not tab.resultView
     else:
-        assert not tab.pathEditing and tab.resultView
+        assert not tab.pathEditing and tab.resultView == (action == "cancel")
     assert not warnings, warnings
 
 
@@ -56,7 +56,7 @@ def test_cpr_panel_commands_leave_text_and_popups_alone(sidebar_scene):
     tab = app.workspaceController.activeTab
     wait_until(lambda: tab.referencesReady)
     draw(tab, ((35, 48), (65, 48)))
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     tab.setPathEditing(True)
     window.requestActivate()
     QTest.qWait(80)
@@ -89,7 +89,7 @@ def test_cpr_commands_work_from_non_text_panel_controls(sidebar_scene, control_n
     tab = app.workspaceController.activeTab
     wait_until(lambda: tab.referencesReady)
     draw(tab, ((35, 48), (65, 48)))
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     tab.setPathEditing(True)
     window.requestActivate()
     QTest.qWait(80)
@@ -98,10 +98,10 @@ def test_cpr_commands_work_from_non_text_panel_controls(sidebar_scene, control_n
     assert control.hasActiveFocus() and not window.property('shortcutPopupOpen')
     QTest.keyClick(window, key)
     QTest.qWait(40)
-    assert tab.resultView and not tab.pathEditing
+    assert tab.resultView == (key == Qt.Key_Escape) and not tab.pathEditing
     if control_name == 'cprFinishPath':
         assert not control.isVisible()
-        curved = find(window, 'cprViewport-curved')
+        curved = find(window, 'cprViewport-' + tab.activeViewport.viewportRole)
         try:
             wait_until(curved.hasActiveFocus)
         except AssertionError:
@@ -130,10 +130,10 @@ def test_async_completion_preserves_visible_parameter_input_focus(sidebar_scene)
         wait_until(lambda: bool(results))
         field = find(window, 'cprParameter-angle')
         click(window, field)
-        assert field.hasActiveFocus() and tab.finishing and not tab.resultView
+        assert field.hasActiveFocus() and not tab.finishing and not tab.resultView
         tab._accept_cpr(results[-1])
         QTest.qWait(40)
-        assert tab.resultView and field.isVisible()
+        assert not tab.resultView and field.isVisible()
         assert field.hasActiveFocus()
         assert not warnings, warnings
     finally:
@@ -148,7 +148,7 @@ def test_delete_and_backspace_from_panel_button_remove_only_draft_points(sidebar
     wait_until(lambda: tab.referencesReady)
     window.requestActivate()
     QTest.qWait(80)
-    click(window, find(window, 'cprNewPath'))
+    assert tab.drawing
     ref = tab.viewForRole('reference-a')
     for x in (35, 45, 65):
         ref.cprTap(x, 48, .4)
@@ -179,7 +179,7 @@ def test_result_split_legacy_defaults_validation_and_export_revision(cpr):
 
 def test_exit_editing_returns_to_results_and_repeated_edit_keeps_active_reference(cpr):
     draw(cpr)
-    cpr.finishEditing()
+    cpr.setReferenceBrowsing(False)
     cpr.setPathEditing(True)
     other = cpr.viewForRole('reference-b')
     cpr.activateViewport(other.viewportId)
@@ -194,7 +194,7 @@ def test_drag_result_split_clamps_and_survives_layout_changes(cpr_page, tmp_path
     from qt_dicom_viewer.model.interaction import WindowLevelChange
     window, tab = cpr_page
     tab.viewForRole('cross').apply_window_level(WindowLevelChange(WindowLevel(2200, 4400), False))
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     QTest.qWait(60)
     root = window.rootObject()
     handle = named_item(root, 'cprResultSplitHandle')
@@ -211,6 +211,11 @@ def test_drag_result_split_clamps_and_survives_layout_changes(cpr_page, tmp_path
         QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
         QTest.qWait(40)
 
+    grip = named_item(handle, "resizeGrip")
+    QTest.mouseMove(window, curved.mapToScene(QPointF(30, 30)).toPoint())
+    wait_until(lambda: not grip.isVisible())
+    QTest.mouseMove(window, handle.mapToScene(QPointF(handle.width()/2, 30)).toPoint())
+    wait_until(grip.isVisible)
     before = curved.width()
     drag(-130)
     assert curved.width() == pytest.approx(before-130, abs=2)
@@ -221,6 +226,7 @@ def test_drag_result_split_clamps_and_survives_layout_changes(cpr_page, tmp_path
     QTest.qWait(40)
     assert not handle.isVisible()
     tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     QTest.qWait(40)
     assert curved.width() == pytest.approx(before-130, abs=2)
     double_click(window, cross)
@@ -229,10 +235,11 @@ def test_drag_result_split_clamps_and_survives_layout_changes(cpr_page, tmp_path
     double_click(window, cross)
     assert handle.isVisible() and tab.resultSplitRatio == ratio
     drag(-1000)
-    assert curved.width() >= 276 and curved.width() <= 278  # 280 px cell minus borders.
+    minimum = root.property('minimumResultWidth') - 4  # Cell minus viewport margins.
+    assert curved.width() == pytest.approx(minimum, abs=1)
     assert window.grabWindow().save(str(tmp_path/'split-left-minimum.png'))
     drag(2000)
-    assert 276 <= cross.width() <= 278
+    assert cross.width() == pytest.approx(minimum, abs=1)
     assert window.grabWindow().save(str(tmp_path/'split-right-minimum.png'))
     tab.restore_session(saved)
     wait_until(lambda: tab.ready)
@@ -240,7 +247,132 @@ def test_drag_result_split_clamps_and_survives_layout_changes(cpr_page, tmp_path
     assert tab.resultSplitRatio == ratio
     window.resize(600, 700)
     QTest.qWait(40)
-    assert not handle.isVisible() and curved.width() > 590
+    assert handle.isVisible() and curved.width() > 590
+    assert handle.property('cursorShape') == Qt.SizeVerCursor
+    before_height = curved.height()
+    start = handle.mapToScene(QPointF(handle.width()/2, handle.height()/2)).toPoint()
+    end = start + QPointF(0, 64).toPoint()
+    QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
+    QTest.mouseMove(window, end, 20)
+    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
+    QTest.qWait(40)
+    assert curved.height() == pytest.approx(before_height + 64, abs=2)
+    assert window.grabWindow().save(str(tmp_path/'stacked-split-adjusted.png'))
+    tab.setResultSplitRatio(ratio)
     window.resize(1000, 700)
     QTest.qWait(40)
     assert handle.isVisible() and curved.width() == pytest.approx(before-130, abs=2)
+
+
+def test_new_cpr_first_click_places_a_point_without_choosing_a_tool(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    app.workspaceController.createTab(records[0].series_instance_uid, 'CPR', 'cpr')
+    tab = app.workspaceController.activeTab
+    wait_until(lambda: tab.referencesReady)
+    ref = find(window, 'cprViewport-reference-a')
+    assert named_item(ref, 'viewportInteractionLayer').property('hoverCursorKind') == 'cpr-path'
+    click(window, ref)
+    wait_until(lambda: tab.drawing and len(tab.controlPoints) == 1)
+    assert find(window, 'cprCancelPath').isEnabled()
+    assert not find(window, 'cprFinishPath').isEnabled()
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('edge', ['middle', 'curved-border', 'cross-border'])
+def test_result_panes_follow_the_visible_boundary_in_main_window(sidebar_scene, edge):
+    window, app, records, warnings = sidebar_scene
+    window.resize(1440, 850)
+    app.workspaceController.createTab(records[0].series_instance_uid, 'CPR', 'cpr')
+    tab = app.workspaceController.activeTab
+    wait_until(lambda: tab.referencesReady)
+    draw(tab, ((35, 48), (65, 48)))
+    tab.setReferenceBrowsing(False)
+    curved = find(window, 'cprViewport-curved')
+    cross = find(window, 'cprViewport-cross')
+    handle = find(window, 'cprResultSplitHandle')
+    QTest.qWait(100)
+    for delta in (56, -96):
+        right = curved.mapToScene(QPointF(curved.width(), curved.height() / 3))
+        left = cross.mapToScene(QPointF(0, cross.height() / 3))
+        # Users can grab either cell border as well as the center of the gutter.
+        start = {'middle': (right + left) / 2, 'curved-border': right + QPointF(1, 0),
+                 'cross-border': left - QPointF(1, 0)}[edge].toPoint()
+        w1, w2 = curved.width(), cross.width()
+        QTest.mouseMove(window, start)
+        QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
+        try:
+            assert handle.property('pressed')
+            for step in range(1, 5):
+                end = start + QPointF(delta * step / 4, 0).toPoint()
+                QTest.mouseMove(window, end, 12)
+                wait_until(lambda: abs(curved.width() - (w1 + delta * step / 4)) <= 2, timeout=1000)
+                assert cross.width() == pytest.approx(w2 - delta * step / 4, abs=2)
+        finally:
+            QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, start + QPointF(delta, 0).toPoint())
+    assert not warnings, warnings
+
+
+def test_interval_shortcuts_labels_and_scope_in_main_window(sidebar_scene, monkeypatch):
+    from threading import Event
+    window, app, records, warnings = sidebar_scene
+    ws = app.workspaceController
+    uid = records[0].series_instance_uid
+    ws.createTab(uid, 'CPR', 'cpr')
+    tab = ws.activeTab
+    wait_until(lambda: tab.referencesReady)
+    draw(tab, ((35, 48), (65, 48)))
+    ref = find(window, 'cprViewport-reference-a')
+    window.requestActivate()
+    ref.forceActiveFocus()
+    assert '(' not in find(window, 'cprInterval').property('text')
+    click(window, find(window, 'cprInterval'))
+    start = find(window, 'cprMarkStart')
+    assert start.property('text').endswith('(S)')
+    tab.setPositionMm(6)
+    wait_until(lambda: tab.ready)
+    # K updates the selected sample immediately; S/E must not lose it while
+    # the cross-section image for the same centerline is still being drawn.
+    resume, compute = Event(), tab._queue._compute
+    def slow_section(request):
+        assert resume.wait(5)
+        return compute(request)
+    monkeypatch.setattr(tab._queue, '_compute', slow_section)
+    try:
+        QTest.keyClick(window, Qt.Key_K)
+        first_mark = tab.positionMm
+        assert tab.busy and not tab.ready
+        QTest.keyClick(window, Qt.Key_S)
+        assert tab.hasInterval and tab.interval_mm == (first_mark, first_mark)
+        assert start.isEnabled()
+        QTest.keyClick(window, Qt.Key_K)
+        QTest.keyClick(window, Qt.Key_E)
+        assert tab.positionMm > first_mark and tab.interval_mm == (first_mark, tab.positionMm)
+    finally:
+        resume.set()
+    wait_until(lambda: tab.ready)
+    interval = tab.interval_mm
+    assert app.shortcutController.assign('cpr-start', 'Shift+T')
+    wait_until(lambda: start.property('text').endswith('(' + app.shortcutController.hint('cpr-start') + ')'))
+    QTest.keyClick(window, Qt.Key_T, Qt.ShiftModifier)
+    assert tab.interval_mm == (interval[1], interval[1])
+    click(window, find(window, 'cprPositionInput'))
+    QTest.keyClick(window, Qt.Key_V)
+    assert not tab.resultView
+    ref.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_V)
+    wait_until(lambda: tab.resultView)
+    selected = tab.interval_mm
+    click(window, find(window, 'primaryTool-measure'))
+    find(window, 'cprViewport-curved').forceActiveFocus()
+    for key in (Qt.Key_N, Qt.Key_R, Qt.Key_E, Qt.Key_V):
+        QTest.keyClick(window, key)
+    assert tab.toolController.activePanel == 'measure' and tab.resultView
+    assert not tab.drawing and not tab.pathEditing and tab.interval_mm == selected
+    QTest.keyClick(window, Qt.Key_S)
+    wait_until(lambda: tab.toolController.activeTool == 'scroll')
+    ws.createTab(uid, '2D', '2d')
+    image = find(window, 'imageViewport-' + ws.activeViewport.viewportId)
+    image.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_S)
+    wait_until(lambda: ws.activeTab.toolController.activeTool == 'scroll')
+    assert not warnings, warnings

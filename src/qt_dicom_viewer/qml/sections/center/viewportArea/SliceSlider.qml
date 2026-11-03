@@ -45,7 +45,7 @@ Item {
         Accessible.name: qsTrId("slice.jump")
         Accessible.description: qsTrId("slice.position").arg(root.sliceNumber).arg(root.sliceCount)
         onClicked: jumpPopup.open()
-        Components.AppToolTip { visible: jumpButton.hovered; text: qsTrId("slice.jump") }
+        Components.AppToolTip { requested: jumpButton.hovered; text: qsTrId("slice.jump") }
     }
     Basic.Popup {
         id: jumpPopup
@@ -55,6 +55,7 @@ Item {
         width: Math.min(230, (parent?.width ?? 246) - 16)
         padding: 12
         focus: true
+        Components.DialogKeys { popup: jumpPopup; defaultButton: applySlice }
         closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutside
         onAboutToShow: {
             const point = jumpButton.mapToItem(parent, 0, 0)
@@ -78,9 +79,9 @@ Item {
                 Layout.fillWidth: true
                 Accessible.name: qsTrId("slice.number")
                 validator: IntValidator { bottom: 1; top: root.sliceCount }
-                onAccepted: jumpPopup.apply()
             }
             Components.AppButton {
+                id: applySlice
                 objectName: "sliceJumpApply"
                 Layout.fillWidth: true
                 text: qsTrId("slice.jump")
@@ -166,7 +167,7 @@ Item {
         }
 
         Components.AppToolTip {
-            visible: sliceControl.hovered || sliceControl.pressed
+            requested: sliceControl.hovered || sliceControl.pressed
             delay: 250
             text: Math.round(sliceControl.value)
                 + " / " + (root.viewportController

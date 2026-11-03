@@ -246,7 +246,7 @@ Item {
                                     }
                                 }
                             }
-                            Components.AppToolTip { visible: openRecent.hovered; text: recentRow.modelData.path }
+                            Components.AppToolTip { requested: openRecent.hovered; text: recentRow.modelData.path }
                             onClicked: emptyState.documentController.openRecent(recentRow.modelData.path)
                         }
                         Components.AppButton {
@@ -258,7 +258,7 @@ Item {
                             iconSize: 14
                             normalColor: "transparent"
                             Accessible.name: qsTrId("home.removeRecent")
-                            Components.AppToolTip { visible: parent.hovered; text: qsTrId("home.removeRecent") }
+                            Components.AppToolTip { requested: parent.hovered; text: qsTrId("home.removeRecent") }
                             onClicked: emptyState.documentController.removeRecent(recentRow.modelData.path)
                         }
                     }

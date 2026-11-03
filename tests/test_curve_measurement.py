@@ -1,4 +1,5 @@
 """Curve geometry and click-based paths share the displayed/exported physical arc."""
+from test_dicom_tags import wait_until
 from dataclasses import replace
 import math
 import numpy as np
@@ -67,15 +68,17 @@ def test_real_click_paths_have_only_clicked_handles(viewport,kind,finish,tmp_pat
         QTest.mouseClick(view,Qt.LeftButton,Qt.NoModifier,_scene(layer,*p))
         QTest.qWait(30)
         QTest.mouseMove(view,_scene(layer,p[0]+5,p[1]+5),20)
-    assert len(c._active_transaction.draft.points)==4
+    wait_until(lambda: len(c._active_transaction.draft.points)==4)
+    controls = tuple(c._active_transaction.draft.points)
     if finish=='enter':
         QTest.keyClick(view,Qt.Key_Return)
     else:
-        QTest.mouseDClick(view,Qt.LeftButton,Qt.NoModifier,_scene(layer,*path[-1]))
+        QTest.mouseDClick(view,Qt.LeftButton,Qt.NoModifier,_scene(layer, 20, 60))
     QTest.qWait(50)
     assert len(c.committed_measurements)==1
     item=c.committed_measurements[0]
-    assert len(item.points)==4
+    assert tuple(item.points)==controls
+    assert not c.has_active_transaction
     if kind=='curve':
         assert item.length_mm>0
         handles=[x for x in _visual_children(view.rootObject()) if x.objectName()=='measurementControlPoint' and x.isVisible()]
@@ -184,6 +187,7 @@ def test_real_curve_crossing_preview_is_blocked_and_controls_can_continue(viewpo
         QTest.mouseClick(view,Qt.LeftButton,Qt.NoModifier,_scene(layer,*p))
         QTest.qWait(30)
     c = controller._measure_controller
+    wait_until(lambda: len(c._active_transaction.draft.points) == 3)
     QTest.mouseMove(view,_scene(layer,30,95),30)
     QTest.qWait(30)
     last = c.activeTransaction['renderPoints']
@@ -199,3 +203,15 @@ def test_real_curve_crossing_preview_is_blocked_and_controls_can_continue(viewpo
     assert len(item.points) == 4 and simple_path(sample_curve(item.points))
     assert view.grabWindow().save(str(tmp_path/'curve-no-crossing.png'))
     assert not warnings,warnings
+
+
+@pytest.mark.parametrize("kind", ["curve", "freehand"])
+def test_double_click_exits_too_short_path_without_creating_a_measurement(viewport, kind):
+    view, controller, layer, warnings = viewport
+    controller._tool_controller.selectInteraction("measure:" + kind)
+    for xy in [(30, 35), (95, 35)]:
+        QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, *xy))
+    QTest.mouseDClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, 80, 90))
+    assert not controller.measurementController.has_active_transaction
+    assert not controller.measurementController.committed_measurements
+    assert not warnings, warnings

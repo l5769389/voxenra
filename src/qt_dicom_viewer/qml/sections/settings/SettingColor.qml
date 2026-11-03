@@ -16,6 +16,7 @@ RowLayout {
     Components.AppButton {
         id: picker
         objectName: "colorPicker-" + root.settingName
+        hintText: Accessible.name
         Layout.preferredWidth: 30
         leftPadding: 6; rightPadding: 6
         topPadding: 6; bottomPadding: 6
@@ -38,6 +39,12 @@ RowLayout {
             padding: 10
             modal: false
             focus: true
+            onOpened: {
+                const index = Theme.overlaySwatches.indexOf(root.value.toLowerCase())
+                const choice = swatches.itemAt(index) ?? closePalette
+                choice.forceActiveFocus(Qt.TabFocusReason)
+            }
+            Components.DialogKeys { popup: palette; escapeButton: closePalette }
             closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutside
             background: Rectangle { color: Theme.elevatedBackground; border.color: Theme.borderStrong; radius: 6 }
             contentItem: ColumnLayout {
@@ -46,7 +53,9 @@ RowLayout {
                     Layout.fillWidth: true
                     Text { Layout.fillWidth: true; text: root.title; color: Theme.textSecondary; font.pixelSize: 12; elide: Text.ElideRight }
                     Components.AppButton {
+                        id: closePalette
                         objectName: "colorPickerClose-" + root.settingName
+                        hintText: Accessible.name
                         iconName: "close"; iconSize: 14
                         Layout.preferredWidth: 24; Layout.preferredHeight: 24
                         minimumButtonWidth: 24; compact: true
@@ -57,11 +66,13 @@ RowLayout {
                 GridLayout {
                     columns: 4; rowSpacing: 6; columnSpacing: 6
                     Repeater {
+                        id: swatches
                         model: Theme.overlaySwatches
                         delegate: Components.AppButton {
                             id: swatch
                             required property string modelData
                             objectName: "colorChoice-" + root.settingName + "-" + modelData.slice(1)
+                            hintText: Accessible.name
                             Layout.preferredWidth: 40; Layout.preferredHeight: 30
                             Accessible.name: root.title + " " + modelData
                             onClicked: { root.edited(modelData); palette.close() }

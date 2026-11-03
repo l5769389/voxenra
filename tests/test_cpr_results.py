@@ -9,14 +9,15 @@ def test_done_edit_new_cancel_preserve_result_state(cpr):
     cpr.setPositionMm(5)
     wait_until(lambda: cpr.ready)
     before = cross.viewport_state
-    assert cpr.finishEditing()
+    cpr.setReferenceBrowsing(False)
     assert cpr.resultView and cpr.activeViewport.viewportRole == 'curved'
     assert not cpr.pathEditing
     cpr.setPathEditing(True)
     assert not cpr.resultView and cpr.pathEditing
     assert cpr.activeViewport.viewportRole.startswith('reference')
     assert reference.cprFinish()
-    assert cpr.resultView and cross.viewport_state == before
+    assert not cpr.resultView and cross.viewport_state == before
+    cpr.setReferenceBrowsing(False)
     original = cpr.current_path
     cpr.startPath()
     assert not cpr.resultView and cpr.drawing
@@ -35,18 +36,19 @@ def test_done_waits_for_new_result_and_failure_does_not_switch(cpr):
     ref.cprTap(5, 10, .4)
     ref.cprTap(15, 10, .4)
     assert cpr.finishEditing()
+    cpr.setReferenceBrowsing(False)
     assert not cpr.resultView
     cpr._fail_cpr(cpr._generation, 'test failure')
     wait_until(lambda: not cpr.busy)
     assert not cpr.resultView
-    assert cpr.finishEditing()
+    cpr.setReferenceBrowsing(False)
     wait_until(lambda: cpr.resultView)
 
 
 def test_result_layout_roundtrip_and_legacy_session(cpr):
     from qt_dicom_viewer.core.cpr_session import validate_cpr_session
     draw(cpr)
-    cpr.finishEditing()
+    cpr.setReferenceBrowsing(False)
     state = cpr.session_state()
     assert state['resultView']
     cpr.setPathEditing(True)
@@ -66,6 +68,7 @@ def test_switching_tools_cancels_pending_result_transition(cpr):
     ref.cprTap(5, 10, .4)
     ref.cprTap(15, 10, .4)
     assert cpr.finishEditing() and not cpr.resultView
+    cpr.setReferenceBrowsing(False)
     other = cpr.viewForRole('reference-b')
     cpr.activateViewport(other.viewportId)
     cpr.toolController.activateTool('measure')
@@ -87,12 +90,15 @@ def test_configurable_creation_and_edit_shortcuts_are_cpr_scoped(cpr, tmp_path):
     assert len(cpr.controlPoints) == 1
     ref.cprTap(15, 10, .4)
     cpr.finishEditing()
-    wait_until(lambda: cpr.resultView)
+    wait_until(lambda: cpr.ready)
+    assert not cpr.resultView
     assert shortcuts.activate('cpr-edit', cpr.toolController, cpr)
     assert cpr.pathEditing and not cpr.resultView
     cpr.toolController.activateTool('measure')
     assert not cpr.pathEditing
-    assert not shortcuts.activate('cpr-new', cpr.toolController, object())
+    assert not shortcuts.activate('cpr-new', cpr.toolController, cpr)
+    assert not shortcuts.activate('cpr-edit', cpr.toolController, cpr)
+    assert cpr.toolController.activeTool == 'measure'
 
 
 def test_existing_shortcut_letters_survive_upgrade(qt_app):
@@ -102,8 +108,9 @@ def test_existing_shortcut_letters_survive_upgrade(qt_app):
     bindings = normalize_settings({'shortcuts': {'bindings': raw}})['shortcuts']['bindings']
     assert bindings['pan'] == 'N' and bindings['zoom'] == 'R'
     assert bindings['cpr-new'] == bindings['cpr-edit'] == ''
+    assert validate_bindings(dict(raw, **{'cpr-new': 'N'}))['cpr-new'] == 'N'
     with pytest.raises(ValueError):
-        validate_bindings(dict(raw, **{'cpr-new': 'N'}))
+        validate_bindings({'cpr-new': 'R', 'cpr-edit': 'R'})
 
 
 @pytest.mark.parametrize('results', [False, True])
@@ -111,7 +118,7 @@ def test_workspace_snapshot_preserves_active_and_focused_result(cpr, results):
     from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
     draw(cpr)
     if results:
-        cpr.finishEditing()
+        cpr.setReferenceBrowsing(False)
     cross = cpr.viewForRole('cross')
     cpr.activateViewport(cross.viewportId)
     cpr.focusSingleViewport(cross.viewportId)
@@ -134,7 +141,7 @@ def test_hidden_reference_history_restores_without_leaving_results(cpr_app, tmp_
     wait_until(lambda: tab.ready and not tab.busy)
     tab.navigate_measurement(ref, source)
     wait_until(lambda: ref.historicalPlane)
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     cross = tab.viewForRole('cross')
     tab.activateViewport(cross.viewportId)
     tab.focusSingleViewport(cross.viewportId)
@@ -155,3 +162,29 @@ def test_hidden_reference_history_restores_without_leaving_results(cpr_app, tmp_
     restored.navigate_measurement(ref, source)
     assert not restored.resultView and restored.activeViewport is ref
     assert not restored.focusedViewportId
+
+
+def test_range_marks_preserve_historical_section_and_undo(cpr_app):
+    from test_workspace_persistence import draw_length
+    _, tab, _ = cpr_app
+    cross = tab.viewForRole('cross')
+    uid = draw_length(cross)
+    source = cross.measurementController._sources[uid]
+    tab.setPositionMm(20)
+    wait_until(lambda: tab.ready)
+    tab.navigate_measurement(cross, source)
+    wait_until(lambda: cross.historicalPlane)
+    generation, image = tab._generation, cross.imageSource
+    history = tab._edit_history
+    history.capture()
+    tab.setParameter('rangeStart', 10)
+    assert tab.parameters['rangeStart'] == tab.parameters['rangeEnd'] == 10
+    history.capture()
+    tab.setParameter('rangeEnd', 20)
+    history.capture()
+    for action, end in [(history.undo, 10), (history.redo, 20)]:
+        action()
+        assert tab.parameters['rangeEnd'] == end
+        assert tab._generation == generation and cross.historicalPlane and cross.imageSource == image
+    assert not cross.cprGuides
+    assert tab.viewForRole('curved').cprGuides['startColumn'] == pytest.approx(10 / tab._result.curve.centerline.spacing_mm)

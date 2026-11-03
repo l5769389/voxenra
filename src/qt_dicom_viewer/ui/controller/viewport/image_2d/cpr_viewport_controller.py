@@ -80,6 +80,16 @@ class CprViewportController(Image2DViewportController):
                 # section. Keep both numbers tied to the accepted result.
                 info['cprDistance'] = (f's: {result.section.distance_mm:.1f} / '
                                        f'{result.curve.centerline.length_mm:.1f} mm')
+        if (self._cpr.showSamplingGuides and not self._historical and result is not None
+                and result.curve is not None and self._frame_meta is not None):
+            if self.viewportRole == "curved":
+                settings = result.curve.settings
+                info["cprSampling"] = (f'{settings.width_mm:g} mm · {np.degrees(settings.angle_radians):g}°'
+                                       f' · Δs {result.curve.centerline.spacing_mm:.3g} mm')
+            elif self.viewportRole == "cross" and result.section is not None:
+                geometry = result.section.geometry
+                width = (geometry.columns - 1) * geometry.column_spacing
+                info["cprSampling"] = f'{width:g} × {width:g} mm'
         return info
 
     @Property(bool, notify=cprChanged)
@@ -108,7 +118,7 @@ class CprViewportController(Image2DViewportController):
 
     @Property(bool, notify=cprChanged)
     def cprEditing(self):
-        return self._cpr.pathEditing and self.viewportRole.startswith("reference")
+        return self._cpr.pathEditing and not self._historical and self.viewportRole.startswith("reference")
 
     @Property(bool, notify=cprChanged)
     def cprDrawing(self):
@@ -119,7 +129,52 @@ class CprViewportController(Image2DViewportController):
         result = self._cpr._result
         if result is None or result.curve is None:
             return -1.
-        return self._cpr.positionMm / result.curve.centerline.spacing_mm
+        return result.section.distance_mm / result.curve.centerline.spacing_mm
+
+    @Property("QVariantMap", notify=cprChanged)
+    def cprGuides(self):
+        tab = self._cpr
+        result = tab._result
+        if self._historical or result is None or result.curve is None or result.section is None:
+            return {}
+        line = result.curve.centerline
+        if line.path_id != tab.selectedPathId or tab.drawing or result.preview:
+            return {}
+        settings = result.curve.settings
+        if self.viewportRole == "curved":
+            # Interval coordinates belong to the edited path, not a stale raster.
+            if not tab.ready or not tab.hasInterval:
+                return {}
+            start, end = tab.interval_mm
+            return dict(startColumn=start / line.spacing_mm, endColumn=end / line.spacing_mm,
+                        length=end - start, startMm=start, endMm=end)
+        if self.plane_geometry is None:
+            return {}
+        if self.viewportRole == "cross":
+            if not tab.showSamplingGuides:
+                return {}
+            geo = result.section.geometry
+            return dict(widthPixels=settings.width_mm / geo.column_spacing,
+                        slabPixels=(settings.thickness_mm / geo.row_spacing if settings.projection != "thin" else 0.))
+        guides = {}
+        transform = self.plane_geometry.patient_to_image_index
+        if tab.showSamplingGuides:
+            center = result.section.geometry.frame.center_patient
+            depth, row, col, _ = transform @ (*center, 1.)
+            if abs(depth) <= .5:
+                guides.update(stationX=float(col), stationY=float(row))
+        if tab.ready and tab.hasInterval:
+            points = np.asarray(result.cache.path.control_points)
+            distances = np.r_[0., np.cumsum(np.linalg.norm(np.diff(points, axis=0), axis=1))]
+            start, end = tab.interval_mm
+            for label, distance in (("A", start), ("B", end)):
+                if label == "B" and start == end:
+                    continue
+                patient = [np.interp(distance, distances, axis) for axis in points.T]
+                depth, row, col, _ = transform @ (*patient, 1.)
+                if abs(depth) <= .5:
+                    guides[label] = dict(col=float(col), row=float(row))
+        return guides
 
     def present_cpr(self, pixels, geometry, *, index=0, count=1, spacing=None, provenance=None):
         self.plane_geometry = geometry
@@ -212,7 +267,7 @@ class CprViewportController(Image2DViewportController):
 
     @Slot(float, float, float, result=bool)
     def cprCanDragPoint(self, column, row, tolerance):
-        return (self.cprEditing and not self.cprDrawing
+        return (self._cpr.can_select_path(self)
                 and self._cpr._hit_point(self, column, row, tolerance) >= 0)
 
     @Slot(float, float, float, result=bool)
@@ -231,9 +286,12 @@ class CprViewportController(Image2DViewportController):
     def cprDoubleClick(self):
         # One dispatcher owns this gesture: finishing a draft must never also
         # maximize after finishPath changes the editing state during the event.
-        if self.cprFinish() or self.cprEditing:
+        if self.cprDrawing and not self._cpr.canFinishPath:
+            self._cpr.cancel_operation()
             return True
-        if self.activeInteraction in ("measure:freehand", "measure:curve"):
+        if self.cprFinish():
+            return True
+        if self.activeInteraction in ("measure:freehand", "measure:curve", "measure:angle"):
             return False
         self._cpr.activateViewport(self.viewportId)
         self._cpr.focusSingleViewport("" if self._cpr.focusedViewportId else self.viewportId)

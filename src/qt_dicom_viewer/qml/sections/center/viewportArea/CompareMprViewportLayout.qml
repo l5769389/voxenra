@@ -45,7 +45,7 @@ Item {
                     && (modelData.key !== "window" || root.tabController.windowLinkAvailable)
                 Accessible.name: modelData.label + " · " + qsTrId(checked ? "compare.mpr.linkOn" : "compare.mpr.linkOff")
                 onClicked: root.tabController.setLink(modelData.key, checked)
-                Components.AppToolTip { visible: linkButton.hovered; text: linkButton.Accessible.name }
+                Components.AppToolTip { requested: linkButton.hovered; text: linkButton.Accessible.name }
             }
         }
         Item { Layout.fillWidth: true }
@@ -85,7 +85,7 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
                 HoverHandler { id: headingHover }
-                Components.AppToolTip { visible: headingHover.hovered; text: heading.text }
+                Components.AppToolTip { requested: headingHover.hovered && heading.truncated; text: heading.text }
             }
         }
         Repeater {
@@ -130,7 +130,7 @@ Item {
                 TapHandler {
                     onPressedChanged: if (pressed) root.tabController.activateViewport(cell.modelData.viewportId)
                     onDoubleTapped: {
-                        if (["measure:freehand", "measure:curve"].includes(cell.modelData.activeInteraction)) return
+                        if (canvas.doubleClickEditsPoints) return
                         root.tabController.togglePair(cell.modelData.viewportId)
                     }
                 }

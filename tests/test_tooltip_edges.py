@@ -20,6 +20,8 @@ def tip_rect(tip, window):
 
 
 def assert_stable_tip(window, action, button, tip):
+    window.requestActivate()
+    wait_until(window.isActive)
     # Close to the upper edge, where a clamped 'above' tooltip used to overlap.
     point = button.mapToScene(QPointF(button.width()/2, 2)).toPoint()
     move_pointer(window, point)
@@ -111,3 +113,29 @@ def test_disabled_and_wrapped_tooltips_are_passive(edge_scene, enabled, text):
     move_pointer(view, QPoint(2, view.height()-2))
     wait_until(lambda: not tip.property("visible"))
     assert not errors, errors
+
+
+@pytest.mark.parametrize("already_open", [True, False])
+def test_tooltip_cannot_outlive_anchor_window_focus(edge_scene, already_open):
+    view, root, errors = edge_scene
+    view.requestActivate()
+    wait_until(view.isActive)
+    tip = root.findChild(QObject, "toolbarTooltip")
+    button = root.findChild(QObject, "edgeButton")
+    other = QQuickView()
+    other.setPosition(view.x() + view.width() + 20, view.y())
+    try:
+        move_pointer(view, button.mapToScene(QPointF(button.width()/2, 2)).toPoint())
+        if already_open:
+            wait_until(lambda: tip.property("visible"))
+        other.show()
+        other.requestActivate()
+        wait_until(lambda: other.isActive() and not view.isActive())
+        QTest.qWait(tip.property("delay") + 120)
+        assert not tip.property("visible")
+        native = tip.property("contentItem").window()
+        assert native is None or native is view or not native.isVisible()
+        assert not errors, errors
+    finally:
+        other.hide()
+        delete(other)

@@ -1,15 +1,29 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls.Basic as Basic
+import "PopupShortcuts.js" as PopupShortcuts
 
 Item {
     id: root
     required property var controller
     required property var toolController
     required property var tabController
+    property var ownerPopup: null
+    readonly property bool foreground: allowed && (!ownerPopup || !PopupShortcuts.blocked(
+        Window.window, controller?.focusWindow, Basic.Overlay.overlay, ownerPopup))
+    property bool menuOnly: false
+    required property string activeMenu
     property bool allowed: false
     property bool controlFocused: false
     property bool cprPanelFocused: false
+    property var listPanel: null
+    readonly property int listCount: listPanel?.shortcutCount ?? 0
+    function offers(binding) { return binding.listIndex < 0 || binding.listIndex < listCount }
+    signal primaryToolRequested(string tool)
     readonly property var cpr: tabController?.cprController ?? null
+    readonly property var menuSequences: activeMenu ? (controller?.bindings ?? [])
+        .filter(binding => binding.menus.includes(activeMenu) && offers(binding) && binding.sequence)
+        .map(binding => binding.sequence) : []
     Repeater {
         model: root.controller?.bindings ?? []
         delegate: Item {
@@ -20,10 +34,25 @@ Item {
                 sequence: bindingItem.modelData.sequence
                 context: Qt.WindowShortcut
                 autoRepeat: false
-                enabled: root.allowed && bindingItem.modelData.sequence.length > 0
+                enabled: root.foreground && bindingItem.modelData.sequence.length > 0
                     && !root.controller?.recordingAction
-                    && (!root.controlFocused || ["cpr-new", "cpr-edit"].includes(bindingItem.modelData.action))
-                onActivated: root.controller.activate(bindingItem.modelData.action, root.toolController, root.tabController)
+                    && !(root.controlFocused && bindingItem.modelData.sequence === "Space")
+                    && (bindingItem.modelData.menu
+                        ? bindingItem.modelData.menus.includes(root.activeMenu) && root.offers(bindingItem.modelData)
+                        : !root.menuOnly
+                            && !root.menuSequences.includes(bindingItem.modelData.sequence))
+                onActivated: {
+                    const binding = bindingItem.modelData
+                    if (binding.listIndex >= 0) {
+                        if (!root.tabController?.playing && root.controller.pointerIdle())
+                            root.listPanel.selectShortcutIndex(binding.listIndex)
+                    } else if (!binding.menu && binding.action !== "play") {
+                        const tool = root.controller.primaryToolFor(binding.action, root.toolController)
+                        if (tool) root.primaryToolRequested(tool)
+                    } else {
+                        root.controller.activate(binding.action, root.toolController, root.tabController, root.activeMenu)
+                    }
+                }
             }
         }
     }
@@ -42,7 +71,7 @@ Item {
                 sequence: command.modelData.key
                 context: Qt.WindowShortcut
                 autoRepeat: false
-                enabled: root.allowed && root.cprPanelFocused && !!root.cpr
+                enabled: root.foreground && root.cprPanelFocused && root.activeMenu === "cpr-path" && !!root.cpr
                     && (command.modelData.action === "finish" ? root.cpr.canFinishEditing
                         : command.modelData.action === "cancel" ? root.cpr.canCancelPath
                         : root.cpr.canDeletePoint)

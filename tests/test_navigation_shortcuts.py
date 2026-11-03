@@ -5,7 +5,7 @@ import json
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QPointF
+from PySide6.QtCore import QPointF, Qt
 from PySide6.QtQuick import QQuickItem
 from PySide6.QtTest import QTest
 from qt_dicom_viewer.model import ToolType
@@ -16,6 +16,7 @@ from test_measurement_qml import viewport, qt_app
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, descendants
 from test_dicom_tags import wait_until
+from qt_zoom_slider import drag_zoom
 from test_volume_panel_qml import panel, volume, loaded_tab, click as volume_click, find as volume_find
 
 
@@ -40,22 +41,27 @@ def test_scroll_shortcuts_exact_steps_and_clamped_boundaries(display_panel):
     assert not warnings, warnings
 
 
-def test_zoom_buttons_set_absolute_fit_multiple_and_keep_transforms(display_panel, tmp_path):
+def test_zoom_slider_sets_absolute_fit_multiple_and_keeps_transforms(display_panel, tmp_path):
     view, controller, warnings = display_panel
     controller.apply_pan(17, -12)
     controller.applyTransformAction("rotate:cw90")
     controller.applyTransformAction("rotate:mirror-h")
     _click(view, _find(view.rootObject(), "primaryTool-zoom"))
     assert controller._tool_controller.activeInteraction == "zoom"
-    for factor in (2, 2, 5, 10, 1):
-        button = _find(view.rootObject(), "zoomShortcut-" + str(factor))
-        _click(view, button)
-        assert controller.zoom == factor and button.property("checked")
+    slider = _find(view.rootObject(), "zoomSlider")
+    for factor in (0.1, 3.5, 10, 20, 1):
+        value = drag_zoom(view, slider, factor)
+        assert controller.zoom == pytest.approx(value) and value == pytest.approx(factor, abs=.12)
         assert (controller.panX, controller.panY, controller.rotationDegrees, controller.horizontalFlip) == (17, -12, 90, True)
+    from PySide6.QtGui import QAccessible
+    accessible = QAccessible.queryAccessibleInterface(slider).valueInterface()
+    accessible.setCurrentValue(3.7)
+    wait_until(lambda: controller.zoom == pytest.approx(3.7))
     controller.setZoom(float("nan"))
-    assert controller.zoom == 1
+    assert controller.zoom == pytest.approx(3.7)
     controller.apply_zoom(1.3)
-    assert not _find(view.rootObject(), "zoomShortcut-1").property("checked")
+    assert slider.property("value") == pytest.approx(controller.zoom)
+    assert controller.zoom != value
     assert view.grabWindow().save(str(tmp_path / "zoom-shortcuts.png"))
     assert not warnings, warnings
 
@@ -69,7 +75,7 @@ def test_real_workspaces_use_shortcuts_and_preserve_other_tabs(sidebar_scene, ki
     assert ws.activeLoadState.status == "ready", ws.activeLoadState.errorMessage
     current = ws.activeViewport
     click(window, find(window, "primaryTool-zoom"))
-    click(window, find(window, "zoomShortcut-5"))
+    QTest.keyClick(window, Qt.Key_5)
     assert current.zoom == 5
     if kind != "montage":
         click(window, find(window, "primaryTool-scroll"))
@@ -97,11 +103,12 @@ def test_volume_zoom_shortcuts_preserve_rotation_and_parameters(panel, tmp_path)
     controller.setViewFace("L")
     rotation, display = controller.state.rotation, controller.display_state
     volume_click(view, "primaryTool-zoom")
-    for factor in (1, 2, 5, 10):
-        volume_click(view, "zoomShortcut-" + str(factor))
-        assert controller.zoom == factor
+    slider = volume_find(view, "zoomSlider")
+    for factor in (0.1, 4.5, 12, 20):
+        dragged = drag_zoom(view, slider, factor)
+        assert controller.zoom == pytest.approx(dragged)
+        assert controller.zoom == pytest.approx(factor, abs=.12)
         assert controller.state.rotation == rotation and controller.display_state == display
-        assert volume_find(view, "zoomShortcut-" + str(factor)).property("checked")
     controller.reset_tool_state(ToolType.ZOOM)
     assert controller.zoom == 1
     assert view.grabWindow().save(str(tmp_path / "volume-zoom.png"))
@@ -138,7 +145,7 @@ def test_corner_default_migration_and_explicit_removal_survive_restart(qt_app, t
     assert settings.removeCornerField("bottomRight", 0)
     restored = SettingsController(path=path)
     assert restored.values["corners"]["bottomRight"] == ["cursor"]
-    assert json.loads(path.read_text())["schemaVersion"] == 2
+    assert json.loads(path.read_text())["schemaVersion"] == 3
     old["corners"]["bottomRight"] = ["zoom", "cursor"]
     assert normalize_settings(old)["corners"]["bottomRight"] == ["zoom", "cursor"]
 
@@ -163,7 +170,7 @@ def test_pet_mpr_shortcuts_and_compact_transform_field(scene, paired_series, tmp
     click(window, find(window, "scrollShortcut-first"))
     wait_until(lambda: current.sliceIndex == 0)
     click(window, find(window, "primaryTool-zoom"))
-    click(window, find(window, "zoomShortcut-2"))
+    QTest.keyClick(window, Qt.Key_2)
     assert current.zoom == 2
     current.applyTransformAction("rotate:mirror-h")
     QTest.qWait(50)
@@ -187,6 +194,6 @@ def test_four_d_shortcuts_keep_phase_and_use_active_plane(scene, tmp_path):
     click(window, find(window, "scrollShortcut-last"))
     assert current.sliceIndex == current.sliceCount - 1 and tab.currentPhaseIndex == phase
     click(window, find(window, "primaryTool-zoom"))
-    click(window, find(window, "zoomShortcut-10"))
+    QTest.keyClick(window, Qt.Key_0)
     assert current.zoom == 10 and tab.currentPhaseIndex == phase
     assert not warnings, warnings

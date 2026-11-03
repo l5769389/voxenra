@@ -8,6 +8,11 @@ import "../theme"
 
 Basic.Dialog {
     id: dialog
+    Components.DialogKeys {
+        popup: dialog
+        defaultButton: dialog.controller.scanning ? null : dialog.controller.importError ? retryButton : closeButton
+        escapeButton: closeButton
+    }
     Components.DelayedActivity { id: feedback; active: dialog.visible && dialog.controller.scanning }
     objectName: "importTaskDialog"
     required property var controller
@@ -168,6 +173,7 @@ Basic.Dialog {
             onClicked: dialog.controller.openImportDialog()
         }
         Components.AppButton {
+            id: closeButton
             objectName: "importTaskClose"
             minimumButtonWidth: 80
             text: dialog.controller.scanning ? qsTrId("text.0620") : qsTrId("common.ok")
@@ -179,6 +185,7 @@ Basic.Dialog {
             }
         }
         Components.AppButton {
+            id: retryButton
             objectName: "importTaskRetry"
             minimumButtonWidth: 80
             text: qsTrId("text.0009")

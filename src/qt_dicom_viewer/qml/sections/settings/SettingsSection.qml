@@ -44,10 +44,6 @@ Rectangle {
                 normalColor: "transparent"; compact: true
                 Accessible.name: I18n.format(qsTrId("settings.expand"), {name: root.title, action: root.collapsed ? qsTrId("common.expand") : qsTrId("common.collapse")})
                 Accessible.description: root.description
-                Components.AppToolTip {
-                    visible: parent !== null && (parent.hovered || parent.visualFocus) && root.description !== ""
-                    text: root.description
-                }
                 onClicked: {
                     if (root.settingsController) {
                         const groups = root.settingsController.values.layout.settingsCollapsedGroups.filter(key => key !== root.sectionKey)
@@ -65,11 +61,11 @@ Rectangle {
             }
             Components.HelpButton {
                 objectName: root.helpObjectName
-                visible: root.helpText !== ""
+                visible: explanation !== ""
                 Layout.minimumWidth: 28
                 Layout.maximumWidth: 28
                 Layout.alignment: Qt.AlignVCenter
-                explanation: root.helpText
+                explanation: [root.description, root.helpText].filter((t, i, all) => t && all.indexOf(t) === i).join("\n\n")
             }
         }
         ColumnLayout {

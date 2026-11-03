@@ -8,6 +8,12 @@ import "../theme"
 
 Basic.Dialog {
     id: dialog
+    Components.DialogKeys {
+        popup: dialog
+        defaultButton: dialog.recovery || dialog.missing ? null : saveButton
+        closeOnEnter: !dialog.working && (dialog.recovery || dialog.missing)
+        escapeButton: dialog.restoring ? cancelRestoreButton : null
+    }
     objectName: "workspaceDocumentDialog"
     property var controller: null
     readonly property bool working: controller?.busy ?? false
@@ -125,7 +131,7 @@ Basic.Dialog {
                     font.pixelSize: 12
                     HoverHandler { id: pathHover }
                     Components.AppToolTip {
-                        visible: pathHover.hovered && dialog.named
+                        requested: pathHover.hovered && dialog.named && location.truncated
                         text: location.text
                     }
                 }
@@ -349,6 +355,7 @@ Basic.Dialog {
                 onClicked: dialog.controller.open()
             }
             Components.AppButton {
+                id: cancelRestoreButton
                 objectName: "cancelWorkspaceRestore"
                 anchors.fill: parent
                 text: qsTrId("text.0642")
@@ -371,6 +378,7 @@ Basic.Dialog {
             }
         }
         Components.AppButton {
+            id: saveButton
             objectName: "saveWorkspace"
             text: dialog.named ? qsTrId("text.0644") : qsTrId("text.0645")
             actionRole: "primary"

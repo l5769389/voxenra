@@ -8,6 +8,7 @@ from math import isfinite
 import numpy as np
 from PySide6.QtCore import QObject, Signal, Slot, Property, QPointF, Qt
 
+from qt_dicom_viewer.ui.controller.viewport.point_click import PendingPointClick
 from qt_dicom_viewer.ui.controller.viewport.mouse_bindings import drag_interaction
 
 from qt_dicom_viewer.core.color_maps import COLOR_MAPS, apply_color_map
@@ -172,6 +173,7 @@ class Image2DViewportController(ViewportController):
         self._frame_meta: FrameDisplayMeta | None = None
         self._baseline_window: WindowLevel | None = None
         self._baseline_slice_index: int | None = None
+        self._point_click = PendingPointClick(self)
         self._tool_controller = tool_controller
         self._settings_controller = tool_controller.settingsController
         self._state = replace(self._state, display_settings=self._default_display_settings())
@@ -1212,6 +1214,7 @@ class Image2DViewportController(ViewportController):
         return self._measure_controller
 
     def shutdown(self):
+        self.discardPointClick()
         if self._mtf_controller is not None:
             self._mtf_controller.shutdown()
         if self._fwhm_controller is not None:
@@ -1626,6 +1629,28 @@ class Image2DViewportController(ViewportController):
             return
         self.apply_window_level(WindowLevelChange(WindowLevel(center=center, width=width), self.inverted))
 
+    @Slot(QObject, QPointF, bool, float, float, float, float, float, float)
+    def queuePointClick(self, window, scene_pos, valid, column, row, endpoint, line, x, y):
+        if valid and getattr(self, "cprDrawing", False):
+            self._cpr.queue_draft_point(self, window, scene_pos, column, row, endpoint)
+            return
+        frame, interaction = self._frame_meta, self.activeInteraction
+        path_input = getattr(self, "cprEditing", False)
+
+        def place():
+            if (self._frame_meta is not frame or self.activeInteraction != interaction
+                    or path_input != getattr(self, "cprEditing", False)):
+                return
+            if valid and hasattr(self, "cprTap") and self.cprTap(column, row, endpoint):
+                return
+            self.selectMeasurementAt(valid, column, row, endpoint, line, x, y)
+
+        self._point_click.queue(window, scene_pos, place)
+
+    @Slot()
+    def discardPointClick(self):
+        self._point_click.discard()
+
     @Slot(bool, float, float, float, float)
     @Slot(bool, float, float, float, float, float, float)
     def selectMeasurementAt(
@@ -1756,11 +1781,16 @@ class Image2DViewportController(ViewportController):
         return True
 
     @Slot(result=bool)
-    def finishMeasurement(self):
-        return self._measure_controller.finish_path()
+    @Slot(bool, result=bool)
+    def finishMeasurement(self, exit_incomplete=False):
+        if exit_incomplete and self.activeInteraction == "measure:angle":
+            self.cancelMeasurement()
+            return True
+        return self._measure_controller.finish_path(exit_incomplete=exit_incomplete)
 
     @Slot()
     def cancelMeasurement(self) -> None:
+        self.discardPointClick()
         if self._annotation_drag_active:
             self._annotation_drag_active = False
             self._text_annotation_controller.cancelDraft()

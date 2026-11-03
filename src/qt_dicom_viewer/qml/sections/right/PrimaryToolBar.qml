@@ -47,6 +47,7 @@ Rectangle {
 
 
         buttonObjectName: "primaryTool-" + modelData.toolType
+        shortcutAction: ToolLabels.shortcutAction(modelData.toolType, toolBar.tabController?.playbackShortcutTool)
         showLabel: toolBar.showToolLabels
         shortLabel: running ? qsTrId("tools.short.stop")
             : ToolLabels.label(modelData, toolBar.viewportController?.displayMappingEditor, true)
@@ -68,7 +69,9 @@ Rectangle {
             ? (toolBar.volumeController ? toolBar.volumeController.currentFace : "A") : ""
         directionColor: toolBar.volumeController
             ? toolBar.volumeController.currentFaceColor : Theme.iconDefault
-        tooltipText: label + (placeholder ? qsTrId("text.0710")
+        explanation: ToolLabels.explanation(modelData.toolType)
+        tooltipText: tooltipBody + (shortcutHint && actionEnabled && !placeholder ? " (" + shortcutHint + ")" : "")
+            + (placeholder ? qsTrId("text.0710")
             : !actionEnabled ? (toolBar.playbackActive ? qsTrId("text.0743") : toolBar.volumeController && toolBar.volumeController.editBusy ? qsTrId("text.0744") : qsTrId("text.0745"))
             : directionFace !== "" ? " · " + directionFace : "")
         onTriggered: {

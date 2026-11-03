@@ -1,6 +1,6 @@
 """App-owned widget text bindings; native file pickers translate on their next opening."""
 from PySide6 import QtWidgets
-from PySide6.QtCore import QEvent
+from PySide6.QtCore import QEvent, QTimer
 from .messages import Message, JoinedMessage, localize, message
 
 
@@ -12,6 +12,7 @@ class TextBindings:
         getattr(super(), name)(localize(value))
 
     def setText(self, value): self._bind('setText', value)
+    def setAccessibleName(self, value): self._bind('setAccessibleName', value)
     def setWindowTitle(self, value): self._bind('setWindowTitle', value)
     def setToolTip(self, value): self._bind('setToolTip', value)
     def setPlaceholderText(self, value): self._bind('setPlaceholderText', value)
@@ -44,6 +45,14 @@ QCheckBox = _text_widget(QtWidgets.QCheckBox)
 QLineEdit = _text_widget(QtWidgets.QLineEdit)
 
 
+def set_dialog_button_hint(button, title, keys):
+    """Keep the action name available independently of its visible keyboard hint."""
+    caption = title + f" ({keys})" if keys else title
+    button.setText(caption)
+    button.setAccessibleName(title)
+    button.setAccessibleDescription(keys)
+
+
 class QDialog(TextBindings, QtWidgets.QDialog):
     pass
 
@@ -54,15 +63,37 @@ class QMessageBox(TextBindings, QtWidgets.QMessageBox):
         self._texts = {}
         if len(args) >= 3:
             self._texts = {'setWindowTitle': args[1], 'setText': args[2]}
+        self._button_text_timer = QTimer(self)
+        self._button_text_timer.setSingleShot(True)
+        self._button_text_timer.timeout.connect(self._translate_buttons)
         self._translate_buttons()
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.LanguageChange and hasattr(self, '_button_text_timer'):
+            # QDialogButtonBox may reset its standard labels in a queued event.
+            self._button_text_timer.start(0)
+
+    def _button_message_ids(self):
+        role = QtWidgets.QMessageBox.StandardButton
+        return {role.Save: 'text.1092', role.Discard: 'common.dontSave', role.Cancel: 'text.0539',
+                role.Close: 'text.0621', role.Ok: 'common.ok', role.Yes: 'common.yes',
+                role.No: 'common.no', role.Retry: 'common.retry'}
+
     def _translate_buttons(self):
-        for key, id_ in {QtWidgets.QMessageBox.StandardButton.Save: 'text.1092', QtWidgets.QMessageBox.StandardButton.Discard: 'common.dontSave',
-                         QtWidgets.QMessageBox.StandardButton.Cancel: 'text.0539', QtWidgets.QMessageBox.StandardButton.Close: 'text.0621',
-                         QtWidgets.QMessageBox.StandardButton.Ok: 'common.ok', QtWidgets.QMessageBox.StandardButton.Yes: 'common.yes', QtWidgets.QMessageBox.StandardButton.No: 'common.no',
-                         QtWidgets.QMessageBox.StandardButton.Retry: 'common.retry'}.items():
-            button = self.button(key)
-            if button is not None: button.setText(localize(message(id_)))
+        for role, key in self._button_message_ids().items():
+            button = self.button(role)
+            if button is not None:
+                hints = []
+                if button == self.defaultButton():
+                    hints.append('Enter')
+                if role == QtWidgets.QMessageBox.StandardButton.Cancel:
+                    hints.append('Esc')
+                set_dialog_button_hint(button, localize(message(key)), ' / '.join(hints))
+
+    def setDefaultButton(self, button):
+        super().setDefaultButton(button)
+        self._translate_buttons()
 
     def setStandardButtons(self, buttons):
         super().setStandardButtons(buttons)

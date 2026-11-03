@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../../../components/ShortcutCaption.js" as KeysText
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "../../../components" as Components
@@ -38,7 +39,7 @@ ColumnLayout {
         rightPadding: 24
         readonly property real singleLineWidth: Math.ceil(captionMetrics.advanceWidth) + leftPadding + rightPadding + 2
         TextMetrics { id: captionMetrics; font: combo.font; text: combo.displayText }
-        implicitHeight: Math.max(Theme.controlHeight, caption.implicitHeight + 12)
+        implicitHeight: Math.max(Theme.controlHeight, contentItem.implicitHeight + 12)
         contentItem: Text {
             id: caption
             text: combo.displayText
@@ -87,10 +88,29 @@ ColumnLayout {
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: singleLineWidth
                 readonly property var keys: panel.controller?.canDraw === false ? ["paint", "erase", "keep", "remove"] : ["threshold", "paint", "erase", "keep", "remove"]
-                model: panel.controller?.canDraw === false
-                    ? [qsTrId("seg.paint"), qsTrId("seg.erase"), qsTrId("seg.keepIsland"), qsTrId("seg.removeIsland")]
-                    : [qsTrId("seg.thresholdTool"), qsTrId("seg.paint"), qsTrId("seg.erase"), qsTrId("seg.keepIsland"), qsTrId("seg.removeIsland")]
+                readonly property var shortcuts: typeof appController !== "undefined" ? appController?.shortcutController?.bindings ?? [] : []
+                model: keys.map(key => {
+                    if (key === "paint" || key === "erase") {
+                        const hint = KeysText.hint(key, shortcuts)
+                        return qsTrId("seg." + key) + (hint ? " (" + hint + ")" : "")
+                    }
+                    return qsTrId(key === "threshold" ? "seg.thresholdTool" : key === "keep" ? "seg.keepIsland" : "seg.removeIsland")
+                })
                 currentIndex: keys.indexOf(panel.controller?.editMode ?? "threshold")
+                contentItem: Components.ShortcutLabel {
+                    id: modeCaption
+                    readonly property string mode: editMode.keys[editMode.currentIndex] ?? ""
+                    keyHint: KeysText.hint(mode, editMode.shortcuts)
+                    title: keyHint ? qsTrId("seg." + mode) : editMode.displayText
+                    font: editMode.font
+                    color: editMode.enabled ? Theme.textPrimary : Theme.textDisabled
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Components.AppToolTip {
+                    requested: (editMode.hovered || editMode.visualFocus)
+                        && (modeCaption.truncated || modeCaption.text !== editMode.displayText)
+                    text: editMode.displayText
+                }
                 onModelChanged: Qt.callLater(function() {
                     currentIndex = Qt.binding(() => keys.indexOf(panel.controller?.editMode ?? "threshold"))
                 })
@@ -203,7 +223,7 @@ ColumnLayout {
                 // overwrite a precise value entered outside its common range.
                 onMoved: panel.setDiameter(value)
                 Components.AppToolTip {
-                    visible: parent.hovered
+                    requested: parent.hovered
                     text: panel.diameterHelp
                 }
             }
@@ -335,12 +355,13 @@ ColumnLayout {
             spacing: 4
             Components.AppButton {
                 objectName: "voiVisibility-" + entry.modelData.id
+                hintText: qsTrId(entry.modelData.visible ? "action.hideRegion" : "action.showRegion")
                 compact: true
                 minimumButtonWidth: 28
                 iconName: entry.modelData.visible ? "visible" : "hidden"
                 iconSize: 16
                 textColor: entry.modelData.color
-                Accessible.name: qsTrId("text.1153")
+                Accessible.name: hintText
                 onClicked: panel.controller.toggleVisible(entry.modelData.id)
             }
             Item {
@@ -393,6 +414,7 @@ ColumnLayout {
                 text: "●"
                 textColor: entry.modelData.color
                 Accessible.name: qsTrId("seg.color")
+                hintText: Accessible.name
                 onClicked: {
                     const colors = Theme.segmentationSwatches
                     panel.controller.setColor(entry.modelData.id,
@@ -404,6 +426,7 @@ ColumnLayout {
                 compact: true
                 minimumButtonWidth: 28
                 iconName: "delete"
+                hintText: Accessible.name
                 iconSize: 16
                 Accessible.name: qsTrId("text.1154")
                 onClicked: panel.controller.remove(entry.modelData.id)

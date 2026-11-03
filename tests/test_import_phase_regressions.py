@@ -47,11 +47,31 @@ def test_local_reimport_restores_only_requested_hidden_series(qt_app, tmp_path, 
         assert panel._start_import([str(i.path) for i in records[0].instances])
         wait_until(lambda: not panel.scanning)
         assert set(panel._scan_series_record) == {records[0].series_instance_uid}
+        assert panel.selectedSeriesUids == [records[0].series_instance_uid]
         assert panel._scan_series_record[records[0].series_instance_uid].phase_identifiers == (0, 1, 2)
         # Explicitly importing the removed peer restores exactly that source.
         assert panel._start_import([str(i.path) for i in records[1].instances])
         wait_until(lambda: not panel.scanning)
         assert set(panel._scan_series_record) == {r.series_instance_uid for r in records[:2]}
+        assert panel.selectedSeriesUids == [records[0].series_instance_uid]
+    finally:
+        panel.shutdown()
+
+
+def test_local_import_respects_deselection_during_scan(qt_app, tmp_path):
+    records = _cross_series_four_d(tmp_path)
+    panel = PanelController(series_catalog=SeriesCatalog())
+    uid = records[0].series_instance_uid
+    snapshot = DicomFolderScanSnapshot(tmp_path, 2, 2, 0, records[:1])
+    panel.update_series_session(snapshot)
+    panel._update_series_record(snapshot)
+    try:
+        assert panel._start_import([str(i.path) for i in records[1].instances])
+        panel.selectSeriesWithModifiers(uid, True)
+        panel.selectSeriesWithModifiers(uid, True)
+        wait_until(lambda: not panel.scanning)
+        assert records[1].series_instance_uid in panel._scan_series_record
+        assert not panel.selectedSeriesUids and not panel.activeSeriesUid
     finally:
         panel.shutdown()
 
@@ -78,6 +98,7 @@ def test_local_import_keeps_concurrent_removal(qt_app, tmp_path, monkeypatch):
         release.set()
         wait_until(lambda: not panel.scanning)
         assert set(panel._scan_series_record) == {r.series_instance_uid for r in records[1:]}
+        assert not panel.selectedSeriesUids and not panel.activeSeriesUid
     finally:
         release.set()
         panel.shutdown()

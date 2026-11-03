@@ -16,6 +16,7 @@ var labels = {
         "appearance.sizeLarge",
         "appearance.sizeLargest",
         "appearance.sizeStandard",
+        "appearance.system",
         "appearance.theme",
         "appearance.toolLabels",
         "appearance.toolLabelsHint",

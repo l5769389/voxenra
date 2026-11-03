@@ -95,6 +95,9 @@ def test_pacs_profile_footer_and_destructive_confirmation(scene, tmp_path):
     click(window, close)
     assert len(app.pacsController.profiles) == 1
     click(window, find(window, "pacsDelete-" + profile_id))
-    click(window, find(window, "confirmDeletePacs"))
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert len(app.pacsController.profiles) == 1 and not dialog.property("visible")
+    click(window, find(window, "pacsDelete-" + profile_id))
+    QTest.keyClick(window, Qt.Key_Return)
     assert not app.pacsController.profiles and not dialog.property("visible")
     assert not warnings, warnings

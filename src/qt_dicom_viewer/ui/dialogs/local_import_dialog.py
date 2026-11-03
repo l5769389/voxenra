@@ -9,7 +9,7 @@ import threading
 from PySide6.QtCore import QEvent, QDir, QFileInfo, QFileSystemWatcher, QTimer, QAbstractTableModel, QLocale, QModelIndex, QItemSelectionModel, QSignalBlocker, QStandardPaths, QSize, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QTableView, QVBoxLayout, QApplication, QStyle, QListWidget, QListWidgetItem, QListView
-from qt_dicom_viewer.i18n.widgets import QDialog, QLabel, QLineEdit, QPushButton
+from qt_dicom_viewer.i18n.widgets import QDialog, QLabel, QLineEdit, QPushButton, set_dialog_button_hint
 
 
 def apply_import_dialog_theme(widget):
@@ -155,7 +155,6 @@ class LocalImportDialog(QDialog):
         from qt_dicom_viewer.ui.controller import appearance_controller
         appearance = appearance_controller.current_appearance()
         if appearance is not None: appearance.changed.connect(self._apply_theme)
-        QGuiApplication.styleHints().colorSchemeChanged.connect(self._apply_theme)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
@@ -170,7 +169,6 @@ class LocalImportDialog(QDialog):
             (_msg('text.0536'), lambda: self.navigate("")),
         ):
             button = QPushButton(title)
-            button.setAutoDefault(False)
             button.clicked.connect(navigate)
             location.addWidget(button)
         self.path_edit = QLineEdit()
@@ -180,7 +178,6 @@ class LocalImportDialog(QDialog):
         location.addWidget(self.path_edit, 1)
         self.favorite_button = QPushButton(_msg('favorites.addCurrent'))
         self.favorite_button.setObjectName("importFavoriteCurrent")
-        self.favorite_button.setAutoDefault(False)
         self.favorite_button.setVisible(favorites is not None)
         self.favorite_button.clicked.connect(self._favorite_current)
         location.addWidget(self.favorite_button)
@@ -195,7 +192,6 @@ class LocalImportDialog(QDialog):
         self.favorites_header.addStretch(1)
         self.manage_favorites = QPushButton(_msg('favorites.manage'))
         self.manage_favorites.setObjectName('importManageFavorites')
-        self.manage_favorites.setAutoDefault(False)
         self.manage_favorites.clicked.connect(lambda: self._favorites.showManager())
         self.favorites_header.addWidget(self.manage_favorites)
         layout.addLayout(self.favorites_header)
@@ -216,7 +212,7 @@ class LocalImportDialog(QDialog):
         self.favorite_list.installEventFilter(self)
         self.favorite_remove = QPushButton("×", self.favorite_list.viewport())
         self.favorite_remove.setObjectName('importFavoriteRemove')
-        self.favorite_remove.setAutoDefault(False)
+        self.favorite_remove.setAutoDefault(True)
         self.favorite_remove.setToolTip(_msg('favorites.remove'))
         self.favorite_remove.setAccessibleName(localize(_msg('favorites.remove')))
         self.favorite_remove.setFixedSize(22, 22)
@@ -245,6 +241,7 @@ class LocalImportDialog(QDialog):
         self.view.verticalHeader().setDefaultSectionSize(28)
         self.view.setShowGrid(False)
         self.view.setObjectName("importFileList")
+        self.view.installEventFilter(self)
         self.view.setModel(self.model)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -266,13 +263,14 @@ class LocalImportDialog(QDialog):
         buttons = QHBoxLayout()
         buttons.setSpacing(8)
         buttons.addStretch(1)
-        self.cancel_button = QPushButton(_msg('text.0539'))
+        self.cancel_button = QPushButton()
+        set_dialog_button_hint(self.cancel_button, _msg('text.0539'), 'Esc')
         self.cancel_button.setObjectName("importCancel")
-        self.cancel_button.setAutoDefault(False)
         self.cancel_button.setMinimumWidth(80)
         self.cancel_button.clicked.connect(self.reject)
         buttons.addWidget(self.cancel_button)
-        self.open_button = QPushButton(_msg('text.0544'))
+        self.open_button = QPushButton()
+        set_dialog_button_hint(self.open_button, _msg('text.0544'), 'Enter')
         self.open_button.setObjectName("importOpen")
         self.open_button.setMinimumWidth(144)
         self.open_button.setDefault(True)
@@ -285,6 +283,7 @@ class LocalImportDialog(QDialog):
             or str(Path.home())
         )
         self.navigate(initial)
+        self.path_edit.setFocus()
 
     def _refresh_favorites(self):
         scroll = self.favorite_list.verticalScrollBar().value()
@@ -364,7 +363,7 @@ class LocalImportDialog(QDialog):
             return
         if self._loading and self._favorite_request == self._navigation_id and target == self._favorite_path:
             return
-        self.navigate(target, typed=True)
+        self.navigate(target)
         self._favorite_request = self._navigation_id
         self._favorite_path = target
 
@@ -418,20 +417,25 @@ class LocalImportDialog(QDialog):
         if (hasattr(self, 'favorite_remove') and watched is self.favorite_list.viewport()
                 and event.type() in (QEvent.Resize, QEvent.Show)):
             self._favorite_position_timer.start(0)
-        if (watched is getattr(self, 'favorite_list', None)
-                and event.type() == QEvent.KeyPress
-                and event.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space)):
-            item = self.favorite_list.currentItem()
-            if item is not None:
-                self._open_favorite(item)
-            return True
-        if (
-            watched is self.path_edit
-            and event.type() == QEvent.KeyPress
-            and event.key() in (Qt.Key_Return, Qt.Key_Enter)
-        ):
-            self.open_typed_path()
-            return True
+        if event.type() == QEvent.KeyPress and event.modifiers() in (Qt.NoModifier, Qt.KeypadModifier):
+            enter = event.key() in (Qt.Key_Return, Qt.Key_Enter)
+            if enter and event.isAutoRepeat():
+                return True
+            if watched is self.favorite_list and (enter or event.key() == Qt.Key_Space):
+                item = self.favorite_list.currentItem()
+                if item is not None:
+                    self._open_favorite(item)
+                return True
+            if enter and watched is self.path_edit:
+                address = self.path_edit.text()
+                if address == self._directory:
+                    self.open_button.click()
+                elif not self._loading or address != self._navigation_directory:
+                    self.navigate(address, typed=True)
+                return True
+            if enter and watched is self.view:
+                self.open_button.click()
+                return True
         return super().eventFilter(watched, event)
 
     def selected_paths(self):
@@ -446,6 +450,7 @@ class LocalImportDialog(QDialog):
         self._accept_navigation = request if accept_after else 0
         results = self._directory_results
         self._navigation_directory = directory
+        self._typed_navigation = typed
         self._loading = True
         self._update_favorite_button()
         self.path_edit.setText(directory)
@@ -503,8 +508,9 @@ class LocalImportDialog(QDialog):
             self._directory_timer.stop()
             self.path_edit.setEnabled(True)
             self.view.setEnabled(True)
+            address_unchanged = self.path_edit.text() == self._navigation_directory
             if error:
-                if not accept_after:
+                if address_unchanged and not self._typed_navigation:
                     self.path_edit.setText(self._directory)
                 self.update_selection()
                 self.selection_label.setText(
@@ -521,31 +527,30 @@ class LocalImportDialog(QDialog):
             self.view.sortByColumn(self.view.horizontalHeader().sortIndicatorSection(),
                                    self.view.horizontalHeader().sortIndicatorOrder())
             self.view.setColumnWidth(0, 420)
-            self.path_edit.setText(target)
+            if address_unchanged:
+                self.path_edit.setText(target)
             for path in selected:
                 index = self.model.index(path)
                 if index.isValid():
                     self.view.selectionModel().select(index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
                     self.view.scrollTo(index)
             self.update_selection()
-            if accept_after:
-                if selected and set(self.selected_paths()) != set(selected):
+            if self._typed_navigation and selected and set(self.selected_paths()) != set(selected):
+                if address_unchanged:
                     self.path_edit.setText(selected[0])
-                    self.selection_label.setText(_msg('text.0545'))
-                    continue
+                self.selection_label.setText(_msg('text.0545'))
+                continue
+            if accept_after:
                 self.accept()
 
     def _refresh_directory(self):
-        if self.isVisible() and not self._loading:
+        if self.isVisible() and not self._loading and self.path_edit.text() == self._directory:
             self.navigate(self._directory, restore_selection=self.selected_paths())
 
     def up(self):
         if self._directory:
             parent = str(Path(self._directory).parent)
             self.navigate("" if parent == self._directory else parent)
-
-    def open_typed_path(self):
-        self.navigate(self.path_edit.text(), typed=True)
 
     def open_item(self, index):
         if self.model.isDir(index):
@@ -564,7 +569,7 @@ class LocalImportDialog(QDialog):
             if paths
             else _msg('text.0542')
         )
-        self.open_button.setText(_msg('text.0543') if paths else _msg('text.0544'))
+        set_dialog_button_hint(self.open_button, _msg('text.0543' if paths else 'text.0544'), 'Enter')
         self.open_button.setEnabled(bool(paths or self._directory))
 
     def accept(self):

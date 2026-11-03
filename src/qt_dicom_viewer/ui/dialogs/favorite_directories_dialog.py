@@ -1,11 +1,11 @@
 """Manage application-local directory bookmarks without changing image data."""
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (QApplication, QAbstractItemView, QHeaderView,
                               QHBoxLayout, QTableWidgetItem, QVBoxLayout)
 
 from qt_dicom_viewer.i18n import message as _msg, localize
-from qt_dicom_viewer.i18n.widgets import QDialog, QFileDialog, QLabel, QLineEdit, QPushButton
+from qt_dicom_viewer.i18n.widgets import QDialog, QFileDialog, QLabel, QLineEdit, QPushButton, set_dialog_button_hint
 from .local_import_dialog import apply_import_dialog_theme
 from .reorder_table import ReorderTable
 
@@ -27,7 +27,6 @@ class FavoriteDirectoriesDialog(QDialog):
         self.setWindowTitle(_msg('favorites.manage'))
         self.resize(760, 510)
         self.setMinimumSize(560, 420)
-        apply_import_dialog_theme(self)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
@@ -63,7 +62,7 @@ class FavoriteDirectoriesDialog(QDialog):
         self.name = QLineEdit()
         self.name.setObjectName('favoriteDirectoryName')
         self.name.setMaxLength(120)
-        self.name.returnPressed.connect(self._rename)
+        self.name.installEventFilter(self)
         self.name.textChanged.connect(self._name_changed)
         name_row.addWidget(self.name, 1)
         self.rename_button = self._button('favoriteDirectoryRename', 'favorites.saveName', self._rename)
@@ -86,21 +85,44 @@ class FavoriteDirectoriesDialog(QDialog):
         layout.addWidget(self.status)
         footer = QHBoxLayout()
         footer.addStretch(1)
-        self.close_button = self._button('favoriteDirectoryClose', 'text.0621', self.accept)
+        self.close_button = self._button('favoriteDirectoryClose', 'text.0621', self.accept, keys='Enter / Esc')
+        self.close_button.setDefault(True)
         footer.addWidget(self.close_button)
         layout.addLayout(footer)
         controller.changed.connect(self.refresh)
         controller.messageChanged.connect(self._message)
         controller.busyChanged.connect(self._busy_changed)
         self.refresh()
+        from qt_dicom_viewer.ui.controller.appearance_controller import current_appearance
+        appearance = current_appearance()
+        if appearance is not None:
+            appearance.changed.connect(self._apply_theme)
+        self._apply_theme()
+
+    def _apply_theme(self):
+        apply_import_dialog_theme(self)
         self._message()
 
-    def _button(self, name, key, action):
+    def _button(self, name, key, action, *, keys=None):
         button = QPushButton(_msg(key))
+        if keys:
+            set_dialog_button_hint(button, _msg(key), keys)
         button.setObjectName(name)
-        button.setAutoDefault(False)
         button.clicked.connect(action)
         return button
+
+    def eventFilter(self, watched, event):
+        if (watched is self.name and event.type() == QEvent.KeyPress
+                and event.key() in (Qt.Key_Return, Qt.Key_Enter)
+                and event.modifiers() in (Qt.NoModifier, Qt.KeypadModifier)):
+            if event.isAutoRepeat():
+                return True
+            if self.rename_button.isEnabled():
+                self._rename()
+            elif self.name.text().strip():
+                self.accept()
+            return True
+        return super().eventFilter(watched, event)
 
     def current_id(self):
         item = self.table.item(self.table.currentRow(), 0)

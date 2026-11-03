@@ -330,3 +330,21 @@ def test_sidebar_does_not_start_queued_drag_after_release(sidebar_scene, monkeyp
     QTest.qWait(50)
     assert captured == []
     assert not warnings, warnings
+
+
+def test_finishing_curve_in_split_2d_keeps_both_views(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    tab, layout = open_scene(app, records)
+    layout.setLayout('1x2')
+    view = tab.activeViewport
+    image = find(window, 'imageViewport-' + view.viewportId)
+    tab.toolController.selectInteraction('measure:curve')
+    def pos(x, y):
+        return image.mapToScene(QPointF(image.width()*x, image.height()*y)).toPoint()
+    for x, y in [(0.4, 0.43), (0.5, 0.52), (0.6, 0.46)]:
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, pos(x, y))
+    QTest.mouseDClick(window, Qt.LeftButton, Qt.NoModifier, pos(0.56, 0.55))
+    wait_until(lambda: bool(view.measurementController.committed_measurements))
+    assert len(view.measurementController.committed_measurements[0].points) == 3
+    assert not tab.focusedViewportId and not view.measurementController.has_active_transaction
+    assert not warnings, warnings

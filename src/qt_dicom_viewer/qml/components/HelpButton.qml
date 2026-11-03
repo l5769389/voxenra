@@ -16,13 +16,14 @@ AppButton {
     Accessible.description: explanation
     onClicked: details.visible ? details.close() : details.open()
     onVisibleChanged: if (!visible) details.close()
-    AppToolTip { visible: control.hovered || control.visualFocus; text: qsTrId("ui.help") }
+    AppToolTip { requested: !details.visible && (control.hovered || control.visualFocus); text: qsTrId("ui.help") }
     Basic.Popup {
         id: details
         objectName: control.objectName + "Popup"
         parent: Basic.Overlay.overlay
         popupType: Basic.Popup.Item
         focus: true
+        DialogKeys { popup: details; closeOnEnter: true }
         padding: 14
         margins: 8
         width: Math.min(380, (parent?.width ?? 396) - 16)

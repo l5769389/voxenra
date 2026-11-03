@@ -80,7 +80,7 @@ Item {
         onClicked: sidebar.collapsed = !sidebar.collapsed
         Components.AppToolTip {
             id: toggleTip
-            visible: toggle.hovered
+            requested: toggle.hovered
             delay: 600
             text: toggle.Accessible.name
         }

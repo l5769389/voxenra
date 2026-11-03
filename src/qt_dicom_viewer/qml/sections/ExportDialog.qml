@@ -7,6 +7,8 @@ import "../theme"
 
 Components.AppDialog {
     id: dialog
+    defaultButton: controller?.outputDirectory ? cancelButton : exportButton
+    escapeButton: controller ? cancelButton : null
     Components.DelayedActivity { id: feedback; active: dialog.visible && (dialog.controller?.busy ?? false) }
     objectName: "exportDialog"
     property var controller: null
@@ -140,6 +142,7 @@ Components.AppDialog {
     }
     footer: Components.AppDialogFooter {
         Components.AppButton {
+            id: cancelButton
             objectName: "cancelExport"
             text: dialog.controller && dialog.controller.busy ? qsTrId("text.0656")
                 : dialog.controller?.outputDirectory ? qsTrId("text.0864") : qsTrId("text.0539")
@@ -149,6 +152,7 @@ Components.AppDialog {
             }
         }
         Components.AppButton {
+            id: exportButton
             objectName: "startExport"
             text: dialog.controller?.outputDirectory ? qsTrId("export.again") : qsTrId("text.0657")
             actionRole: "primary"

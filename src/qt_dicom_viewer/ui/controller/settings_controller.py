@@ -270,7 +270,7 @@ class SettingsController(QObject):
                          if key != "window" or not self._window_file_valid}
                 if self._window_file_valid and candidate["window"]["favorites"]:
                     saved["window"] = {"favorites": candidate["window"]["favorites"]}
-                payload = json.dumps({"schemaVersion": 2, **saved}, ensure_ascii=False, indent=2).encode("utf-8")
+                payload = json.dumps({"schemaVersion": 3, **saved}, ensure_ascii=False, indent=2).encode("utf-8")
                 if not target.open(QIODevice.WriteOnly) or target.write(payload) != len(payload) or not target.commit():
                     raise OSError("Cannot save settings")
             except OSError:

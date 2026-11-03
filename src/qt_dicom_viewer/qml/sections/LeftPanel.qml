@@ -131,7 +131,8 @@ Rectangle {
             disabledIconColor: normalIconColor
             iconName: actionData.icon
             readonly property string viewError: leftPanel.panelController.activeMrViewErrors[actionData.type] ?? ""
-            tooltipText: viewError || label
+            fixedShortcutAction: isFileAction && !leftPanel.panelController.scanning ? "open" : ""
+            tooltipText: viewError || label + (shortcutHint ? " (" + shortcutHint + ")" : "")
             placeholder: !actionData.supported
             actionEnabled: isFileAction
                 ? true
@@ -320,6 +321,10 @@ Rectangle {
                     else if (leftPanel.panelController.patientSearch.trim() === "")
                         leftPanel.panelController.toggleGroup(modelData.key)
                 }
+                Keys.onShortcutOverride: event => {
+                    if (event.modifiers === Qt.NoModifier && (event.key === Qt.Key_Home || event.key === Qt.Key_End))
+                        event.accepted = true
+                }
                 Keys.onPressed: event => {
                     const backward = event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))
                     if (event.key === Qt.Key_Tab || backward || event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
@@ -478,7 +483,7 @@ Rectangle {
                     onClicked: leftPanel.panelController.selectSeriesWithModifiers(entry.modelData.seriesInstanceUid, true)
                 }
                 Components.AppToolTip {
-                    visible: mouse.containsMouse
+                    requested: mouse.containsMouse
                     delay: 900
                     text: entry.modelData.label + (entry.modelData.subtitle ? "\n" + entry.modelData.subtitle : "")
                 }
@@ -606,7 +611,7 @@ Rectangle {
         readonly property string viewError: leftPanel.panelController.seriesViewError(seriesContextMenu.contextSeriesUid, actionCode)
         Components.AppToolTip {
             text: seriesMenuItem.viewError
-            visible: seriesMenuItem.viewError !== "" && reasonHover.hovered
+            requested: seriesMenuItem.viewError !== "" && reasonHover.hovered
         }
         HoverHandler { id: reasonHover }
         enabled: actionEnabled && (leftPanel.panelController.seriesModality(seriesContextMenu.contextSeriesUid) !== "PT"
@@ -662,7 +667,7 @@ Rectangle {
         onTriggered: seriesContextMenu.triggerAction(actionCode)
 
         Components.AppToolTip {
-            visible: (parent?.hovered ?? false) && !parent.actionEnabled
+            requested: (parent?.hovered ?? false) && !parent.actionEnabled
             delay: 350
             text: ["montage", "4d"].includes(parent.actionCode)
                 ? qsTrId("text.0695") : qsTrId("text.0697")
@@ -681,6 +686,7 @@ Rectangle {
 
     Basic.Menu {
         id: seriesContextMenu
+        readonly property Components.PopupScope shortcutScope: Components.PopupScope { popup: seriesContextMenu }
         objectName: "seriesContextMenu"
         parent: Basic.Overlay.overlay
         property string contextSeriesUid: ""

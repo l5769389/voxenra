@@ -30,7 +30,7 @@ AppTextField {
     onEnabledChanged: if (!enabled) sync()
     onVisibleChanged: if (!visible) sync()
     Accessible.description: qsTrId(commitOnFinish ? "numeric.commitHint" : "numeric.applyHint")
-    AppToolTip { visible: field.hovered; text: field.Accessible.description }
+    AppToolTip { requested: field.hovered; text: field.Accessible.description }
     validator: DoubleValidator { locale: "C"; bottom: field.minimum; top: field.maximum; decimals: field.decimals; notation: DoubleValidator.StandardNotation }
     function commit() {
         // Qt can emit editingFinished before enabledChanged during disabling.

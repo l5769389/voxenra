@@ -3,9 +3,10 @@ import QtQuick
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "../../../theme"
+import "../../../components" as Components
 
 Basic.Popup {
-    id: popup
+    id: info
     objectName: "mtfInfoPopup"
     required property var anchorItem
     property string explanation: ""
@@ -14,6 +15,7 @@ Basic.Popup {
     popupType: Basic.Popup.Item
     modal: false
     focus: true
+    Components.DialogKeys { popup: info; closeOnEnter: true }
     padding: 14
     margins: 8
     closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutside
@@ -47,14 +49,14 @@ Basic.Popup {
             Text {
                 objectName: "mtfInfoExplanation"
                 Layout.fillWidth: true
-                text: popup.explanation
+                text: info.explanation
                 textFormat: Text.PlainText
                 font.pixelSize: 12
                 color: Theme.textSecondary
                 wrapMode: Text.Wrap
             }
             Repeater {
-                model: popup.warnings
+                model: info.warnings
                 Text {
                     required property string modelData
                     required property int index

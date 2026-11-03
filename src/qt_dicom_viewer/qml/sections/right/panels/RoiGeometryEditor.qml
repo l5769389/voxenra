@@ -28,6 +28,7 @@ Components.AppButton {
         popupType: Basic.Popup.Item
         modal: false
         focus: true
+        Components.DialogKeys { popup: editor; defaultButton: applyButton }
         padding: 14
         width: Math.min(340, (parent?.width ?? 356) - 16)
         closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutside
@@ -81,7 +82,6 @@ Components.AppButton {
                     Layout.fillWidth: true
                     selectByMouse: true
                     validator: DoubleValidator { locale: "C"; bottom: 0; top: 100000; decimals: 6; notation: DoubleValidator.StandardNotation }
-                    onAccepted: editor.apply()
                 }
                 Label { text: qsTrId("analysis.centerX") }
                 Input { id: cx; objectName: "analysisRoiCenterX"; Accessible.name: qsTrId("analysis.centerX") }
@@ -104,6 +104,7 @@ Components.AppButton {
                 Accessible.name: text
             }
             Components.AppButton {
+                id: applyButton
                 objectName: "applyAnalysisRoi"
                 Layout.fillWidth: true
                 text: qsTrId("analysis.applyRoi")

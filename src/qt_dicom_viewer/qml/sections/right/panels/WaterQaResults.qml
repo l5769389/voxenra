@@ -137,7 +137,7 @@ ColumnLayout {
                 onEnabledChanged: if (!enabled) discardDraft()
                 onVisibleChanged: if (!visible) discardDraft()
                 Accessible.description: qsTrId("numeric.commitHint")
-                Components.AppToolTip { visible: number.hovered; text: number.Accessible.description }
+                Components.AppToolTip { requested: number.hovered; text: number.Accessible.description }
                 leftPadding: 24
                 rightPadding: 24
                 onValueModified: {
@@ -301,7 +301,7 @@ ColumnLayout {
                         color: Theme.textSecondary
                         font.pixelSize: 12
                         horizontalAlignment: Text.AlignHCenter
-                        Components.AppToolTip { text: cell.text; visible: cell.truncated && cellHover.hovered }
+                        Components.AppToolTip { text: cell.text; requested: cell.truncated && cellHover.hovered }
                         HoverHandler { id: cellHover }
                     }
                 }
@@ -317,7 +317,7 @@ ColumnLayout {
                     enabled: !panel.editing
                     Accessible.name: qsTrId("qa.copyRoi") + " " + row.modelData.label
                     onClicked: panel.controller.copyRoi(row.modelData.key)
-                    Components.AppToolTip { text: qsTrId("qa.copyRoi"); visible: copyButton.hovered }
+                    Components.AppToolTip { text: qsTrId("qa.copyRoi"); requested: copyButton.hovered }
                 }
                 Components.AppButton {
                     id: deleteButton
@@ -331,7 +331,7 @@ ColumnLayout {
                     enabled: !panel.editing && row.modelData.removable
                     Accessible.name: qsTrId("qa.deleteRoi") + " " + row.modelData.label
                     onClicked: panel.controller.deleteRoi(row.modelData.key)
-                    Components.AppToolTip { text: qsTrId("qa.deleteRoi"); visible: deleteButton.hovered }
+                    Components.AppToolTip { text: qsTrId("qa.deleteRoi"); requested: deleteButton.hovered }
                 }
             }
         }

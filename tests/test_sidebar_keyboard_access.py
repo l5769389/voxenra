@@ -184,9 +184,13 @@ def test_compact_palette_keyboard_reveals_last_color(sidebar_scene, tmp_path):
     assert scroll is not None
     first.forceActiveFocus(Qt.TabFocusReason)
     last_name = 'compactAction-' + view.colorMapOptions[-1]['colorMap']
-    for _ in range(len(view.colorMapOptions) + 3):
+    # Each row now exposes both its palette and its favorite button.
+    visited = set()
+    for _ in range(2 * len(view.colorMapOptions)):
         focus = window.activeFocusItem()
         assert_revealed(focus, scroll)
+        assert focus.objectName() not in visited
+        visited.add(focus.objectName())
         if focus.objectName() == last_name:
             break
         QTest.keyClick(window, Qt.Key_Tab)

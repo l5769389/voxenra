@@ -278,12 +278,64 @@ def test_real_qml_drop_imports_without_modifying_source_and_can_open_views(
     record = app._series_catalog.get_series(series.series_instance_uid)
     assert record and len(record.instances) == 2
     assert [i.path.read_bytes() for i in series.instances] == originals
-    app.panelController.openSeriesView(series.series_instance_uid, "2d")
+    uid = series.series_instance_uid
+    assert app.panelController.selectedSeriesUids == [uid]
+    assert app.panelController.activeSeriesUid == uid
+    if find(window, "sidebarContainer").property("compact"):
+        assert find(window, "compactSeries-" + uid).property("selected")
+    else:
+        assert find(window, "selectSeries-" + uid).property("checked")
+    assert not app.workspaceController.tabs
+    open_selected = find(window, "homeOpenSelected")
+    assert open_selected.isEnabled()
+    click(window, open_selected)
     wait_until(lambda: app.workspaceController.activeLoadState.status == "ready")
     view = app.workspaceController.activeViewport
+    assert view.viewport_config.series_uid == uid
     app.panelController.clearSeries()
     assert view.loadState == "ready" and all(i.path.exists() for i in record.instances)
     assert window.grabWindow().save(str(tmp_path / ("import-" + kind + ".png")))
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize("source", ["local", "pacs"])
+def test_import_selects_first_series_in_sidebar_order(scene, tmp_path, source):
+    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from test_series_sidebar import phantom_series
+
+    window, app, warnings = scene
+    panel, workspace = app.panelController, app.workspaceController
+    sidebar = find(window, "sidebarContainer")
+    sidebar.setProperty("compactRequired", False)
+    sidebar.setProperty("collapsed", False)
+    older = phantom_series(tmp_path, 1, "DEMO-A", "1.2.3.1", "20260101")
+    newer = phantom_series(tmp_path, 2, "DEMO-A", "1.2.3.2", "20260201")
+    older_uid, newer_uid = older.series_instance_uid, newer.series_instance_uid
+    if source == "pacs":
+        panel.preparePacsImport([older_uid, newer_uid])
+        panel.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 6, 6, 0, [older, newer]))
+        wait_until(lambda: workspace.activeViewport and workspace.activeViewport.loadState == "ready")
+        assert workspace.activeViewport.viewport_config.series_uid == newer_uid
+    else:
+        assert drop_files(window, [item.path for series in (older, newer) for item in series.instances])
+        wait_until(lambda: not panel.scanning)
+        assert not workspace.tabs
+    assert panel.compactSidebarModel.keyAt(0) == newer_uid
+    assert panel.selectedSeriesUids == [newer_uid] and panel.activeSeriesUid == newer_uid
+    assert find(window, "selectSeries-" + newer_uid).property("checked")
+    assert not find(window, "selectSeries-" + older_uid).property("checked")
+
+    if source == "local":
+        click(window, find(window, "selectSeries-" + older_uid))
+        third = phantom_series(tmp_path, 3, "DEMO-A", "1.2.3.3", "20260301")
+        assert drop_files(window, [item.path for item in third.instances])
+        wait_until(lambda: not panel.scanning)
+        assert panel.compactSidebarModel.keyAt(0) == third.series_instance_uid
+        assert panel.selectedSeriesUids == [newer_uid, older_uid] and panel.activeSeriesUid == older_uid
+        assert not find(window, "selectSeries-" + third.series_instance_uid).property("checked")
+    click(window, find(window, "sidebarToggle"))
+    assert find(window, "compactSeries-" + newer_uid).property("selected")
+    assert find(window, "compactSeries-" + panel.activeSeriesUid).property("active")
     assert not warnings, warnings
 
 

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic as Basic
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import "../theme"
 
@@ -11,12 +12,19 @@ Basic.Dialog {
     property bool closeEnabled: true
     property bool closeButtonVisible: true
     property string closeButtonName: objectName + "Close"
+    property T.AbstractButton defaultButton: titleClose
+    property T.AbstractButton escapeButton: closeButtonVisible ? titleClose : null
     padding: 16
     spacing: 0
     modal: true
     focus: true
     closePolicy: closeEnabled ? Basic.Popup.CloseOnEscape : Basic.Popup.NoAutoClose
     Basic.Overlay.modal: Rectangle { color: Theme.modalScrim }
+    DialogKeys {
+        popup: dialog
+        defaultButton: dialog.defaultButton
+        escapeButton: dialog.escapeButton
+    }
     background: Rectangle {
         color: Theme.panelBackgroundStrong
         border.color: Theme.borderStrong
@@ -62,6 +70,7 @@ Basic.Dialog {
                 }
             }
             AppButton {
+                id: titleClose
                 objectName: dialog.closeButtonName
                 visible: dialog.closeButtonVisible
                 Layout.alignment: Qt.AlignTop
@@ -76,11 +85,7 @@ Basic.Dialog {
                 hoverBorderWidth: 0
                 pressedBorderWidth: 0
                 Accessible.name: qsTrId("text.0621")
-                AppToolTip {
-                    visible: (parent?.hovered ?? false)
-                    delay: 650
-                    text: qsTrId("text.0621")
-                }
+                hintText: qsTrId("text.0621")
                 onClicked: dialog.reject()
             }
         }

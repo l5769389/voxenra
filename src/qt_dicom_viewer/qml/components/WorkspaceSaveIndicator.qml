@@ -46,7 +46,7 @@ Item {
     }
     HoverHandler { id: hover }
     AppToolTip {
-        visible: indicator.tooltipEnabled && hover.hovered
+        requested: indicator.tooltipEnabled && hover.hovered
         text: indicator.statusText + qsTrId("text.0738") + (indicator.controller?.recoveryPath ?? "")
     }
 }

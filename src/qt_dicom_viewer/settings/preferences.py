@@ -36,6 +36,7 @@ DEFAULTS = {
     "layout": {"rightPanelCollapsed": False, "rightPanelWidth": 300, "settingsNavigationWidth": 180, "manualNavigationWidth": 260,
                "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []},
     "export": {"directory": ""},
+    "paletteList": {"favorites": []},
     "colormap": {"gray": "grayscale", "pet": "grayscale"},
     "window": {"hidden": [], "custom": [], "favorites": []},
     "crosshair": {"axialColor": "#ff0000", "coronalColor": "#008000", "sagittalColor": "#0000ff",
@@ -83,7 +84,7 @@ def validate_value(section, key, value):
             raise ValueError(_msg('text.0050'))
         if key == "interfaceScale" and (type(value) is not int or value not in (100, 115, 130)):
             raise ValueError(_msg('appearance.invalidScale'))
-        if key == "theme" and value not in ("dark", "graphite", "light"):
+        if key == "theme" and value not in ("dark", "graphite", "light", "system"):
             raise ValueError(_msg('text.1166'))
         if key == "language" and (not isinstance(value, str) or not re.fullmatch(r"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*", value)):
             raise ValueError(_msg('text.1167'))
@@ -114,6 +115,10 @@ def validate_value(section, key, value):
         if not isinstance(value, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
             raise ValueError(_msg('text.0051'))
         value = value.lower()
+    elif section == "paletteList" and key == "favorites":
+        if not isinstance(value, list) or any(not isinstance(v, str) or v not in COLOR_MAPS for v in value):
+            raise ValueError(_msg('text.0052'))
+        value = list(dict.fromkeys(value))
     elif section == "colormap":
         if value not in COLOR_MAPS:
             raise ValueError(_msg('text.0052'))
@@ -195,6 +200,13 @@ def normalize_settings(raw):
     # Move calculation preferences out of annotation appearance. Existing
     # service values win, including an explicit reset to defaults.
     raw = deepcopy(raw)
+    shortcuts = raw.get("shortcuts")
+    if isinstance(shortcuts, dict) and isinstance(shortcuts.get("bindings"), dict):
+        from qt_dicom_viewer.settings.shortcuts import RETIRED_ACTIONS, migrate_scroll_defaults
+        for action in RETIRED_ACTIONS:
+            shortcuts["bindings"].pop(action, None)
+        if raw.get("schemaVersion", 0) in (0, 1, 2):
+            migrate_scroll_defaults(shortcuts["bindings"])
     legacy = raw.get("measurement", {})
     services = raw.get("services", {})
     services = services if isinstance(services, dict) else {}

@@ -229,10 +229,12 @@ def test_native_volume_canvas_routes_right_drag_and_keeps_left_rotation(qt_app, 
 
 
 def test_real_angle_can_finish_after_temporary_right_zoom(viewport):
+    from test_dicom_tags import wait_until
     window, c, pixels, warnings = viewport
     c._tool_controller.selectInteraction("measure:angle")
     QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, _scene(pixels, 55, 55))
-    assert c.measurementController.has_active_transaction
+    # A point click is committed once Qt can distinguish it from double-click to finish.
+    wait_until(lambda: c.measurementController.has_active_transaction)
     start = _scene(pixels, 80, 80)
     end = start + QPoint(35, -50)
     QTest.mousePress(window, Qt.RightButton, Qt.NoModifier, start)
@@ -244,7 +246,7 @@ def test_real_angle_can_finish_after_temporary_right_zoom(viewport):
     for column, row in [(110, 55), (110, 110)]:
         QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, _scene(pixels, column, row))
         QTest.qWait(30)
-    assert len(c.measurementController.measurementItems) == 1
+    wait_until(lambda: len(c.measurementController.measurementItems) == 1)
     assert not c.measurementController.has_active_transaction
     assert c.activeInteraction == "measure:angle"
     assert not warnings, warnings

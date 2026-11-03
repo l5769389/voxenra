@@ -322,6 +322,43 @@ def test_rename_only_enabled_for_changed_nonempty_name(qt_app, tmp_path):
         delete(dialog)
 
 
+@pytest.mark.parametrize(("key", "modifier"), [
+    (Qt.Key_Return, Qt.NoModifier), (Qt.Key_Enter, Qt.KeypadModifier),
+    (Qt.Key_Escape, Qt.NoModifier),
+])
+def test_manager_keys_rename_then_dismiss_only_nested_dialog(qt_app, tmp_path, key, modifier):
+    from PySide6.QtCore import QEvent
+    from PySide6.QtGui import QKeyEvent
+    from PySide6.QtWidgets import QDialog
+    panel = PanelController(favorite_path=tmp_path / 'favorites.json')
+    assert panel.favoriteDirectories.add(str(tmp_path))
+    picker = LocalImportDialog(str(tmp_path), favorites=panel.favoriteDirectories)
+    picker.show()
+    manager = FavoriteDirectoriesDialog(panel.favoriteDirectories, picker)
+    try:
+        wait_until(lambda: not picker._loading)
+        manager.open()
+        assert manager.close_button.text() == manager.close_button.accessibleName() + ' (Enter / Esc)'
+        manager.name.setFocus()
+        manager.name.selectAll()
+        QTest.keyClicks(manager.name, 'Renamed')
+        QTest.keyClick(manager.name, Qt.Key_Return)
+        assert manager.isVisible() and manager.table.item(0, 0).text() == 'Renamed'
+        qt_app.sendEvent(manager.name, QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier, "", True))
+        assert manager.isVisible()
+        manager.table.setFocus()
+        QTest.keyClick(manager.table, key, modifier)
+        assert not manager.isVisible()
+        assert manager.result() == (QDialog.Rejected if key == Qt.Key_Escape else QDialog.Accepted)
+        assert picker.isVisible() and not picker.paths
+        assert panel.favoriteDirectories.items[0]['name'] == 'Renamed'
+    finally:
+        manager.close()
+        delete(manager)
+        picker.close()
+        delete(picker)
+
+
 @pytest.mark.parametrize('fail', [False, True])
 def test_switch_favorite_keeps_pending_highlight_and_close_position(qt_app, tmp_path, monkeypatch, fail):
     from threading import Event
@@ -416,3 +453,33 @@ def test_rapid_favorite_switch_ignores_late_directory(qt_app, tmp_path, monkeypa
         assert listing.visualItemRect(listing.item(2)).contains(picker.favorite_remove.geometry())
     finally:
         release.set(); picker.close(); delete(picker)
+
+
+def test_favorites_table_only_repeats_text_when_clipped(qt_app):
+    from PySide6.QtCore import QEvent
+    from PySide6.QtGui import QHelpEvent
+    from PySide6.QtWidgets import QTableWidgetItem, QToolTip
+    from qt_dicom_viewer.ui.dialogs.reorder_table import ReorderTable
+
+    table = ReorderTable(2)
+    table.setWordWrap(False)
+    table.setRowCount(1)
+    for column, value in enumerate(('CT', '/very-long-directory-name' * 8)):
+        item = QTableWidgetItem(value)
+        item.setToolTip(value)
+        table.setItem(0, column, item)
+        table.setColumnWidth(column, 110)
+    table.show()
+    try:
+        QTest.qWait(60)
+        for column in (1, 0):
+            item = table.item(0, column)
+            point = table.visualItemRect(item).center()
+            qt_app.sendEvent(table.viewport(), QHelpEvent(QEvent.ToolTip, point, table.viewport().mapToGlobal(point)))
+            if column == 1:
+                wait_until(QToolTip.isVisible)
+                assert QToolTip.text() == item.text()
+            else:
+                wait_until(lambda: not QToolTip.isVisible())
+    finally:
+        table.close()

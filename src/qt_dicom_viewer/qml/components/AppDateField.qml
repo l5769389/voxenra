@@ -24,7 +24,7 @@ AppTextField {
         objectName: root.objectName + "-calendar"
         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
         width: 28; height: 28; minimumButtonWidth: 28; compact: true
-        text: "▦"; Accessible.name: qsTrId("text.0712"); normalColor: "transparent"
+        text: "▦"; Accessible.name: qsTrId("text.0712"); hintText: Accessible.name; normalColor: "transparent"
         onClicked: calendar.open()
     }
     Basic.Popup {
@@ -40,9 +40,12 @@ AppTextField {
         onOpened: {
             if (root.text && root.validDate) {
                 const p = root.text.split("-").map(Number)
-                displayed = new Date(p[0], p[1] - 1, 1)
+                displayed = new Date(p[0], p[1] - 1, p[2])
             } else displayed = new Date()
+            const leadingDays = (new Date(displayed.getFullYear(), displayed.getMonth(), 1).getDay() + 6) % 7
+            days.itemAt(leadingDays + displayed.getDate() - 1)?.forceActiveFocus(Qt.TabFocusReason)
         }
+        DialogKeys { popup: calendar; escapeButton: closeCalendar }
         function moveMonth(amount) { displayed = new Date(displayed.getFullYear(), displayed.getMonth() + amount, 1) }
         background: Rectangle { color: Theme.panelBackground; border.color: Theme.borderStrong; radius: 6 }
         contentItem: ColumnLayout {
@@ -51,8 +54,10 @@ AppTextField {
                 Layout.fillWidth: true
                 Text { Layout.fillWidth: true; text: qsTrId("text.0712"); color: Theme.textSecondary; font.pixelSize: 12 }
                 AppButton {
+                    id: closeCalendar
                     objectName: root.objectName + "-close"
                     iconName: "close"; iconSize: 14
+                    hintText: Accessible.name
                     Layout.preferredWidth: 24; Layout.preferredHeight: 24
                     minimumButtonWidth: 24; compact: true
                     normalColor: "transparent"; Accessible.name: qsTrId("text.0621")
@@ -61,7 +66,7 @@ AppTextField {
             }
             RowLayout {
                 Layout.fillWidth: true
-                AppButton { text: "‹"; minimumButtonWidth: 24; compact: true; Accessible.name: qsTrId("text.0713"); onClicked: calendar.moveMonth(-1) }
+                AppButton { text: "‹"; minimumButtonWidth: 24; compact: true; Accessible.name: qsTrId("text.0713"); hintText: Accessible.name; onClicked: calendar.moveMonth(-1) }
                 AppNumberField {
                     objectName: root.objectName + "-year"
                     Layout.fillWidth: true; Layout.minimumWidth: 55
@@ -69,6 +74,7 @@ AppTextField {
                     horizontalAlignment: Text.AlignHCenter
                     numberValue: calendar.displayed.getFullYear()
                     Accessible.name: qsTrId("text.0714")
+                    Keys.onEscapePressed: calendar.close()
                     onEdited: value => calendar.displayed = new Date(value, calendar.displayed.getMonth(), 1)
                 }
                 AppComboBox {
@@ -78,7 +84,7 @@ AppTextField {
                     currentIndex: calendar.displayed.getMonth()
                     onActivated: index => calendar.displayed = new Date(calendar.displayed.getFullYear(), index, 1)
                 }
-                AppButton { text: "›"; minimumButtonWidth: 24; compact: true; Accessible.name: qsTrId("text.0727"); onClicked: calendar.moveMonth(1) }
+                AppButton { text: "›"; minimumButtonWidth: 24; compact: true; Accessible.name: qsTrId("text.0727"); hintText: Accessible.name; onClicked: calendar.moveMonth(1) }
             }
             GridLayout {
                 Layout.fillWidth: true; columns: 7; columnSpacing: 2; rowSpacing: 2; uniformCellWidths: true
@@ -87,6 +93,7 @@ AppTextField {
                     Text { required property string modelData; Layout.fillWidth: true; text: modelData; horizontalAlignment: Text.AlignHCenter; color: Theme.textMuted; font.pixelSize: 11 }
                 }
                 Repeater {
+                    id: days
                     model: 42
                     AppButton {
                         required property int index

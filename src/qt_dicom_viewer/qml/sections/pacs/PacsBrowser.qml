@@ -255,6 +255,8 @@ Rectangle {
                     }
                     Components.AppButton {
                         objectName: "pacsStudyPrevious"
+                        Accessible.name: qsTrId("pacs.previousPage")
+                        hintText: Accessible.name
                         text: "‹"
                         compact: true
                         minimumButtonWidth: 26
@@ -266,6 +268,8 @@ Rectangle {
                     }
                     Components.AppButton {
                         objectName: "pacsStudyNext"
+                        Accessible.name: qsTrId("pacs.nextPage")
+                        hintText: Accessible.name
                         text: "›"
                         compact: true
                         minimumButtonWidth: 26
@@ -402,6 +406,8 @@ Rectangle {
                     }
                     Components.AppButton {
                         objectName: "pacsSeriesPrevious"
+                        Accessible.name: qsTrId("pacs.previousSeriesPage")
+                        hintText: Accessible.name
                         text: "‹"
                         compact: true
                         minimumButtonWidth: 26
@@ -413,6 +419,8 @@ Rectangle {
                     }
                     Components.AppButton {
                         objectName: "pacsSeriesNext"
+                        Accessible.name: qsTrId("pacs.nextSeriesPage")
+                        hintText: Accessible.name
                         text: "›"
                         compact: true
                         minimumButtonWidth: 26

@@ -742,7 +742,7 @@ def test_small_roi_area_visible_before_and_after_analysis_without_method_in_view
 
 
 @pytest.mark.parametrize("workspace", [(1200, 820), (760, 560)], indirect=True)
-def test_accessible_numeric_roi_and_result_summary(workspace):
+def test_accessible_numeric_roi_and_result_summary(workspace, monkeypatch):
     from PySide6.QtGui import QAccessible, QAccessibleActionInterface
     from test_tag_qml import find, click, type_text
     view, controller, _, warnings = workspace
@@ -774,7 +774,14 @@ def test_accessible_numeric_roi_and_result_summary(workspace):
     saved = controller.mtfController.currentResult
     click(view, button)
     type_text(view, find(view, 'analysisRoiWidth'), '10000')
-    click(view, find(view, 'applyAnalysisRoi'))
+    attempts = []
+    apply_roi = controller.mtfController.applyRoi
+    def apply_once(*values):
+        attempts.append(values)
+        return apply_roi(*values)
+    monkeypatch.setattr(controller.mtfController, 'applyRoi', apply_once)
+    QTest.keyClick(view, Qt.Key_Enter)
+    assert len(attempts) == 1
     assert find(view, 'analysisRoiError').isVisible()
     assert controller.mtfController.currentResult == saved
     assert not warnings, warnings

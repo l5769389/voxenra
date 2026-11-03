@@ -5,6 +5,8 @@
 分类可搜索，低对比分组默认展开，可点击标题折叠；本次会话保留分类和折叠状态。
 同一参数的数值输入与滑块双向同步，合法输入即时生效；未完成输入暂不提交，无效值在回车或失焦时恢复。
 
+在 **设置 → 外观与语言 → 主题** 选择 **跟随系统**，界面会随操作系统切换深色或浅色。新安装默认使用深色，也可手动选择中性深灰或浅色。影像的窗宽窗位、色表和测量颜色独立于界面主题。
+
 设置修改即时生效并自动保存到 Qt `AppConfigLocation/display-settings.json`，重启后继续使用。
 macOS 上通常为 `~/Library/Preferences/Voxenra/Voxenra/display-settings.json`。
 首次使用新应用标识时，自动从旧配置目录复制窗模板、布局偏好与 PACS 配置；不覆盖已有 Voxenra 配置，也不移动原始影像。
@@ -108,7 +110,7 @@ LUT 与颜色图像提供器，以及设置到视口渲染请求的同步。
 并通过鼠标事件验证 ROI 指标过滤、比例尺缩放、四角文字和箭头绘制/编辑/删除。
 
 
-窗口控制使用操作系统原生装饰，macOS 保留系统信号灯，Windows 保留系统最小化、最大化/还原、关闭按钮。Windows 启动时请求深色系统外观，以匹配顶部背景。macOS 绿色按钮或 Control+Command+F 进入/退出真正全屏；Windows 使用 F11。系统安全区域（如刘海）由平台保留。实现使用 Qt 6.9+ 的 ExpandedClientAreaHint 和 NoTitleBarBackgroundHint，依据 [Qt 官方窗口说明](https://www.qt.io/blog/expanded-client-areas-and-safe-areas-in-qt-6.9)。
+窗口控制使用操作系统原生装饰，macOS 保留系统信号灯，Windows 保留系统最小化、最大化/还原、关闭按钮。Windows 标题栏与当前主题同步。macOS 绿色按钮或 Control+Command+F 进入/退出真正全屏；Windows 使用 F11。系统安全区域（如刘海）由平台保留。实现使用 Qt 6.9+ 的 ExpandedClientAreaHint 和 NoTitleBarBackgroundHint，依据 [Qt 官方窗口说明](https://www.qt.io/blog/expanded-client-areas-and-safe-areas-in-qt-6.9)。
 
 测量和两种箭头标注在有效拖动后松开即完成并选中；在空白处直接拖动可新建下一项，无需“继续绘制”按钮。长度、矩形、椭圆和纯箭头仍支持选中后拖动编辑；角度在第三点完成后提交。所有影像操作使用统一箭头指针，右侧带 18 px 当前操作图标。2D、MPR、4D、平铺、PET 和原生 3D 共用 SVG，逻辑画布 40 × 32 px，箭头尖端 (2, 2) 为落点；按住拖动时不切换为手形或其他布局。
 
@@ -117,7 +119,7 @@ LUT 与颜色图像提供器，以及设置到视口渲染请求的同步。
 macOS 通过 Cocoa 的 `NSWindow.titleVisibility` 隐藏原生标题文字，保留窗口标题属性与原生信号灯，避免和顶部的 Voxenra 品牌重复。仅在 Cocoa 平台应用，并在窗口状态改变后重新应用；Windows 继续由系统管理标题按钮。
 
 
-翻页二级面板提供第一页、最后一页、向前和向后 10 页。使用当前视口的切片索引，越界截断；MPR 沿当前切面法线导航，4D 不改变相位，MIP 等不可逐页浏览的视图禁用快捷按钮。缩放二级面板提供 1×、2×、5×、10× 绝对倍率，1× 表示默认适配大小；保留平移、旋转、窗值和已完成裁剪。
+翻页二级面板提供第一页、最后一页、向前和向后 10 页。使用当前视口的切片索引，越界截断；MPR 沿当前切面法线导航，4D 不改变相位，MIP 等不可逐页浏览的视图禁用快捷按钮。缩放二级面板提供 0.1× 至 20× 的滑杆，数字快捷键可直选 1× 至 10× 的整数倍率，1× 表示默认适配大小；保留平移、旋转、窗值和已完成裁剪。
 
 「旋转 / 水平与垂直翻转」字段默认在 2D、MPR、4D 和融合切片的右下角，显示 Rot 角度与 Flip H/V 状态，精简模式也保留。字段可添加到任一角、移除，遵循四角整体开关、字体和颜色设置。平铺宫格只显示切片序号；所有 3D 视图不显示四角文字，保留方向立方体，PNG 同样不包含四角文字。旧版默认右下角布局会补入此项，自定义布局保留；明确移除后重启不会重新添加。
 
@@ -132,7 +134,7 @@ CT 2D、MPR、4D、平铺及融合切片的调窗面板提供「反白」按钮�
 
 ## 原生顶部与图标细节
 
-原生窗口外观请求深色方案；macOS 同时将 NSWindow 背景设为应用颜色、启用透明标题栏并指定 Dark Aqua，保留系统信号灯、全屏与原生边框。外观更新延续原有窗口状态变化处理。实现依据：[Qt 窗口提示](https://doc.qt.io/qt-6/qt.html#WindowType-enum)、[Qt 颜色方案](https://doc.qt.io/qt-6/qstylehints.html#colorScheme-prop)、[AppKit 透明标题栏](https://developer.apple.com/documentation/appkit/nswindow/titlebarappearstransparent)。
+原生窗口使用当前主题的明暗模式。macOS 同时将 NSWindow 背景设为应用颜色，启用透明标题栏，保留系统信号灯、全屏与原生边框。外观更新延续原有窗口状态变化处理。实现依据：[Qt 窗口提示](https://doc.qt.io/qt-6/qt.html#WindowType-enum)、[Qt 颜色方案](https://doc.qt.io/qt-6/qstylehints.html#colorScheme-prop)、[AppKit 透明标题栏](https://developer.apple.com/documentation/appkit/nswindow/titlebarappearstransparent)。
 
 统一图标、设置/关闭/折叠等小图形以及伪彩图标使用 SVG 管线；先以目标物理尺寸的 2 倍抗锯齿渲染，再平滑缩到对应 DPR。标题 logo 随屏幕 DPR 请求纹理，按钮图文垂直对齐；伪彩列表收紧并在调整宽度后重绘渐变预览。
 

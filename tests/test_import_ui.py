@@ -3,8 +3,8 @@
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import QItemSelectionModel, QTimer, Qt
-from PySide6.QtGui import QKeySequence
+from PySide6.QtCore import QEvent, QItemSelectionModel, QTimer, Qt
+from PySide6.QtGui import QKeyEvent, QKeySequence
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QDialog, QPushButton
 from shiboken6 import delete
@@ -27,9 +27,21 @@ def test_single_click_opens_mixed_picker(scene, entry, tmp_path):
     sidebar = find(window, "sidebarContainer")
     sidebar.setProperty("compactRequired", False)
     sidebar.setProperty("collapsed", False)
+    if entry == "sidebarOpenFolder":
+        sidebar.setProperty("expandedWidth", sidebar.property("maximumExpandedWidth"))
     if entry == "compactSidebarImport":
         click(window, find(window, "sidebarToggle"))
     target = None if entry == "shortcut" else find(window, entry)
+    if entry in ("sidebarOpenFolder", "compactSidebarImport"):
+        native_key = QKeySequence(QKeySequence.StandardKey.Open).toString(QKeySequence.NativeText)
+        assert target.parentItem().property("tooltipText").endswith(f"({native_key})")
+        caption = next(item for item in descendants(target) if item.objectName() == "toolbarLabel")
+        assert caption.isVisible() and not caption.property("truncated")
+        title = target.parentItem().property("shortLabel")
+        if entry == "sidebarOpenFolder":
+            assert caption.property("text") == f"{title} ({native_key})", (sidebar.width(), caption.width())
+        else:
+            assert caption.property("text") == title
     errors, opened = [], []
 
     def inspect():
@@ -119,7 +131,7 @@ def test_picker_navigation_current_folder_and_cancel(qt_app, tmp_path):
         QTest.keyClick(dialog.path_edit, Qt.Key_Return)
         wait_until(lambda: not dialog._loading)
         assert dialog.isVisible() and dialog.path_edit.text() == str(nested)
-        QTest.mouseClick(dialog.open_button, Qt.LeftButton)
+        QTest.keyClick(dialog.path_edit, Qt.Key_Return)
         assert dialog.paths == [str(nested)]
     finally:
         dialog.close()
@@ -128,6 +140,54 @@ def test_picker_navigation_current_folder_and_cancel(qt_app, tmp_path):
     dialog.reject()
     assert dialog.result() == QDialog.Rejected and not dialog.paths
     delete(dialog)
+
+
+@pytest.mark.parametrize(("key", "modifier"), [
+    (Qt.Key_Return, Qt.NoModifier),
+    (Qt.Key_Enter, Qt.KeypadModifier),
+    (Qt.Key_Escape, Qt.NoModifier),
+])
+def test_picker_file_list_keys_confirm_mixed_selection_or_cancel(qt_app, tmp_path, key, modifier):
+    folder = tmp_path / "study"
+    folder.mkdir()
+    image = tmp_path / "slice.dcm"
+    image.touch()
+    dialog = LocalImportDialog(str(tmp_path))
+    dialog.show()
+    try:
+        wait_until(lambda: not dialog._loading)
+        for path, selection_modifier in ((folder, Qt.NoModifier), (image, Qt.ControlModifier)):
+            rect = dialog.view.visualRect(dialog.model.index(str(path)))
+            QTest.mouseClick(dialog.view.viewport(), Qt.LeftButton, selection_modifier, rect.center())
+        dialog.view.setFocus()
+        assert {Path(p) for p in dialog.selected_paths()} == {folder, image}
+        assert dialog.open_button.isEnabled() and dialog.isVisible()
+        assert dialog.open_button.text() == dialog.open_button.accessibleName() + " (Enter)"
+        assert not dialog.open_button.toolTip() and dialog.open_button.accessibleDescription() == "Enter"
+        QTest.keyClick(dialog.view, key, modifier)
+        assert not dialog.isVisible()
+        if key == Qt.Key_Escape:
+            assert dialog.result() == QDialog.Rejected and not dialog.paths
+        else:
+            assert dialog.result() == QDialog.Accepted
+            assert {Path(p) for p in dialog.paths} == {folder, image}
+    finally:
+        dialog.close()
+        delete(dialog)
+
+
+def test_picker_enter_activates_focused_cancel(qt_app, tmp_path):
+    dialog = LocalImportDialog(str(tmp_path))
+    dialog.show()
+    try:
+        wait_until(lambda: not dialog._loading)
+        dialog.cancel_button.setFocus(Qt.TabFocusReason)
+        QTest.keyClick(dialog.cancel_button, Qt.Key_Return)
+        assert not dialog.isVisible()
+        assert dialog.result() == QDialog.Rejected and not dialog.paths
+    finally:
+        dialog.close()
+        delete(dialog)
 
 
 def test_removed_status_does_not_render_or_change_layout(scene):
@@ -176,7 +236,8 @@ def test_mixed_picker_imports_folder_file_and_rar_together(scene, tmp_path):
                     dialog.model.index(str(path)),
                     QItemSelectionModel.Select | QItemSelectionModel.Rows,
                 )
-            QTest.mouseClick(dialog.open_button, Qt.LeftButton)
+            dialog.view.setFocus()
+            QTest.keyClick(dialog.view, Qt.Key_Return)
         except BaseException as error:
             errors.append(error)
             if dialog:
@@ -224,8 +285,9 @@ def test_picker_accessible_cells_invalidated_on_navigation_and_selection_survive
     for folder,count in zip(folders,(104,2)):
         folder.mkdir()
         for i in range(count): (folder/f'{i:03}.dcm').write_bytes(bytes(i+1))
-    dialog=LocalImportDialog(str(folders[0]));dialog.show()
+    dialog=LocalImportDialog(str(folders[1]));dialog.show()
     try:
+        wait_until(lambda: not dialog._loading)
         for i in range(20):
             interface=QAccessible.queryAccessibleInterface(dialog.view)
             assert interface is not None
@@ -303,10 +365,60 @@ def test_typed_file_is_selected_after_async_navigation(qt_app, tmp_path):
         dialog.path_edit.setText(str(file))
         QTest.keyClick(dialog.path_edit, Qt.Key_Return)
         wait_until(lambda: not dialog._loading)
-        assert dialog.selected_paths() == [str(file)]
-        dialog.accept()
+        assert dialog.isVisible() and dialog.selected_paths() == [str(file)]
+        qt_app.sendEvent(dialog.path_edit, QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier, "", True))
+        assert dialog.isVisible() and not dialog.paths
+        QTest.keyClick(dialog.path_edit, Qt.Key_Enter, Qt.KeypadModifier)
         assert dialog.paths == [str(file)]
     finally:
+        delete(dialog)
+
+
+def test_pending_directory_result_preserves_new_address(qt_app, tmp_path):
+    target = tmp_path / 'second'
+    target.mkdir()
+    dialog = LocalImportDialog(str(tmp_path))
+    # Hold delivery until the address field has a newer edit.
+    dialog._directory_timer.stop()
+    dialog.show()
+    try:
+        dialog.path_edit.selectAll()
+        QTest.keyClicks(dialog.path_edit, str(target))
+        dialog._directory_timer.start()
+        wait_until(lambda: not dialog._loading)
+        assert dialog.isVisible() and dialog.path_edit.text() == str(target)
+        QTest.keyClick(dialog.path_edit, Qt.Key_Return)
+        wait_until(lambda: not dialog._loading)
+        assert dialog._directory == str(target) and not dialog.paths
+    finally:
+        dialog.close()
+        delete(dialog)
+
+
+def test_invalid_address_enter_never_confirms_previous_selection(qt_app, tmp_path):
+    image = tmp_path / 'previous.dcm'
+    image.touch()
+    invalid = str(tmp_path / 'missing')
+    dialog = LocalImportDialog(str(tmp_path))
+    dialog.show()
+    try:
+        wait_until(lambda: not dialog._loading)
+        dialog.view.selectRow(dialog.model.index(str(image)).row())
+        dialog.path_edit.setFocus()
+        dialog.path_edit.setText(invalid)
+        for _ in range(2):
+            QTest.keyClick(dialog.path_edit, Qt.Key_Return)
+            wait_until(lambda: not dialog._loading)
+            assert dialog.isVisible() and not dialog.paths
+            assert dialog.path_edit.text() == invalid and dialog.selection_label.text()
+            # A directory watcher refresh while editing must preserve the failed address.
+            dialog._refresh_directory()
+            wait_until(lambda: not dialog._loading)
+            assert dialog.path_edit.text() == invalid
+        QTest.keyClick(dialog.path_edit, Qt.Key_Escape)
+        assert not dialog.isVisible() and not dialog.paths
+    finally:
+        dialog.close()
         delete(dialog)
 
 

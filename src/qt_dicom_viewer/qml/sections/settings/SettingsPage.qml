@@ -131,7 +131,7 @@ Rectangle {
                                 normalColor: "transparent"
                                 Accessible.name: qsTrId("updates.details")
                                 onClicked: appController.updateController.show()
-                                Components.AppToolTip { visible: (parent?.hovered ?? false); text: I18n.format(qsTrId("updates.newVersion"), {version: appController.updateController.latestVersion}) }
+                                Components.AppToolTip { requested: (parent?.hovered ?? false); text: I18n.format(qsTrId("updates.newVersion"), {version: appController.updateController.latestVersion}) }
                             }
                         }
                     }
@@ -151,7 +151,7 @@ Rectangle {
                         onClicked: Qt.openUrlExternally("https://github.com/l5769389/voxenra")
                         Components.AppToolTip {
                             text: qsTrId("settings.projectPage")
-                            visible: projectLink.hovered
+                            requested: projectLink.hovered
                         }
                     }
                 }

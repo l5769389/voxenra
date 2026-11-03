@@ -11,6 +11,7 @@ from PySide6.QtQml import QQmlProperty
 from qt_dicom_viewer.ui.theme_palette import palette_for
 from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
 from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from qt_pointer import move_pointer
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import click, find
@@ -23,6 +24,62 @@ def capture(window, name, tmp_path):
     image = window.grabWindow() if hasattr(window, 'grabWindow') else window.grab().toImage()
     assert not image.isNull()
     assert image.save(str(destination / (name + '.png')))
+
+
+def test_follow_system_theme_updates_open_windows_and_preserves_selection(sidebar_scene, qt_app, tmp_path, monkeypatch):
+    window, app, records, warnings = sidebar_scene
+    ws = app.workspaceController
+    click(window, find(window, 'series-' + records[0].series_instance_uid))
+    click(window, find(window, 'openView-2d'))
+    wait_until(lambda: ws.activeLoadState.status == 'ready')
+    view = ws.activeViewport
+    wait_until(lambda: view._state.width > 100 and view._state.height > 100)
+    draw_length(view)
+    click(window, find(window, 'sidebarSettings'))
+    click(window, find(window, 'settingsCategory-appearance'))
+    system = find(window, 'themeChoice-system')
+    state, measurements = deepcopy(view._state), deepcopy(view._measure_controller._measurements)
+    hints = qt_app.styleHints()
+    hints.unsetColorScheme()
+    QTest.qWait(30)
+    native = hints.colorScheme()
+    fixed_choice = 'light' if native == Qt.ColorScheme.Dark else 'graphite'
+    click(window, find(window, 'themeChoice-' + fixed_choice))
+    click(window, system)
+    expected = 'light' if native == Qt.ColorScheme.Light else 'dark'
+    assert system.property('checked')
+    wait_until(lambda: app.appearanceController.colors == palette_for(expected))
+    inactive = find(window, 'themeChoice-light')
+    wait_until(lambda: inactive.property('background').property('color') == inactive.property('normalColor'))
+    capture(window, 'follow-system-selected', tmp_path)
+    restored = SettingsController(path=app.settingsController._path)
+    assert restored.values['appearance']['theme'] == 'system'
+    dialog = LocalImportDialog(str(tmp_path))
+    dialog.show()
+    try:
+        for scheme, theme in ((Qt.ColorScheme.Dark, 'dark'), (Qt.ColorScheme.Light, 'light')):
+            if qt_app.platformName() not in ('cocoa', 'windows'):
+                # Supply a platform notification on backends without a native override.
+                monkeypatch.setattr(hints, 'colorScheme', lambda: scheme)
+                hints.colorSchemeChanged.emit(scheme)
+            else:
+                # Exercise the native Qt notification without changing desktop preferences.
+                hints.setColorScheme(scheme)
+            palette = palette_for(theme)
+            wait_until(lambda: qt_app.palette().color(QPalette.Window).name() == palette['panelBackground'])
+            assert window.color().name() == palette['appBackground']
+            assert palette['panelBackground'] in dialog.styleSheet()
+            assert system.property('checked') and app.appearanceController.theme == 'system'
+            assert view._state == state and view._measure_controller._measurements == measurements
+    finally:
+        dialog.close()
+        dialog.deleteLater()
+        hints.unsetColorScheme()
+    click(window, find(window, 'themeChoice-graphite'))
+    hints.colorSchemeChanged.emit(Qt.ColorScheme.Light)
+    QTest.qWait(30)
+    assert app.appearanceController.colors == palette_for('graphite')
+    assert not warnings, warnings
 
 
 def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tmp_path, monkeypatch):
@@ -43,7 +100,7 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     click(window, find(window, 'sidebarSettings'))
     click(window, find(window, 'settingsCategory-appearance'))
     QTest.qWait(150)
-    choices = [find(window, 'themeChoice-' + key) for key in ('dark', 'graphite', 'light')]
+    choices = [find(window, 'themeChoice-' + key) for key in ('dark', 'graphite', 'light', 'system')]
     assert len({round(item.mapToScene(QPointF()).y()) for item in choices}) == 1
     app.workspaceDocumentController._autosave.stop()
     app.workspaceDocumentController._dirty = False
@@ -51,13 +108,12 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
         # Native dialogs can leave Cocoa's key window elsewhere after closing.
         # Re-enter the window before checking a hover state in the next theme.
         window.requestActivate()
-        QTest.mouseMove(window, QPointF(2, 2).toPoint())
+        move_pointer(window, QPointF(2, 2).toPoint())
         QTest.qWait(30)
         button = find(window, 'themeChoice-' + theme)
         center = button.mapToScene(QPointF(button.width()/2, button.height()/2)).toPoint()
-        QTest.mouseMove(window, center)
-        QTest.qWait(80)
-        assert button.property('hovered')
+        move_pointer(window, center)
+        wait_until(lambda: button.property('hovered'))
         capture(window, theme + '-hover', tmp_path)
         QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, center)
         assert button.property('down')

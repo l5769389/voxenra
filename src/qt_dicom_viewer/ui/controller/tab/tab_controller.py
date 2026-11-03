@@ -33,6 +33,7 @@ from qt_dicom_viewer.model.render_models import MprRenderResult
 from qt_dicom_viewer.model.interaction import WindowLevelChange
 from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
 from qt_dicom_viewer.ui.controller.tab.tag_controller import TagController
+from qt_dicom_viewer.ui.controller.viewport.image_2d.image_2d_viewport_controller import Image2DViewportController
 from qt_dicom_viewer.ui.controller.viewport.image_2d.mpr_viewport_controller import (
     MprViewportController,
 )
@@ -297,6 +298,13 @@ class TabController(QObject):
 
     @Property(str, notify=playbackModeChanged)
     def playbackMode(self): return self._playback_mode
+
+    @Property(str, notify=playbackAvailabilityChanged)
+    def playbackShortcutTool(self):
+        """The single playback button operated by the general playback shortcut."""
+        if self.temporalPlayback and self.playbackMode == "slice" and getattr(self.activeViewport, "viewportType", "") != "volume":
+            return "slice-play"
+        return "play"
 
     @Property(bool, notify=playbackAvailabilityChanged)
     def slicePlaybackAvailable(self):
@@ -567,7 +575,7 @@ class TabController(QObject):
             return
 
         viewport = self.activeViewport
-        if isinstance(viewport, (MprViewportController, StackViewportController, VolumeViewportController, MontageViewportController)):
+        if isinstance(viewport, (Image2DViewportController, VolumeViewportController, MontageViewportController)):
             viewport.reset_tool_state(tool_type)
 
     def _reset_mpr_3d_rotation(self) -> None:

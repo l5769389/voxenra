@@ -71,7 +71,7 @@ SettingsSection {
             text: qsTrId("autoSeg.detect")
             enabled: !!root.controller && !root.controller.busy
             onClicked: root.controller.checkEnvironment()
-            Components.AppToolTip { visible: parent.hovered; text: qsTrId("autoSeg.detectHelp") }
+            Components.AppToolTip { requested: parent.hovered; text: qsTrId("autoSeg.detectHelp") }
         }
         Components.AppButton {
             objectName: "autoSegAdvanced"
@@ -84,7 +84,7 @@ SettingsSection {
             compact: true
             Accessible.name: qsTrId("autoSeg.help")
             onClicked: appController.workspaceController.openManual("segmentation")
-            Components.AppToolTip { visible: parent.hovered; text: qsTrId("autoSeg.help") }
+            Components.AppToolTip { requested: parent.hovered; text: qsTrId("autoSeg.help") }
         }
     }
     ColumnLayout {
@@ -97,7 +97,7 @@ SettingsSection {
             enabled: !!root.controller && !root.controller.busy
             onClicked: root.controller.choosePython()
             Components.AppToolTip {
-                visible: parent.hovered
+                requested: parent.hovered
                 text: qsTrId("autoSeg.pythonHint") + (root.controller?.pythonPath ? "\n" + root.controller.pythonPath : "")
             }
         }
@@ -107,7 +107,7 @@ SettingsSection {
             text: qsTrId("autoSeg.weights")
             enabled: !!root.controller && !root.controller.busy
             onClicked: root.controller.chooseWeights()
-            Components.AppToolTip { visible: parent.hovered; text: qsTrId("autoSeg.weightsHint") + "\n" + (root.controller?.weightsPath ?? "") }
+            Components.AppToolTip { requested: parent.hovered; text: qsTrId("autoSeg.weightsHint") + "\n" + (root.controller?.weightsPath ?? "") }
         }
         Components.AppButton {
             Layout.fillWidth: true

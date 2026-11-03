@@ -38,19 +38,38 @@ def draw(tab, points=((5, 10), (15, 10), (25, 20))):
     return view
 
 
-def test_confirmed_path_requires_explicit_editing(cpr):
+def test_position_markers_wait_for_new_path_or_sampling_grid(cpr):
+    draw(cpr)
+    first = cpr.selectedPathId
+    draw(cpr, ((8, 8), (12, 12)))
+    assert cpr.selectedPathId != first
+    cpr.selectPath(first)
+    cpr.stepPosition(1)
+    assert not cpr.intervalPositionReady
+    wait_until(lambda: cpr.ready)
+    cpr.setParameter('step', 2.)
+    cpr.stepPosition(1)
+    assert not cpr.intervalPositionReady
+    wait_until(lambda: cpr.ready)
+    cpr.stepPosition(1)
+    assert cpr.intervalPositionReady
+    assert not cpr.ready and not cpr.export_ready()
+    wait_until(lambda: cpr.ready)
+
+
+def test_first_segment_click_selects_without_inserting_then_edits(cpr):
     view = draw(cpr)
     original = cpr.current_path
     assert not cpr.pathEditing
-    assert not view.cprTap(10, 10, .4)
-    assert not view.cprBeginDrag(15, 10, .4)
+    assert view.cprTap(10, 10, .4)
+    assert cpr.pathEditing
     assert cpr.current_path == original
     cpr.setPathEditing(True)
     assert view.cprTap(10, 10, .4)
     assert len(cpr.current_path.control_points) == 4
     cpr.setPathEditing(False)
     modified = cpr.current_path
-    assert not view.cprTap(12, 10, .4)
+    assert view.cprTap(12, 10, .4) and cpr.pathEditing
     assert cpr.current_path == modified
 
 
@@ -59,14 +78,16 @@ def test_double_click_has_one_owner_for_drawing_editing_and_curve_measurements(c
     cpr.startPath()
     ref.cprTap(5, 10, .4)
     assert ref.cprDoubleClick()  # An incomplete draft still owns the gesture.
-    assert cpr.drawing and not cpr.focusedViewportId
+    assert not cpr.drawing and not cpr.paths and not cpr.focusedViewportId
+    cpr.startPath()
+    ref.cprTap(5, 10, .4)
     ref.cprTap(15, 10, .4)
     assert ref.cprDoubleClick()
     wait_until(lambda: cpr.ready)
     assert not cpr.drawing and not cpr.focusedViewportId
     cpr.setPathEditing(True)
     assert ref.cprDoubleClick()
-    assert not cpr.pathEditing and cpr.resultView and not cpr.focusedViewportId
+    assert not cpr.pathEditing and not cpr.resultView and not cpr.focusedViewportId
     cpr.setPathEditing(False)
     for kind in ("curve", "freehand"):
         cpr.toolController.selectInteraction("measure:" + kind)
@@ -392,7 +413,7 @@ def test_delete_during_drag_ends_transaction_without_moving_successor(cpr, index
 
 def test_locked_reference_browsing_and_sample_navigation(cpr):
     ref = draw(cpr)
-    assert cpr.finishEditing()
+    cpr.setReferenceBrowsing(False)
     original = cpr.current_path
     cpr.setReferenceBrowsing(True)
     assert not cpr.resultView and not cpr.pathEditing
@@ -443,3 +464,44 @@ def test_position_jump_on_long_path_uses_actual_sampling_grid(cpr):
     cpr.stepPosition(-1)
     wait_until(lambda: cpr.ready and not cpr.busy)
     assert cpr.positionMm == pytest.approx(cpr.totalLength - cpr._result.curve.centerline.spacing_mm)
+
+
+def test_projected_mode_uses_positive_thickness_and_old_zero_slabs_restore_as_thin(cpr):
+    draw(cpr)
+    cpr.setParameter('projection', 'mean')
+    assert cpr.parameters['thickness'] > 0
+    cpr.setParameter('thickness', 7)
+    cpr.setParameter('thickness', 0)
+    assert cpr.parameters['projection'] == 'thin'
+    cpr.setParameter('projection', 'mip')
+    assert cpr.parameters['thickness'] == 7
+    legacy = cpr.session_state()
+    legacy['paths'][0]['settings'].update(projection='mean', thickness_mm=0.)
+    cpr.restore_session(legacy)
+    assert cpr.parameters['projection'] == 'thin'
+
+
+def test_sampling_guides_match_the_displayed_section_grid(cpr):
+    draw(cpr)
+    cpr.setParameter('width', 10)
+    cpr.setParameter('crossWidth', 24)
+    cpr.setParameter('thickness', 4)
+    cpr.setParameter('angle', 35)
+    wait_until(lambda: cpr.ready)
+    cross = cpr.viewForRole('cross')
+    geo = cross.plane_geometry
+    assert cross.cprGuides['widthPixels'] * geo.column_spacing == pytest.approx(10)
+    assert cross.cprGuides['slabPixels'] * geo.row_spacing == pytest.approx(4)
+    assert cross.overlayInfo['cprSampling'] == '24 × 24 mm'
+    cpr.setParameter('rangeStart', 0)
+    assert cpr.hasInterval and cpr.viewForRole('curved').cprGuides['startColumn'] == 0
+    cpr.setParameter('rangeStart', 4)
+    cpr.setParameter('rangeEnd', 9)
+    curved = cpr.viewForRole('curved')
+    assert curved.cprGuides['length'] == 5
+    before = cpr.export_revision()
+    cpr.setShowSamplingGuides(False)
+    assert cpr.export_revision() != before
+    assert not cross.cprGuides and curved.cprGuides['length'] == 5
+    cpr.clearInterval()
+    assert not curved.cprGuides

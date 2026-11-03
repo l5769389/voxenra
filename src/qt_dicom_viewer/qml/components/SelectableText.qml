@@ -20,6 +20,7 @@ TextEdit {
     }
     Basic.Menu {
         id: selectionMenu
+        readonly property PopupScope shortcutScope: PopupScope { popup: selectionMenu }
         Basic.MenuItem {
             text: qsTrId("text.1034")
             enabled: textBlock.selectedText.length > 0

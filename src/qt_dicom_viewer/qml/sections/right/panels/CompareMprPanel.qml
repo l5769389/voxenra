@@ -3,10 +3,14 @@ import QtQuick
 import QtQuick.Layouts
 import "../../../components" as Components
 import "../../../theme"
+import "../../../components/ShortcutCaption.js" as KeysText
 
 ColumnLayout {
     id: panel
     required property var controller
+    readonly property var bindings: typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : []
+    readonly property int shortcutCount: Math.min(9, layouts.count)
+    function selectShortcutIndex(index) { layouts.itemAt(index)?.click() }
     spacing: 10
     Components.PanelHeading {
         objectName: "CompareMprPanelHeading"
@@ -19,18 +23,21 @@ ColumnLayout {
         rowSpacing: 6
         columnSpacing: 6
         Repeater {
+            id: layouts
             model: [{value:"", label:qsTrId("compare.mpr.six")},
                     {value:"axial", label:qsTrId("compare.mpr.axial")},
                     {value:"coronal", label:qsTrId("compare.mpr.coronal")},
                     {value:"sagittal", label:qsTrId("compare.mpr.sagittal")}]
             delegate: Components.AppButton {
+                required property int index
                 required property var modelData
                 objectName: "compareMprLayout-" + (modelData.value || "six")
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 compact: true
                 checkable: true
-                text: modelData.label
+                shortcutTitle: modelData.label
+                captionKey: KeysText.hint("list-" + (index + 1), panel.bindings)
                 checked: panel.controller?.pairPlane === modelData.value
                 onClicked: panel.controller.setPairPlane(modelData.value)
             }

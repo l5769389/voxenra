@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "../../../components" as Components
+import "../../../components/ShortcutCaption.js" as KeysText
 import "../../../theme"
 
 Components.AppButton {
@@ -17,11 +18,8 @@ Components.AppButton {
     readonly property color foregroundColor: !enabled ? Theme.iconDisabled : actionRole === "primary" ? Theme.textOnPrimary
         : down ? Theme.iconActive : hovered ? (checked ? Theme.primaryHover : Theme.iconHover) : checked ? Theme.iconActive : Theme.iconDefault
     readonly property var shortcutOwner: typeof appController !== "undefined" ? appController.shortcutController ?? null : null
-    readonly property string shortcutHint: {
-        const bindings = shortcutOwner?.bindings ?? []
-        const match = bindings.find(item => qsTrId(item.labelId) === label)
-        return match?.display ?? ""
-    }
+    property string shortcutAction: ""
+    property string shortcutHint: KeysText.hint(shortcutAction, shortcutOwner?.bindings ?? [])
     property string tooltipText: label + (shortcutHint ? " (" + shortcutHint + ")" : "") + (placeholder ? qsTrId("text.0710") : "")
     iconSize: 24
     implicitHeight: Theme.toolbarButtonHeight
@@ -47,15 +45,17 @@ Components.AppButton {
                 iconSize: actionButton.iconSize
                 iconColor: actionButton.foregroundColor
             }
-            Text {
+            Components.ShortcutLabel {
+                id: caption
                 objectName: "toolActionLabel"
                 visible: actionButton.showLabel
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                text: actionButton.shortLabel
+                Layout.preferredWidth: 0
+                title: actionButton.shortLabel
+                keyHint: actionButton.shortcutHint
                 color: actionButton.foregroundColor
                 font.pixelSize: 11
-                elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
             }
         }
@@ -72,7 +72,8 @@ Components.AppButton {
         }
     }
     Components.AppToolTip {
-        visible: actionButton.hovered || actionButton.visualFocus
+        displayedCaption: actionButton.textOnly ? actionButton.label : caption.visible && !caption.truncated ? caption.text : ""
+        requested: actionButton.hovered || actionButton.visualFocus
         delay: 400
         text: actionButton.tooltipText
     }

@@ -93,7 +93,7 @@ ColumnLayout {
             border.width: button.hovered || button.visualFocus ? 1 : 0
             border.color: Theme.primaryColor
         }
-        Components.AppToolTip { visible: button.hovered; text: qsTrId("text.0960") }
+        Components.AppToolTip { requested: button.hovered; text: qsTrId("text.0960") }
     }
     Components.SelectableText {
         Layout.fillWidth: true
@@ -124,6 +124,7 @@ ColumnLayout {
         modal: true
         focus: true
         closePolicy: Basic.Popup.CloseOnEscape
+        Components.DialogKeys { popup: preview; closeOnEnter: true }
         onOpened: original.checked = false
         onClosed: shot.stopRequested()
         background: Rectangle { color: Theme.panelBackgroundStrong }

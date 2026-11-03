@@ -230,7 +230,8 @@ def test_window_button_name_follows_display_editor(sidebar_scene, paired_series,
             button = find(window, name)
             label = next(i for i in descendants(button) if i.objectName() == 'toolbarLabel')
             QTest.qWait(40)
-            assert label.isVisible() and label.property('text') == short
+            expected_caption = short if name.startswith('compact') else short + ' (W)'
+            assert label.isVisible() and label.property('text') == expected_caption
             assert not label.property('truncated')
             assert QAccessible.queryAccessibleInterface(button).text(QAccessible.Name) == full
             click(window, button)

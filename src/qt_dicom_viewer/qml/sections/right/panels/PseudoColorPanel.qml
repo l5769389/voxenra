@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "../../../theme"
+import "../../../components/ShortcutCaption.js" as KeysText
 import "../../../components" as Components
 
 ColumnLayout {
@@ -11,6 +12,37 @@ ColumnLayout {
     objectName: "pseudoColorPanel"
     required property var viewportController
     property string buttonPrefix: "colorMap-"
+    property var settingsController: typeof appController !== "undefined" ? appController.settingsController ?? null : null
+    readonly property var favorites: settingsController?.values?.paletteList?.favorites ?? []
+    readonly property var bindings: typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : []
+    readonly property var options: {
+        const all = viewportController?.colorMapOptions ?? []
+        return all.filter(entry => favorites.includes(entry.colorMap)).concat(all.filter(entry => !favorites.includes(entry.colorMap)))
+    }
+    readonly property int shortcutCount: Math.min(9, options.length)
+    function selectShortcutIndex(index) {
+        const row = rows.itemAt(index)
+        if (!row) return
+        // Keep the keyboard selection visible without moving focus off the image.
+        for (let view = row.parent; view; view = view.parent) {
+            if (!(view instanceof Flickable)) continue
+            const top = row.mapToItem(view.contentItem, 0, 0).y
+            if (top < view.contentY) view.contentY = top
+            else if (top + row.height > view.contentY + view.height)
+                view.contentY = top + row.height - view.height
+            break
+        }
+        row.click()
+    }
+    function toggleFavorite(key, restoreFocus) {
+        const next = favorites.includes(key) ? favorites.filter(id => id !== key) : favorites.concat([key])
+        if (settingsController.setValue("paletteList", "favorites", next) && restoreFocus) {
+            Qt.callLater(function() {
+                const index = options.findIndex(entry => entry.colorMap === key)
+                rows.itemAt(index)?.favoriteButton.forceActiveFocus(Qt.TabFocusReason)
+            })
+        }
+    }
     signal colorSelected()
     property string description: qsTrId("text.1068")
     spacing: 6
@@ -23,12 +55,16 @@ ColumnLayout {
 
 
     Repeater {
-        model: pseudoColorPanel.viewportController
-            ? pseudoColorPanel.viewportController.colorMapOptions : []
+        id: rows
+        model: pseudoColorPanel.options
 
         delegate: Components.AppButton {
             id: colorMapButton
+            required property int index
             required property var modelData
+            readonly property alias favoriteButton: star
+            readonly property string hint: index < pseudoColorPanel.shortcutCount ? KeysText.hint("list-" + (index + 1), pseudoColorPanel.bindings) : ""
+            Accessible.description: hint
             objectName: pseudoColorPanel.buttonPrefix + modelData.colorMap
             Accessible.name: modelData.label
             Accessible.checkable: true
@@ -40,13 +76,40 @@ ColumnLayout {
             Layout.minimumWidth: 0
             checked: pseudoColorPanel.viewportController?.activeColorMap === modelData.colorMap
             onClicked: {
-                pseudoColorPanel.viewportController?.applyColorMap(modelData.colorMap)
+                pseudoColorPanel.viewportController.applyColorMap(modelData.colorMap)
                 pseudoColorPanel.colorSelected()
+            }
+            Components.AppToolTip {
+                requested: (colorMapButton.hovered || colorMapButton.visualFocus) && !star.hovered
+                    && (caption.truncated || caption.text !== caption.fullCaption)
+                text: caption.fullCaption
             }
 
             contentItem: RowLayout {
                 spacing: 10
 
+                Components.AppButton {
+                    id: star
+                    objectName: pseudoColorPanel.buttonPrefix + "favorite-" + colorMapButton.modelData.colorMap
+                    visible: !!pseudoColorPanel.settingsController
+                    Layout.preferredWidth: 26
+                    Layout.preferredHeight: 26
+                    minimumButtonWidth: 0
+                    compact: true
+                    padding: 0
+                    normalColor: "transparent"
+                    checked: pseudoColorPanel.favorites.includes(colorMapButton.modelData.colorMap)
+                    iconName: checked ? "star-filled" : "star"
+                    iconSize: 17
+                    Accessible.name: qsTrId(checked ? "palette.unfavorite" : "palette.favorite") + " · " + colorMapButton.modelData.label
+                    Accessible.checkable: true
+                    Accessible.checked: checked
+                    onClicked: pseudoColorPanel.toggleFavorite(colorMapButton.modelData.colorMap, visualFocus)
+                    Components.AppToolTip {
+                        requested: star.hovered || star.visualFocus
+                        text: qsTrId(star.checked ? "palette.unfavorite" : "palette.favorite")
+                    }
+                }
                 Canvas {
                     id: gradientPreview
                     Layout.preferredWidth: Math.min(80, colorMapButton.width * 0.3)
@@ -67,9 +130,12 @@ ColumnLayout {
                     }
                 }
 
-                Text {
+                Components.ShortcutLabel {
+                    id: caption
+                    objectName: "paletteCaption"
                     Layout.fillWidth: true
-                    text: colorMapButton.modelData.label
+                    title: colorMapButton.modelData.label
+                    keyHint: colorMapButton.hint
                     color: colorMapButton.checked
                         ? Theme.textPrimary : Theme.textSecondary
                     Layout.minimumWidth: 0

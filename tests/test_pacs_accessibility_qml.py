@@ -198,3 +198,16 @@ def test_profile_names_follow_visible_labels_and_language(scene, tmp_path):
         assert secret.text(QAccessible.Name) == ("Access token" if locale == "en-US" else "访问令牌")
         auth.setProperty("currentIndex", 1)
     assert not warnings, warnings
+
+
+def test_paging_arrows_explain_which_list_they_change(scene, pacs_server):
+    window, app, warnings = scene
+    app.languageController.selectLanguage('en-US')
+    query_studies(window, app, pacs_server)
+    for group, target in [('Study', 'studies'), ('Series', 'series')]:
+        for direction in ('Previous', 'Next'):
+            button = find(window, 'pacs' + group + direction)
+            label = direction + ' page of ' + target
+            assert button.property('hintText') == label
+            assert QAccessible.queryAccessibleInterface(button).text(QAccessible.Name) == label
+    assert not warnings, warnings

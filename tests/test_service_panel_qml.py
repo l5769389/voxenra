@@ -10,6 +10,7 @@ from shiboken6 import delete
 
 from qt_dicom_viewer.model import TabType
 from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from test_dicom_tags import wait_until
 from test_measurement_qml import (
     _mouse_drag, _scene, _visual_children, qt_app, viewport,
 )
@@ -165,7 +166,7 @@ def test_automatic_qa_cancels_draft_and_does_not_draw_manual_measurements(viewpo
     tools.activateTool("measure")
     tools.selectInteraction("measure:angle")
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(pixel_layer, 30, 30))
-    assert controller.measurementController.has_active_transaction
+    wait_until(lambda: controller.measurementController.has_active_transaction)
 
     tools.selectService("service:" + entry)
     assert not controller.measurementController.has_active_transaction

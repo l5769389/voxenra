@@ -149,6 +149,7 @@ Basic.TabBar {
 
     Basic.Menu {
         id: tabMenu
+        readonly property Components.PopupScope shortcutScope: Components.PopupScope { popup: tabMenu }
         objectName: "tabContextMenu"
         parent: Basic.Overlay.overlay
         property string tabId: ""
@@ -245,27 +246,14 @@ Basic.TabBar {
                 === workspaceTabs.workspaceController.activeTabId
 
             HoverHandler { id: tabHover }
-            Basic.ToolTip {
-                id: identityTooltip
+            Components.AppToolTip {
                 objectName: "tabTooltip-" + tabButton.modelData.tabId
-                visible: tabHover.hovered && !tabDragArea.pressed && !closeButton.hovered
+                requested: (tabHover.hovered || tabButton.visualFocus) && !tabDragArea.pressed
+                    && !closeButton.hovered && !closeButton.visualFocus
                     && (descriptionLabel.truncated || patientLabel.truncated
                         || (patientLabel.text !== "" && !patientLabel.visible) || contextLabel.truncated)
-                delay: 550
                 text: tabButton.modelData.tabTooltip ?? tabButton.modelData.tabLabel
-                width: Math.min(560, Math.max(240, workspaceTabs.width - 24))
-                contentItem: Text {
-                    text: identityTooltip.text
-                    textFormat: Text.PlainText
-                    color: Theme.textPrimary
-                    font.pixelSize: 12
-                    wrapMode: Text.Wrap
-                }
-                background: Rectangle {
-                    radius: 5
-                    color: Theme.panelBackground
-                    border.color: Theme.controlBorder
-                }
+                placement: "below"
             }
 
             onClicked: {
@@ -434,6 +422,11 @@ Basic.TabBar {
 
                 Basic.ToolButton {
                     id: closeButton
+                    objectName: "tabClose-" + tabButton.modelData.tabId
+                    Components.AppToolTip {
+                        requested: closeButton.hovered || closeButton.visualFocus
+                        text: qsTrId("tabs.closeCurrent")
+                    }
                     Accessible.name: I18n.format(qsTrId("tabs.close"), {name: tabButton.modelData.tabLabel})
                     implicitWidth: 24
                     implicitHeight: 24

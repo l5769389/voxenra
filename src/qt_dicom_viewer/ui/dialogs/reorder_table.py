@@ -1,6 +1,6 @@
 """Row reorder gesture: preview while dragging, commit only on release."""
 from PySide6.QtCore import Qt, Signal, QRect, QTimer, QEvent
-from PySide6.QtWidgets import QApplication, QTableWidget, QRubberBand
+from PySide6.QtWidgets import QApplication, QTableWidget, QToolTip, QRubberBand
 
 
 class ReorderTable(QTableWidget):
@@ -130,6 +130,12 @@ class ReorderTable(QTableWidget):
         return super().eventFilter(watched, event)
 
     def viewportEvent(self, event):
+        if event.type() == QEvent.ToolTip:
+            index = self.indexAt(event.pos())
+            if (index.isValid() and index.data(Qt.ToolTipRole) == index.data(Qt.DisplayRole)
+                    and self.sizeHintForIndex(index).width() <= self.visualRect(index).intersected(self.viewport().rect()).width()):
+                QToolTip.hideText()
+                return True
         if event.type() == QEvent.UngrabMouse and hasattr(self, '_start'):
             self._abort_gesture()
         return super().viewportEvent(event)

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic as Basic
 import "../theme"
+import "ShortcutCaption.js" as KeysText
 
 Item {
     id: action
@@ -12,7 +13,7 @@ Item {
     required property string buttonObjectName
     property bool showLabel: false
     property string shortLabel: label
-    property int labelMaximumLines: 1
+    property bool showInlineShortcut: true
     property bool actionEnabled: true
     property bool placeholder: false
     property bool checked: false
@@ -30,12 +31,14 @@ Item {
     property bool tooltipDismissed: false
     onHoveredChanged: if (!hovered) tooltipDismissed = false
     readonly property var shortcutOwner: typeof appController !== "undefined" ? appController.shortcutController ?? null : null
-    readonly property string shortcutHint: {
-        const bindings = shortcutOwner?.bindings ?? []
-        const match = bindings.find(item => qsTrId(item.labelId) === label)
-        return match?.display ?? ""
-    }
-    property string tooltipText: label + (shortcutHint ? " (" + shortcutHint + ")" : "") + (placeholder ? qsTrId("text.0710") : "")
+    property string shortcutAction: ""
+    property string fixedShortcutAction: ""
+    readonly property string shortcutHint: fixedShortcutAction ? shortcutOwner?.hint(fixedShortcutAction) ?? ""
+        : KeysText.hint(shortcutAction, shortcutOwner?.bindings ?? [], action.Window.window?.activeReadingMenu, action.Window.window?.readingListCount)
+    property string explanation: ""
+    readonly property string tooltipBody: explanation
+        ? (caption.visible && !caption.truncated ? explanation : label + " · " + explanation) : label
+    property string tooltipText: tooltipBody + (shortcutHint ? " (" + shortcutHint + ")" : "") + (placeholder ? qsTrId("text.0710") : "")
     readonly property bool hovered: hover.hovered
     readonly property bool tooltipVisible: tooltip.visible
     signal pressed()
@@ -128,19 +131,20 @@ Item {
                     }
                 }
 
-                Text {
+                ShortcutLabel {
+                    id: caption
                     objectName: "toolbarLabel"
-                    visible: action.showLabel
+                    // In the compact rail a clipped name adds little beside the icon.
+                    visible: action.showLabel && (action.showInlineShortcut || implicitWidth <= width)
                     width: parent.width
-                    text: action.shortLabel
+                    title: action.shortLabel
+                    keyHint: action.showInlineShortcut && button.enabled ? action.shortcutHint : ""
                     horizontalAlignment: Text.AlignHCenter
                     color: !button.enabled ? Theme.textDisabled
                         : action.primaryAction ? Theme.textOnPrimary
                         : action.resetAction && button.hovered ? Theme.resetActionColor
                         : button.checked ? Theme.textPrimary : Theme.textSecondary
                     font.pixelSize: Theme.toolbarLabelSize
-                    wrapMode: action.labelMaximumLines > 1 ? Text.Wrap : Text.NoWrap
-                    maximumLineCount: action.labelMaximumLines
                     elide: Text.ElideRight
                 }
             }
@@ -161,7 +165,8 @@ Item {
     AppToolTip {
         id: tooltip
         objectName: "toolbarTooltip"
-        visible: !action.tooltipDismissed && (action.hovered || button.visualFocus)
+        displayedCaption: caption.visible && !caption.truncated ? caption.text : ""
+        requested: !action.tooltipDismissed && (action.hovered || button.visualFocus)
         placement: action.tooltipPlacement
         delay: 400
         text: action.tooltipText

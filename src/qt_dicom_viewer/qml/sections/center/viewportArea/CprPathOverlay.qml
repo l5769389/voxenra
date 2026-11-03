@@ -7,6 +7,9 @@ Canvas {
     required property var controller
     required property var coordinateMapper
     required property var transformState
+    objectName: "cprPathOverlay"
+    readonly property var guides: controller?.cprGuides ?? ({})
+    onGuidesChanged: requestPaint()
     readonly property var points: controller?.cprPoints ?? []
     readonly property real marker: controller?.cprMarkerColumn ?? -1
     property var previewPoint: null
@@ -18,6 +21,80 @@ Canvas {
     onTransformStateChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
+    function pixel(col, row) {
+        return coordinateMapper.mapDicomPixelToItem(overlay, col, row)
+    }
+
+    function line(ctx, a, b) {
+        ctx.beginPath()
+        ctx.moveTo(a.x, a.y)
+        ctx.lineTo(b.x, b.y)
+        ctx.stroke()
+    }
+
+    function drawInterval(ctx, rows) {
+        const a = pixel(guides.startColumn, 0)
+        const b = pixel(guides.endColumn, 0)
+        const c = pixel(guides.endColumn, rows - 1)
+        const d = pixel(guides.startColumn, rows - 1)
+        ctx.save()
+        ctx.strokeStyle = ctx.fillStyle = Theme.crosshairPreview
+        ctx.globalAlpha = 0.12
+        ctx.beginPath()
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y)
+        ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill()
+        ctx.globalAlpha = 1
+        ctx.lineWidth = 1.5
+        ctx.setLineDash([4, 3])
+        line(ctx, a, d)
+        line(ctx, b, c)
+        ctx.setLineDash([])
+        ctx.font = "bold 12px sans-serif"
+        ctx.textBaseline = "bottom"
+        ctx.fillStyle = Theme.overlayText
+        ctx.strokeStyle = Theme.imageBlack
+        ctx.lineWidth = 3
+        const ax = Math.max(2, Math.min(width - 12, a.x + 3))
+        const ay = Math.max(14, Math.min(height - 2, a.y - 1))
+        if (a.x >= 0 && a.x <= width && a.y >= 0 && a.y <= height) {
+            const label = "A " + guides.startMm.toFixed(2) + " mm"
+            const x = Math.min(ax, width - ctx.measureText(label).width - 2)
+            ctx.strokeText(label, x, ay)
+            ctx.fillText(label, x, ay)
+        }
+        if (guides.length > 0 && c.x >= 0 && c.x <= width && c.y >= 0 && c.y <= height) {
+            ctx.textBaseline = "top"
+            const label = "B " + guides.endMm.toFixed(2) + " mm   |   A–B " + guides.length.toFixed(2) + " mm"
+            const x = Math.max(2, Math.min(width - ctx.measureText(label).width - 2, c.x + 3))
+            const y = Math.max(2, Math.min(height - 14, c.y + 1))
+            ctx.strokeText(label, x, y)
+            ctx.fillText(label, x, y)
+        }
+        ctx.restore()
+    }
+
+    function drawSectionGuide(ctx, columns, rows) {
+        const x = (columns - 1) / 2, y = (rows - 1) / 2
+        const halfWidth = Math.min(x, guides.widthPixels / 2)
+        ctx.save()
+        ctx.strokeStyle = Theme.crosshairPreview
+        ctx.lineWidth = 1.25
+        line(ctx, pixel(x - halfWidth, y), pixel(x + halfWidth, y))
+        if (guides.widthPixels <= columns - 1) {
+            for (const side of [-1, 1]) {
+                const col = x + side * halfWidth
+                line(ctx, pixel(col, y - 1), pixel(col, y + 1))
+            }
+        }
+        const halfSlab = guides.slabPixels / 2
+        if (halfSlab > 0 && halfSlab <= y) {
+            ctx.setLineDash([4, 3])
+            line(ctx, pixel(x - halfWidth, y - halfSlab), pixel(x + halfWidth, y - halfSlab))
+            line(ctx, pixel(x - halfWidth, y + halfSlab), pixel(x + halfWidth, y + halfSlab))
+        }
+        ctx.restore()
+    }
+
     onPaint: {
         const ctx = getContext("2d")
         ctx.clearRect(0, 0, width, height)
@@ -46,6 +123,31 @@ Canvas {
             ctx.setLineDash([4, 4])
             ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()
             ctx.setLineDash([])
+        }
+        ctx.globalAlpha = 1
+        if (guides.startColumn !== undefined)
+            drawInterval(ctx, controller.imageRows)
+        if (guides.widthPixels !== undefined)
+            drawSectionGuide(ctx, controller.imageColumns, controller.imageRows)
+        for (const label of ["A", "B"]) {
+            const mark = guides[label]
+            if (!mark) continue
+            const p = pixel(mark.col, mark.row)
+            ctx.save()
+            ctx.strokeStyle = Theme.crosshairPreview
+            ctx.lineWidth = 2
+            ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.stroke()
+            ctx.font = "bold 12px sans-serif"
+            ctx.strokeStyle = Theme.imageBlack; ctx.lineWidth = 3
+            ctx.fillStyle = Theme.overlayText
+            const y = p.y + (label === "A" ? -7 : 15)
+            ctx.strokeText(label, p.x+6, y); ctx.fillText(label, p.x+6, y)
+            ctx.restore()
+        }
+        if (guides.stationX !== undefined) {
+            const center = pixel(guides.stationX, guides.stationY)
+            ctx.strokeStyle = Theme.measurementPrimary
+            ctx.beginPath(); ctx.arc(center.x, center.y, 5, 0, 2 * Math.PI); ctx.stroke()
         }
         if (controller.viewportRole === "curved" && marker >= 0) {
             ctx.globalAlpha = 1

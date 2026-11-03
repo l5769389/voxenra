@@ -17,7 +17,7 @@ Basic.Button {
     Accessible.description: tooltip
     HoverHandler { cursorShape: Qt.PointingHandCursor }
     AppToolTip {
-        visible: (parent?.hovered ?? false) && parent.tooltip !== ""
+        requested: (control.hovered || control.visualFocus) && (label.truncated || control.tooltip !== control.text)
         delay: 500
         text: parent?.tooltip ?? ""
     }

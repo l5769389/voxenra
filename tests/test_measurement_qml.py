@@ -14,6 +14,7 @@ from shiboken6 import delete
 
 from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
 from qt_dicom_viewer.model import EditTargetKind, ImagePoint, Point
+from test_dicom_tags import wait_until
 from test_viewport_transform import _controller, _render_result
 
 
@@ -175,6 +176,7 @@ def test_real_three_click_angle_and_keyboard_cancel_delete(viewport, tmp_path):
     for column, row in [(30, 50), (100, 50), (100, 140)]:
         QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(pixel_layer, column, row))
         QTest.qWait(20)
+    wait_until(lambda: bool(controller.measurementController.measurementItems))
     items = controller.measurementController.measurementItems
     assert len(items) == 1
     assert items[0]["label"] == "90.00°"
@@ -186,7 +188,7 @@ def test_real_three_click_angle_and_keyboard_cancel_delete(viewport, tmp_path):
     QTest.keyClick(view, Qt.Key_Delete)
     assert controller.measurementController.measurementItems == []
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(pixel_layer, 150, 180))
-    assert controller.measurementController.has_active_transaction
+    wait_until(lambda: controller.measurementController.has_active_transaction)
     QTest.keyClick(view, Qt.Key_Escape)
     assert not controller.measurementController.has_active_transaction
     assert not warnings, warnings
@@ -281,7 +283,7 @@ def test_label_hit_moves_card_without_changing_measurement(viewport, kind, trans
     label_center = label.mapToScene(QPointF(label.width() / 2, label.height() / 2)).toPoint()
     # 点击标签应选中所属测量，角度工具下也不能误建新的角度草稿。
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, label_center)
-    assert measurement_controller.selectedMeasurementId == original["measurementId"]
+    wait_until(lambda: measurement_controller.selectedMeasurementId == original["measurementId"])
     assert not measurement_controller.has_active_transaction
     image_position = pixel_layer.mapFromScene(QPointF(label_center))
     hit = measurement_controller.hit_test(
@@ -656,3 +658,28 @@ def test_live_link_switch_moves_geometry_and_card_together_or_independently(view
         assert area.y()>=size.y()+size.height()
         assert size.x()==pytest.approx(area.x(),abs=1)
     assert not warnings,warnings
+
+
+def test_double_click_does_not_supply_the_third_angle_point(viewport):
+    view, controller, layer, warnings = viewport
+    controller._tool_controller.selectInteraction("measure:angle")
+    for x, y in [(30, 50), (100, 50)]:
+        QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, x, y))
+    QTest.mouseDClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, 100, 140))
+    QTest.qWait(QApplication.styleHints().mouseDoubleClickInterval() + 60)
+    assert not controller._measure_controller.committed_measurements
+    assert not controller._measure_controller.has_active_transaction
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize("tool", ["measure:length", "measure:rect", "measure:ellipse", "annotate:arrow"])
+def test_double_click_in_drag_tool_preserves_completed_geometry(viewport, tool):
+    view, controller, layer, warnings = viewport
+    controller._tool_controller.selectInteraction(tool)
+    _mouse_drag(view, _scene(layer, 35, 40), _scene(layer, 100, 90))
+    measures = controller.measurementController
+    original, = measures.committed_measurements
+    QTest.mouseDClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, 150, 155))
+    assert tuple(measures.committed_measurements) == (original,)
+    assert not measures.has_active_transaction
+    assert not warnings, warnings

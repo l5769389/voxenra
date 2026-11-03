@@ -55,7 +55,7 @@ ColumnLayout {
     onVisibleChanged: if (!visible) cancel()
     onWidthChanged: cancel()
     Connections { target: editor.Window.window; function onActiveChanged() { if (!editor.Window.window.active) editor.cancel() } }
-    Shortcut { sequence: "Escape"; enabled: editor.dragging; onActivated: { editor.cancel(); editor.error = "" } }
+    Shortcut { sequence: "Escape"; enabled: (editor.Window.window?.standardShortcutsAllowed ?? true) && editor.dragging; onActivated: { editor.cancel(); editor.error = "" } }
     Timer {
         interval: 30; repeat: true; running: editor.dragging
         onTriggered: {
@@ -182,6 +182,8 @@ ColumnLayout {
     }
     Basic.Popup {
         id: addPopup
+        onOpened: search.forceActiveFocus(Qt.TabFocusReason)
+        Components.DialogKeys { popup: addPopup; defaultButton: addField }
         parent: editor.Window.window ? editor.Window.window.contentItem : editor
         x: Math.max(0, (parent.width - width) / 2); y: Math.max(0, (parent.height - height) / 2)
         width: Math.min(340, parent.width - 24); padding: 12; modal: true; focus: true
@@ -196,6 +198,7 @@ ColumnLayout {
                 textRole: "label"; valueRole: "key"
             }
             Components.AppButton {
+                id: addField
                 objectName: "cornerAdd-" + editor.activeCorner; text: qsTrId("text.0807"); enabled: choice.currentIndex >= 0
                 onClicked: { if (editor.settingsController.addCornerField(editor.activeCorner, choice.currentValue)) addPopup.close() }
             }

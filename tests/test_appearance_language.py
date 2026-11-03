@@ -192,14 +192,35 @@ def test_preferences_restart_defaults_and_widget_translations(qt_app, tmp_path):
     try:
         settings.setValue('appearance','theme','light'); language.selectLanguage('en-US'); QTest.qWait(30)
         assert appearance.colors['panelBackground'] == LIGHT['panelBackground']
-        assert dialog.windowTitle() == 'Open images' and dialog.cancel_button.text() == 'Cancel'
+        assert dialog.windowTitle() == 'Open images' and dialog.cancel_button.text() == 'Cancel (Esc)'
+        assert dialog.cancel_button.accessibleName() == 'Cancel'
         assert LIGHT['panelBackground'] in dialog.styleSheet()
         restarted=SettingsController(path=path)
         assert restarted.section('appearance') == {'theme':'light','language':'en-US','interfaceScale':100,'toolLabels':True,'sidebarLabels':True}
         settings.resetSection('appearance')
         assert language.locale == 'zh-CN' and appearance.theme == 'dark'
-        assert dialog.cancel_button.text() == '取消'
+        assert dialog.cancel_button.text() == '取消 (Esc)'
+        assert dialog.cancel_button.accessibleName() == '取消'
     finally: dialog.deleteLater(); language.shutdown()
+
+
+def test_saved_system_theme_resolves_again_at_startup(qt_app, tmp_path):
+    from PySide6.QtCore import Qt
+
+    path = tmp_path / 'settings.json'
+    assert SettingsController(path=path).setValue('appearance', 'theme', 'system')
+    hints = qt_app.styleHints()
+    hints.unsetColorScheme()
+    QTest.qWait(30)
+    native = hints.colorScheme()
+    try:
+        hints.setColorScheme(Qt.ColorScheme.Dark if native == Qt.ColorScheme.Light else Qt.ColorScheme.Light)
+        restored = AppearanceController(SettingsController(path=path))
+        wait_until(lambda: hints.colorScheme() == native)
+        assert restored.theme == 'system'
+        assert restored.colors == (LIGHT if native == Qt.ColorScheme.Light else DARK)
+    finally:
+        hints.unsetColorScheme()
 
 
 def test_report_uses_snapshot_and_keeps_patient_data(qt_app, tmp_path):
@@ -424,7 +445,7 @@ def test_manual_images_and_language_resources_are_packaged():
 
 
 def test_app_confirmation_and_buttons_switch_while_open(qt_app, tmp_path):
-    from PySide6.QtCore import QTimer
+    from PySide6.QtCore import QTimer, Qt
     from qt_dicom_viewer.i18n.widgets import QMessageBox
     language = LanguageController(SettingsController(path=False), root=tmp_path)
     language.selectLanguage('en-US')
@@ -432,16 +453,17 @@ def test_app_confirmation_and_buttons_switch_while_open(qt_app, tmp_path):
     def inspect_dialog():
         dialog = qt_app.activeModalWidget()
         checks.append(dialog.text() == localize(message('text.0418')))
-        checks.append(dialog.button(QMessageBox.StandardButton.Cancel).text() == 'Cancel')
+        checks.append(dialog.button(QMessageBox.StandardButton.Cancel).text() == 'Cancel (Esc)')
+        checks.append(dialog.defaultButton().text() == 'Save (Enter)')
         language.selectLanguage('zh-CN')
         checks.append(dialog.text() == localize(message('text.0418')))
-        checks.append(dialog.button(QMessageBox.StandardButton.Cancel).text() == '取消')
-        dialog.button(QMessageBox.StandardButton.Cancel).click()
+        checks.append(dialog.button(QMessageBox.StandardButton.Cancel).text() == '取消 (Esc)')
+        QTest.keyClick(dialog, Qt.Key_Escape)
     try:
         QTimer.singleShot(30, inspect_dialog)
         answer = QMessageBox.question(None, message('text.0417'), message('text.0418'),
-            QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Cancel)
-        assert answer == QMessageBox.StandardButton.Cancel and checks == [True]*4
+            QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Save)
+        assert answer == QMessageBox.StandardButton.Cancel and checks == [True]*5
     finally: language.shutdown()
 
 

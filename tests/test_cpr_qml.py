@@ -51,7 +51,7 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
                 target.width()*x, target.height()*y))
             QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
             QTest.qWait(40)
-        assert len(cpr.controlPoints) == 2
+        wait_until(lambda: len(cpr.controlPoints) == 2)
         point = target.mapToScene(QPointF(target.width()*.65, target.height()*.6))
         if completion == 'enter':
             QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
@@ -59,6 +59,7 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
         else:
             if completion == 'double-click-existing-point':
                 QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
+                wait_until(lambda: len(cpr.controlPoints) == 3)
                 point += QPointF(1, 1)
             # A realistic second press can drift by a pixel. It must confirm,
             # not add a tiny terminal segment that changes the section normal.
@@ -67,14 +68,15 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
             QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
         wait_until(lambda: cpr.ready)
         assert len(cpr.paths) == 1
-        assert len(cpr.current_path.control_points) == 3
-        assert cpr.resultView
-        assert not target.isVisible()
+        count = 2 if completion == "double-click" else 3
+        assert len(cpr.current_path.control_points) == count
+        assert not cpr.resultView
+        assert target.isVisible()
         assert target.size() == original_size
         assert not cpr.focusedViewportId
         # A two-pixel correction must move the existing control point, not
         # become a tap (or insert a new point) at the release position.
-        cpr.setPathEditing(True)
+        assert not cpr.pathEditing
         QTest.qWait(40)
         before = cpr.current_path.control_points
         start = target.mapToScene(QPointF(target.width()*.35, target.height()*.35)).toPoint()
@@ -83,9 +85,14 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
         QTest.mouseMove(view, end, 20)
         QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
         wait_until(lambda: not cpr.busy)
-        assert len(cpr.current_path.control_points) == 3
+        assert cpr.pathEditing and len(cpr.current_path.control_points) == count
         assert cpr.current_path.control_points[0] != before[0]
         assert cpr.current_path.control_points[1:] == before[1:]
+        edited = cpr.current_path
+        middle = target.mapToScene(QPointF(target.width()*.425 + 1, target.height()*.425)).toPoint()
+        QTest.mouseDClick(view, Qt.LeftButton, Qt.NoModifier, middle)
+        wait_until(lambda: not cpr.pathEditing)
+        assert not cpr.resultView and cpr.current_path == edited
         view.rootObject().setProperty("controller", None)
         QCoreApplication.processEvents()
         assert not warnings, "\n".join(warnings)
@@ -156,7 +163,7 @@ def test_done_changes_visible_layout_and_edit_restores_four_views(cpr_page, tmp_
     state = cross.viewport_state
     assert all(item.isVisible() for item in items.values())
     assert window.grabWindow().save(str(tmp_path/'editing.png'))
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     QTest.qWait(80)
     assert not items['reference-a'].isVisible() and not items['reference-b'].isVisible()
     assert items['curved'].isVisible() and items['cross'].isVisible()
@@ -173,7 +180,7 @@ def test_done_changes_visible_layout_and_edit_restores_four_views(cpr_page, tmp_
     window.resize(600, 700)
     QTest.qWait(80)
     assert items['curved'].width() > 590 and items['cross'].width() > 590
-    assert items['curved'].height() == items['cross'].height()
+    assert items['curved'].height() == pytest.approx(2 * items['cross'].height(), abs=6)
     assert window.grabWindow().save(str(tmp_path/'results-narrow.png'))
     tab.setPathEditing(True)
     QTest.qWait(80)
@@ -182,7 +189,7 @@ def test_done_changes_visible_layout_and_edit_restores_four_views(cpr_page, tmp_
     # Returning to edit from a button/shortcut gives the reference keyboard focus.
     QTest.keyClick(window, Qt.Key_Return)
     QTest.qWait(80)
-    assert tab.resultView and not tab.pathEditing
+    assert not tab.resultView and not tab.pathEditing
     assert replace(cross.viewport_state, width=state.width, height=state.height) == state
 
 
@@ -204,6 +211,9 @@ def test_main_window_cpr_shortcuts_and_text_input_guards(sidebar_scene, tmp_path
     ref.cprTap(35, 48, .4)
     ref.cprTap(65, 48, .4)
     QTest.keyClick(window, Qt.Key_Return)
+    wait_until(lambda: tab.ready)
+    assert not tab.resultView and reference.isVisible()
+    QTest.keyClick(window, Qt.Key_V)
     wait_until(lambda: tab.resultView)
     QTest.qWait(80)
     assert not reference.isVisible()
@@ -222,7 +232,10 @@ def test_main_window_cpr_shortcuts_and_text_input_guards(sidebar_scene, tmp_path
     assert name.hasActiveFocus()
     click(window, find(window, 'cprFinishPath'))
     QTest.qWait(80)
-    assert tab.resultView and not name.isVisible()
+    assert not tab.resultView and not tab.pathEditing
+    reference.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_V)
+    wait_until(lambda: tab.resultView)
     QTest.keyClick(window, Qt.Key_N)
     QTest.qWait(40)
     assert tab.drawing and reference.isVisible()
@@ -238,7 +251,7 @@ def test_cross_section_history_is_visible_when_curved_result_is_maximized(cpr_ap
     cross = tab.viewForRole('cross')
     measurement = draw_length(cross)
     source = cross.measurementController._sources[measurement]
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     with displayed_cpr_page(tab) as (window, _):
         curved = named_item(window.rootObject(), 'cprViewport-curved')
         section = named_item(window.rootObject(), 'cprViewport-cross')
@@ -424,7 +437,6 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
         QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
         QTest.qWait(20)
     try:
-        click("cprNewPath")
         assert cpr.drawing
         fields = {item.objectName(): item for item in _visual_children(view.rootObject())}
         assert not fields['cprFinishPath'].isEnabled()
@@ -440,7 +452,7 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
         assert cpr.pathEditing
         click('cprFinishPath')
         assert not cpr.pathEditing
-        click('cprNewPath')
+        click('cprAdditionalPath')
         click("cprCancelPath")
         assert not cpr.drawing
         draw(cpr)
@@ -545,7 +557,7 @@ def test_numeric_position_history_return_and_locked_browse_ui(cpr_app, tmp_path)
     tab.setPositionMm(27.0)
     tab.setParameter('angle', 45)
     wait_until(lambda: tab.ready and not tab.busy)
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     tab.navigate_measurement(cross, source)
     wait_until(lambda: cross.historicalPlane and not cross.render_pending)
     view = QQuickView()
@@ -611,7 +623,7 @@ def test_numeric_position_history_return_and_locked_browse_ui(cpr_app, tmp_path)
 
 def test_locked_reference_layout_pointer_and_wheel_preserve_path(cpr_page):
     window, tab = cpr_page
-    tab.finishEditing()
+    tab.setReferenceBrowsing(False)
     tab.setReferenceBrowsing(True)
     QTest.qWait(30)
     original = tab.current_path

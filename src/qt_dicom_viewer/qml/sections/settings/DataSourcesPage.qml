@@ -216,6 +216,8 @@ Basic.ScrollView {
     }
     Components.AppDialog {
         id: deleteDialog
+        defaultButton: confirmDelete
+        escapeButton: cancelDelete
         objectName: "deletePacsDialog"
         title: qsTrId("text.0763")
         property string profileId: ""
@@ -245,11 +247,13 @@ Basic.ScrollView {
         }
         footer: Components.AppDialogFooter {
             Components.AppButton {
+                id: cancelDelete
                 objectName: "cancelDeletePacs"
                 text: qsTrId("text.0539")
                 onClicked: deleteDialog.reject()
             }
             Components.AppButton {
+                id: confirmDelete
                 objectName: "confirmDeletePacs"
                 text: qsTrId("text.0766")
                 actionRole: "danger"

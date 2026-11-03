@@ -68,7 +68,7 @@ Rectangle {
                     ? appController.shortcutController?.fixedBindings.find(item => item.action === "maximizeViewport")?.display ?? "" : "") + ")"
                 onClicked: centerPanel.toggleViewportMaximize()
                 Components.AppToolTip {
-                    visible: maximizeButton.hovered || maximizeButton.visualFocus
+                    requested: maximizeButton.hovered || maximizeButton.visualFocus
                     text: maximizeButton.Accessible.description
                 }
             }
@@ -81,7 +81,7 @@ Rectangle {
                 iconName: "workspace"
                 Accessible.name: qsTrId("tabs.showMain")
                 onClicked: centerPanel.windowManager.showMainWindow()
-                Components.AppToolTip { visible: (parent?.hovered ?? false); text: qsTrId("tabs.showMain") }
+                Components.AppToolTip { requested: (parent?.hovered ?? false); text: qsTrId("tabs.showMain") }
             }
         }
 

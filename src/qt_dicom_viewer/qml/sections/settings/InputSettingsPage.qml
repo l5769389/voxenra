@@ -61,29 +61,42 @@ ColumnLayout {
         title: qsTrId("input.shortcuts")
         description: qsTrId("input.shortcutHint")
         Repeater {
+            id: shortcutRows
             model: page.shortcuts.bindings
-            delegate: RowLayout {
+            delegate: ColumnLayout {
                 id: row
                 required property var modelData
+                required property int index
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; Layout.minimumWidth: 0; text: qsTrId(row.modelData.labelId); wrapMode: Text.Wrap; color: Theme.textPrimary }
-                Components.AppButton {
-                    objectName: "shortcutRecord-" + row.modelData.action
-                    Layout.preferredWidth: 160
-                    compact: true
-                    checked: page.shortcuts.recordingAction === row.modelData.action
-                    text: checked ? qsTrId("input.recording") : row.modelData.display || qsTrId("input.record")
-                    onClicked: page.shortcuts.beginRecording(row.modelData.action)
+                Text {
+                    visible: row.index === 0 || shortcutRows.model[row.index - 1]?.menu !== row.modelData.menu
+                    Layout.fillWidth: true
+                    Layout.topMargin: row.index > 0 ? 8 : 0
+                    text: qsTrId(row.modelData.menuLabelId)
+                    font.bold: true
+                    color: Theme.textSecondary
                 }
-                Components.AppButton {
-                    objectName: "shortcutClear-" + row.modelData.action
-                    Layout.preferredWidth: 32
-                    minimumButtonWidth: 32
-                    compact: true
-                    iconName: "close"; iconSize: 16
-                    Accessible.name: qsTrId("input.clear")
-                    onClicked: { page.shortcuts.cancelRecording(); page.shortcuts.assign(row.modelData.action, "") }
-                    Components.AppToolTip { visible: parent.hovered; text: qsTrId("input.clear") }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text { Layout.fillWidth: true; Layout.minimumWidth: 0; text: qsTrId(row.modelData.labelId); wrapMode: Text.Wrap; color: Theme.textPrimary }
+                    Components.AppButton {
+                        objectName: "shortcutRecord-" + row.modelData.action
+                        Layout.preferredWidth: 160
+                        compact: true
+                        checked: page.shortcuts.recordingAction === row.modelData.action
+                        text: checked ? qsTrId("input.recording") : row.modelData.display || qsTrId("input.record")
+                        onClicked: page.shortcuts.beginRecording(row.modelData.action)
+                    }
+                    Components.AppButton {
+                        objectName: "shortcutClear-" + row.modelData.action
+                        Layout.preferredWidth: 32
+                        minimumButtonWidth: 32
+                        compact: true
+                        iconName: "close"; iconSize: 16
+                        Accessible.name: qsTrId("input.clear")
+                        onClicked: { page.shortcuts.cancelRecording(); page.shortcuts.assign(row.modelData.action, "") }
+                        Components.AppToolTip { requested: parent.hovered; text: qsTrId("input.clear") }
+                    }
                 }
             }
         }
