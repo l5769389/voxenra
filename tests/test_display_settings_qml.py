@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 from PySide6.QtCore import QObject, QPointF, Qt
-from PySide6.QtTest import QTest
+from PySide6.QtTest import QSignalSpy, QTest
 
 from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
 from qt_dicom_viewer.model import DicomFolderScanSnapshot
@@ -27,10 +27,44 @@ def select_category(window, category):
     item.forceActiveFocus(Qt.TabFocusReason)
     def revealed():
         point = item.mapToItem(scroll, QPointF())
-        return point.y() >= 0 and point.y() + item.height() <= scroll.height() + 1
+        return (point.x() >= 0 and point.y() >= 0
+                and point.x() + item.width() <= scroll.width() + 1
+                and point.y() + item.height() <= scroll.height() + 1)
     wait_until(revealed)
-    click(window, item)
+    click(window, item, ready=revealed)
     wait_until(lambda: item.property('checked'))
+
+
+def test_category_click_waits_for_reveal_after_resize(scene, monkeypatch):
+    import test_tag_qml
+    window, app, warnings = scene
+    app.settingsController.setValue('appearance', 'theme', 'graphite')
+    app.workspaceController.openSettings()
+    window.resize(1280, 720)
+    button = find(window, 'settingsCategory-ai')
+    clicks = QSignalSpy(button.clicked)
+    original = test_tag_qml.settled_point
+    resized = False
+
+    def resize_before_settle(item, local_point=None, **kwargs):
+        nonlocal resized
+        if item is button and not resized:
+            resized = True
+            page = find(window, 'settingsPage')
+            reveal_timer = next(child for child in page.findChildren(QObject)
+                                if child.inherits('QQmlTimer') and child.property('interval') == 40)
+            # Let the real layout expand its navigation rows after the first
+            # visibility check, before the existing reveal timer catches up.
+            reveal_timer.setProperty('interval', 250)
+            window.resize(1440, 900)
+        return original(item, local_point, **kwargs)
+
+    monkeypatch.setattr(test_tag_qml, 'settled_point', resize_before_settle)
+    select_category(window, 'ai')
+    assert resized and clicks.count() == 1
+    assert app.settingsController.activeCategory == 'ai'
+    assert find(window, 'autoSegDetect').isVisible()
+    assert not warnings, warnings
 
 
 @pytest.mark.parametrize('category', ['colormap', 'window', 'crosshair', 'corners', 'scale', 'measurement', 'roi', 'export'])

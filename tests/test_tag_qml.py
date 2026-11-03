@@ -58,16 +58,18 @@ def find(window, name):
     return target()
 
 
-def settled_point(item, local_point=None):
+def settled_point(item, local_point=None, *, ready=None):
     # Async incubation can expose a visible control before Layout/anchors have
     # placed it. Observe a stable scene rectangle before sending a real click;
     # do not retry missed clicks or invoke the control's command directly.
+    # Additional readiness, such as scroll containment, must hold throughout.
     previous = None
     stable_since = 0.0
 
     def settled():
         nonlocal previous, stable_since
-        if not item.isVisible() or item.width() <= 0 or item.height() <= 0:
+        if (not item.isVisible() or item.width() <= 0 or item.height() <= 0
+                or (ready is not None and not ready())):
             previous = None
             return False
         origin = item.mapToScene(QPointF())
@@ -83,8 +85,8 @@ def settled_point(item, local_point=None):
     return item.mapToScene(point).toPoint()
 
 
-def click(window, item):
-    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, settled_point(item))
+def click(window, item, *, ready=None):
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, settled_point(item, ready=ready))
     QTest.qWait(30)
 
 
