@@ -63,7 +63,9 @@ def launch_installer(command: list[str], log: Path):
     kwargs = {"stdin": subprocess.DEVNULL, "close_fds": True, "cwd": str(log.parent), "env": environment}
     restore_dll = None
     if os.name == "nt":
-        kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+        # Windows PowerShell can exit before running its script with DETACHED_PROCESS.
+        # A hidden console lets the helper run independently after the GUI exits.
+        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
         # System PowerShell must not inherit PyInstaller's private DLL directory.
         import ctypes
         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
