@@ -12,7 +12,7 @@ from shiboken6 import delete
 from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_dicom_tags import qt_app as qt_app, wait_until
 from test_pacs_qml import scene as scene
-from test_tag_qml import find, click, descendants
+from test_tag_qml import find, click, descendants, settled_point
 
 
 @pytest.mark.parametrize(
@@ -33,6 +33,8 @@ def test_single_click_opens_mixed_picker(scene, entry, tmp_path):
         click(window, find(window, "sidebarToggle"))
     target = None if entry == "shortcut" else find(window, entry)
     if entry in ("sidebarOpenFolder", "compactSidebarImport"):
+        # The requested sidebar width is applied during Qt Quick's layout pass.
+        settled_point(target)
         native_key = QKeySequence(QKeySequence.StandardKey.Open).toString(QKeySequence.NativeText)
         assert target.parentItem().property("tooltipText").endswith(f"({native_key})")
         caption = next(item for item in descendants(target) if item.objectName() == "toolbarLabel")

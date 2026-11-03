@@ -12,9 +12,10 @@ QtObject {
     property bool elapsed: false
 
     function restart() {
-        timer.stop()
+        // Bound inputs can change after the child timer is cleared during teardown.
+        timer?.stop()
         elapsed = false
-        if (active) timer.start()
+        if (active) timer?.start()
     }
     onActiveChanged: restart()
     onActivityKeyChanged: restart()

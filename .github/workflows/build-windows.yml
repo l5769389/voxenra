@@ -145,7 +145,7 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           QT_QUICK_BACKEND: software
           PYTHONUNBUFFERED: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_qml_controller_metatypes.py tests/test_qml_viewport_metatypes.py tests/test_qml_tab_metatypes.py tests/test_feedback_qml.py tests/test_two_d_selector.py --output build/test-results/controller-lifetimes
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_qml_controller_metatypes.py tests/test_qml_viewport_metatypes.py tests/test_qml_tab_metatypes.py tests/test_feedback_qml.py tests/test_two_d_selector.py tests/test_delayed_activity_qml.py tests/test_tab_windows.py tests/test_import_ui.py --output build/test-results/controller-lifetimes
 
       - name: Stress asynchronous QML transitions
         env:
