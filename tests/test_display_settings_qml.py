@@ -22,11 +22,15 @@ def shot(window, name, directory):
 def select_category(window, category):
     item = find(window, 'settingsCategory-' + category)
     scroll = find(window, 'settingsCategoryScroll').property('contentItem')
-    point = item.mapToItem(scroll, QPointF(0, 0))
-    maximum = max(0, scroll.property('contentHeight') - scroll.height())
-    scroll.setProperty('contentY', max(0, min(maximum, scroll.property('contentY') + point.y() - scroll.height() / 2)))
-    QTest.qWait(40)
+    # Use the page's focus/reveal path so delayed layout cannot scroll the
+    # previously selected category back over the intended click target.
+    item.forceActiveFocus(Qt.TabFocusReason)
+    def revealed():
+        point = item.mapToItem(scroll, QPointF())
+        return point.y() >= 0 and point.y() + item.height() <= scroll.height() + 1
+    wait_until(revealed)
     click(window, item)
+    wait_until(lambda: item.property('checked'))
 
 
 @pytest.mark.parametrize('category', ['colormap', 'window', 'crosshair', 'corners', 'scale', 'measurement', 'roi', 'export'])

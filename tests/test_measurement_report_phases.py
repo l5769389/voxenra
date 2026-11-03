@@ -47,7 +47,9 @@ def test_report_exports_regions_from_each_phase_without_changing_view(
     target = tmp_path / ('phases.' + format)
     try:
         assert report.export_to(target, format=format), report.message
-        wait_until(lambda: not report.busy)
+        # Report generation runs in a worker; PDF font initialization can exceed
+        # the ordinary UI wait budget on a cold Windows runner.
+        wait_until(lambda: not report.busy, timeout=20000)
         assert not report.isError, report.message
         if format == 'csv':
             rows = read_csv(target)
