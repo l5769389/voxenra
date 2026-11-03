@@ -7,6 +7,7 @@ from functools import partial
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -50,6 +51,8 @@ def run_file(indexed_path, *, root, output, env, timeout, parallel):
             counts = {}
             log += f"\nCould not read JUnit report for {name}: {error}\n"
     prefix.with_suffix(".log").write_text(log, encoding="utf-8")
+    if parallel and code == 0:
+        shutil.rmtree(temp_directory, ignore_errors=True)
     return dict(file=name, exit_code=code, counts=counts), log
 
 

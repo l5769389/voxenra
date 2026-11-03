@@ -136,6 +136,48 @@ def test_reused_output_discards_stale_report(monkeypatch, tmp_path):
     assert summary["totals"] == dict(tests=0, failures=0, errors=0, skipped=0)
 
 
+@pytest.mark.parametrize("outcome", ["passed", "failed", "timeout"])
+def test_parallel_temp_cleanup_preserves_failure_diagnostics(monkeypatch, tmp_path, outcome):
+    _, output = configure(monkeypatch, tmp_path, ["test_fixture.py"], "--workers", "2")
+    fixtures = []
+
+    def run(command, **kwargs):
+        temp_path = Path(next(arg.split("=", 1)[1] for arg in command if arg.startswith("--basetemp=")))
+        temp_path.mkdir()
+        fixture = temp_path / "image.dcm"
+        fixture.write_bytes(b"synthetic fixture")
+        fixtures.append(fixture)
+        if outcome == "timeout":
+            raise subprocess.TimeoutExpired(command, 180, output=b"partial output")
+        code = int(outcome == "failed")
+        write_report(command, failures=code)
+        return subprocess.CompletedProcess(command, code, outcome)
+
+    monkeypatch.setattr(run_isolated.subprocess, "run", run)
+    assert run_isolated.main() == int(outcome != "passed")
+    assert fixtures[0].exists() == (outcome != "passed")
+    assert (output / "001-test_fixture.log").exists()
+    assert (output / "001-test_fixture.xml").exists() == (outcome != "timeout")
+
+
+def test_successful_temp_cleanup_tolerates_locked_files(monkeypatch, tmp_path):
+    _, output = configure(monkeypatch, tmp_path, ["test_locked.py"], "--workers", "2")
+    cleanup_calls = []
+
+    def run(command, **kwargs):
+        write_report(command)
+        return subprocess.CompletedProcess(command, 0, "passed")
+
+    def cleanup(path, *, ignore_errors):
+        assert ignore_errors is True
+        cleanup_calls.append(path)
+
+    monkeypatch.setattr(run_isolated.subprocess, "run", run)
+    monkeypatch.setattr(run_isolated.shutil, "rmtree", cleanup)
+    assert run_isolated.main() == 0
+    assert cleanup_calls == [output / "tmp" / "001"]
+
+
 @pytest.mark.parametrize("workers", ["0", "-1"])
 def test_workers_must_be_positive(monkeypatch, tmp_path, workers):
     _, output = configure(monkeypatch, tmp_path, ["test_one.py"], "--workers", workers)
