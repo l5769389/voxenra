@@ -100,6 +100,9 @@ jobs:
         shell: pwsh
         run: New-Item -ItemType Directory -Force build/test-results | Out-Null
 
+      - name: Verify native update helper handoff
+        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_update_installer.py --junitxml=build/test-results/windows-update-helper.xml
+
       - name: Verify native Windows caption
         env:
           QT_QPA_PLATFORM: windows

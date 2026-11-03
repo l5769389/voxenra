@@ -6,6 +6,7 @@ import plistlib
 import shutil
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -44,6 +45,34 @@ def test_detached_helper_uses_fresh_pyinstaller_environment(tmp_path, monkeypatc
     data = json.loads(log.read_text())
     assert data['PYINSTALLER_RESET_ENVIRONMENT'] == '1'
     assert str(bundle) not in data['PATH'].split(os.pathsep)
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='Native Windows PowerShell handoff')
+def test_windows_helper_executes_after_launcher_exits(tmp_path):
+    script = tmp_path / 'helper.ps1'
+    marker = tmp_path / 'completed.txt'
+    log = tmp_path / 'helper.log'
+    script.write_text("""param([int]$Owner, [string]$Marker)
+$ErrorActionPreference = 'Stop'
+$parent = Get-Process -Id $Owner -ErrorAction SilentlyContinue
+if ($parent) { $parent.WaitForExit() }
+Set-Content -LiteralPath $Marker -Value 'completed' -Encoding ASCII
+""", encoding='utf-8-sig')
+    shell = Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
+    parent_code = """import os, sys
+from pathlib import Path
+from qt_dicom_viewer.infrastructure.update_installer import launch_installer
+shell, script, marker, log = sys.argv[1:]
+launch_installer([shell, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+                  '-File', script, str(os.getpid()), marker], Path(log))
+"""
+    subprocess.run([sys.executable, '-c', parent_code, str(shell), str(script), str(marker), str(log)],
+                   check=True, timeout=30)
+    deadline = time.monotonic() + 20
+    while not marker.exists() and time.monotonic() < deadline:
+        time.sleep(.1)
+    assert marker.exists(), log.read_text(errors='replace')
+    assert marker.read_text().strip() == 'completed'
 
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='Native macOS DMG and app replacement')
@@ -141,8 +170,9 @@ def test_windows_portable_update_and_recovery(tmp_path, wrong_digest):
     digest = hashlib.sha256(new).hexdigest()
     command = prepare_installer(Installation('windows_portable', target), release(package.name), package,
                                 '0' * 64 if wrong_digest else digest, pid=2147483647)
-    result = subprocess.run(command, capture_output=True, timeout=60)
-    assert result.returncode == (1 if wrong_digest else 0), result.stdout + result.stderr
+    log = stage / 'helper.log'
+    with launch_installer(command, log) as helper:
+        assert helper.wait(timeout=60) == (1 if wrong_digest else 0), log.read_text(errors='replace')
     assert target.read_bytes() == (original if wrong_digest else new)
     assert (stage / 'result').read_text().strip() == ('failed' if wrong_digest else 'success')
 
@@ -177,8 +207,9 @@ def test_windows_installer_exit_code_and_backup_restore(tmp_path, failure):
     subprocess.run([shell, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(build)], check=True, capture_output=True)
     digest = hashlib.sha256(package.read_bytes()).hexdigest()
     command = prepare_installer(Installation('windows_installer', target), release(package.name), package, digest, pid=2147483647)
-    result = subprocess.run(command, capture_output=True, timeout=60)
-    assert result.returncode == (1 if failure else 0), result.stdout + result.stderr
+    log = stage / 'helper.log'
+    with launch_installer(command, log) as helper:
+        assert helper.wait(timeout=60) == (1 if failure else 0), log.read_text(errors='replace')
     assert (target / 'version.txt').read_text() == ('old' if failure else 'new')
     assert (target / 'Voxenra.exe').read_bytes() == (native.read_bytes() if failure else ready_app.read_bytes())
     assert (stage / 'result').read_text().strip() == ('failed' if failure else 'success')
