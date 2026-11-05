@@ -10,7 +10,7 @@
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.4.0/Voxenra-2.4.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.4.0/Voxenra-2.4.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.4.0/Voxenra-2.4.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
 
 
 ## 贡献者与致谢

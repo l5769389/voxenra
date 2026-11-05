@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.3.0/Voxenra-2.3.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.4.0/Voxenra-2.4.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.4.0/Voxenra-2.4.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.4.0/Voxenra-2.4.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
 
 
 ## Contributors and acknowledgments
