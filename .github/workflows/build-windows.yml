@@ -130,12 +130,19 @@ jobs:
           VOXENRA_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_measurement_report_pdf.py --junitxml=build/test-results/windows-native-pdf.xml
 
+      - name: Verify native workspace and background report exports
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_QUICK_BACKEND: software
+          VOXENRA_NATIVE_QA: "1"
+        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_workspace_persistence.py --junitxml=build/test-results/windows-native-workspace.xml
+
       - name: Verify report and close-dialog regressions
         env:
           QT_QPA_PLATFORM: offscreen
           QT_QUICK_BACKEND: software
           PYTHONUNBUFFERED: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_measurement_report_phases.py tests/test_tab_close_protection.py --output build/test-results/report-close-regressions
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_measurement_report_phases.py tests/test_tab_close_protection.py tests/test_workspace_persistence.py --output build/test-results/report-close-regressions
 
       - name: Verify CPR keyboard focus and update dialog lifecycle
         env:

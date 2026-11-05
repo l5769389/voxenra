@@ -279,7 +279,9 @@ def test_measurement_csv_privacy_pdf_and_busy_export(qt_app, tmp_path):
         assert '患者 1' in text and '长度' in text
         pdf = tmp_path / 'results.pdf'
         assert report.export_to(pdf, format='pdf', include_images=True)
-        wait_until(lambda: not report.busy)
+        # A cold native Windows font database can take longer than the ordinary
+        # three-second UI budget. Still wait for actual background completion.
+        wait_until(lambda: not report.busy, timeout=20000)
         assert not report.isError, report.message
         assert pdf.read_bytes().startswith(b'%PDF-')
         assert report.resultPath == str(pdf)
