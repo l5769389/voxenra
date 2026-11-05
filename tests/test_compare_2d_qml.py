@@ -104,6 +104,17 @@ def test_navigation_notice_retranslates_without_changing_comparison(sidebar_scen
     panel = find(window, 'viewportSettingsPanel')
     notice = next(item for item in descendants(panel)
                   if item.property('text') == tab.navigationNotice)
+    # Loading image data can finish before the asynchronous QML comparison
+    # layout reserves its headings and shared slider. Snapshot only once the
+    # real canvases have settled, so that initial layout is not attributed to
+    # the subsequent language change.
+    find(window, 'compareSliceSlider')
+    for view in tab.viewports_by_id.values():
+        find(window, 'compareHeading-' + view.viewportId)
+        canvas = find(window, 'imageViewport-' + view.viewportId)
+        settled_point(canvas, ready=lambda: (
+            view._state.width == canvas.width()
+            and view._state.height == canvas.height()))
     saved = tab_snapshot(tab)
     app.workspaceDocumentController._autosave.stop()
     app.workspaceDocumentController._dirty = False
