@@ -121,7 +121,8 @@ def test_opening_waits_for_all_required_frames(opening_scene, view_type, pet_onl
     assert not warnings, warnings
 
 
-def test_loading_switch_close_reopen_and_stale_result(opening_scene):
+@pytest.mark.parametrize("manual_delay", [0, 1, 8, 25])
+def test_loading_switch_close_reopen_and_stale_result(opening_scene, manual_delay):
     window, workspace, ct, pet, requests, worker, warnings = opening_scene
     workspace.createTab(pet.series_instance_uid, "PET", "mpr")
     old_id = workspace.activeTabId
@@ -130,6 +131,8 @@ def test_loading_switch_close_reopen_and_stale_result(opening_scene):
     workspace.openManual("water-qa")
     assert workspace.activeLoadState is None
     wait_until(lambda: not visible(window, "workspaceLoadingState"))
+    # Exercise switching both immediately and during the manual shell load.
+    QTest.qWait(manual_delay)
     workspace.activateTabId(old_id)
     wait_until(lambda: visible(window, "cancelWorkspaceLoad"))
     click(window, find(window, "cancelWorkspaceLoad"))
