@@ -114,12 +114,15 @@ def test_compact_series_accessible_press_and_toggle_match_keyboard(sidebar_scene
     assert not warnings, warnings
 
 
-def test_compact_toolbar_tab_reveals_and_activates_last_action(sidebar_scene, tmp_path):
+def test_compact_toolbar_tab_reveals_and_activates_last_action(sidebar_scene, tmp_path, monkeypatch):
+    from test_window_sizing import fit_desktop
     window, app, records, warnings = sidebar_scene
     open_image(app, records[0])
-    window.resize(1280, 720)
+    fit_desktop(window, app, monkeypatch, (1280, 520))
     click(window, find(window, 'toggleRightPanel'))
     rail = find(window, 'compactToolRail')
+    last = find(window, 'compactTool-viewport-settings')
+    assert last.mapToItem(rail, QPointF(0, last.height())).y() > rail.height()
     find(window, 'compactTool-window').forceActiveFocus(Qt.TabFocusReason)
     for _ in range(30):
         focus = window.activeFocusItem()

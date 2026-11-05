@@ -13,7 +13,7 @@ from qt_dicom_viewer.model import StackRenderResult, TwoDViewType
 from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
 from qt_dicom_viewer.ui.workspace_snapshot import apply_edits, editable_state
 from test_four_d_tools import temporal
-from test_measurement_qml import qt_app, viewport, _scene, _mouse_drag, _visual_children
+from test_measurement_qml import qt_app, viewport, _scene, _click_points, _visual_children
 
 
 def visible_annotations(window):
@@ -50,7 +50,7 @@ def test_four_d_annotations_roundtrip_and_history_keep_phase_scope(temporal_view
     text, history = controller.textAnnotationController, tab.historyController
     tab.toolController.selectInteraction("annotate:text")
     text.setAnnotationText("Phase 0 only")
-    _mouse_drag(window, _scene(layer, .5, .5), _scene(layer, 2., 1.5))
+    _click_points(window, _scene(layer, .5, .5), _scene(layer, 2., 1.5))
     first = text.selectedAnnotationId
     history.capture()
     assert len(visible_annotations(window)) == 1
@@ -66,7 +66,7 @@ def test_four_d_annotations_roundtrip_and_history_keep_phase_scope(temporal_view
     assert window.grabWindow().save(str(tmp_path / "phase-1-no-annotation.png"))
 
     text.setAnnotationText("Phase 1 only")
-    _mouse_drag(window, _scene(layer, .5, .5), _scene(layer, 2., 1.5))
+    _click_points(window, _scene(layer, .5, .5), _scene(layer, 2., 1.5))
     second = text.selectedAnnotationId
     history.capture()
     saved = loads(dumps(editable_state(tab)))
@@ -140,7 +140,7 @@ def test_pending_slice_rejects_new_gestures_and_cancels_existing_draft(viewport,
     text = controller.textAnnotationController
     controller._tool_controller.selectInteraction("annotate:text")
     text.setAnnotationText("Original slice")
-    _mouse_drag(window, _scene(layer, 30, 35), _scene(layer, 95, 95))
+    _click_points(window, _scene(layer, 30, 35), _scene(layer, 95, 95))
     original_id = text.selectedAnnotationId
     original = text._annotations[original_id]
     assert len(visible_annotations(window)) == 1
@@ -155,7 +155,7 @@ def test_pending_slice_rejects_new_gestures_and_cancels_existing_draft(viewport,
         QTest.mouseMove(window, end, 20)
         QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
     else:
-        _mouse_drag(window, start, end)
+        _click_points(window, start, end)
     assert not text._draft_id and not controller._annotation_drag_active
     assert len(text._annotations) == 1
     assert not text.annotationItems
@@ -167,7 +167,7 @@ def test_pending_slice_rejects_new_gestures_and_cancels_existing_draft(viewport,
     assert text._annotations[original_id] == original
     assert window.grabWindow().save(str(tmp_path / "pending-slice.png"))
     deliver(controller, new)
-    _mouse_drag(window, start, end)
+    _click_points(window, start, end)
     second_id = text.selectedAnnotationId
     assert [a["annotationId"] for a in text.annotationItems] == [second_id]
     assert text.annotationItems[0]["sliceIndex"] == 1

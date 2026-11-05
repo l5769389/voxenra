@@ -7,16 +7,18 @@ import "../../../components" as Components
 Item {
     id: viewportRoot
     property bool multiViewport: false
+    property bool capturingPng: false
     property bool anonymousExport: false
     property string overlayStatusText: ""
     // Only independent 2D cells supply a mode; other workspaces retain their overlay.
     property string twoDViewMode: ""
     readonly property alias cornerOverlay: metadataOverlay
     property bool outsideImageRange: false
-    readonly property alias doubleClickEditsPoints: interactionLayer.pointInput
+    readonly property alias doubleClickEditsPoints: interactionLayer.reservesDoubleClick
     property bool cprKeysActive: false
     property bool cprDragging: false
     readonly property real imageFitScale: imageCanvas.fitScale
+    signal pointToolFocusToggleRequested()
     signal returnToVolumeRequested()
     required property var viewportController
     required property bool hasTabs
@@ -42,12 +44,15 @@ Item {
             viewportRoot.viewportController.cancelMeasurement()
         event.accepted = true
     }
-    Keys.onDeletePressed: event => {
-        if (viewportRoot.cprKeysActive && viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
-        if (viewportRoot.viewportController)
-            viewportRoot.viewportController.deleteSelectedMeasurement()
+    function deleteSelection(event) {
+        if (cprKeysActive && viewportController?.cprPathInput) {
+            if (!event.isAutoRepeat) viewportController.cprDelete()
+        } else {
+            viewportController?.deleteSelectedMeasurement()
+        }
         event.accepted = true
     }
+    Keys.onDeletePressed: event => deleteSelection(event)
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (viewportRoot.cprKeysActive && viewportRoot.viewportController?.cprFinish?.()) { event.accepted = true; return }
@@ -62,11 +67,8 @@ Item {
             event.accepted = viewportRoot.viewportController?.pasteAnnotation() ?? false
             return
         }
-        if (event.key === Qt.Key_Backspace && viewportRoot.viewportController) {
-            if (viewportRoot.cprKeysActive && viewportRoot.viewportController?.cprDelete?.()) { event.accepted = true; return }
-            viewportRoot.viewportController.deleteSelectedMeasurement()
-            event.accepted = true
-        }
+        if (event.key === Qt.Key_Backspace && viewportRoot.viewportController)
+            viewportRoot.deleteSelection(event)
     }
     readonly property bool isMprViewport:
         viewportRoot.viewportController
@@ -111,7 +113,7 @@ Item {
     onVisibleChanged: {
         if (!visible) viewportController?.discardPointClick?.()
         if (!visible && viewportRoot.cprDragging) {
-            viewportRoot.viewportController?.cprCancel?.()
+            viewportRoot.viewportController?.cprCancelDrag?.()
             viewportRoot.cprDragging = false
         }
         // A tab's QObject can lose its slots before its visual delegate is hidden.
@@ -123,7 +125,7 @@ Item {
     Component.onCompleted: syncViewportSize()
     onActiveFocusChanged: {
         if (!activeFocus && viewportRoot.cprDragging) {
-            viewportRoot.viewportController?.cprCancel?.()
+            viewportRoot.viewportController?.cprCancelDrag?.()
             viewportRoot.cprDragging = false
         }
     }
@@ -323,7 +325,8 @@ Item {
 
     InteractionLayer {
         id: interactionLayer
-        cprPathInput: viewportRoot.viewportController?.cprEditing ?? false
+        opacity: viewportRoot.capturingPng ? 0 : 1
+        cprPathInput: viewportRoot.viewportController?.cprPathInput ?? false
         mousePreferences: viewportRoot.viewportController?.settingsController?.values.input ?? null
         brushDiameterPixels: viewportRoot.viewportController?.voiController?.brushRelative
             ? Math.min(width, height) * (viewportRoot.viewportController.voiController.brushPercent / 100)
@@ -334,6 +337,19 @@ Item {
         anchors.fill: parent
         z: 20
         enabled: viewportRoot.viewportController !== null
+        Rectangle {
+            objectName: "pathPointPlacementPreview"
+            visible: interactionLayer.leftPressed && !interactionLayer.cprPointPressed
+                && ["cpr-path", "measure-curve", "measure-freehand"].includes(interactionLayer.effectiveCursorKind)
+                && (!interactionLayer.cprPathInput || imageCanvas.mapToDicomPixel(
+                    interactionLayer, interactionLayer.placementPosition).valid)
+            width: 9; height: 9; radius: width / 2
+            x: interactionLayer.placementPosition.x - radius
+            y: interactionLayer.placementPosition.y - radius
+            color: "transparent"
+            border.width: 2
+            border.color: Theme.drawingLineColor(viewportRoot.viewportController?.settingsController?.values.measurement ?? ({}), true)
+        }
         onPointerPressedAt: (position, buttons) => {
             const controller = viewportRoot.viewportController
             controller?.setBrushViewMetrics?.(imageCanvas.pixelsPerMillimeter, Math.min(width, height))
@@ -341,10 +357,19 @@ Item {
             interactionLayer.cprPointPressed = buttons === Qt.LeftButton && hit.valid
                 && (controller?.cprCanDragPoint?.(hit.column, hit.row,
                     imageCanvas.pointHitToleranceInImagePixels) ?? false)
-            if (controller?.captureLocatorPress === undefined) return
-            interactionLayer.locatorPressed = controller.captureLocatorPress(
+            interactionLayer.locatorPressed = controller?.captureLocatorPress?.(
                 position.x, position.y, buttons, hit.valid, hit.column, hit.row,
-                imageCanvas.pointHitToleranceInImagePixels, imageCanvas.lineHitToleranceInImagePixels)
+                imageCanvas.pointHitToleranceInImagePixels, imageCanvas.lineHitToleranceInImagePixels) ?? false
+            if (interactionLayer.fixedPointInput && !interactionLayer.locatorPressed
+                    && !interactionLayer.registrationInteraction
+                    && interactionLayer.usesSelectedTool(buttons)) {
+                viewportRoot.forceActiveFocus()
+                imageCanvas.updateMeasurementHitRegions(interactionLayer)
+                interactionLayer.fixedPointPressed = true
+                interactionLayer.fixedPointPlacement = controller.placeFixedPoint(
+                    hit.valid, hit.column, hit.row, imageCanvas.pointHitToleranceInImagePixels,
+                    imageCanvas.lineHitToleranceInImagePixels, position.x, position.y)
+            }
         }
         onPointerTapFinished: viewportRoot.viewportController?.clearLocatorPress?.()
         registrationInteraction: viewportRoot.viewportController !== null
@@ -372,9 +397,10 @@ Item {
         }
 
         onFinishMeasurementRequested: {
-            viewportRoot.viewportController?.discardPointClick?.()
-            if (!viewportRoot.viewportController?.cprDoubleClick?.())
-                viewportRoot.viewportController?.finishMeasurement(true)
+            const controller = viewportRoot.viewportController
+            if (!controller || controller.discardPointClick?.(true) || controller.cprDoubleClick?.()) return
+            if (!controller.finishMeasurement(true) && interactionLayer.pointInput)
+                viewportRoot.pointToolFocusToggleRequested()
         }
         onTapped: position => {
             viewportRoot.forceActiveFocus()
@@ -409,10 +435,14 @@ Item {
             )
         }
 
+        onToolChangedDuringDrag: {
+            if (!viewportRoot.viewportController?.hasActiveDrag?.()) interactionLayer.dragCursorKind = null
+        }
         onDragStarted: (startPosition, buttons) => {
             viewportRoot.forceActiveFocus()
-            if (!viewportRoot.viewportController)
+            if (!viewportRoot.viewportController || interactionLayer.fixedPointPlacement)
                 return
+            viewportRoot.viewportController.confirmPointClick?.()
             imageCanvas.updateMeasurementHitRegions(interactionLayer)
             const hit = imageCanvas.mapToDicomPixel(
                 interactionLayer,
@@ -424,9 +454,15 @@ Item {
             const lineTolerance =
                 imageCanvas.lineHitToleranceInImagePixels
 
-            viewportRoot.cprDragging = hit.valid && buttons === Qt.LeftButton
-                && (viewportRoot.viewportController?.cprBeginDrag?.(hit.column, hit.row, endpointTolerance) ?? false)
-            if (viewportRoot.cprDragging) return
+            // Reserve the selected CPR gesture even in the margin, where
+            // there is no path to hit and the generic drag would adjust WW/WL.
+            viewportRoot.cprDragging = interactionLayer.usesCprPathForDrag(buttons)
+            if (viewportRoot.cprDragging) {
+                interactionLayer.dragCursorKind = "cpr-path"
+                if (hit.valid)
+                    viewportRoot.viewportController.cprBeginDrag(hit.column, hit.row, endpointTolerance, buttons === Qt.LeftButton)
+                return
+            }
 
             // 按下前可能没有 move 事件，按本次拖动起点确认光标，再锁定到本次拖动。
             viewportRoot.viewportController.refreshInteractionHover(
@@ -458,7 +494,12 @@ Item {
                 interactionLayer,
                 currentPosition
             )
+            if (interactionLayer.fixedPointPlacement) {
+                viewportRoot.viewportController.previewFixedPoint(hit.column, hit.row)
+                return
+            }
             if (viewportRoot.cprDragging) {
+                cprPathOverlay.previewPoint = hit.valid ? hit : null
                 if (hit.valid) viewportRoot.viewportController.cprMoveDrag(hit.column, hit.row)
                 return
             }
@@ -481,7 +522,7 @@ Item {
             endPosition,
             totalDelta
         ) => {
-            if (!viewportRoot.viewportController)
+            if (!viewportRoot.viewportController || interactionLayer.fixedPointPlacement)
                 return
             const hit = imageCanvas.mapToDicomPixel(
                 interactionLayer,
@@ -490,7 +531,7 @@ Item {
             if (viewportRoot.cprDragging) {
                 viewportRoot.cprDragging = false
                 if (hit.valid) viewportRoot.viewportController.cprEndDrag(hit.column, hit.row)
-                else viewportRoot.viewportController.cprCancel()
+                else viewportRoot.viewportController.cprCancelDrag()
                 return
             }
             viewportRoot.viewportController.endInteraction(

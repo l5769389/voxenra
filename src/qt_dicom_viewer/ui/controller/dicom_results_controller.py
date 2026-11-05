@@ -79,7 +79,7 @@ def capture_dicom_results(workspace, catalog, *, report=True):
             ):
                 raise ValueError(_msg("results.projectedMeasurement"))
             for item in measurements:
-                frame = measure._measurement_frames.get(item.measurement_id)
+                frame = measure.frame_for(item.measurement_id)
                 instances = _instances(catalog, item.series_uid, sop=item.sop_instance_uid)
                 if frame is not None and len(frame) == 7:
                     context = frame[6]
@@ -389,28 +389,22 @@ class DicomResultsController(QObject):
         return True
 
     @Slot(result=bool)
-    def convertSelectedRoi(self):
+    @Slot(str, result=bool)
+    def convertSelectedRoi(self, expected_key: str = ""):
         if self._busy or self._closed:
             return False
         self._operation = "convert"
         try:
             tab, voi, view, volume, instances = self._mask_target()
             measure = view._measure_controller
-            item = next(
-                (
-                    m
-                    for m in measure.visible_measurements
-                    if m.measurement_id == measure.selectedMeasurementId
-                ),
-                None,
-            )
+            item = measure.selected_committed_measurement
             if (
                 item is None
+                or (expected_key and expected_key != view.viewportId + ":" + item.measurement_id)
                 or str(getattr(item, "kind", "")) != "freehand"
-                or measure.has_active_transaction
             ):
                 raise ValueError(_msg("seg.roiRequired"))
-            frame = measure._measurement_frames.get(item.measurement_id)
+            frame = measure.frame_for(item.measurement_id)
         except ValueError as error:
             self._finish(error_message(error), True, "")
             return False

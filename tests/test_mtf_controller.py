@@ -609,7 +609,7 @@ def test_mtf_and_fwhm_keep_independent_methods_rois_results_and_reset(mtf_viewpo
     view._tool_controller.selectService('service:fwhm')
     assert view.activeAnnotationController is fwhm.roiController
     assert view.activeProfileController is fwhm
-    assert view._tool_controller.resetLabel == '重置 FWHM'
+    assert view._tool_controller.resetLabel == '清除 FWHM 结果'
     fwhm.setAnalysisMethod('direct_fft')
     draw(view, (25, 61), (102, 66))
     finish(view, fwhm_jobs[-1])

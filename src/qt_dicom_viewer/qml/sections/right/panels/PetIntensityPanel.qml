@@ -18,6 +18,11 @@ ColumnLayout {
         activityKey: petPanel.viewportController
     }
 
+    function discardDraft() {
+        displayUpperInput.sync()
+        controlUpperInput.sync()
+    }
+
     function formatValue(value) {
         if (!Number.isFinite(value))
             return "--"
@@ -28,6 +33,8 @@ ColumnLayout {
     }
 
     Text {
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
         text: qsTrId("text.1146")
         color: Theme.textPrimary
         font.pixelSize: 14
@@ -136,6 +143,7 @@ ColumnLayout {
 
                 Components.AppNumberField {
                     editContext: [petPanel.viewportController, petPanel.viewportController?.petActiveUnitLabel ?? "", petPanel.viewportController?.loadState ?? "ready"]
+                    id: controlUpperInput
                     objectName: "petControlUpperInput"
                     // Partial digits must not repeatedly clamp the PET display
                     // upper limit while editing the slider's allowed range.

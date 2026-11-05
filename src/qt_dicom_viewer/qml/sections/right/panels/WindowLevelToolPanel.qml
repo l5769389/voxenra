@@ -37,6 +37,8 @@ ColumnLayout {
     spacing: 8
 
     readonly property int listGutter: width < 240 ? 4 : 8
+    readonly property int listPadding: 8
+    readonly property int numberColumnWidth: Math.max(40, Math.min(72, Math.round(width / 5)))
     readonly property bool hasDeleteColumn: allowEditing && presets.some(preset => preset.builtin === false)
     readonly property int shortcutCount: ready && allowTemplates ? Math.min(9, presets.length) : 0
     readonly property var bindings: typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : []
@@ -111,6 +113,17 @@ ColumnLayout {
         real width
     )
 
+    component PresetNumber: Text {
+        Layout.preferredWidth: windowPanel.numberColumnWidth
+        Layout.fillHeight: true
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        font.pixelSize: Theme.bodyFontSize
+        fontSizeMode: Text.HorizontalFit
+        minimumPixelSize: 10
+        elide: Text.ElideRight
+        color: Theme.textSecondary
+    }
 
     ColumnLayout {
         id: fixedControls
@@ -190,6 +203,7 @@ ColumnLayout {
                 spacing: 6
                 Components.AppButton {
                     objectName: "applyWindowValues"
+                    Layout.preferredWidth: 1
                     normalColor: Theme.primaryButtonBackground
                     hoverColor: Theme.primaryButtonHover
                     pressedColor: Theme.primaryButtonPressed
@@ -211,6 +225,7 @@ ColumnLayout {
                     textColor: Theme.textSecondary
                     text: qsTrId("text.1091")
                     compact: true
+                    Layout.preferredWidth: 1
                     Layout.fillWidth: true
                     enabled: windowPanel.ready && !!windowPanel.settingsController
                     onClicked: {
@@ -298,8 +313,8 @@ ColumnLayout {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: windowPanel.listGutter
-                anchors.rightMargin: windowPanel.listGutter
+                anchors.leftMargin: windowPanel.listPadding
+                anchors.rightMargin: windowPanel.listPadding
                 spacing: windowPanel.listGutter
 
                 Item { Layout.preferredWidth: 22; visible: !!windowPanel.settingsController && windowPanel.allowTemplates }
@@ -307,24 +322,20 @@ ColumnLayout {
                 Text {
                     font.pixelSize: Theme.bodyFontSize
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    elide: Text.ElideRight
                     text: qsTrId("text.1095")
                     color: Theme.textMuted
                 }
 
-                Text {
-                    font.pixelSize: Theme.bodyFontSize
-                    Layout.preferredWidth: 44
+                PresetNumber {
                     text: "WW"
                     color: Theme.textMuted
-                    horizontalAlignment: Text.AlignRight
                 }
 
-                Text {
-                    font.pixelSize: Theme.bodyFontSize
-                    Layout.preferredWidth: 44
+                PresetNumber {
                     text: "WL"
                     color: Theme.textMuted
-                    horizontalAlignment: Text.AlignRight
                 }
                 Item { Layout.preferredWidth: 22; visible: windowPanel.hasDeleteColumn }
             }
@@ -376,8 +387,8 @@ ColumnLayout {
 
             width: presetList.width
             height: 36
-            leftPadding: windowPanel.listGutter
-            rightPadding: windowPanel.listGutter
+            leftPadding: windowPanel.listPadding
+            rightPadding: windowPanel.listPadding
             topPadding: 0
             bottomPadding: 0
             hoverEnabled: true
@@ -441,26 +452,16 @@ ColumnLayout {
                         elide: Text.ElideRight
                     }
 
-                    Text {
-                        Layout.fillHeight: true
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Theme.bodyFontSize
-                        Layout.preferredWidth: 44
+                    PresetNumber {
+                        id: presetWidth
                         objectName: "windowPresetWW-" + presetItem.modelData.presetId
                         text: presetItem.modelData.width
-                        color: Theme.textSecondary
-                        horizontalAlignment: Text.AlignRight
                     }
 
-                    Text {
-                        Layout.fillHeight: true
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: Theme.bodyFontSize
-                        Layout.preferredWidth: 44
+                    PresetNumber {
+                        id: presetCenter
                         objectName: "windowPresetWL-" + presetItem.modelData.presetId
                         text: presetItem.modelData.center
-                        color: Theme.textSecondary
-                        horizontalAlignment: Text.AlignRight
                     }
                     Item {
                         Layout.preferredWidth: 22
@@ -468,6 +469,7 @@ ColumnLayout {
                         Layout.alignment: Qt.AlignVCenter
                         visible: windowPanel.hasDeleteColumn
                         Components.ToolbarAction {
+                            id: deleteAction
                             anchors.fill: parent
                             visible: presetItem.modelData.builtin === false
                             actionEnabled: !!windowPanel.settingsController
@@ -486,9 +488,14 @@ ColumnLayout {
             }
 
             Components.AppToolTip {
-                requested: (presetItem.hovered || presetItem.visualFocus) && !favoriteButton.hovered && !favoriteButton.visualFocus
-                    && (presetCaption.truncated || presetCaption.text !== presetCaption.fullCaption)
-                text: presetCaption.fullCaption
+                objectName: "windowPresetDetails-" + presetItem.modelData.presetId
+                requested: (presetItem.hovered || presetItem.visualFocus)
+                    && !favoriteButton.hovered && !favoriteButton.visualFocus && !deleteAction.hovered
+                    && (presetCaption.truncated || presetCaption.text !== presetCaption.fullCaption
+                        || presetWidth.truncated || presetCenter.truncated)
+                text: presetWidth.truncated || presetCenter.truncated
+                    ? presetCaption.fullCaption + " · WW " + presetWidth.text + " · WL " + presetCenter.text
+                    : presetCaption.fullCaption
             }
             normalColor: "transparent"
             cornerRadius: 5

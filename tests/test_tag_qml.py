@@ -259,6 +259,7 @@ def assert_indentation(window, controller, expected):
 def test_nested_indentation_survives_expand_search_and_tab_switch(scene, tmp_path):
     window, workspace, series, warnings = scene
     controller = open_tags(window, workspace, series)
+    tag_id = workspace.activeTabId
     root_id = "dataset/0040A043"
     expected = [
         (root_id, 0), (root_id + "/item-0", 1),
@@ -280,7 +281,7 @@ def test_nested_indentation_survives_expand_search_and_tab_switch(scene, tmp_pat
     type_text(window, find(window, "tagSearch"), "")
     assert [(row["nodeId"], row["depth"], row["expanded"]) for row in rows(controller.tagModel)] == before
     click(window, find(window, "openView-2d"))
-    click(window, find(window, "openView-tag"))
+    click(window, find(window, "workspaceTab-" + tag_id))
     assert_indentation(window, controller, expected)
     assert not warnings, "\n".join(warnings)
 
@@ -338,6 +339,7 @@ def test_full_value_is_plain_selectable_text(scene):
 def test_tag_tab_restores_scroll_query_and_image_toolbar(scene):
     window, workspace, series, warnings = scene
     controller = open_tags(window, workspace, series)
+    tag_id = workspace.activeTabId
     list_view = find(window, "tagList")
     list_view.setProperty("contentY", 500)
     QTest.qWait(30)
@@ -345,7 +347,7 @@ def test_tag_tab_restores_scroll_query_and_image_toolbar(scene):
     click(window, find(window, "openView-2d"))
     assert workspace.activeTabType == "2d"
     assert find(window, "rightPanel").isVisible()
-    click(window, find(window, "openView-tag"))
+    click(window, find(window, "workspaceTab-" + tag_id))
     QTest.qWait(50)
     assert workspace.activeTab.tagController is controller
     assert find(window, "tagList").property("contentY") == pytest.approx(500)
@@ -366,7 +368,7 @@ def test_tag_tab_restores_scroll_query_and_image_toolbar(scene):
     type_text(window, find(window, "tagSearch"), "PatientName")
     click(window, find(window, "openView-mpr"))
     assert workspace.activeTabType == "mpr" and find(window, "rightPanel").isVisible()
-    click(window, find(window, "openView-tag"))
+    click(window, find(window, "workspaceTab-" + tag_id))
     assert find(window, "tagSearch").property("text") == "PatientName"
     assert controller.tagModel.matchCount == 1
     assert not warnings, "\n".join(warnings)

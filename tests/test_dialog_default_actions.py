@@ -147,7 +147,6 @@ def test_import_enter_never_cancels_progress_and_escape_requests_cancellation(sc
     finally:
         release.set()
         wait_until(lambda: not panel.scanning)
-    QTest.keyClick(popup, Qt.Key_Return)
     assert not dialog.property("visible") and not panel.importTaskOpen
     assert not warnings, warnings
 

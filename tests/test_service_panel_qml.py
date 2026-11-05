@@ -12,7 +12,7 @@ from qt_dicom_viewer.model import TabType
 from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
 from test_dicom_tags import wait_until
 from test_measurement_qml import (
-    _mouse_drag, _scene, _visual_children, qt_app, viewport,
+    _mouse_drag, _click_points, _scene, _visual_children, qt_app, viewport,
 )
 
 
@@ -179,5 +179,5 @@ def test_automatic_qa_cancels_draft_and_does_not_draw_manual_measurements(viewpo
     # 切回普通测量后，原有矩形绘制功能仍可正常使用。
     tools.activateTool("measure")
     tools.selectInteraction("measure:rect")
-    _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     assert len(controller.measurementController.measurementItems) == 1

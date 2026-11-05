@@ -193,7 +193,7 @@ def test_short_compact_window_popup_keeps_actions_visible(sidebar_scene, monkeyp
     popup_window = item_window(listing)
     width_input = find(popup_window, 'windowWidthInput')
     fixed_position = width_input.mapToScene(QPointF())
-    for name in ('windowWidthInput', 'windowCenterInput', 'applyWindowValues', 'beginSaveWindowTemplate'):
+    for name in ('windowWidthInput', 'windowCenterInput', 'applyWindowValues', 'activeToolReset', 'beginSaveWindowTemplate'):
         item = find(popup_window, name)
         pos = item.mapToScene(QPointF())
         assert 0 <= pos.y() < pos.y() + item.height() <= popup_window.height()
@@ -201,8 +201,13 @@ def test_short_compact_window_popup_keeps_actions_visible(sidebar_scene, monkeyp
         wheel(popup_window, listing, -1200)
     assert listing.property('atYEnd')
     assert width_input.mapToScene(QPointF()) == fixed_position
+    initial = view.current_window
     click(popup_window, find(popup_window, 'windowPreset-ct-spine-bone'))
     wait_until(lambda: view.current_window.width == 1800 and view.current_window.center == 400)
     destination = Path('build/reading-controls'); destination.mkdir(parents=True, exist_ok=True)
+    reset = find(popup_window, 'activeToolReset')
+    assert reset.mapToScene(QPointF()).y() >= listing.mapToScene(QPointF(0, listing.height())).y()
+    click(popup_window, reset)
+    wait_until(lambda: view.current_window == initial)
     assert popup_window.grabWindow().save(str(destination / 'window-presets-compact.png'))
     assert not warnings, warnings

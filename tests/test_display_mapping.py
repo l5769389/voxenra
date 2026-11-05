@@ -146,7 +146,10 @@ def test_mapping_ui_modes_and_gray_controls(scene,tmp_path):
     QTest.keyClick(window, Qt.Key_Escape)
     assert find(window, 'mappingLower').property('text') == '30'
     assert find(window, 'mappingUpper').property('text') == '100'
-    click(window,find(window,'mappingSource'))
+    # The fixed tool footer restores the source mapping.
+    reset = find(window, 'activeToolReset')
+    assert find(window, "toolResetBar").isAncestorOf(reset)
+    click(window, reset)
     assert view.displayMapping['mode']=='source'
     click(window,find(window,'mappingBackground'))
     assert panel.property('backgroundExpanded')

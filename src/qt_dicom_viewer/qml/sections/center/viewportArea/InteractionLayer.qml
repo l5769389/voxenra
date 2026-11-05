@@ -13,7 +13,13 @@ Item {
     clip: true
     property bool cprPathInput: false
     readonly property bool pointInput: cprPathInput
-        || ["measure:curve", "measure:freehand", "measure:angle"].includes(activeInteraction)
+        || ["measure:curve", "measure:freehand"].includes(activeInteraction)
+    readonly property bool fixedPointInput: !cprPathInput
+        && ["measure:length", "measure:angle", "measure:rect", "measure:ellipse",
+            "annotate:arrow", "annotate:text"].includes(activeInteraction)
+    readonly property bool reservesDoubleClick: pointInput || fixedPointInput
+    property bool fixedPointPressed: false
+    property bool fixedPointPlacement: false
     property bool cprPointPressed: false
 
     signal pointerMoved(point position)
@@ -23,6 +29,7 @@ Item {
 
     signal tapped(point position)
     signal finishMeasurementRequested()
+    signal toolChangedDuringDrag()
 
     signal dragStarted(
         point startPosition,
@@ -61,14 +68,19 @@ Item {
     property bool brushPreviewEnabled: false
     property bool registrationInteraction: false
     property bool locatorPressed: false
-    property string dragCursorKind: ""
+    // null follows hover; an empty string is a deliberately unbound mouse button.
+    property var dragCursorKind: null
     // 从按下到释放持续为 true，不受 DragHandler 拖动阈值影响。
+    readonly property point placementPosition: dragHandler.active ? dragHandler.centroid.position : pressTracker.point.position
+    readonly property bool leftPressed: pressTracker.active && (pressTracker.point.pressedButtons & Qt.LeftButton) !== 0
     readonly property bool pointerPressed: pressTracker.active
     // CPR 控制点、ROI 和箭头标注从第一个像素位移就反馈。其他视图操作沿用
     // 平台拖动阈值，避免一次普通点击被解释成调窗、平移或缩放。
     readonly property bool immediateRoiDrag:
-        cprPointPressed || locatorPressed || registrationInteraction || activeInteraction === "mpr:segmentation"
+        cprPathInput || locatorPressed || registrationInteraction || activeInteraction === "mpr:segmentation"
         || activeInteraction === "mpr:voi"
+        || activeInteraction === "measure:length"
+        || activeInteraction === "measure:angle"
         || activeInteraction === "measure:rect"
         || activeInteraction === "measure:ellipse"
         || activeInteraction === "measure:freehand"
@@ -84,23 +96,32 @@ Item {
         : locatorPressed ? "crosshair-move"
         : registrationInteraction ? (crosshairHoverTarget === "center" ? "crosshair-move" : "pan")
         : CursorPolicy.resolve(activeInteraction, regionCursorKind, crosshairHoverTarget, measurementCursorKind)
+    function usesSelectedTool(buttons) {
+        return CursorPolicy.dragBinding(buttons, mousePreferences) === "selected"
+    }
+    function usesCprPathForDrag(buttons) {
+        return cprPathInput && usesSelectedTool(buttons)
+    }
     function dragCursorForButtons(buttons) {
         return CursorPolicy.resolveDrag(hoverCursorKind, buttons, registrationInteraction, mousePreferences)
     }
+    onCprPathInputChanged: if (!cprPathInput && dragCursorKind === "cpr-path") dragCursorKind = null
     onActiveInteractionChanged: {
-        dragCursorKind = ""
+        if (dragHandler.active) toolChangedDuringDrag()
         if (hoverHandler.hovered && !pointerPressed)
             pointerMoved(hoverHandler.point.position)
     }
 
     readonly property string effectiveCursorKind:
-        dragHandler.active
+        dragHandler.active && dragCursorKind !== null
             ? dragCursorKind
             : hoverCursorKind
 
+    readonly property bool precisionCursor: effectiveCursorKind === "cpr-path"
     readonly property bool customCursorActive:
-        effectiveCursorKind !== "" && effectiveCursorKind !== "default"
-    readonly property int effectiveCursorShape: customCursorActive ? Qt.BlankCursor : Qt.ArrowCursor
+        !precisionCursor && effectiveCursorKind !== "" && effectiveCursorKind !== "default"
+    readonly property int effectiveCursorShape: precisionCursor ? Qt.CrossCursor
+        : customCursorActive ? Qt.BlankCursor : Qt.ArrowCursor
 
     readonly property point cursorPosition:
         dragHandler.active
@@ -126,6 +147,8 @@ Item {
             if (active) {
                 interactionLayer.locatorPressed = false
                 interactionLayer.cprPointPressed = false
+                interactionLayer.fixedPointPressed = false
+                interactionLayer.fixedPointPlacement = false
                 interactionLayer.pointerPressedAt(point.position, point.pressedButtons)
             }
         }
@@ -186,7 +209,7 @@ Item {
         CursorGlyph {
             objectName: "viewportCursorOperationIcon"
             anchors.fill: parent
-            iconName: interactionLayer.effectiveCursorKind
+            iconName: interactionLayer.customCursorActive ? interactionLayer.effectiveCursorKind : ""
         }
     }
 
@@ -199,11 +222,14 @@ Item {
 
 
         onDoubleTapped: (eventPoint, button) => {
-            if (button === Qt.LeftButton) interactionLayer.finishMeasurementRequested()
+            if (button === Qt.LeftButton && !interactionLayer.fixedPointInput)
+                interactionLayer.finishMeasurementRequested()
         }
         onTapped: (eventPoint, button) => {
             // 只有左键点击执行测量选择等 tapped 逻辑。
             if (button !== Qt.LeftButton)
+                return
+            if (interactionLayer.fixedPointPressed)
                 return
             // A finish gesture owns both taps; never dispatch its second tap as a point.
             if (interactionLayer.pointInput && tapCount > 1)
@@ -271,7 +297,7 @@ Item {
                         dragHandler.centroid.position
                 }
             } else {
-                interactionLayer.dragCursorKind = ""
+                interactionLayer.dragCursorKind = null
 
                 interactionLayer.dragFinished(
                     interactionLayer.dragStart,

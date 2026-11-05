@@ -9,7 +9,11 @@ import os
 import time
 from pathlib import Path
 
+import numpy as np
 import pytest
+from pydicom import dcmread
+from pydicom.pixels import pixel_array
+from PySide6.QtGui import QImage
 from PySide6.QtCore import QItemSelectionModel, QPoint, QPointF, Qt, QTimer
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
@@ -115,9 +119,11 @@ def test_public_sample_local_picker_and_view(scene, case):
             assert not app.exportController.canExportPng
             assert not any(i.objectName() == 'retryWorkspaceLoad' and i.isVisible() for i in descendants(window.contentItem()))
             save_window(window, output / (path.stem + '-reason.png'))
-            assert not find(window, 'primaryTool-export').isEnabled()
+            workspace.activeTab.toolController.activateTool('export')
+            assert not find(window, 'exportPng').isEnabled()
+            failed_tab = workspace.activeTabId
             click(window, find(window, 'cancelWorkspaceLoad'))
-            assert not workspace.activeTab
+            assert failed_tab not in workspace._tab_dict
             result['outcome'] = 'incomplete_enhanced_mr_error_tab'
         else:
             assert view_button.isEnabled()
@@ -126,8 +132,7 @@ def test_public_sample_local_picker_and_view(scene, case):
                        workspace.activeViewport.loadState in ('ready', 'error'), 15000)
             view = workspace.activeViewport
             result.update(state=view.loadState, error=view.errorMessage, slice_count=view.sliceCount)
-            expected_error = ('12 位精度' if path.name == 'JPEG-lossy.dcm' else
-                              '暂不支持彩色 DICOM' if path.name.startswith('SC_rgb') else '')
+            expected_error = '12 位精度' if path.name == 'JPEG-lossy.dcm' else ''
             if expected_error:
                 assert view.loadState == 'error' and expected_error in view.errorMessage
                 assert not view.imageSource and not view.render_pending
@@ -135,21 +140,29 @@ def test_public_sample_local_picker_and_view(scene, case):
                 assert '或导出 PNG' not in view.errorMessage
                 settle()
                 assert any(expected_error in text for text in visible_text(window))
-                assert not find(window, 'primaryTool-export').isEnabled()
-                result['outcome'] = 'unsupported_precision' if path.name == 'JPEG-lossy.dcm' else 'unsupported_color_view'
+                workspace.activeTab.toolController.activateTool('export')
+                assert not find(window, 'exportPng').isEnabled()
+                result['outcome'] = 'unsupported_precision'
             else:
                 assert view.loadState == 'ready', view.errorMessage
                 assert view.sliceCount == 1 and view.imageSource
                 image = app._image_provider._images[view.viewportId]
                 assert (image.height(), image.width()) == (case['rows'], case['columns'])
                 before = image_digest(app, view)
-                original = view.current_window
                 save_window(window, output / (path.stem + '-default.png'))
-                view.applyWindowPreset(original.center, max(original.width * .8, .001))
-                wait_until(lambda: not view.render_pending, 10000)
-                assert before != image_digest(app, view)
-                result.update(outcome='ready', window_changed=True,
-                              image_size=[image.width(), image.height()])
+                if case['photometric'] == 'RGB':
+                    rgb = image.convertToFormat(QImage.Format_RGB888)
+                    rows = np.frombuffer(rgb.constBits(), dtype=np.uint8).reshape(rgb.height(), rgb.bytesPerLine())
+                    displayed = rows[:, :3 * rgb.width()].reshape(rgb.height(), rgb.width(), 3)
+                    np.testing.assert_array_equal(displayed, pixel_array(dcmread(path)))
+                    result.update(outcome='ready_rgb', verified_rgb_pixels=True)
+                else:
+                    original = view.current_window
+                    view.applyWindowPreset(original.center, max(original.width * .8, .001))
+                    wait_until(lambda: not view.render_pending, 10000)
+                    assert before != image_digest(app, view)
+                    result.update(outcome='ready', window_changed=True)
+                result['image_size'] = [image.width(), image.height()]
             assert not workspace.activeTab.playbackAvailable
             workspace.activeTab.setPlaying(True)
             assert not workspace.activeTab.playing

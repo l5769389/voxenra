@@ -86,12 +86,18 @@ def _mouse_drag(view, start, end):
     QTest.qWait(40)
 
 
+def _click_points(view, *points):
+    for point in points:
+        QTest.mouseClick(view, Qt.LeftButton, pos=point)
+    QTest.qWait(40)
+
+
 @pytest.mark.parametrize("kind", ["rect", "ellipse"])
-def test_real_drag_renders_roi_metrics_and_keeps_card_upright(viewport, tmp_path, kind):
+def test_real_point_placement_renders_roi_metrics_and_keeps_card_upright(viewport, tmp_path, kind):
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction(f"measure:{kind}")
     start, end = _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95)
-    _mouse_drag(view, start, end)
+    _click_points(view, start, end)
     items = controller.measurementController.measurementItems
     assert len(items) == 1
     assert items[0]["type"] == kind
@@ -159,6 +165,7 @@ def test_roi_card_width_and_columns_stay_stable_during_draw_and_resize(
         assert width == pytest.approx(expected_width)
         assert np.array(columns) == pytest.approx(np.array(expected_columns))
 
+    _click_points(view, points[-1])
     # Editing recreates the draft/card delegate; it must use the same reservation.
     samples = drag_samples(points[-1], [
         _scene(pixel_layer, 131, 140), _scene(pixel_layer, 40, 45),
@@ -194,13 +201,13 @@ def test_real_three_click_angle_and_keyboard_cancel_delete(viewport, tmp_path):
     assert not warnings, warnings
 
 
-def test_real_two_drag_angle_and_vertex_edit(viewport):
+def test_real_three_press_angle_and_vertex_drag_edit(viewport):
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction("measure:angle")
-    _mouse_drag(view, _scene(pixel_layer, 30, 50), _scene(pixel_layer, 100, 50))
+    _click_points(view, _scene(pixel_layer, 30, 50), _scene(pixel_layer, 100, 50))
     assert controller.measurementController.measurementItems == []
     assert "终点" in controller.measurementController.instruction
-    _mouse_drag(view, _scene(pixel_layer, 100, 50), _scene(pixel_layer, 100, 140))
+    _click_points(view, _scene(pixel_layer, 100, 140))
     original = controller.measurementController.measurementItems[0]
     assert original["label"] == "90.00°"
     _mouse_drag(view, _scene(pixel_layer, 100, 50), _scene(pixel_layer, 125, 65))
@@ -222,7 +229,7 @@ def test_real_roi_corner_resize_and_outline_move(viewport, kind, transformed):
         controller.applyTransformAction("rotate:mirror-h")
         controller.apply_zoom(1.1)
         QTest.qWait(40)
-    _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     original = controller.measurementController.measurementItems[0]
     _mouse_drag(view, _scene(pixel_layer, 95, 35), _scene(pixel_layer, 115, 25))
     resized = controller.measurementController.measurementItems[0]
@@ -243,9 +250,9 @@ def test_measurement_can_start_in_canvas_outside_image(viewport, kind):
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction(f"measure:{kind}")
     start, end = _scene(pixel_layer, -25, 35), _scene(pixel_layer, 60, 95)
-    _mouse_drag(view, start, end)
+    _click_points(view, start, end)
     if kind == "angle":
-        _mouse_drag(view, end, _scene(pixel_layer, 30, 140))
+        _click_points(view, _scene(pixel_layer, 30, 140))
     item = controller.measurementController.measurementItems[0]
     assert min(point["column"] for point in item["points"]) == pytest.approx(-25, abs=.5)
     if kind in ("rect", "ellipse"):
@@ -263,10 +270,9 @@ def test_label_hit_moves_card_without_changing_measurement(viewport, kind, trans
     end = _scene(pixel_layer, 95, 95)
     if kind == "angle":
         vertex = _scene(pixel_layer, 95, 35)
-        _mouse_drag(view, start, vertex)
-        _mouse_drag(view, vertex, end)
+        _click_points(view, start, vertex, end)
     else:
-        _mouse_drag(view, start, end)
+        _click_points(view, start, end)
     measurement_controller = controller.measurementController
     original = measurement_controller.measurementItems[0]
     measurement_controller.clear_selection()
@@ -321,7 +327,7 @@ def test_label_hit_moves_card_without_changing_measurement(viewport, kind, trans
 def test_selected_roi_interior_drag_reports_interior_not_outline(viewport, kind):
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction(f"measure:{kind}")
-    _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     measurement_controller = controller.measurementController
     original = measurement_controller.measurementItems[0]
     targets = []
@@ -341,7 +347,7 @@ def test_selected_roi_interior_drag_reports_interior_not_outline(viewport, kind)
 def test_roi_edit_updates_after_first_pixel_of_drag(viewport, kind):
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction(f"measure:{kind}")
-    _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     measurement = controller.measurementController
     original = measurement.measurementItems[0]
     start = _scene(pixel_layer, 60, 65)
@@ -448,7 +454,7 @@ def test_unified_cursor_policy_has_vectors_for_every_operation_and_no_raster_bad
 def test_click_unselected_roi_interior_shows_move_cursor_without_an_extra_move(viewport, kind, transformed):
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction(f"measure:{kind}")
-    _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     measurement = controller.measurementController
     original = measurement.measurementItems[0]
     measurement.clear_selection()
@@ -488,14 +494,13 @@ def test_selected_outline_has_move_cursor_and_crosshair_keeps_priority(viewport,
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction(f"measure:{kind}")
     if kind == "angle":
-        _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 35))
-        _mouse_drag(view, _scene(pixel_layer, 95, 35), _scene(pixel_layer, 95, 95))
+        _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 35), _scene(pixel_layer, 95, 95))
         hover_position = _scene(pixel_layer, 60, 35)
     elif kind == "length":
-        _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 35))
+        _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 35))
         hover_position = _scene(pixel_layer, 45, 35)
     else:
-        _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+        _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
         hover_position = _scene(pixel_layer, 30, 65)
     measurement = controller.measurementController
     interaction = view.rootObject().findChild(QQuickItem, "viewportInteractionLayer")
@@ -514,7 +519,7 @@ def test_selected_outline_has_move_cursor_and_crosshair_keeps_priority(viewport,
 def test_move_cursor_is_locked_during_drag_without_xy_sampling_and_cleared_on_tool_change(viewport):
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction("measure:rect")
-    _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     interaction = view.rootObject().findChild(QQuickItem, "viewportInteractionLayer")
     start = _scene(pixel_layer, 60, 65)
     _move_pointer(view, start)
@@ -538,11 +543,11 @@ def test_move_cursor_is_locked_during_drag_without_xy_sampling_and_cleared_on_to
 
 
 @pytest.mark.parametrize("kind", ["length", "rect", "ellipse", "arrow", "text"])
-def test_mouse_release_completes_and_selects_drawing_without_blocking_next(viewport, kind):
+def test_final_press_completes_and_selects_drawing_without_blocking_next(viewport, kind):
     view, controller, pixel_layer, warnings = viewport
     tools = controller._tool_controller
     tools.selectInteraction(("annotate:" if kind in ("arrow", "text") else "measure:") + kind)
-    _mouse_drag(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     text = controller.textAnnotationController
     measure = controller.measurementController
     def items():
@@ -555,7 +560,7 @@ def test_mouse_release_completes_and_selects_drawing_without_blocking_next(viewp
     # Hover after release must not modify the completed result.
     _move_pointer(view, _scene(pixel_layer, 150, 160))
     assert items() == [first]
-    _mouse_drag(view, _scene(pixel_layer, 150, 160), _scene(pixel_layer, 200, 220))
+    _click_points(view, _scene(pixel_layer, 150, 160), _scene(pixel_layer, 200, 220))
     assert len(items()) == 2
     assert {k: v for k, v in items()[0].items() if k != "selected"} == {k: v for k, v in first.items() if k != "selected"}
     assert (text.selectedAnnotationId if kind == "text" else measure.selectedMeasurementId) != selected
@@ -592,7 +597,7 @@ def test_card_has_no_shape_title_and_stays_put_when_roi_moves(viewport, kind, tm
                                                        ImagePoint(95,95), ImagePoint(30,95)], context)
         QTest.qWait(40)
     else:
-        _mouse_drag(view, _scene(pixel_layer, 30,35), _scene(pixel_layer,95,95))
+        _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     def card():
         return next(i for i in _visual_children(view.rootObject())
                     if i.objectName() == 'roiMetricCard' and i.isVisible())
@@ -623,7 +628,7 @@ def test_card_has_no_shape_title_and_stays_put_when_roi_moves(viewport, kind, tm
 def test_live_link_switch_moves_geometry_and_card_together_or_independently(viewport, kind):
     view, c, pixel_layer, warnings = viewport
     c._tool_controller.selectInteraction('measure:'+kind)
-    _mouse_drag(view,_scene(pixel_layer,30,35),_scene(pixel_layer,95,95))
+    _click_points(view, _scene(pixel_layer, 30, 35), _scene(pixel_layer, 95, 95))
     measure = c.measurementController
     label_name = 'measurementLabel' if kind == 'length' else 'roiMetricCard'
     def label():
@@ -660,26 +665,102 @@ def test_live_link_switch_moves_geometry_and_card_together_or_independently(view
     assert not warnings,warnings
 
 
-def test_double_click_does_not_supply_the_third_angle_point(viewport):
+def test_double_click_cannot_cancel_the_committed_third_angle_point(viewport):
     view, controller, layer, warnings = viewport
     controller._tool_controller.selectInteraction("measure:angle")
-    for x, y in [(30, 50), (100, 50)]:
-        QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, x, y))
-    QTest.mouseDClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, 100, 140))
-    QTest.qWait(QApplication.styleHints().mouseDoubleClickInterval() + 60)
-    assert not controller._measure_controller.committed_measurements
-    assert not controller._measure_controller.has_active_transaction
+    _click_points(view, _scene(layer, 30, 50), _scene(layer, 100, 50))
+    QTest.mouseDClick(view, Qt.LeftButton, pos=_scene(layer, 100, 140))
+    assert len(controller.measurementController.committed_measurements) == 1
+    assert not controller.measurementController.has_active_transaction
     assert not warnings, warnings
 
 
-@pytest.mark.parametrize("tool", ["measure:length", "measure:rect", "measure:ellipse", "annotate:arrow"])
-def test_double_click_in_drag_tool_preserves_completed_geometry(viewport, tool):
+@pytest.mark.parametrize('kind', ['length', 'rect', 'ellipse', 'angle'])
+def test_point_measurement_shows_first_click_without_double_click_delay(viewport, kind):
+    window, controller, layer, warnings = viewport
+    controller._tool_controller.selectInteraction('measure:' + kind)
+    measure = controller.measurementController
+    QTest.mouseClick(window, Qt.LeftButton, pos=_scene(layer, 30, 40))
+    assert measure.activeTransaction['points'][0] == pytest.approx({'column': 30, 'row': 40}, abs=.3)
+    QTest.mouseMove(window, _scene(layer, 90, 100), 20)
+    assert measure.activeTransaction['points'][1] == pytest.approx({'column': 90, 'row': 100}, abs=.3)
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert not measure.has_active_transaction and not measure.committed_measurements
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('kind', ['length', 'rect', 'ellipse', 'angle'])
+def test_duplicate_press_keeps_draft_until_valid_fixed_point(viewport, kind):
+    window, controller, layer, warnings = viewport
+    controller._tool_controller.selectInteraction('measure:' + kind)
+    measure = controller.measurementController
+    start = _scene(layer, 30, 40)
+    QTest.mouseDClick(window, Qt.LeftButton, pos=start)
+    assert measure.has_active_transaction and not measure.committed_measurements
+    _click_points(window, _scene(layer, 100, 110))
+    if kind == 'angle':
+        _click_points(window, _scene(layer, 100, 40))
+    assert len(measure.committed_measurements) == 1 and not measure.has_active_transaction
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize("tool", ["pan", "measure:rect"])
+def test_switch_tools_while_mouse_is_down_keeps_cursor_with_drag(viewport, tool):
     view, controller, layer, warnings = viewport
+    tools = controller._tool_controller
+    interaction = view.rootObject().findChild(QQuickItem, "viewportInteractionLayer")
+    tools.selectInteraction(tool)
+    start = _scene(layer, 64, 64)
+    QTest.mousePress(view, Qt.LeftButton, Qt.NoModifier, start)
+    QTest.mouseMove(view, start + QPoint(25, 18), 20)
+    tools.selectInteraction("zoom")
+    # Navigation completes on release. A measurement draft is cancelled by the switch.
+    expected = "pan" if tool == "pan" else "zoom"
+    try:
+        assert interaction.property("effectiveCursorKind") == expected
+        pan = controller.panX
+        QTest.mouseMove(view, start + QPoint(45, 30), 20)
+        assert (controller.panX != pan) == (tool == "pan")
+    finally:
+        QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, start + QPoint(45, 30))
+    assert interaction.property("effectiveCursorKind") == "zoom"
+    assert controller.zoom == 1 and not controller.measurementController.measurementItems
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('tool', ['measure:length', 'measure:angle', 'measure:rect', 'measure:ellipse',
+                                  'annotate:arrow', 'annotate:text'])
+def test_fixed_points_confirm_on_press_and_complete_without_release(viewport, tmp_path, tool):
+    window, controller, layer, warnings = viewport
     controller._tool_controller.selectInteraction(tool)
-    _mouse_drag(view, _scene(layer, 35, 40), _scene(layer, 100, 90))
-    measures = controller.measurementController
-    original, = measures.committed_measurements
-    QTest.mouseDClick(view, Qt.LeftButton, Qt.NoModifier, _scene(layer, 150, 155))
-    assert tuple(measures.committed_measurements) == (original,)
-    assert not measures.has_active_transaction
+    measure = controller.measurementController
+    text = controller.textAnnotationController
+    coordinates = [(30, 40), (100, 40), (100, 110)] if tool == 'measure:angle' else [(30, 40), (100, 110)]
+    for index, (x, y) in enumerate(coordinates):
+        point = _scene(layer, x, y)
+        QTest.mousePress(window, Qt.LeftButton, pos=point)
+        try:
+            final = index == len(coordinates) - 1
+            if tool == 'annotate:text':
+                assert bool(text._draft_id) is not final
+                assert len(text.annotationItems) == 1
+            else:
+                assert measure.has_active_transaction is not final
+                assert len(measure.committed_measurements) == int(final)
+                if not final:
+                    assert measure.activeTransaction['points'][index] == pytest.approx({'column': x, 'row': y}, abs=.3)
+            # Neither moving while held nor releasing is allowed to confirm another point.
+            QTest.mouseMove(window, point + QPoint(20, 25), 10)
+        finally:
+            QTest.mouseRelease(window, Qt.LeftButton, pos=point + QPoint(20, 25))
+    if tool == 'annotate:text':
+        item, = text.annotationItems
+        assert [item['tailColumn'], item['tailRow'], item['headColumn'], item['headRow']] == pytest.approx([30, 40, 100, 110], abs=.3)
+    else:
+        result, = measure.committed_measurements
+        np.testing.assert_allclose([(p.column, p.row) for p in result.points], coordinates, atol=.3)
+    QTest.qWait(40)
+    screenshot = window.grabWindow()
+    if not screenshot.isNull():
+        assert screenshot.save(str(tmp_path / (tool.replace(':', '-') + '-pressed.png')))
     assert not warnings, warnings

@@ -12,7 +12,7 @@ from shiboken6 import delete
 
 from qt_dicom_viewer.model import TabType, ToolType
 from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from test_measurement_qml import qt_app, _mouse_drag, _scene, _visual_children
+from test_measurement_qml import qt_app, _mouse_drag, _click_points, _scene, _visual_children
 from test_mtf_controller import bead_render, wait_result
 from test_service_panel_qml import _click, _find
 from test_viewport_transform import _controller
@@ -147,14 +147,14 @@ def test_real_service_roi_to_canvas_chart_and_metrics(workspace, tmp_path):
     _click(view, _find(view, "serviceEntry-qa"))
     assert controller.activeInteraction == "service:qa"
     assert controller._tool_controller.canResetActiveTool
-    assert controller._tool_controller.resetLabel == "重置水模 QA"
+    assert controller._tool_controller.resetLabel == "清除水模 QA 结果"
     assert not [item for item in _visual_children(view.rootObject())
                 if item.objectName() == "mtfResults" and item.isVisible()]
     _mouse_drag(view, _scene(pixels, 20, 20), _scene(pixels, 90, 90))
     assert controller.mtfController.roiController.measurementItems == saved
     _click(view, _find(view, "primaryTool-service"))
     _click(view, _find(view, "serviceEntry-mtf"))
-    assert controller._tool_controller.resetLabel == "重置 MTF"
+    assert controller._tool_controller.resetLabel == "清除 MTF 结果"
     controller._tool_controller.resetActiveTool()
     assert controller.mtfController.status == "empty"
     assert not warnings, warnings
@@ -850,7 +850,7 @@ def test_small_viewport_analysis_label_leaves_roi_clear_and_keeps_results(worksp
     from PySide6.QtCore import QRectF
     view, controller, pixels, warnings = workspace
     controller._tool_controller.selectInteraction("measure:length")
-    _mouse_drag(view, _scene(pixels, 20, 120), _scene(pixels, 100, 120))
+    _click_points(view, _scene(pixels, 20, 120), _scene(pixels, 100, 120))
     assert len(controller.measurementController.measurementItems) == 1
     _click(view, _find(view, "primaryTool-service"))
     _click(view, _find(view, "serviceEntry-mtf"))

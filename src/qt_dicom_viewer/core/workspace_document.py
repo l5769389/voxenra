@@ -1,6 +1,7 @@
 """Workspace manifests reference original files/archives, never temporary extracts."""
 from qt_dicom_viewer.i18n import message as _msg
 from pathlib import Path
+from sys import float_info
 from dataclasses import replace
 
 from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner, _build_series_from_map, _build_series_record
@@ -119,12 +120,11 @@ def validate_document(document):
     active = document.get("activeTab", 0)
     if type(active) is not int or not 0 <= active < max(1, len(tabs)):
         raise ValueError(_msg('workspace.invalidActiveTab'))
-    known = set()
+    instances_by_uid = {}
     count = 0
     for record in series:
-        if not isinstance(record, dict) or not isinstance(record.get("uid"), str) or record["uid"] in known:
+        if not isinstance(record, dict) or not isinstance(record.get("uid"), str) or record["uid"] in instances_by_uid:
             raise ValueError(_msg('text.0212'))
-        known.add(record["uid"])
         if not isinstance(record.get("sources"), list) or not record["sources"]:
             raise ValueError(_msg('text.0213'))
         for source in record["sources"]:
@@ -140,6 +140,7 @@ def validate_document(document):
                 or not isinstance(sig.get("media_storage_sop_instance_uid", ""), str)
                 for sig in signatures):
             raise ValueError(_msg('text.0215'))
+        instances_by_uid[record["uid"]] = signatures
         count += len(signatures)
         _validate_phase_manifest(record)
     if count > 100000:
@@ -149,10 +150,14 @@ def validate_document(document):
         raise ValueError(_msg('text.0217'))
     for tab in tabs:
         if (not isinstance(tab, dict) or not isinstance(tab.get("series"), list)
-                or any(uid not in known for uid in tab["series"])
+                or any(uid not in instances_by_uid for uid in tab["series"])
                 or tab.get("type") not in ("2d", "compare2d", "comparempr", "mpr", "cpr", "3d", "4d", "montage", "tag", "petctfusion", "settings", "pacs", "manual")):
             raise ValueError(_msg('text.0217'))
         _validate_tab(tab)
+        if "tag" in tab:
+            if tab["type"] != "tag" or len(tab["series"]) != 1:
+                raise ValueError(_msg('text.0222'))
+            _validate_tag_browser(tab["tag"], instances_by_uid[tab["series"][0]])
     for key in ("sidebar", "selected", "collapsed"):
         if not isinstance(document.get(key, []), list) or any(not isinstance(x, str) for x in document.get(key, [])):
             raise ValueError(_msg('text.0218'))
@@ -165,6 +170,20 @@ def validate_document(document):
             or not 200 <= sidebar["width"] <= 350 or type(sidebar.get("collapsed")) is not bool):
         raise ValueError(_msg('text.0220'))
     return document
+
+
+def _validate_tag_browser(state, instances):
+    if not isinstance(state, dict):
+        raise ValueError(_msg('text.0222'))
+    # The metadata browser pages through files, including for multiframe images.
+    file_count = len({_signature_identity(sig)[:2] for sig in instances})
+    page, scroll = state.get("page", 1), state.get("scroll", 0)
+    expanded = state.get("expanded", [])
+    if (type(page) is not int or not 1 <= page <= file_count
+            or type(scroll) not in (int, float) or not 0 <= scroll <= float_info.max
+            or any(not isinstance(state.get(k, ""), str) for k in ("query", "selected"))
+            or not isinstance(expanded, list) or any(not isinstance(key, str) for key in expanded)):
+        raise ValueError(_msg('text.0222'))
 
 
 def _validate_tab(tab):

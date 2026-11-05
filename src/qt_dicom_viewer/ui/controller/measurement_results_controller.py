@@ -4,6 +4,7 @@ from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from qt_dicom_viewer.model.measure import AngleMeasurement, RoiMeasurement
 from qt_dicom_viewer.core.measurement_format import format_measurement
+from qt_dicom_viewer.core.segmentation_masks import native_roi_plane
 
 
 class MeasurementResultsController(QObject):
@@ -18,6 +19,8 @@ class MeasurementResultsController(QObject):
         self._pending = None
         self._message = ""
         self.watch_views()
+        tab.activeViewportChanged.connect(self.changed.emit)
+        tab.playingChanged.connect(self.changed.emit)
         tab.viewLayoutChanged.connect(self.watch_views)
         if hasattr(tab, "twoDLayout"):
             tab.twoDLayout.cellsChanged.connect(self.watch_views)
@@ -60,6 +63,20 @@ class MeasurementResultsController(QObject):
                         return view, measure, item
         return None
 
+    @Property(str, notify=changed)
+    def clearableViewportId(self):
+        view = self.tab.activeViewport
+        measure = getattr(view, "_measure_controller", None)
+        if (not self.tab.playing and measure and any(
+                getattr(item, "kind", None) != "arrow" for item in measure.committed_measurements)):
+            return view.viewportId
+        return ""
+
+    @Slot(str)
+    def clearViewportMeasurements(self, viewport_id):
+        if viewport_id and viewport_id == self.clearableViewportId:
+            self.tab.activeViewport._measure_controller.clear_kind(arrows=False)
+
     @_TextProperty(str, notify=_i18n_message, notify_name="_i18n_message", source_notify="changed")
     def message(self):
         return self._message
@@ -99,13 +116,16 @@ class MeasurementResultsController(QObject):
                     provenance = source["cpr"]
                     location = _msg("cpr.measurementLocation", name=provenance.get("pathName", ""),
                                     revision=provenance["pathRevision"], distance=f'{provenance["distanceMm"]:.1f}')
+                selected = view is self.tab.activeViewport and measure.selectedMeasurementId == item.measurement_id
                 result.append(dict(key=view.viewportId+":"+item.measurement_id,
                     name=measure.measurement_name(item), value=value,
                     group=group,
                     location=location +
                         (" · " + _msg("results.phase", value1=phase) if phase is not None else ""),
                     hidden=info["hidden"], locked=info["locked"],
-                    selected=measure.selectedMeasurementId == item.measurement_id))
+                    selected=selected, convertibleRoi=(selected and kind == "freehand"
+                        and item is measure.selected_committed_measurement
+                        and native_roi_plane(getattr(view, "_voi_volume", None), measure.frame_key) is not None)))
         return result
 
     @Slot(str, str)

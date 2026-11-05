@@ -106,6 +106,7 @@ Item {
                 Layout.minimumWidth: 0
                 Layout.minimumHeight: 0
                 Viewport {
+                    onPointToolFocusToggleRequested: root.tabController.togglePair(cell.modelData.viewportId)
                     id: canvas
                     objectName: "imageViewport-" + cell.modelData.viewportId
                     anchors.fill: parent

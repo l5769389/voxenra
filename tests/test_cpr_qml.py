@@ -448,11 +448,13 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
         click('cprFinishPath')
         wait_until(lambda: cpr.ready)
         assert not cpr.drawing and not cpr.pathEditing
-        click('cprEditPath')
+        assert not {'cprEditPath', 'cprNewPath', 'cprAdditionalPath'} & fields.keys()
+        ref.cprTap(10, 10, .4)
         assert cpr.pathEditing
         click('cprFinishPath')
         assert not cpr.pathEditing
-        click('cprAdditionalPath')
+        ref.cprTap(5, 20, .4)
+        assert cpr.drawing
         click("cprCancelPath")
         assert not cpr.drawing
         draw(cpr)
@@ -630,7 +632,6 @@ def test_locked_reference_layout_pointer_and_wheel_preserve_path(cpr_page):
     target = named_item(window.rootObject(), 'cprViewport-reference-a')
     assert target.isVisible() and not tab.pathEditing
     point = target.mapToScene(QPointF(target.width() * .5, target.height() * .5)).toPoint()
-    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, point)
     QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, point)
     QTest.mouseMove(window, point + QPoint(15, 5), 20)
     QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, point + QPoint(15, 5))
@@ -639,8 +640,491 @@ def test_locked_reference_layout_pointer_and_wheel_preserve_path(cpr_page):
     wheel = QWheelEvent(QPointF(point), QPointF(window.mapToGlobal(point)), QPoint(), QPoint(0, 120),
                         Qt.NoButton, Qt.NoModifier, Qt.NoScrollPhase, False)
     QCoreApplication.sendEvent(window, wheel)
-    wait_until(lambda: tab.ready and not tab.busy)
+    wait_until(lambda: ref.sliceIndex != before and not tab.busy)
     assert ref.sliceIndex != before
     assert tab.current_path == original
+    assert tab.drawing and tab.pointCount == 1
+    tab.cancel_operation()
     tab.setPathEditing(True)
     assert ref.cprEditing and tab.pathEditing
+
+
+def test_click_empty_image_then_select_and_delete_another_visible_path(cpr_page):
+    window, tab = cpr_page
+    ref = tab.viewForRole('reference-a')
+    viewport = named_item(window.rootObject(), 'cprViewport-reference-a')
+    overlay = named_item(viewport, 'cprPathOverlay')
+
+    def tap(column, row):
+        pos = overlay.mapToScene(overlay.pixel(column, row)).toPoint()
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, pos)
+
+    original = tab.current_path
+    tap(8, 29)
+    assert tab.drawing and tab.pointCount == 1  # No double-click timeout for feedback.
+    tap(28, 29)
+    QTest.keyClick(window, Qt.Key_Return)
+    wait_until(lambda: tab.ready and not tab.busy)
+    second = tab.current_path
+    assert not tab.drawing and second != original and len(tab.paths) == 2
+    assert overlay.property('otherTraces')
+    tap(10, 10)
+    QTest.keyClick(window, Qt.Key_Delete)
+    wait_until(lambda: tab.ready and not tab.busy)
+    assert len(tab.paths) == 1 and tab.current_path == second
+    QTest.keyClick(window, Qt.Key_Backspace)
+    assert len(tab.paths) == 1 and ref.cprPathInput and not tab.pathEditing
+    tap(18, 29)
+    wait_until(lambda: overlay.property('wholePathSelected'))
+    assert tab.pathEditing and tab.current_path == second
+    QTest.keyClick(window, Qt.Key_Escape)
+    # The first tap of a double-click on blank image must not leave a draft.
+    double_click(window, viewport)
+    assert tab.focusedViewportId == ref.viewportId and not tab.drawing
+    assert tab.current_path == second
+
+
+def test_cpr_uses_one_native_precision_cursor_while_placing_and_dragging(cpr_page):
+    from qt_pointer import move_pointer
+
+    window, tab = cpr_page
+    viewport = named_item(window.rootObject(), 'cprViewport-reference-a')
+    overlay = named_item(viewport, 'cprPathOverlay')
+    glyph = named_item(viewport, 'viewportCustomCursor')
+
+    def position(column, row):
+        return overlay.mapToScene(overlay.pixel(column, row)).toPoint()
+
+    def assert_cross():
+        assert window.cursor().shape() == Qt.CrossCursor
+        assert not glyph.isVisible()
+
+    window.requestActivate()
+    assert QTest.qWaitForWindowActive(window)
+    start = position(8, 29)
+    move_pointer(window, start + QPoint(15, 10))
+    move_pointer(window, start)
+    wait_until(lambda: window.cursor().shape() == Qt.CrossCursor)
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, start)
+    assert tab.drawing and tab.pointCount == 1
+    assert_cross()
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, position(28, 29))
+    QTest.keyClick(window, Qt.Key_Return)
+    wait_until(lambda: tab.ready)
+    original = tab.current_path.control_points
+    move_pointer(window, start)
+    QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
+    end = position(10, 25)
+    QTest.mouseMove(window, end, 20)
+    assert tab.pathEditing
+    assert_cross()
+    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
+    assert tab.current_path.control_points[0] != original[0]
+    assert_cross()
+    tab.toolController.activateTool('window')
+    move_pointer(window, position(12, 26))
+    assert glyph.isVisible() and window.cursor().shape() == Qt.BlankCursor
+
+
+@pytest.mark.parametrize('gesture', ['from-margin', 'draft-to-margin', 'handle-to-margin'])
+def test_cpr_reference_margin_drag_respects_path_tool(cpr_page, gesture):
+    window, tab = cpr_page
+    ref = tab.viewForRole('reference-a')
+    ref.setZoom(.75)
+    viewport = named_item(window.rootObject(), 'cprViewport-reference-a')
+    overlay = named_item(viewport, 'cprPathOverlay')
+
+    def position(column, row):
+        return overlay.mapToScene(overlay.pixel(column, row)).toPoint()
+
+    start, end = position(7, 26), position(-3, 26)
+    assert viewport.contains(viewport.mapFromScene(end))
+    original = tab.current_path
+    windowing = ref.windowWidth, ref.windowCenter
+    if gesture == 'from-margin':
+        start, end = end, start
+    elif gesture == 'draft-to-margin':
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, position(8, 29))
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, position(29, 29))
+        assert tab.drawing and tab.pointCount == 2
+    else:
+        start = position(5, 10)
+    QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
+    QTest.mouseMove(window, (start + end) / 2, 20)
+    QTest.mouseMove(window, end, 20)
+    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
+    assert (ref.windowWidth, ref.windowCenter) == windowing
+    assert tab.current_path == original
+    if gesture == 'draft-to-margin':
+        assert tab.drawing and tab.pointCount == 2
+    elif gesture == 'handle-to-margin':
+        assert tab.pathEditing and not tab._edit_transaction_active
+
+
+def test_cpr_secondary_drag_matches_its_binding(cpr_page):
+    window, tab = cpr_page
+    ref = tab.viewForRole('reference-a')
+    viewport = named_item(window.rootObject(), 'cprViewport-reference-a')
+    overlay = named_item(viewport, 'cprPathOverlay')
+    layer = named_item(viewport, 'viewportInteractionLayer')
+
+    def drag(button, kind, col, row):
+        start = overlay.mapToScene(overlay.pixel(col, row)).toPoint()
+        QTest.mousePress(window, button, Qt.NoModifier, start)
+        QTest.mouseMove(window, start + QPoint(20, 14), 20)
+        QTest.mouseMove(window, start + QPoint(34, 24), 20)
+        assert layer.property('effectiveCursorKind') == kind
+        QTest.mouseRelease(window, button, Qt.NoModifier, start + QPoint(34, 24))
+        assert layer.property('effectiveCursorKind') == 'cpr-path'
+
+    first = tab.current_path
+    zoom = ref.zoom
+    drag(Qt.RightButton, 'zoom', 5, 10)
+    assert tab.current_path == first and ref.zoom != zoom
+    # Middle is mapped to the selected tool, including a CPR point drag.
+    drag(Qt.MiddleButton, 'cpr-path', 5, 10)
+    assert tab.current_path.control_points[0] != first.control_points[0]
+
+
+@pytest.mark.parametrize('finish_key', [Qt.Key_Return, Qt.Key_Escape])
+def test_saved_paths_stay_visible_and_read_only_while_drawing(cpr_page, finish_key):
+    window, tab = cpr_page
+    first = tab.current_path
+    draw(tab, ((5, 22), (25, 22)))
+    second = tab.current_path
+    ref = named_item(window.rootObject(), 'cprViewport-reference-a')
+    overlay = named_item(ref, 'cprPathOverlay')
+
+    def tap(col, row):
+        pos = overlay.mapToScene(overlay.pixel(col, row)).toPoint()
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, pos)
+
+    tap(32, 32)
+    assert tab.drawing and tab.pointCount == 1
+    assert len(overlay.property('otherTraces')) == 2
+    # Check the painted overlay, including the previously selected path.
+    grab = overlay.grabToImage()
+    wait_until(lambda: not grab.image().isNull())
+    image = grab.image()
+    for row in (10, 22):
+        pos = overlay.pixel(10, row) * (image.width() / overlay.width())
+        assert any(image.pixelColor(round(pos.x()), round(pos.y()) + dy).alpha() > 0
+                   for dy in (-1, 0, 1))
+
+    tap(10, 10)  # On a saved segment: this click belongs to the draft.
+    assert tab.drawing and tab.pointCount == 2 and tab.current_path == second
+    QTest.keyClick(window, finish_key)
+    assert not tab.drawing
+    assert len(tab.paths) == (3 if finish_key == Qt.Key_Return else 2)
+    if finish_key == Qt.Key_Escape:
+        assert tab.selectedPathId == second.path_id
+    for path in (first, second):
+        tab.selectPath(path.path_id)
+        assert tab.current_path == path
+
+
+def test_cpr_lines_use_live_measurement_styles_and_keep_history_subdued(cpr_page):
+    window, tab = cpr_page
+    view = tab.viewForRole('reference-a')
+    overlay = named_item(named_item(window.rootObject(), 'cprViewport-reference-a'), 'cprPathOverlay')
+    settings = view.settingsController
+    # Sample the actual line pixels from the transparent overlay. Avoid handles,
+    # number labels and dashes by sampling a strip along the segment.
+    def line_pixels(col, row):
+        QTest.qWait(40)
+        grab = overlay.grabToImage()
+        wait_until(lambda: not grab.image().isNull())
+        frame = grab.image()
+        point = overlay.pixel(col, row) * (frame.width() / overlay.width())
+        x, y = round(point.x()), round(point.y())
+        return [frame.pixelColor(i, j) for i in range(x - 10, x + 11) for j in range(y - 2, y + 3)]
+
+    def coverage(col, row, channel):
+        colors = line_pixels(col, row)
+        return max((c.alpha() for c in colors if channel(c) > 240 and c.blue() < 25), default=0)
+
+    assert settings.setValue('measurement', 'completedColor', '#ff0000')
+    assert settings.setValue('measurement', 'editingColor', '#00ff00')
+    assert settings.setValue('measurement', 'lineWidth', 3)
+    assert coverage(10, 10, lambda c: c.red()) > 200
+    assert view.cprTap(10, 10, .4) and tab.pathEditing
+    assert coverage(10, 10, lambda c: c.green()) > 200
+    tab.finishEditing()
+    for col in (5, 25):
+        assert view.cprTap(col, 25, .4)
+    assert tab.drawing
+    assert coverage(15, 25, lambda c: c.green()) > 200
+    assert 35 < coverage(10, 10, lambda c: c.red()) < 185
+    assert tab.finishPath()
+    assert coverage(15, 25, lambda c: c.red()) > 200
+
+
+@pytest.mark.parametrize('delete_key', [Qt.Key_Delete, Qt.Key_Backspace])
+def test_delete_on_control_point_removes_only_its_path(cpr_page, delete_key):
+    window, tab = cpr_page
+    ref = named_item(window.rootObject(), 'cprViewport-reference-a')
+    overlay = named_item(ref, 'cprPathOverlay')
+    other = tab.selectedPathId
+    draw(tab, ((8, 29), (28, 29)))
+    end = overlay.mapToScene(overlay.pixel(8, 29)).toPoint()
+    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, end)
+    QTest.keyClick(window, delete_key)
+    assert [p['pathId'] for p in tab.paths] == [other]
+    QTest.keyClick(window, delete_key)
+    assert len(tab.paths) == 1
+
+
+def test_reference_drag_places_one_point_at_release(cpr_page):
+    window, tab = cpr_page
+    ref = named_item(window.rootObject(), 'cprViewport-reference-a')
+    overlay = named_item(ref, 'cprPathOverlay')
+    for i, (x, y) in enumerate(((8, 29), (25, 29))):
+        end = overlay.mapToScene(overlay.pixel(x, y)).toPoint()
+        start = end - QPoint(23, 16)
+        QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
+        marker = named_item(ref, 'pathPointPlacementPreview')
+        assert marker.isVisible()
+        QTest.mouseMove(window, start + QPoint(12, 7), 20)
+        QTest.mouseMove(window, end, 20)
+        assert len(tab.session_state()['draft']) == i
+        QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
+        assert not marker.isVisible()
+        assert tab.drawing and tab.pointCount == i + 1
+        point = tab.viewForRole('reference-a').cprPoints[-1]
+        assert (point['column'], point['row']) == pytest.approx((x, y), abs=.2)
+
+
+def test_sampling_guides_show_point_line_projection_and_share_color(cpr, tmp_path):
+    from qt_dicom_viewer.i18n import message
+    from qt_dicom_viewer.model import WindowLevel
+    from qt_dicom_viewer.model.interaction import WindowLevelChange
+    draw(cpr, ((5, 20), (35, 20)))
+    # Keep the synthetic 0..4440 ramp visible when reviewing native screenshots.
+    cpr.set_linked_window(WindowLevelChange(WindowLevel(center=2200, width=4400), False))
+    cpr.setParameter('width', 20)
+    cpr.setParameter('crossWidth', 20)
+    cpr.setPositionMm(cpr.totalLength / 2)
+    wait_until(lambda: cpr.ready)
+    with displayed_cpr_page(cpr) as (window, tab):
+        overlays = {role: named_item(named_item(window.rootObject(), 'cprViewport-' + role), 'cprPathOverlay')
+                    for role in ('reference-a', 'reference-b', 'curved', 'cross')}
+        labels = {role: named_item(overlay, 'cprSamplingGuideLabel')
+                  for role, overlay in overlays.items() if role.startswith('reference')}
+        color = overlays['reference-a'].property('samplingColor')
+
+        def painted_cyan(role, column, row):
+            overlay = overlays[role]
+            QTest.qWait(40)
+            grab = overlay.grabToImage()
+            wait_until(lambda: not grab.image().isNull())
+            image = grab.image()
+            point = overlay.pixel(column, row) * (image.width()/overlay.width())
+            found = any(image.pixelColor(x, y).alpha() > 100
+                       and abs(image.pixelColor(x, y).hsvHueF() - color.hsvHueF()) < .02
+                       and image.pixelColor(x, y).valueF() > .4
+                       for x in range(max(0, round(point.x())-6), min(image.width(), round(point.x())+7))
+                       for y in range(max(0, round(point.y())-6), min(image.height(), round(point.y())+7)))
+            if not found:
+                image.save(str(tmp_path / (role + '-overlay.png')))
+            return found
+
+        for angle, caption in [(0, 'cpr.samplingPoint'), (45, 'cpr.samplingProjection'), (90, 'cpr.samplingLine')]:
+            tab.setParameter('angle', angle)
+            wait_until(lambda: tab.ready)
+            QTest.qWait(60)
+            assert labels['reference-a'].property('text') == message(caption)
+            for role in ('reference-a', 'reference-b'):
+                guide = tab.viewForRole(role).cprGuides['samplingLine']
+                assert painted_cyan(role, guide['centerColumn'], guide['centerRow'])
+            curved = tab.viewForRole('curved')
+            assert painted_cyan('curved', curved.cprGuides['positionColumn'], (curved.imageRows-1)/2)
+            cross = tab.viewForRole('cross')
+            assert painted_cyan('cross', (cross.imageColumns-1)/2, (cross.imageRows-1)/2)
+            assert window.grabWindow().save(str(tmp_path / f'cpr-guides-{angle}.png'))
+            if angle == 0:
+                selector = named_item(window.rootObject(), 'cprPlane-0')
+                point = selector.mapToScene(QPointF(selector.width()/2, selector.height()/2)).toPoint()
+                for key, plane, label in [(Qt.Key_End, 'sagittal', 'cpr.samplingLine'),
+                                          (Qt.Key_Home, 'axial', 'cpr.samplingPoint')]:
+                    QTest.mouseClick(window, Qt.LeftButton, pos=point)
+                    QTest.keyClick(window, key)
+                    QTest.keyClick(window, Qt.Key_Return)
+                    wait_until(lambda: tab.ready and tab.referencePlanes[0] == plane)
+                    QTest.qWait(60)
+                    assert labels['reference-a'].property('text') == message(label)
+                    guide = tab.viewForRole('reference-a').cprGuides['samplingLine']
+                    assert painted_cyan('reference-a', guide['centerColumn'], guide['centerRow'])
+                    assert window.grabWindow().save(str(tmp_path / f'cpr-guides-{plane}.png'))
+
+        geometry = tab.current_path
+        ref = tab.viewForRole('reference-a')
+        before = ref.cprGuides['samplingLine']
+        ref.applyTransformAction('rotate:cw90')
+        ref.applyTransformAction('rotate:mirror-h')
+        ref.apply_zoom(1.2)
+        assert ref.cprGuides['samplingLine'] == before
+        assert painted_cyan('reference-a', before['centerColumn'], before['centerRow'])
+        assert tab.current_path == geometry
+        tab.setShowSamplingGuides(False)
+        QTest.qWait(60)
+        assert all(not tab.viewForRole(role).cprGuides for role in overlays)
+        assert not labels['reference-a'].isVisible() and not labels['reference-b'].isVisible()
+        assert not painted_cyan('reference-a', before['centerColumn'], before['centerRow'])
+        tab.setShowSamplingGuides(True)
+        assert painted_cyan('reference-a', before['centerColumn'], before['centerRow'])
+
+
+def test_collapsed_oblique_sampling_marker_keeps_projection_dashes(cpr):
+    draw(cpr, ((5, 20), (35, 20)))
+    cpr.setParameter('width', 20)
+    cpr.setPositionMm(cpr.totalLength / 2)
+    wait_until(lambda: cpr.ready)
+    with displayed_cpr_page(cpr) as (window, tab):
+        overlay = named_item(named_item(window.rootObject(), 'cprViewport-reference-a'), 'cprPathOverlay')
+        color = overlay.property('samplingColor')
+        ring_pixels = []
+        for angle in (0, 1):
+            tab.setParameter('angle', angle)
+            wait_until(lambda: tab.ready)
+            QTest.qWait(60)
+            guide = tab.viewForRole('reference-a').cprGuides['samplingLine']
+            a = overlay.pixel(guide['startColumn'], guide['startRow'])
+            b = overlay.pixel(guide['endColumn'], guide['endRow'])
+            assert (b-a).manhattanLength() <= 4
+            assert guide['projected'] == bool(angle)
+            grab = overlay.grabToImage()
+            wait_until(lambda: not grab.image().isNull())
+            image = grab.image()
+            scale = image.width()/overlay.width()
+            center = overlay.pixel(guide['centerColumn'], guide['centerRow']) * scale
+            ring_pixels.append(sum(
+                3.8 <= ((x-center.x())**2 + (y-center.y())**2)**.5/scale <= 6.5
+                and image.pixelColor(x, y).alpha() > 100
+                and abs(image.pixelColor(x, y).hsvHueF() - color.hsvHueF()) < .02
+                for x in range(int(center.x()-7*scale), int(center.x()+7*scale)+1)
+                for y in range(int(center.y()-7*scale), int(center.y()+7*scale)+1)))
+        assert ring_pixels[0] > 10
+        assert ring_pixels[1] < ring_pixels[0] * .9
+
+
+def test_sampling_projection_label_follows_visible_segment_after_pan(cpr):
+    draw(cpr, ((5, 20), (35, 20)))
+    cpr.setParameter('width', 20)
+    cpr.setParameter('angle', 45)
+    cpr.setPositionMm(cpr.totalLength / 2)
+    wait_until(lambda: cpr.ready)
+    with displayed_cpr_page(cpr) as (window, tab):
+        ref = tab.viewForRole('reference-a')
+        overlay = named_item(named_item(window.rootObject(), 'cprViewport-reference-a'), 'cprPathOverlay')
+        label = named_item(overlay, 'cprSamplingGuideLabel')
+        guide = ref.cprGuides['samplingLine']
+        assert guide['projected']
+        center = overlay.pixel(guide['centerColumn'], guide['centerRow'])
+        ref.apply_pan(0, -center.y()-10)
+        QTest.qWait(60)
+        a = overlay.pixel(guide['startColumn'], guide['startRow'])
+        b = overlay.pixel(guide['endColumn'], guide['endRow'])
+        assert min(a.y(), b.y()) < 0 < max(a.y(), b.y())
+        assert overlay.pixel(guide['centerColumn'], guide['centerRow']).y() < 0
+        assert label.isVisible()
+        assert 0 <= label.y() <= overlay.height()-label.height()
+        ref.apply_pan(0, -overlay.height())
+        QTest.qWait(60)
+        assert not label.isVisible()
+
+
+@pytest.mark.parametrize('transform', ['none', 'rotate:cw90', 'rotate:mirror-h'])
+def test_cross_section_marks_sampling_line_continuation(cpr, tmp_path, transform):
+    from qt_dicom_viewer.model import WindowLevel
+    from qt_dicom_viewer.model.interaction import WindowLevelChange
+    draw(cpr, ((5, 20), (35, 20)))
+    cpr.set_linked_window(WindowLevelChange(WindowLevel(center=2200, width=4400), False))
+    cpr.setParameter('crossWidth', 40)
+    cpr.setPositionMm(cpr.totalLength / 2)
+    wait_until(lambda: cpr.ready)
+    with displayed_cpr_page(cpr) as (window, tab):
+        cross = tab.viewForRole('cross')
+        if transform != 'none':
+            cross.applyTransformAction(transform)
+        cross.setZoom(.75)
+        overlay = named_item(named_item(window.rootObject(), 'cprViewport-cross'), 'cprPathOverlay')
+        color = overlay.property('samplingColor')
+
+        def continuation_wings(ends=None):
+            QTest.qWait(60)
+            grab = overlay.grabToImage()
+            wait_until(lambda: not grab.image().isNull())
+            image = grab.image()
+            scale = image.width()/overlay.width()
+            center = overlay.pixel((cross.imageColumns-1)/2, (cross.imageRows-1)/2)
+            found = []
+            ends = ends or [overlay.pixel(col, (cross.imageRows-1)/2)
+                            for col in (0, cross.imageColumns-1)]
+            for end in ends:
+                delta = end-center
+                length = (delta.x()**2 + delta.y()**2)**.5
+                direction = delta/length
+                perpendicular = QPointF(-direction.y(), direction.x())
+                for side in (-1, 1):
+                    # A continuation chevron sits just inside the image edge;
+                    # a true endpoint cap has no inward diagonal wings.
+                    wing = (end - direction*7 + perpendicular*(side*3))*scale
+                    found.append(any(
+                        image.pixelColor(x, y).alpha() > 100
+                        and abs(image.pixelColor(x, y).hsvHueF()-color.hsvHueF()) < .02
+                        and image.pixelColor(x, y).valueF() > .4
+                        for x in range(round(wing.x()-scale), round(wing.x()+scale)+1)
+                        for y in range(round(wing.y()-scale), round(wing.y()+scale)+1)))
+            return found
+
+        for width in (20, 40, 50, 40):
+            tab.setParameter('width', width)
+            wait_until(lambda: tab.ready)
+            assert continuation_wings() == [width > 40]*4
+            assert window.grabWindow().save(str(tmp_path / f'cross-sampling-{width}.png'))
+        tab.setParameter('width', 50)
+        wait_until(lambda: tab.ready)
+        tab.setShowSamplingGuides(False)
+        assert continuation_wings() == [False]*4
+        tab.setShowSamplingGuides(True)
+        assert continuation_wings() == [True]*4
+        if transform == 'none':
+            tab.setParameter('width', 20)
+            wait_until(lambda: tab.ready)
+            row = (cross.imageRows-1)/2
+            columns = [(cross.imageColumns-1)*fraction for fraction in (.25, .75)]
+            start = overlay.pixel(columns[0], row)
+            cross.apply_pan(1-start.x(), 0)
+            QTest.qWait(60)
+            ends = [overlay.pixel(col, row) for col in columns]
+            # A complete line whose endpoint is just inside the viewport still
+            # has a real endpoint, not a continuation arrow.
+            assert continuation_wings(ends) == [False]*4
+            cross.apply_pan(cross.panX-11, 0)
+            QTest.qWait(60)
+            assert overlay.pixel(columns[0], row).x() == pytest.approx(-10, abs=.01)
+            end = overlay.pixel(columns[1], row)
+            assert continuation_wings([QPointF(0, end.y()), end]) == [True, True, False, False]
+
+
+def test_sampling_end_on_label_describes_geometry_not_display_zoom(cpr):
+    from qt_dicom_viewer.i18n import message
+    draw(cpr, ((5, 20), (35, 20)))
+    cpr.setParameter('width', 1)
+    cpr.setPositionMm(cpr.totalLength / 2)
+    wait_until(lambda: cpr.ready)
+    with displayed_cpr_page(cpr) as (window, tab):
+        ref = tab.viewForRole('reference-a')
+        ref.setZoom(.1)
+        overlay = named_item(named_item(window.rootObject(), 'cprViewport-reference-a'), 'cprPathOverlay')
+        label = named_item(overlay, 'cprSamplingGuideLabel')
+        for angle, caption in [(0, 'cpr.samplingPoint'), (90, 'cpr.samplingLine')]:
+            tab.setParameter('angle', angle)
+            wait_until(lambda: tab.ready)
+            QTest.qWait(60)
+            guide = ref.cprGuides['samplingLine']
+            a = overlay.pixel(guide['startColumn'], guide['startRow'])
+            b = overlay.pixel(guide['endColumn'], guide['endRow'])
+            assert (b-a).manhattanLength() < 4
+            assert not guide['projected']
+            assert label.property('text') == message(caption)

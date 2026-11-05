@@ -8,6 +8,8 @@ Item {
     default property alias actions: actionsRow.data
     property alias leading: leadingRow.data
     property bool separatorVisible: true
+    readonly property real preferredContentWidth: leadingRow.implicitWidth + actionsRow.implicitWidth
+        + 2 * footerRow.spacing + 2 * footerRow.anchors.margins
     implicitHeight: Theme.controlHeight + 32
     Rectangle {
         visible: footer.separatorVisible
@@ -17,6 +19,7 @@ Item {
         color: Theme.dividerColor
     }
     RowLayout {
+        id: footerRow
         anchors.fill: parent
         anchors.margins: 16
         spacing: 12

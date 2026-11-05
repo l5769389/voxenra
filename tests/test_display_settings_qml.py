@@ -12,7 +12,7 @@ from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
 from test_pacs_qml import scene
 from test_tag_qml import find, click, type_text, descendants
 from test_dicom_tags import qt_app, make_dicom, wait_until
-from test_measurement_qml import viewport, _mouse_drag, _scene, _visual_children
+from test_measurement_qml import viewport, _mouse_drag, _click_points, _scene, _visual_children
 
 def shot(window, name, directory):
     QTest.qWait(70)
@@ -173,7 +173,7 @@ def test_roi_styles_scale_and_arrow_are_applied_to_actual_viewport(viewport, tmp
     window, controller, pixels, warnings = viewport
     settings = controller.settingsController
     controller._tool_controller.selectInteraction('measure:rect')
-    _mouse_drag(window, _scene(pixels, 30, 35), _scene(pixels, 95, 95))
+    _click_points(window, _scene(pixels, 30, 35), _scene(pixels, 95, 95))
     original = controller.measurementController.measurementItems[0]['metrics'].copy()
     settings.setValue('roi', 'mean', False)
     settings.setValue('measurement', 'completedColor', '#ff0000')
@@ -195,7 +195,7 @@ def test_roi_styles_scale_and_arrow_are_applied_to_actual_viewport(viewport, tmp
     QTest.qWait(30)
     assert find(window, 'overlay-topRight').property('text') == 'Zoom: 200%'
     controller._tool_controller.activateTool('annotate')
-    _mouse_drag(window, _scene(pixels, 100, 100), _scene(pixels, 125, 125))
+    _click_points(window, _scene(pixels, 100, 100), _scene(pixels, 125, 125))
     arrows = [i for i in controller.measurementController.measurementItems if i['type'] == 'arrow']
     assert len(arrows) == 1 and not arrows[0]['label']
     settings.setValue('measurement', 'annotationColor', '#a855f7')

@@ -101,7 +101,8 @@ class WorkspaceDocumentController(QObject):
     def hasContent(self):
         # Layout initialization and utility tabs can mark the workspace dirty
         # without any image work to save. The registry includes detached tabs.
-        return bool(self.panel._scan_series_record or self.workspace._closed_tab_snapshots) or any(
+        has_retained_results = self.closedTabCount > len(self.workspace._session_only_closed)
+        return bool(self.panel._scan_series_record or has_retained_results) or any(
             tab.tab_config.series_metas for tab in self.workspace._tab_dict.values())
 
     @Property(str, notify=changed)
@@ -311,7 +312,8 @@ class WorkspaceDocumentController(QObject):
         tabs = self.app.windowManager.ordered_tabs()
         sidebar = list(self.panel._scan_series_record)
         retained = [dict(loads(value), closedId=key)
-                    for key, value in self.workspace._closed_tab_snapshots.items()]
+                    for key, value in self.workspace._closed_tab_snapshots.items()
+                    if key not in self.workspace._session_only_closed]
         ids = set(sidebar)
         ids.update(uid for record in retained for uid in record["series"])
         ids.update(m.series_uid for tab in tabs for m in tab.tab_config.series_metas)
@@ -463,6 +465,7 @@ class WorkspaceDocumentController(QObject):
             self.app.windowManager.restore_to_main()
             self._wired.clear()
             self.workspace._closed_tab_snapshots.clear()
+            self.workspace._session_only_closed.clear()
             self._retained_source_manifests.clear()
             self.app._series_catalog.replace(None)
             self.panel.reset_workspace_session()
@@ -668,6 +671,7 @@ class WorkspaceDocumentController(QObject):
         self.panel._thumbnail_timer.start()
         for key, value in doc.get("layout", {}).items():
             self.app.settingsController.setValue("layout", key, value)
+        self.workspace._session_only_closed.clear()
         self.workspace._closed_tab_snapshots = {
             tab["closedId"]: dumps({k: v for k, v in tab.items() if k != "closedId"})
             for tab in doc["tabs"] if "closedId" in tab
@@ -705,8 +709,8 @@ class WorkspaceDocumentController(QObject):
             self._message, self._error = error_message(error), True
             self.changed.emit()
             return False
-        if record["type"] == "cpr" and any(self.app._series_catalog.get_series(uid) is None for uid in record["series"]):
-            self._message, self._error = _msg("cpr.missingSource"), True
+        if any(self.app._series_catalog.get_series(uid) is None for uid in record["series"]):
+            self._message, self._error = _msg("cpr.missingSource" if record["type"] == "cpr" else "text.0430"), True
             self.changed.emit()
             return False
         if self._pending is not None:
@@ -748,7 +752,8 @@ class WorkspaceDocumentController(QObject):
                         apply_fusion_source(tab, record["fusionSource"])
                         self._loading_tab = (index, record, tab, started, True, True)
                         return
-                    self.workspace.createFusionVolumeTab(tab, target_id=self._reopening_key)
+                    ct, pet = record["series"]
+                    self.workspace.createFusionVolumeTab(tab, target_id=f"petct:{ct}:{pet}:volume")
                     volume_tab = self.workspace.activeTab
                     self.workspace._close_tab(tab.tab_config.tab_id)
                     self._loading_tab = (index, record, volume_tab, time.monotonic(), False, False)
@@ -776,18 +781,19 @@ class WorkspaceDocumentController(QObject):
                  "manual": self.workspace.openManual}[kind]()
                 self._restored_ids[index] = self.workspace.activeTabId
                 return
+            previous = self.workspace.activeTab
             fusion_volume = kind == "3d" and len(uids) == 2
             if kind == "comparempr":
                 self.workspace.createMprCompareTab(*uids)
             elif kind == "compare2d":
                 self.workspace.createMultiCompareTab(uids)
             elif kind == "petctfusion" or fusion_volume:
-                self.workspace.createFusionTab(*uids, isolated=bool(fusion_volume and self._reopening_key))
+                self.workspace.createFusionTab(*uids, isolated=fusion_volume)
             else:
                 self.workspace.createTab(uids[0], record["label"], kind,
-                                         phase_identifiers=record.get("phaseIdentifiers"), restore_cpr=kind == "cpr")
+                                         phase_identifiers=record.get("phaseIdentifiers"), new_session=True)
             tab = self.workspace.activeTab
-            if tab is None:
+            if tab is None or tab is previous:
                 raise ValueError(_msg('text.0430'))
             self._loading_tab = (index, record, tab, time.monotonic(), fusion_volume, False)
         except Exception as error:
@@ -803,6 +809,8 @@ class WorkspaceDocumentController(QObject):
                     self.workspace._close_tab(self._loading_tab[2].tab_config.tab_id)
             else:
                 self.workspace._closed_tab_snapshots.pop(key, None)
+                if key in self.workspace._session_only_closed:
+                    self.workspace._session_only_closed.remove(key)
             self._pending["store"].cleanup()
             self._pending = self._loading_tab = None
             self._load_queue.clear()

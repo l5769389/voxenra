@@ -11,7 +11,7 @@ from PySide6.QtTest import QTest
 from qt_dicom_viewer.settings.preferences import DEFAULTS, normalize_settings
 from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import wait_until
-from test_measurement_qml import qt_app, viewport, _scene, _mouse_drag, _visual_children
+from test_measurement_qml import qt_app, viewport, _scene, _click_points, _visual_children
 from test_pacs_qml import scene
 from test_settings_redesign import open_page
 from test_tag_qml import find, click, type_text, descendants
@@ -34,7 +34,7 @@ def test_measurement_settings_update_existing_geometry_and_labels(viewport, kind
             QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(pixels, *point))
         wait_until(lambda: bool(controller.measurementController.measurementItems))
     else:
-        _mouse_drag(view, _scene(pixels, 30, 35), _scene(pixels, 95, 95))
+        _click_points(view, _scene(pixels, 30, 35), _scene(pixels, 95, 95))
     saved = deepcopy(controller.measurementController.measurementItems)
     settings = controller.settingsController
     for key, value in {'editingColor': '#e55555', 'completedColor': '#55cc99', 'lineWidth': 4,
@@ -137,8 +137,9 @@ def test_roi_single_dimension_toggle_changes_preview_and_live_card(scene, tmp_pa
     controller = app.workspaceController.activeViewport
     controller._tool_controller.selectInteraction('measure:rect')
     pixels = find(window, 'dicomPixelLayer')
-    _mouse_drag(window, _scene(pixels, 30, 35), _scene(pixels, 55, 60))
+    _click_points(window, _scene(pixels, 30, 35), _scene(pixels, 55, 60))
     assert controller.measurementController.measurementItems
+    image_tab_id = app.workspaceController.activeTabId
     open_page(scene, 'roi')
     names = [i.objectName() for i in descendants(window.contentItem()) if i.isVisible()]
     assert 'setting-roi-dimensions' in names and 'setting-roi-width' not in names and 'setting-roi-height' not in names
@@ -156,8 +157,7 @@ def test_roi_single_dimension_toggle_changes_preview_and_live_card(scene, tmp_pa
     click(window, find(window, 'setting-roi-dimensions'))
     assert not app.settingsController.values['roi']['dimensions']
     assert not any(i.isVisible() and i.objectName() == 'roiGeometry-dimensions' for i in descendants(window.contentItem()))
-    click(window, find(window, 'openView-2d'))
-    QTest.qWait(80)
+    click(window, find(window, 'workspaceTab-' + image_tab_id))
     card = find(window, 'roiMetricCard')
     assert [r['key'] for r in card.property('geometryRows').toVariant()] == ['area']
     assert controller.measurementController.measurementItems
@@ -181,7 +181,7 @@ def test_live_measurements_follow_precision_without_losing_raw_values(viewport, 
             QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, _scene(pixels, *point))
             QTest.qWait(20)
     else:
-        _mouse_drag(view, _scene(pixels, 30, 35), _scene(pixels, 95, 95))
+        _click_points(view, _scene(pixels, 30, 35), _scene(pixels, 95, 95))
     measure = controller.measurementController
     raw = measure.committed_measurements
     source = controller._modality_pixel.copy()
@@ -207,3 +207,60 @@ def test_live_measurements_follow_precision_without_losing_raw_values(viewport, 
         assert (controller._modality_pixel == source).all()
     assert view.grabWindow().save(str(tmp_path / ('precision-' + kind + '.png')))
     assert not warnings, warnings
+
+
+def test_linked_annotation_color_updates_existing_arrows_without_recoloring_local_marks(viewport):
+    view, controller, _, warnings = viewport
+    settings = controller.settingsController
+    annotations = controller.textAnnotationController
+    annotations.addAnnotation(30, 30, 80, 50)
+    annotations.addAnnotation(100, 100, 150, 130)
+    annotations.setAnnotationColor('#ff6600')
+    assert settings.setValue('measurement', 'annotationFollowsCompleted', True)
+    assert settings.setValue('measurement', 'completedColor', '#66d0ff')
+    assert [a['color'] for a in annotations.annotationItems] == ['#66d0ff', '#ff6600']
+    assert annotations.annotationColor == '#ff6600'
+    # Even if the default passes through the same color, a personal mark stays fixed.
+    settings.setValue('measurement', 'completedColor', '#ff6600')
+    settings.setValue('measurement', 'completedColor', '#66d0ff')
+    assert annotations.annotationItems[1]['color'] == '#ff6600'
+    # Picking even the remembered color means an explicit override.
+    custom = settings.values['measurement']['annotationColor']
+    assert settings.setValue('measurement', 'annotationColor', custom)
+    assert not settings.values['measurement']['annotationFollowsCompleted']
+    assert settings.setValue('measurement', 'completedColor', '#808080')
+    assert annotations.annotationItems[0]['color'] == custom
+    assert settings.setValue('measurement', 'annotationFollowsCompleted', True)
+    assert [a['color'] for a in annotations.annotationItems] == ['#808080', '#ff6600']
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('legacy_color,linked', [('#66d0ff', False), ('#ffd45c', True)])
+def test_legacy_arrow_color_mode_preserves_saved_appearance(tmp_path, legacy_color, linked):
+    file = tmp_path / 'colors.json'
+    file.write_text(json.dumps({'measurement': {'annotationColor': legacy_color}}))
+    settings = SettingsController(path=file)
+    assert settings.values['measurement']['annotationFollowsCompleted'] == linked
+    assert settings.values['measurement']['annotationColor'] == legacy_color
+    settings.setValue('measurement', 'completedColor', '#808080')
+    assert SettingsController(path=file).values['measurement'] == settings.values['measurement']
+
+
+def test_workspace_annotation_colors_remember_whether_they_follow_settings(viewport):
+    from qt_dicom_viewer.core.workspace_state import encode, decode
+    _, controller, _, _ = viewport
+    annotations = controller.textAnnotationController
+    annotations.addAnnotation(30, 30, 80, 50)
+    controller.settingsController.setValue('measurement', 'annotationFollowsCompleted', True)
+    linked = encode(annotations._annotations[annotations.selectedAnnotationId])
+    explicit = deepcopy(linked)
+    explicit['fields']['follows_default_color'] = False
+    legacy = deepcopy(linked)
+    del legacy['fields']['follows_default_color']
+    controller.settingsController.setValue('measurement', 'completedColor', '#22c55e')
+    for record, expected in ((linked, '#22c55e'), (explicit, linked['fields']['color']),
+                             (legacy, linked['fields']['color'])):
+        restored = decode(record)
+        annotations._annotations = {restored.annotation_id: restored}
+        annotations.selectAnnotation(restored.annotation_id)
+        assert annotations.annotationColor == annotations.selected_copy()['color'] == expected

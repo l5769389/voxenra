@@ -8,7 +8,7 @@ Item {
     property var preferences: ({})
     readonly property var styleSettings: preferences.measurement ?? ({})
     property bool draftStyle: isDraft
-    readonly property bool dashed: draftStyle ? (styleSettings.editingDash ?? true) : (styleSettings.completedDash ?? false)
+    readonly property bool dashed: Theme.drawingLineDashed(styleSettings, draftStyle)
     property var labelPosition: null
     required property var measurement
 
@@ -22,10 +22,8 @@ Item {
 
     property var renderedPoints: mappedPoints
 
-    readonly property color measurementColor:
-        measurement?.type === "arrow" ? (styleSettings.annotationColor ?? Theme.annotationDefault) : draftStyle
-            ? (styleSettings.editingColor ?? Theme.measurementSelected)
-            : (styleSettings.completedColor ?? Theme.measurementPrimary)
+    readonly property color measurementColor: Theme.drawingLineColor(styleSettings, draftStyle,
+        measurement?.type === "arrow" ? Theme.annotationLineColor(styleSettings) : undefined)
 
     readonly property real startX:
         (mappedPoints?.length ?? 0) > 0 ? mappedPoints[0].x : 0

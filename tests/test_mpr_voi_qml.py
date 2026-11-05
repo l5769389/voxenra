@@ -212,17 +212,16 @@ def test_real_mpr_draw_edit_threshold_depth_and_voi(qt_app, paired_series, tmp_p
         tab.toolController.activateTool("voi")
         QTest.qWait(40)
 
-        # Destructive actions occupy the fixed footer, outside the scroller.
+        # Clear actions stay with the VOI content; scroll to them before use.
         clear_kind = next(x for x in _visual_children(view.rootObject()) if x.objectName() == "voiClearKind")
         clear_all = next(x for x in _visual_children(view.rootObject()) if x.objectName() == "voiClearAll")
-        reset = next(x for x in _visual_children(view.rootObject()) if x.objectName() == "activeToolReset")
-        assert clear_kind.isVisible() and clear_all.isVisible() and not reset.isVisible()
+        assert clear_kind.isVisible() and clear_all.isVisible()
         assert clear_kind.property("text") == "清除 VOI"
         footer_y = clear_kind.mapToScene(QPointF(0, 0)).y()
         scroller = next(x for x in _visual_children(view.rootObject()) if x.objectName() == "toolDetailFlickable")
         scroller.setProperty("contentY", 40)
-        assert clear_kind.mapToScene(QPointF(0, 0)).y() == footer_y
-        scroller.setProperty("contentY", 0)
+        assert clear_kind.mapToScene(QPointF(0, 0)).y() == pytest.approx(footer_y)
+        scroller.setProperty("contentY", max(0, scroller.property("contentHeight") - scroller.height()))
         assert not warnings, warnings
         assert view.grabWindow().save(str(tmp_path / (modality + "-mpr-voi.png")))
         _click(view, clear_kind)
@@ -234,7 +233,8 @@ def test_real_mpr_draw_edit_threshold_depth_and_voi(qt_app, paired_series, tmp_p
         assert not clear_all.isEnabled()
         tab.toolController.activateTool("window")
         QTest.qWait(30)
-        assert reset.isVisible() and not clear_all.isVisible()
+        assert any(x.objectName() == "activeToolReset" and x.isVisible() for x in _visual_children(view.rootObject()))
+        assert not clear_all.isVisible()
     finally:
         view.hide()
         delete(view)

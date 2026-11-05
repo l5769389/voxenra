@@ -13,7 +13,7 @@ ColumnLayout {
     readonly property string rangeContext: JSON.stringify({unit: mapping.unit, mode: mapping.mode,
         lower: mapping.lower, upper: mapping.upper})
     spacing: 12
-    function discardRange() { lowerInput.sync(); upperInput.sync() }
+    function discardDraft() { lowerInput.sync(); upperInput.sync() }
     function applyRange() {
         if (!lowerInput.enabled || !upperInput.enabled) return
         if (!lowerInput.acceptableInput || !upperInput.acceptableInput
@@ -21,11 +21,11 @@ ColumnLayout {
         const lower = Number(lowerInput.text), upper = Number(upperInput.text)
         if (!Number.isFinite(lower) || !Number.isFinite(upper) || lower >= upper) return
         panel.viewportController.setDisplayRange(lower, upper)
-        discardRange()
+        discardDraft()
     }
-    onViewportControllerChanged: discardRange()
-    onRangeContextChanged: discardRange()
-    onVisibleChanged: if (!visible) discardRange()
+    onViewportControllerChanged: discardDraft()
+    onRangeContextChanged: discardDraft()
+    onVisibleChanged: if (!visible) discardDraft()
 
     Components.PanelHeading {
         objectName: "ScalarMappingPanelHeading"
@@ -98,7 +98,7 @@ ColumnLayout {
                 enabled: panel.viewportController.loadState === undefined || panel.viewportController.loadState === "ready"
                 numberValue: panel.mapping.lower ?? 0
                 onAccepted: panel.applyRange()
-                Keys.onEscapePressed: panel.discardRange()
+                Keys.onEscapePressed: panel.discardDraft()
             }
         }
         ColumnLayout {
@@ -113,7 +113,7 @@ ColumnLayout {
                 enabled: panel.viewportController.loadState === undefined || panel.viewportController.loadState === "ready"
                 numberValue: panel.mapping.upper ?? 1
                 onAccepted: panel.applyRange()
-                Keys.onEscapePressed: panel.discardRange()
+                Keys.onEscapePressed: panel.discardDraft()
             }
         }
     }

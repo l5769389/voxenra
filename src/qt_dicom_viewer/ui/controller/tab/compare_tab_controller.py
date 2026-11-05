@@ -12,6 +12,7 @@ from PySide6.QtCore import Property, Signal, Slot
 from qt_dicom_viewer.core.compare import (SYNC_OPERATIONS, relative_slice, compatible_patient_space,
     plane_basis, plane_center, nearest_patient_slice, reference_line)
 from qt_dicom_viewer.i18n import message as _msg
+from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from qt_dicom_viewer.model import ViewportConfig, TwoDViewType, WindowLevelChange
 from qt_dicom_viewer.ui.controller.viewport.image_2d.stack_viewport_controller import StackViewportController
 from .tab_controller import TabController
@@ -90,6 +91,7 @@ class CompareStackViewportController(StackViewportController):
 class CompareTabController(TabController):
     settingsChanged = Signal()
     navigationChanged = Signal()
+    _i18n_navigationNotice = Signal()
 
     def __init__(self, config, parent=None):
         if not 2 <= len(config.series_metas) <= 4 or len({m.series_uid for m in config.series_metas}) != len(config.series_metas):
@@ -166,7 +168,8 @@ class CompareTabController(TabController):
     def scrollMode(self):
         return self._scroll_mode
 
-    @Property(str, notify=navigationChanged)
+    @_TextProperty(str, notify=_i18n_navigationNotice, notify_name='_i18n_navigationNotice',
+                   source_notify='navigationChanged')
     def navigationNotice(self):
         if self._scroll_mode == "relative": return _msg('compare.relativeNotice')
         source = self.activeViewport.viewport_config.series_meta

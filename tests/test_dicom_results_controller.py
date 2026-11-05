@@ -166,10 +166,12 @@ def workspace_for(series, volume):
         busy=False,
         _draft=None,
     )
+    frames = {roi.measurement.measurement_id: roi.frame}
     measure = SimpleNamespace(
         committed_measurements=[roi.measurement],
         has_active_transaction=False,
-        _measurement_frames={roi.measurement.measurement_id: roi.frame},
+        frame_for=frames.get,
+        frames=frames,
     )
     view = SimpleNamespace(_measure_controller=measure, viewportRole="image")
     workspace = SimpleNamespace(
@@ -374,7 +376,7 @@ def test_four_d_planar_export_rejects_unresolved_or_projected_context(qt_app, te
     workspace, catalog, _ = phase_workspace(temporal_source, 1)
     measure = workspace.activeTab.activeViewport._measure_controller
     identifier = measure.committed_measurements[0].measurement_id
-    measure._measurement_frames[identifier] += (context,)
+    measure.frames[identifier] += (context,)
     export = DicomResultsController(workspace, catalog)
     try:
         export.export_to(tmp_path)

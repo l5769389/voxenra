@@ -332,19 +332,107 @@ def test_sidebar_does_not_start_queued_drag_after_release(sidebar_scene, monkeyp
     assert not warnings, warnings
 
 
-def test_finishing_curve_in_split_2d_keeps_both_views(sidebar_scene):
+@pytest.mark.parametrize('kind, workspace', [('curve', '2d'), ('freehand', '2d'), ('freehand', 'mpr')])
+def test_finishing_path_then_double_clicking_toggles_split_view(sidebar_scene, kind, workspace):
     window, app, records, warnings = sidebar_scene
-    tab, layout = open_scene(app, records)
-    layout.setLayout('1x2')
+    if workspace == '2d':
+        tab, layout = open_scene(app, records)
+        layout.setLayout('1x2')
+    else:
+        app.workspaceController.createTab(records[0].series_instance_uid, 'MPR', workspace)
+        wait_until(lambda: app.workspaceController.activeLoadState.status == 'ready')
+        tab = app.workspaceController.activeTab
     view = tab.activeViewport
     image = find(window, 'imageViewport-' + view.viewportId)
-    tab.toolController.selectInteraction('measure:curve')
+    tab.toolController.selectInteraction('measure:' + kind)
     def pos(x, y):
         return image.mapToScene(QPointF(image.width()*x, image.height()*y)).toPoint()
-    for x, y in [(0.4, 0.43), (0.5, 0.52), (0.6, 0.46)]:
+    for count, (x, y) in enumerate([(0.4, 0.43), (0.5, 0.52), (0.6, 0.46)], 1):
         QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, pos(x, y))
+        assert len(view.measurementController.activeTransaction.get('points', [])) == count
     QTest.mouseDClick(window, Qt.LeftButton, Qt.NoModifier, pos(0.56, 0.55))
     wait_until(lambda: bool(view.measurementController.committed_measurements))
     assert len(view.measurementController.committed_measurements[0].points) == 3
     assert not tab.focusedViewportId and not view.measurementController.has_active_transaction
+    geometry = view.measurementController.committed_measurements
+    original_size = image.size()
+    QTest.mouseDClick(window, Qt.LeftButton, Qt.NoModifier, pos(0.4, 0.43))
+    wait_until(lambda: tab.focusedViewportId == view.viewportId and image.size() != original_size)
+    QTest.mouseDClick(window, Qt.LeftButton, Qt.NoModifier, pos(0.65, 0.54))
+    wait_until(lambda: not tab.focusedViewportId and image.size() == original_size)
+    assert not view.measurementController.has_active_transaction
+    assert view.measurementController.committed_measurements == geometry
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('kind', ['length', 'rect', 'ellipse', 'angle'])
+@pytest.mark.parametrize('workspace', ['2d', 'mpr'])
+def test_point_measurements_commit_on_press_with_undo_history(sidebar_scene, kind, workspace, tmp_path):
+    window, app, records, warnings = sidebar_scene
+    if workspace == '2d':
+        tab, layout = open_scene(app, records)
+        layout.setLayout('1x2')
+    else:
+        app.workspaceController.createTab(records[0].series_instance_uid, 'MPR', workspace)
+        wait_until(lambda: app.workspaceController.activeLoadState.status == 'ready')
+        tab = app.workspaceController.activeTab
+    view = tab.activeViewport
+    image = find(window, 'imageViewport-' + view.viewportId)
+    click(window, find(window, 'primaryTool-measure'))
+    click(window, find(window, 'measureEntry-' + kind))
+    assert tab.toolController.activeInteraction == 'measure:' + kind
+    measure, history = view.measurementController, tab.historyController
+    def pos(x, y):
+        return image.mapToScene(QPointF(image.width()*x, image.height()*y)).toPoint()
+    points = [(.35, .4), (.55, .4), (.6, .6)] if kind == 'angle' else [(.35, .4), (.6, .6)]
+    for index, (x, y) in enumerate(points):
+        point = pos(x, y)
+        QTest.mousePress(window, Qt.LeftButton, pos=point)
+        try:
+            assert len(measure.committed_measurements) == int(index == len(points) - 1)
+        finally:
+            QTest.mouseRelease(window, Qt.LeftButton, pos=point)
+    assert len(measure.committed_measurements) == 1
+    history.capture()
+    geometry = measure.committed_measurements
+    saved_undo = list(history._undo)
+    from PySide6.QtWidgets import QApplication
+    # Fixed tools do not retract/cancel a completed shape via a double-click timer.
+    QTest.qWait(QApplication.styleHints().mouseDoubleClickInterval() + 30)
+    history.capture()
+    assert measure.committed_measurements == geometry and history._undo == saved_undo
+    assert not measure.has_active_transaction
+    assert window.grabWindow().save(str(tmp_path / (workspace + '-' + kind + '.png')))
+    history.undo()
+    assert not measure.committed_measurements
+    history.redo()
+    assert measure.committed_measurements == geometry
+    assert not warnings, warnings
+
+
+def test_fixed_point_tool_keeps_mpr_crosshair_drag_priority(sidebar_scene):
+    from test_measurement_qml import _scene, _mouse_drag
+    window, app, records, warnings = sidebar_scene
+    app.workspaceController.createTab(records[0].series_instance_uid, 'MPR', 'mpr')
+    wait_until(lambda: app.workspaceController.activeLoadState.status == 'ready')
+    tab = app.workspaceController.activeTab
+    view = tab.activeViewport
+    image = find(window, 'imageViewport-' + view.viewportId)
+    layer = image.findChild(type(image), 'dicomPixelLayer')
+    # find() traverses the visual tree when a loader changes QObject ownership.
+    if layer is None:
+        layer = next(item for item in descendants(image) if item.objectName() == 'dicomPixelLayer')
+    tab.toolController.selectInteraction('measure:length')
+    center = view._crosshair_image_position
+    start = _scene(layer, center.column, center.row)
+    QTest.mousePress(window, Qt.LeftButton, pos=start)
+    try:
+        assert not view.measurementController.has_active_transaction
+    finally:
+        QTest.mouseRelease(window, Qt.LeftButton, pos=start)
+    assert not view.measurementController.has_active_transaction
+    _mouse_drag(window, start, start + QPointF(18, 15).toPoint())
+    assert not view.measurementController.has_active_transaction
+    assert not view.measurementController.committed_measurements
+    wait_until(lambda: view._crosshair_image_position != center)
     assert not warnings, warnings

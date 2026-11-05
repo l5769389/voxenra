@@ -19,6 +19,10 @@ Rectangle {
     property bool canMaximizeViewport: false
     property bool viewportMaximized: false
     signal toggleViewportMaximize()
+    property bool toolsPanelVisible: false
+    property bool toolsPanelCollapsed: false
+    property bool canToggleToolsPanel: true
+    signal toggleToolsPanel()
     readonly property var windowManager: workspaceController.windowManager ?? null
 
     readonly property var opening: workspaceController.activeLoadState
@@ -52,6 +56,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 workspaceController: centerPanel.workspaceController
+                documentController: centerPanel.documentController
             }
             Components.AppButton {
                 id: maximizeButton
@@ -70,6 +75,24 @@ Rectangle {
                 Components.AppToolTip {
                     requested: maximizeButton.hovered || maximizeButton.visualFocus
                     text: maximizeButton.Accessible.description
+                }
+            }
+            Components.AppButton {
+                id: toolsPanelToggle
+                objectName: "toggleRightPanel"
+                visible: centerPanel.toolsPanelVisible
+                enabled: centerPanel.canToggleToolsPanel
+                Layout.preferredWidth: 32
+                Layout.preferredHeight: 32
+                minimumButtonWidth: 32
+                compact: true
+                iconName: centerPanel.toolsPanelCollapsed ? "chevron-left" : "chevron-right"
+                Accessible.name: qsTrId(centerPanel.toolsPanelCollapsed ? "tools.expand" : "tools.collapse")
+                Accessible.description: enabled ? Accessible.name : qsTrId("layout.expandNeedsSpace")
+                onClicked: centerPanel.toggleToolsPanel()
+                Components.AppToolTip {
+                    requested: toolsPanelToggle.hovered || toolsPanelToggle.visualFocus
+                    text: toolsPanelToggle.Accessible.description
                 }
             }
             Components.AppButton {

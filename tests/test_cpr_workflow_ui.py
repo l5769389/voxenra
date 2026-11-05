@@ -1,11 +1,81 @@
 import pytest
-from PySide6.QtCore import QPointF, Qt
+from PySide6.QtCore import QPoint, QPointF, Qt
 from PySide6.QtTest import QTest
 
 from test_cpr_controller import cpr, qt_app, draw, wait_until
 from test_cpr_qml import cpr_page, named_item, double_click
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click
+
+
+@pytest.mark.parametrize('finish', ['enter', 'double'])
+def test_sample_alignment_activation_and_substep_drag(sidebar_scene, tmp_path, finish):
+    window, app, records, warnings = sidebar_scene
+    app.workspaceController.createTab(records[0].series_instance_uid, 'CPR', 'cpr')
+    tab = app.workspaceController.activeTab
+    wait_until(lambda: tab.referencesReady)
+    window.requestActivate()
+    QTest.qWait(80)
+    reference = find(window, 'cprViewport-reference-a')
+    overlay = named_item(reference, 'cprPathOverlay')
+    for col, row in ((30, 20), (65, 70)):
+        point = overlay.mapToScene(overlay.pixel(col, row)).toPoint()
+        QTest.mouseClick(window, Qt.LeftButton, pos=point)
+        QTest.qWait(60)
+    if finish == 'enter':
+        QTest.keyClick(window, Qt.Key_Return)
+    else:
+        QTest.mouseDClick(window, Qt.LeftButton, pos=point)
+        QTest.mouseRelease(window, Qt.LeftButton, pos=point)
+    wait_until(lambda: tab.ready)
+    QTest.qWait(80)
+    refs = [tab.viewForRole(role) for role in ('reference-a', 'reference-b')]
+    assert tab.positionMm == 0
+    assert refs[1].sliceIndex == pytest.approx(20, abs=1)
+    assert all(ref.cprGuides['samplingLine']['centerOnPlane'] for ref in refs)
+    assert window.grabWindow().save(str(tmp_path/'after-path-completion.png'))
+    initial_slices = [ref.sliceIndex for ref in refs]
+    curved = tab.viewForRole('curved')
+    curved_overlay = named_item(find(window, 'cprViewport-curved'), 'cprPathOverlay')
+    sample = curved_overlay.mapToScene(curved_overlay.pixel(1, curved.imageRows/2)).toPoint()
+    QTest.mouseClick(window, Qt.LeftButton, pos=sample)
+    wait_until(lambda: tab.ready)
+    assert 0 < tab.positionMm < 2*tab.current_settings.step_mm
+    assert all(abs(ref.sliceIndex-old) <= 1 for ref, old in zip(refs, initial_slices))
+    assert window.grabWindow().save(str(tmp_path/'after-first-sample-move.png'))
+    tab.setPositionMm(0)
+    wait_until(lambda: tab.ready)
+    # Manual browsing remains independent until an actual sampling request.
+    refs[1].setSliceIndex(refs[1].sliceCount // 2)
+    wait_until(lambda: tab.ready)
+    before = [ref.sliceIndex for ref in refs]
+    centers = tab.session_state()['referenceCenters']
+    cross = tab.viewForRole('cross')
+    item = find(window, 'cprViewport-cross')
+    point = item.mapToScene(QPointF(item.width()/2, item.height()/2)).toPoint()
+    assert window.grabWindow().save(str(tmp_path/'before-cross-click.png'))
+    QTest.mouseClick(window, Qt.LeftButton, pos=point)
+    QTest.qWait(80)
+    assert tab.activeViewport is cross
+    assert [ref.sliceIndex for ref in refs] == before
+    assert tab.positionMm == 0
+    assert window.grabWindow().save(str(tmp_path/'after-cross-click.png'))
+    tab.toolController.activateTool('scroll')
+    QTest.mousePress(window, Qt.LeftButton, pos=point)
+    QTest.mouseMove(window, point+QPoint(0, 15), 20)
+    QTest.mouseMove(window, point+QPoint(0, 20), 20)
+    QTest.mouseRelease(window, Qt.LeftButton, pos=point+QPoint(0, 20))
+    QTest.qWait(80)
+    wait_until(lambda: tab.ready)
+    assert tab.positionMm == 0
+    assert tab.session_state()['referenceCenters'] == centers
+    assert [ref.sliceIndex for ref in refs] == before
+    assert window.grabWindow().save(str(tmp_path/'after-substep-drag.png'))
+    cross.handleWheel(-120, 0, item.width()/2, item.height()/2, 0)
+    wait_until(lambda: tab.ready)
+    assert tab.positionMm > 0 and refs[1].sliceIndex != before[1]
+    assert window.grabWindow().save(str(tmp_path/'after-real-navigation.png'))
+    assert not warnings, warnings
 
 
 @pytest.mark.parametrize('action', ['new', 'edit', 'finish', 'cancel'])
@@ -371,8 +441,29 @@ def test_interval_shortcuts_labels_and_scope_in_main_window(sidebar_scene, monke
     QTest.keyClick(window, Qt.Key_S)
     wait_until(lambda: tab.toolController.activeTool == 'scroll')
     ws.createTab(uid, '2D', '2d')
+    wait_until(lambda: ws.activeTabType == '2d' and ws.activeLoadState.status == 'ready')
     image = find(window, 'imageViewport-' + ws.activeViewport.viewportId)
     image.forceActiveFocus()
     QTest.keyClick(window, Qt.Key_S)
     wait_until(lambda: ws.activeTab.toolController.activeTool == 'scroll')
     assert not warnings, warnings
+
+
+def test_selecting_a_saved_path_in_the_panel_allows_delete(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    app.workspaceController.createTab(records[0].series_instance_uid, 'CPR', 'cpr')
+    tab = app.workspaceController.activeTab
+    wait_until(lambda: tab.referencesReady)
+    draw(tab, ((35, 40), (65, 40)))
+    first = tab.selectedPathId
+    draw(tab, ((35, 56), (65, 56)))
+    second = tab.selectedPathId
+    combo = find(window, 'cprPathSelector')
+    combo.forceActiveFocus(Qt.TabFocusReason)
+    QTest.keyClick(window, Qt.Key_Up)
+    wait_until(lambda: tab.selectedPathId == first)
+    assert not tab.pathEditing
+    QTest.keyClick(window, Qt.Key_Backspace)
+    wait_until(lambda: [p['pathId'] for p in tab.paths] == [second])
+    QTest.keyClick(window, Qt.Key_Delete)
+    assert len(tab.paths) == 1 and not warnings

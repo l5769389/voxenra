@@ -297,6 +297,7 @@ def test_compact_reset_restores_all_view_state(sidebar_scene, tmp_path, theme):
     reset = find(window, 'compactToolReset')
     assert reset.parentItem().property('label') == '重置所有'
     assert reset.isEnabled()
+    assert not rail.isAncestorOf(reset)
     click(window, reset)
     QTest.qWait(80)
     state = view.viewport_state

@@ -8,6 +8,8 @@ from importlib.resources import files
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
+from functools import partial
+from unittest.mock import patch
 import time
 import traceback
 
@@ -19,6 +21,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
 from qt_dicom_viewer.app import bind_controller
+from qt_dicom_viewer.ui.app_controller import AppController
 from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
 from qt_dicom_viewer.model import DicomFolderScanSnapshot, TabType
 
@@ -66,7 +69,10 @@ def main():
     app.setQuitOnLastWindowClosed(False)
     temp = TemporaryDirectory(prefix="water-qa-")
     series, expected = make_water_series(Path(temp.name))
-    engine = bind_controller()
+    isolated = partial(AppController, settings_path=Path(temp.name) / "settings.json",
+                       pacs_config_path=Path(temp.name) / "pacs.json", pacs_import_root=Path(temp.name) / "imports")
+    with patch("qt_dicom_viewer.app.AppController", isolated):
+        engine = bind_controller()
     app_controller = engine.app_controller
     app_controller._series_catalog.update(DicomFolderScanSnapshot(Path(temp.name), 3, 3, 0, [series]))
     warnings, errors = [], []
@@ -110,6 +116,8 @@ def main():
         try:
             wait_for(lambda: bool(view.imageSource))
             np.testing.assert_array_equal(view._modality_pixel, expected[0])
+            if not any(i.objectName() == "primaryTool-service" and i.isVisible() for i in children(root.contentItem())):
+                click("primaryToolsMore")
             click("primaryTool-service")
             click("serviceEntry-qa")
             qa = view.qaController
@@ -148,12 +156,14 @@ def main():
             pump()
             if len(sys.argv) > 1:
                 assert root.grabWindow().save(sys.argv[1])
-            click("waterQaInfo-uniformity_hu")
-            assert "最大绝对值" in find("waterQaInfoDetail").property("text")
+            tab_id = workspace.activeTabId
+            click("waterQaManualButton")
+            wait_for(lambda: workspace.activeTabType == "manual" and workspace.manualController.chapterId == "water-qa")
             if len(sys.argv) > 1:
                 path = Path(sys.argv[1])
                 assert root.grabWindow().save(str(path.with_stem(path.stem+"-info")))
-            click("waterQaInfoClose")
+            workspace.activateTabId(tab_id)
+            wait_for(lambda: workspace.activeViewport is view and find("waterQaManualButton").isVisible())
             saved, token = qa.currentResult, qa._token
             view.applyWindowPreset(200, 800)
             wait_for(lambda: view.current_window.center == 200)
@@ -169,8 +179,12 @@ def main():
             view.apply_zoom(1.2)
             pump()
             assert qa.currentResult == saved
+            find("activeToolReset").forceActiveFocus(Qt.TabFocusReason)
+            pump()
             click("activeToolReset")
             assert not qa.enabled and qa.roiItems == []
+            find("waterQa-analyze").forceActiveFocus(Qt.TabFocusReason)
+            pump()
             click("waterQa-analyze")
             wait_for(lambda: qa.status == "ready")
             assert len(qa.roiItems) == 5

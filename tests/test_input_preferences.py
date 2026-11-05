@@ -160,7 +160,7 @@ def test_view_reset_conflicts_only_in_its_member_menus_and_keeps_older_remaps(qt
     path.write_text(json.dumps({'shortcuts': {'bindings': {'pan': 'R', 'cpr-next': 'L'}}}))
     settings = SettingsController(path=path)
     values = settings.section('shortcuts')['bindings']
-    assert values['pan'] == 'R' and values['view-reset'] == ''
+    assert values['pan'] == 'R' and values['view-reset'] == values['measure:rect'] == ''
     assert values['cpr-next'] == values['measure:length'] == 'L'
     assert not settings.setValue('shortcuts', 'bindings', dict(values, **{'view-reset': 'J'}))
     assert not settings.setValue('shortcuts', 'bindings', dict(values, **{'view-reset': 'L'}))

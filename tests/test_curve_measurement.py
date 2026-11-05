@@ -215,3 +215,28 @@ def test_double_click_exits_too_short_path_without_creating_a_measurement(viewpo
     assert not controller.measurementController.has_active_transaction
     assert not controller.measurementController.committed_measurements
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize("kind", ["curve", "freehand"])
+def test_drag_places_one_path_point_at_release(viewport, kind):
+    from PySide6.QtCore import QPoint
+    window, controller, layer, warnings = viewport
+    controller._tool_controller.selectInteraction('measure:' + kind)
+    measure = controller.measurementController
+    for i, (x, y) in enumerate(((50, 50), (90, 60), (70, 90))):
+        end = _scene(layer, x, y)
+        start = end - QPoint(19, 12)
+        QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
+        marker = next(item for item in _visual_children(window.rootObject())
+                      if item.objectName() == 'pathPointPlacementPreview')
+        assert marker.isVisible()
+        QTest.mouseMove(window, start + QPoint(11, 8), 20)
+        QTest.mouseMove(window, end, 20)
+        assert len(measure.activeTransaction.get('points', [])) == i
+        QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
+        assert not marker.isVisible()
+        points = measure.activeTransaction['points']
+        assert len(points) == i + 1
+        assert (points[-1]['column'], points[-1]['row']) == pytest.approx((x, y), abs=.3)
+    QTest.keyClick(window, Qt.Key_Return)
+    assert len(measure.committed_measurements) == 1 and not warnings

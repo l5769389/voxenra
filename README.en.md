@@ -91,7 +91,7 @@ Switch each viewport between original slices and axial/coronal/sagittal reconstr
 
 Tabs prioritize the original series description on the first line, with patient and available study information below. Missing fields are omitted; hover for full source details. Identity-hiding settings also cover the new reading labels. Window values consistently use **WW → WL**. Star CT presets to place favorites first; starring does not apply window values, and the preset list scrolls independently.
 
-![CT preset favorites and the independently scrolling list](docs/screenshots/en/55-window-favorites.png)
+![CT preset favorites and the independently scrolling list](docs/screenshots/en/55-window-favorites-2.4.0.png)
 
 Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F12 on some Mac keyboards), to hide both side panels and button rails. Repeat to restore their widths and expanded states. This affects only the current window and is independent of single-viewport enlargement and system full screen.
 
@@ -104,7 +104,7 @@ Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F1
 - **3D:** CT, MR, and PET volume rendering with presets, windowing, orientation, rotation, and region cropping; 20 CT presets and CT bed removal.
 - **4D:** synchronized multi-phase CT playback, with segmentation and VOI stored by phase; separate slice playback within the current phase. The image and exported PNG identify the displayed phase.
 
-![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/61-cpr-reference-2.3.0.png)
+![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/61-cpr-reference-2.4.0.png)
 
 **Dual-series MPR comparison** keeps position, rotation, CT windowing, and physical display-scale switches visible. Groups start independently. Enabling window/scale sync uses the selected group; position/rotation linking preserves existing offsets and synchronizes subsequent changes. Double-click to enlarge corresponding planes side by side. Linking does not perform automatic registration.
 
@@ -148,7 +148,7 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 **Free-shape measurement.** Click to place at least three control points, then press Enter or double-click to close the contour and view its statistics. Double-clicking finishes at the last point placed.
 
-![Free-shape ROI drawing and statistics](docs/screenshots/01-freehand-measurement.gif)
+![Measurement tools and grouped results](docs/screenshots/en/63-measurement-2.4.0.png)
 
 **Curve measurement.** Click at least three control points, then press Enter or double-click to measure the physical arc length of the smooth path.
 
@@ -181,7 +181,7 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 Import source DICOM images on the left and associated SEG / NRRD masks through **Import segmentation** on the right (named “Import” in v2.1.3). Export source series as PNG or DICOM, or save the current view as a PNG screenshot. Series export and viewport screenshots have different content scopes; see [export details](docs/export.md).
 
-Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Start a blank workspace; closing a tab retains editing results, reopenable from the workspace panel or Ctrl+Shift+T / ⇧⌘T. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
+Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Opening a series from the list creates an independent tab. Click an existing tab to continue reading there. If you close a tab accidentally, choose **Reopen closed tab** from a tab’s context menu, the home screen or Workspace, or press Ctrl+Shift+T / ⇧⌘T. The session remembers the last 20 closed, fully loaded reading tabs without edits. Workspace files retain completed editing results from closed tabs. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
 
 ![Offline manual and workflow demos](docs/screenshots/en/50-offline-manual-2.1.2.png)
 
@@ -192,7 +192,7 @@ Drag tabs into detached windows or move them between windows. Workspaces preserv
 </tr>
 <tr>
 <td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="Detach a tab into another window" width="100%"></a></td>
-<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/17-workspace-2.1.3.png"><img src="docs/screenshots/en/17-workspace-2.1.3.png" alt="Create, reopen, and save a workspace" width="100%"></a></td>
+<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/17-workspace-2.4.0.png"><img src="docs/screenshots/en/17-workspace-2.4.0.png" alt="Create, open, and save a workspace" width="100%"></a></td>
 </tr>
 </table>
 
@@ -210,7 +210,7 @@ Choose **Follow system** in **Settings → Theme & language** to follow the oper
 
 Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Button labels show the current shortcuts. Number keys select items in supported menus. Conflicting or reserved shortcuts are rejected. Edit corner information directly with sample values, drag within or between corners, and add or remove fields; changes save on release. Crosshairs, scales, measurement styles, and ROI metrics remain configurable. Chinese, English, and Brazilian Portuguese are built in, with support for additional local JSON language packs. Independent switches show labels for sidebar actions and right-side tools. Privacy options control identity overlays in new views and let you clear recent workspace entries.
 
-![Theme, language and independent button labels](docs/screenshots/en/62-appearance-2.3.0.png)
+![Theme, language and independent button labels](docs/screenshots/en/62-appearance-2.4.0.png)
 
 ![Direct corner editing and moves between corners](docs/screenshots/en/58-corner-editor-2.1.5.gif)
 

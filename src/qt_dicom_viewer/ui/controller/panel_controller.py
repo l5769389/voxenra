@@ -34,6 +34,7 @@ class PanelController(QObject):
 
     statusMessageChanged = Signal()
     importTaskChanged = Signal()
+    imagesAlreadyListed = Signal()
     scanningChanged = Signal()
     seriesItemsChanged = Signal()
     sidebarItemsChanged = Signal()
@@ -60,7 +61,12 @@ class PanelController(QObject):
         self._import_error = False
         self._import_task_open = False
         self._import_progress = -1.0
-        self._import_clean_success = False
+        self._import_outcome = 'review'
+        self._import_restored_series = False
+        self._progress_delay = QTimer(self)
+        self._progress_delay.setSingleShot(True)
+        self._progress_delay.setInterval(300)
+        self._progress_delay.timeout.connect(self._show_import_task)
         self._last_import_paths = []
         self._last_import_directory = ""
         self._import_store = LocalImportStore()
@@ -114,11 +120,13 @@ class PanelController(QObject):
             return False
         if self._import_is_blocked(retry_paths=paths):
             return False
+        if self._import_task_open:
+            self.closeImportTask()
         self._last_import_snapshot = None
-        self._import_clean_success = False
+        self._import_outcome = 'review'
+        self._import_restored_series = False
         self._last_import_paths = list(paths)
         self._select_after_local_import = not self._selected_series_uids
-        self._import_task_open = True
         self._import_progress = -1.0
         self._set_status(_msg('text.0472'))
         # Only sources actually read by this import may restore hidden items.
@@ -127,6 +135,7 @@ class PanelController(QObject):
         thread = QThread(self)
         worker = DicomScanWorker(paths, self._import_store,
             base_series=self._series_catalog.snapshot() if self._series_catalog else {})
+        self._progress_delay.start()
         self.importTaskChanged.emit()
 
         self._scan_thread = thread
@@ -146,10 +155,8 @@ class PanelController(QObject):
         self._last_import_paths = list(retry_paths)
         self._last_import_snapshot = None
         self._import_progress = -1.0
-        self._import_clean_success = False
         self._set_status(reason, True)
-        self._import_task_open = True
-        self.importTaskChanged.emit()
+        self._show_import_task()
         return True
 
     def _wire_scan_thread(self,thread: QThread | None, worker: QObject | None) -> None:
@@ -177,6 +184,8 @@ class PanelController(QObject):
             if requested is None:
                 requested = {s.series_instance_uid for s in result.series}
             restored = requested & self._local_import_restorable_uids
+            if restored:
+                self._import_restored_series = True
             self._removed_series_uids.difference_update(restored)
             self._local_import_restorable_uids.difference_update(restored)
             visible = set(self._scan_series_record) | requested
@@ -202,6 +211,12 @@ class PanelController(QObject):
     def importProgress(self): return self._import_progress
 
     @Slot()
+    def _show_import_task(self):
+        if not self._closing and not self._import_task_open:
+            self._import_task_open = True
+            self.importTaskChanged.emit()
+
+    @Slot()
     def closeImportTask(self):
         self._import_task_open = False
         self.importTaskChanged.emit()
@@ -224,9 +239,11 @@ class PanelController(QObject):
         if result is not None and result is not self._last_import_snapshot:
             self._handle_scan_process(result)
         final = self._last_import_snapshot
-        self._import_clean_success = False
+        self._progress_delay.stop()
         if self._scan_thread and self._scan_thread.isInterruptionRequested():
             self._set_status(_msg('text.0474'))
+            if not self._import_restored_series and (final is None or final.dicom_file_count == final.existing_file_count):
+                self._import_outcome = 'complete'
         elif final is None or not final.dicom_file_count:
             self._set_status(_msg('text.0475'), True)
         else:
@@ -240,13 +257,17 @@ class PanelController(QObject):
             self._set_status(_msg('text.0476', value1=len(final.series), value2=final.dicom_file_count)
                              + (_msg('text.0477', value1=final.skipped_file_count) if final.skipped_file_count else "")
                              + (_msg('import.alreadyLoaded', count=final.existing_file_count) if final.existing_file_count else ""))
-            self._import_clean_success = not (final.skipped_file_count or final.existing_file_count)
+            if not final.skipped_file_count and not final.existing_file_count:
+                self._import_outcome = 'complete'
+            elif (final.existing_file_count == final.dicom_file_count
+                  and final.skipped_file_count == final.duplicate_file_count):
+                self._import_outcome = 'complete' if self._import_restored_series else 'already-listed'
         self._select_after_local_import = False
 
     @Slot(object)
     def _handle_scan_failed(self, error) -> None:
         if not self._closing:
-            self._import_clean_success = False
+            self._progress_delay.stop()
             self._set_status(error_message(error), True)
 
     @_TextProperty(str, notify=_i18n_statusMessage, notify_name='_i18n_statusMessage', source_notify='statusMessageChanged')
@@ -309,10 +330,14 @@ class PanelController(QObject):
         self._scan_thread = None
         self._scan_worker = None
         self._set_scanning(False)
-        # Close only after the worker exits, so the native busy-window close guard
-        # cannot veto a clean result. All other outcomes stay open for review.
-        if self._import_clean_success and not self._closing:
-            self.closeImportTask()
+        # A visible native progress window can close only once scanning is false.
+        if not self._closing:
+            if self._import_outcome == 'review':
+                self._show_import_task()
+            else:
+                self.closeImportTask()
+                if self._import_outcome == 'already-listed':
+                    self.imagesAlreadyListed.emit()
 
         if thread is not None:
             thread.deleteLater()
@@ -652,6 +677,7 @@ class PanelController(QObject):
     @Slot()
     def shutdown(self):
         self._closing = True
+        self._progress_delay.stop()
         self.closeImportTask()
         self._thumbnail_timer.stop()
         if self._thumbnail_service is not None:
@@ -807,7 +833,7 @@ class PanelController(QObject):
         self._last_import_paths = []
         self._import_task_open = False
         self._import_progress = -1.0
-        self._import_clean_success = False
+        self._progress_delay.stop()
         self._set_status("")
         self.importTaskChanged.emit()
 

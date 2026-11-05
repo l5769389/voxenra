@@ -183,8 +183,7 @@ class Image2DViewportController(ViewportController):
         self._fwhm_controller = None
         self._qa_controller = None
         self._set_default_color_map()
-        annotation_style = self._settings_controller.section("measurement")
-        self._annotation_style_defaults = dict(color=annotation_style["annotationColor"], font_size=annotation_style["fontSize"])
+        self._annotation_style_defaults = self._annotation_defaults()
         self._text_annotation_controller.applyStyleDefaults(**self._annotation_style_defaults)
         self._settings_controller.sectionChanged.connect(self._preferences_changed)
         self._tool_controller.windowPresetsChanged.connect(self.windowPresetsChanged.emit)
@@ -234,11 +233,15 @@ class Image2DViewportController(ViewportController):
         name = self._settings_controller.section("colormap")[category]
         self._state = replace(self._state, display_style=DisplayStyle(name, COLOR_MAPS[name][1][0]))
 
+    def _annotation_defaults(self):
+        style = self._settings_controller.section("measurement")
+        color = style["completedColor"] if style["annotationFollowsCompleted"] else style["annotationColor"]
+        return dict(color=color, font_size=style["fontSize"])
+
     @Slot(str)
     def _preferences_changed(self, section):
         if section == "measurement":
-            style = self._settings_controller.section("measurement")
-            defaults = dict(color=style["annotationColor"], font_size=style["fontSize"])
+            defaults = self._annotation_defaults()
             changed = {key: value for key, value in defaults.items() if value != self._annotation_style_defaults[key]}
             self._text_annotation_controller.applyStyleDefaults(**changed)
             self._annotation_style_defaults = defaults
@@ -703,6 +706,10 @@ class Image2DViewportController(ViewportController):
             info.update(phaseNumber=phases.index(phase) + 1, phaseCount=len(phases))
         return info
 
+    @Slot(result=bool)
+    def hasActiveDrag(self):
+        return self._active_drag_operation is not None
+
     @Slot(float, float, int, bool, float, float, float, float)
     def beginInteraction(
             self,
@@ -952,9 +959,7 @@ class Image2DViewportController(ViewportController):
         # UI 已拦截按住鼠标的 hover；这里再防御拖动期间的晚到事件。
         if self._active_drag_operation is not None or (self._qa_controller is not None and self._qa_controller.dragging):
             return
-        if self._tool_controller.active_interaction in (InteractionType.MEASURE_ANGLE, InteractionType.MEASURE_FREEHAND, InteractionType.MEASURE_CURVE):
-            preview = ImagePoint(column, row) if isfinite(column) and isfinite(row) else None
-            self._measure_controller.preview_at(preview)
+        self.previewFixedPoint(column, row)
         self.refreshInteractionHover(x, y, column, row, point_tolerance, line_tolerance)
 
         if self._modality_pixel is None or not image_valid:
@@ -1629,10 +1634,41 @@ class Image2DViewportController(ViewportController):
             return
         self.apply_window_level(WindowLevelChange(WindowLevel(center=center, width=width), self.inverted))
 
+    @Slot(bool, float, float, float, float, float, float, result=bool)
+    def placeFixedPoint(self, valid, column, row, endpoint, line, x, y):
+        """Confirm a fixed-count point on press; reserve that gesture from dragging."""
+        if self._tool_controller.active_interaction == InteractionType.ANNOTATE_TEXT:
+            if (valid and self._frame_meta is not None
+                    and self._frame_meta.slice_index == self._state.slice_index):
+                self._text_annotation_controller.place_point(column, row, max(endpoint, line))
+            return True
+        if self._measurement_context(endpoint, line) is None:
+            return True
+        position = PointerPosition(Point(x, y), ImagePoint(column, row))
+        if self._begin_specific_interaction(position, endpoint, line) is not None:
+            # MPR handles keep their navigation gesture, including a press
+            # without a preceding hover event. Release must not create a point.
+            return False
+        creating = self._measure_controller.creating_fixed_points
+        self.selectMeasurementAt(valid, column, row, endpoint, line, x, y)
+        # Existing geometry remains draggable; a creation press owns the entire
+        # gesture, including the final press after its draft has been committed.
+        return creating or self._measure_controller.creating_fixed_points
+
+    @Slot(float, float)
+    def previewFixedPoint(self, column, row):
+        if not isfinite(column) or not isfinite(row):
+            return
+        if self._tool_controller.active_interaction in MEASUREMENT_KINDS:
+            self._measure_controller.preview_at(ImagePoint(column, row))
+        elif self._tool_controller.active_interaction == InteractionType.ANNOTATE_TEXT:
+            self._text_annotation_controller.updateAnnotation(column, row)
+
     @Slot(QObject, QPointF, bool, float, float, float, float, float, float)
     def queuePointClick(self, window, scene_pos, valid, column, row, endpoint, line, x, y):
-        if valid and getattr(self, "cprDrawing", False):
-            self._cpr.queue_draft_point(self, window, scene_pos, column, row, endpoint)
+        if getattr(self, "cprPathInput", False):
+            if valid:
+                self._cpr.queue_reference_click(self, window, scene_pos, column, row, endpoint)
             return
         frame, interaction = self._frame_meta, self.activeInteraction
         path_input = getattr(self, "cprEditing", False)
@@ -1645,11 +1681,22 @@ class Image2DViewportController(ViewportController):
                 return
             self.selectMeasurementAt(valid, column, row, endpoint, line, x, y)
 
-        self._point_click.queue(window, scene_pos, place)
+        if (interaction in ("measure:curve", "measure:freehand") and not path_input
+                and getattr(self, "viewportRole", "") != "curved"):
+            self._point_click.confirm()
+            retract = self._measure_controller.place_reversible_path_tap(place)
+            self._point_click.queue(window, scene_pos, None, retract=retract)
+        else:
+            place()
 
     @Slot()
-    def discardPointClick(self):
-        self._point_click.discard()
+    def confirmPointClick(self):
+        self._point_click.confirm()
+
+    @Slot(result=bool)
+    @Slot(bool, result=bool)
+    def discardPointClick(self, double_tap=False):
+        return self._point_click.discard(double_tap=double_tap)
 
     @Slot(bool, float, float, float, float)
     @Slot(bool, float, float, float, float, float, float)
@@ -1783,17 +1830,13 @@ class Image2DViewportController(ViewportController):
     @Slot(result=bool)
     @Slot(bool, result=bool)
     def finishMeasurement(self, exit_incomplete=False):
-        if exit_incomplete and self.activeInteraction == "measure:angle":
-            self.cancelMeasurement()
-            return True
         return self._measure_controller.finish_path(exit_incomplete=exit_incomplete)
 
     @Slot()
     def cancelMeasurement(self) -> None:
         self.discardPointClick()
-        if self._annotation_drag_active:
-            self._annotation_drag_active = False
-            self._text_annotation_controller.cancelDraft()
+        self._annotation_drag_active = False
+        self._text_annotation_controller.cancelDraft()
         self._measure_controller.cancel_transaction()
         if self._qa_controller is not None:
             self._qa_controller.cancel_drag()

@@ -34,7 +34,7 @@ Item {
     property string shortcutAction: ""
     property string fixedShortcutAction: ""
     readonly property string shortcutHint: fixedShortcutAction ? shortcutOwner?.hint(fixedShortcutAction) ?? ""
-        : KeysText.hint(shortcutAction, shortcutOwner?.bindings ?? [], action.Window.window?.activeReadingMenu, action.Window.window?.readingListCount)
+        : KeysText.hint(shortcutAction, shortcutOwner?.bindings ?? [], action.Window.window?.readingMenuSequences)
     property string explanation: ""
     readonly property string tooltipBody: explanation
         ? (caption.visible && !caption.truncated ? explanation : label + " · " + explanation) : label

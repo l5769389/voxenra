@@ -52,39 +52,39 @@ ColumnLayout {
         compact: true
         onClicked: panel.controller.returnToCurrentResult()
     }
-    Components.AppComboBox {
-        objectName: "cprPathSelector"
-        Layout.fillWidth: true
-        visible: !panel.drawing && panel.hasPath
-        model: panel.controller?.paths ?? []
-        textRole: "name"
-        Accessible.name: qsTrId("cpr.selectedPath")
-        Accessible.description: currentText
-        currentIndex: model.findIndex(item => item.pathId === panel.controller?.selectedPathId)
-        onActivated: panel.controller.selectPath(model[currentIndex].pathId)
-    }
     RowLayout {
         Layout.fillWidth: true
-        visible: panel.hasPath && !panel.results && !panel.drawing && !panel.editing
-        enabled: !!panel.controller?.referencesReady && !panel.controller?.sourceMismatch
-        Components.AppButton {
-            objectName: "cprAdditionalPath"
+        visible: !panel.drawing && panel.hasPath
+        Components.AppComboBox {
+            objectName: "cprPathSelector"
             Layout.fillWidth: true
-            shortcutTitle: qsTrId("cpr.new")
-            captionKey: KeysText.hint("cpr-new", panel.shortcuts)
-            onClicked: panel.controller.startPath()
+            model: panel.controller?.paths ?? []
+            textRole: "name"
+            Accessible.name: qsTrId("cpr.selectedPath")
+            Accessible.description: currentText
+            currentIndex: model.findIndex(item => item.pathId === panel.controller?.selectedPathId)
+            onActivated: panel.controller.selectPath(model[currentIndex].pathId)
         }
         Components.AppButton {
-            objectName: "cprEditPath"
-            Layout.fillWidth: true
-            shortcutTitle: qsTrId("cpr.edit")
-            captionKey: KeysText.hint("cpr-edit", panel.shortcuts)
-            onClicked: panel.controller.setPathEditing(true)
+            objectName: "cprDeletePath"
+            enabled: !panel.historical && !panel.controller?.sourceMismatch && !panel.controller?.finishing
+            Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
+            minimumButtonWidth: 32
+            compact: true
+            iconName: "delete"
+            iconSize: 16
+            normalColor: "transparent"
+            hoverColor: Theme.dangerSurface
+            textColor: hovered ? Theme.dangerColor : Theme.textSecondary
+            Accessible.name: qsTrId("cpr.deletePath")
+            hintText: Accessible.name
+            onClicked: panel.controller.deletePath()
         }
     }
     Text {
         objectName: "cprPathStatus"
-        visible: !panel.results
+        visible: !panel.results && (panel.hasPath || panel.drawing)
         Accessible.role: Accessible.StaticText
         Accessible.name: text
         Layout.fillWidth: true
@@ -109,10 +109,10 @@ ColumnLayout {
     Components.AppButton {
         objectName: "cprDeletePoint"
         Layout.fillWidth: true
-        visible: panel.drawing || panel.editing
+        visible: panel.drawing || (panel.editing && panel.controller.canDeletePoint)
         compact: true
         shortcutTitle: qsTrId(panel.drawing ? "cpr.undoPoint" : "cpr.deletePoint")
-        captionKey: panel.drawing ? "Backspace" : "Delete"
+        captionKey: panel.drawing ? "Backspace" : ""
         iconName: panel.drawing ? "undo" : "delete"
         enabled: panel.controller?.canDeletePoint ?? false
         onClicked: panel.controller.deleteSelectedPoint()
@@ -172,16 +172,7 @@ ColumnLayout {
                 onClicked: panel.controller.locatePoint(modelData.index)
             }
         }
-        Components.AppButton {
-            objectName: "cprDeletePath"
-            Layout.fillWidth: true
-            visible: !panel.drawing
-            text: qsTrId("cpr.deletePath")
-            iconName: "delete"
-            actionRole: "danger"
-            compact: true
-            onClicked: panel.controller.deletePath()
-        }
+
     }
     ColumnLayout {
         Layout.fillWidth: true

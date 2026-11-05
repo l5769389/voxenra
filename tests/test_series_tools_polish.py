@@ -2,7 +2,7 @@
 from dataclasses import replace
 
 import pytest
-from PySide6.QtCore import QPointF, Qt
+from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtGui import QImage
 from PySide6.QtTest import QTest
 
@@ -291,6 +291,71 @@ def test_window_preset_content_is_centered_and_actions_remain_distinct(display_p
             assert center == pytest.approx(row.height() / 2, abs=0.5)
     assert view.grabWindow().save(str(tmp_path / f"window-controls-{width}.png"))
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize(("panel_width", "custom"), [(220, True), (290, False), (420, True)])
+def test_preset_header_and_values_share_visible_column_centers(display_panel, panel_width, custom):
+    view, controller, warnings = display_panel
+    view.resize(panel_width, 700)
+    if custom:
+        assert controller.settingsController.saveWindowTemplate("", "自定义模板", 1200, -100)
+    controller._tool_controller.activateTool("window")
+    QTest.qWait(100)
+    root = view.rootObject()
+    listing = _find(root, "windowPresetList")
+    scrollbar = _find(listing, "appScrollBar")
+    img = view.grabWindow()
+    scale = img.devicePixelRatio()
+
+    for column in ("WW", "WL"):
+        header = next(item for item in descendants(root) if item.isVisible() and item.property("text") == column)
+        cell = _find(root, "windowPreset" + column + "-ct-lung")
+        center = header.mapToScene(QPointF(header.width() / 2, 0)).x()
+        assert cell.mapToScene(QPointF(cell.width() / 2, 0)).x() == pytest.approx(center, abs=0.5)
+        assert cell.mapToItem(scrollbar, QPointF(cell.width(), 0)).x() < 0
+
+        # Check the rendered ink. Aligned cell rectangles can still paint
+        # headings and differently sized numbers against the right edge.
+        for item in (header, cell):
+            origin = item.mapToScene(QPointF())
+            left = round(origin.x() * scale)
+            top = round((origin.y() + item.height() / 2 - 6) * scale)
+            right = round((origin.x() + item.width()) * scale)
+            bottom = round((origin.y() + item.height() / 2 + 6) * scale)
+            ink = [x for y in range(top, bottom) for x in range(left, right)
+                   if abs(img.pixelColor(x, y).lightness() - img.pixelColor(left, y).lightness()) > 30]
+            assert ink
+            assert (min(ink) + max(ink) + 1) / (2 * scale) == pytest.approx(center, abs=1.5)
+    assert not warnings, warnings
+
+
+def test_narrow_preset_columns_contain_localized_heading_and_custom_values(sidebar_scene):
+    from qt_pointer import move_pointer
+    from test_input_settings_qml import reading_scene
+    from test_tag_qml import settled_point
+
+    window, app, tab = reading_scene(sidebar_scene)
+    app.languageController.selectLanguage("pt-BR")
+    settings = app.settingsController
+    settings.setValue("layout", "rightPanelWidth", 240)
+    assert settings.saveWindowTemplate("", "Janela", 999999.9375, -999999.9375)
+    identifier = settings.values["window"]["custom"][0]["presetId"]
+    QTest.keyClick(window, Qt.Key_W)
+    listing = find(window, "windowPresetList")
+    listing.setProperty("contentY", listing.property("contentHeight") - listing.height())
+    row = find(window, "windowPreset-" + identifier)
+    heading = next(item for item in descendants(window.contentItem())
+                   if item.isVisible() and item.property("text") == "Predefinições")
+    for item in (heading, find(window, "windowPresetWW-" + identifier), find(window, "windowPresetWL-" + identifier)):
+        assert item.property("contentWidth") <= item.width() + 1
+    assert not find(window, "windowPresetName-" + identifier).property("truncated")
+    move_pointer(window, settled_point(row))
+    tip = row.findChild(QObject, "windowPresetDetails-" + identifier)
+    wait_until(lambda: tip.property("visible"))
+    assert "WW 999999.9375" in tip.property("text") and "WL -999999.9375" in tip.property("text")
+    click(window, row)
+    assert (tab.activeViewport.windowWidth, tab.activeViewport.windowCenter) == (999999.9375, -999999.9375)
+    assert not sidebar_scene[3], sidebar_scene[3]
 
 
 @pytest.mark.parametrize("panel_width", [220, 250, 420])

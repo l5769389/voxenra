@@ -17,7 +17,8 @@ BINDINGS = {
     **{f'list-{i}': ('preset-lists', str(i), f'input.listSlot{i}') for i in range(1, 10)},
     **{f'zoom-{factor}': ('zoom', str(factor % 10), f'input.zoom{factor}') for factor in range(1, 11)},
     'measure:length': ('measure', 'L', 'text.0321'), 'measure:angle': ('measure', 'A', 'text.0322'),
-    'measure:ellipse': ('measure', 'E', 'text.0324'),
+    'measure:rect': ('measure', 'R', 'text.0323'), 'measure:ellipse': ('measure', 'E', 'text.0324'),
+    'measure:curve': ('measure', 'V', 'measurement.curve'), 'measure:freehand': ('measure', 'F', 'measurement.freehand'),
     'paint': ('segmentation', 'B', 'seg.paint'), 'erase': ('segmentation', 'E', 'seg.erase'),
     'cpr-new': ('cpr-path', 'N', 'cpr.new'), 'cpr-edit': ('cpr-path', 'R', 'cpr.edit'),
     'cpr-start': ('cpr-path', 'S', 'cpr.markStart'), 'cpr-end': ('cpr-path', 'E', 'cpr.markEnd'),
@@ -48,7 +49,11 @@ def menu_scopes(group: str) -> tuple[str, ...]:
     """Menus that share this setting; never include tools whose reset deletes objects."""
     if group == 'preset-lists':
         return ('window', 'ct-window', 'pseudocolor', 'mpr-layout')
-    return ('window', 'ct-window', 'pet-window', 'scroll', 'zoom', 'rotate') if group == 'view-tools' else (group,)
+    if group == 'view-tools':
+        return ('window', 'ct-window', 'pet-window', 'scroll', 'pan', 'zoom', 'rotate',
+                'mpr-rotate-3d', 'volume-rotate', 'volume-direction', 'volume-preset', 'mip',
+                'pseudocolor', 'viewport-settings', 'registration', 'fusion-blend', 'mpr-layout')
+    return (group,)
 
 
 def canonical(value):

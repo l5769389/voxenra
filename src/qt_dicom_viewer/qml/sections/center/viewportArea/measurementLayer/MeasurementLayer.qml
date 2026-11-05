@@ -85,7 +85,7 @@ Item {
         anchors.bottomMargin: 32
         text: measurementLayer.measurementController?.instruction ?? ""
         visible: text.length > 0
-        color: Theme.measurementSelected
+        color: Theme.drawingLineColor(measurementLayer.preferences.measurement ?? ({}), true)
         font.pixelSize: 13
         style: Text.Outline
         styleColor: Theme.overlayOutline

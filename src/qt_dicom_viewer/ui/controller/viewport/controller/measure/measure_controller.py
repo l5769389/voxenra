@@ -34,6 +34,7 @@ from qt_dicom_viewer.ui.controller.viewport.operation.roi_measure_operation impo
 class MeasurementController(QObject):
     _i18n_instruction = Signal()
     _i18n_measurementItems = Signal()
+    _i18n_activeTransaction = Signal()
 
 
     measurementsChanged = Signal()
@@ -79,6 +80,7 @@ class MeasurementController(QObject):
         self._label_positions: dict[str, ImagePoint] = {}
         self._label_origins: dict[str, ImagePoint] = {}
         self._label_drag = None
+        self._point_drag_context = None
         self._path_invalid = False
         self._path_preview = None
         self._linked_label_reference = None
@@ -232,7 +234,8 @@ class MeasurementController(QObject):
         return [self._to_qml_item(m) for key, m in self._measurements.items()
                 if key != editing_id and self._visible(m)]
 
-    @Property('QVariantMap', notify=activeTransactionChanged)
+    @_TextProperty('QVariantMap', notify=_i18n_activeTransaction, notify_name='_i18n_activeTransaction',
+                   source_notify='activeTransactionChanged')
     def activeTransaction(self) -> dict:
         transaction = self._active_transaction
         if transaction is None:
@@ -263,6 +266,11 @@ class MeasurementController(QObject):
         if self._creating_angle():
             return (_msg('text.0607') if self._active_transaction.target.index == AnglePointIndex.VERTEX
                     else _msg('text.0608'))
+        if (isinstance(self._active_transaction, CreateMeasurementTransaction)
+                and not self._geometry_only):
+            kind = self._active_transaction.context.measurement_kind
+            return _msg('measurement.cornerHint' if kind in (MeasurementKind.RECT, MeasurementKind.ELLIPSE)
+                        else 'measurement.endpointHint')
         return ""
 
     @Property(str, notify=selectionChanged)
@@ -404,7 +412,39 @@ class MeasurementController(QObject):
         self._path_preview = None
         self.activeTransactionChanged.emit()
 
+    def place_reversible_path_tap(self, place):
+        """Place a point now, retaining only what the double-tap recognizer can retract."""
+        previous = self._active_transaction
+        selected = self._selected_measurement_id, self._selected_measurement_state
+        preview, invalid = self._path_preview, self._path_invalid
+        if previous is not None:
+            draft = previous.draft
+            count = len(draft.points)
+            length = getattr(draft, "length_mm", None)
+        place()
+        placed = self._active_transaction
+
+        def retract():
+            if self._active_transaction is not placed:
+                return False
+            if previous is not None and placed is None:
+                # Tapping the first vertex already closed this polygon.
+                return True
+            if previous is not None and placed is previous:
+                del draft.points[count:]
+                if length is not None:
+                    draft.length_mm = length
+            elif placed is not None:
+                self.cancel_transaction()
+            self._path_preview, self._path_invalid = preview, invalid
+            self._selected_measurement_id, self._selected_measurement_state = selected
+            self.activeTransactionChanged.emit()
+            self.selectionChanged.emit()
+            return False
+        return retract
+
     def finish_path(self, *, exit_incomplete=False):
+        self._point_drag_context = None
         if not self._creating_path():
             return False
         transaction = self._active_transaction
@@ -429,6 +469,11 @@ class MeasurementController(QObject):
         return (isinstance(self._active_transaction, CreateMeasurementTransaction)
                 and isinstance(self._active_transaction.draft, AngleMeasurementDraft))
 
+    @property
+    def creating_fixed_points(self) -> bool:
+        return (isinstance(self._active_transaction, CreateMeasurementTransaction)
+                and not self._creating_path())
+
     def tap_at(self, point: ImagePoint | None, *, slice_index: int,
                endpoint_tolerance: float, line_tolerance: float,
                context: MeasureContext | None = None,
@@ -436,9 +481,9 @@ class MeasurementController(QObject):
         if point is not None and self._creating_path():
             self._append_path_point(point)
             return
-        if point is not None and self._creating_angle():
+        if point is not None and isinstance(self._active_transaction, CreateMeasurementTransaction):
             self._update_point(point)
-            self._advance_angle_or_commit()
+            self._advance_angle_or_commit(keep_invalid=True)
             return
         if self._active_transaction is not None:
             self.cancel_transaction()
@@ -446,7 +491,7 @@ class MeasurementController(QObject):
                             endpoint_tolerance=endpoint_tolerance, line_tolerance=line_tolerance,
                             viewport_point=viewport_point)
                if point is not None else None)
-        if hit is None and point is not None and context is not None and context.measurement_kind in (MeasurementKind.ANGLE, MeasurementKind.FREEHAND, MeasurementKind.CURVE):
+        if hit is None and point is not None and context is not None and not self._geometry_only:
             self._path_preview = None
             self._begin_create_transaction(point=point, context=context)
         elif hit is not None:
@@ -455,7 +500,7 @@ class MeasurementController(QObject):
             self.clear_selection()
 
     def preview_at(self, point: ImagePoint | None) -> None:
-        """角度两段之间的悬停只更新草稿；按住鼠标时仍由拖动事件负责。"""
+        """Preview the next point without moving an already confirmed endpoint."""
         if self._creating_path() and point is not None:
             draft = self._active_transaction.draft
             candidate = self._path_preview_points(point)
@@ -468,7 +513,8 @@ class MeasurementController(QObject):
             self._path_preview = point
             self.activeTransactionChanged.emit()
             return
-        if self._creating_angle() and self._drag_reference is None and point is not None:
+        if (isinstance(self._active_transaction, CreateMeasurementTransaction)
+                and self._drag_reference is None and point is not None):
             self._update_point(point)
 
     def begin(self, position: PointerPosition, context: MeasureContext | None) -> None:
@@ -480,15 +526,19 @@ class MeasurementController(QObject):
         if point is None:
             return
         if self._creating_path():
-            self._append_path_point(point)
+            self._point_drag_context = context
             return
-        if not (self._creating_angle() and context.measurement_kind == MeasurementKind.ANGLE):
+        if not (isinstance(self._active_transaction, CreateMeasurementTransaction)
+                and self._active_transaction.context.measurement_kind == context.measurement_kind):
             self.cancel_transaction()
             hit = self.hit_test(point, slice_index=context.slice_index,
                                 endpoint_tolerance=context.endpoint_tolerance,
                                 line_tolerance=context.line_tolerance,
                                 viewport_point=position.viewport)
             if hit is None:
+                if context.measurement_kind in (MeasurementKind.CURVE, MeasurementKind.FREEHAND):
+                    self._point_drag_context = context
+                    return
                 self._begin_create_transaction(point=point, context=context)
             else:
                 if self.presentation(hit.measurement_id)["locked"]:
@@ -558,6 +608,14 @@ class MeasurementController(QObject):
         self.update(DragUpdateEvent(self._drag_start or position, position, Offset(0, 0), Offset(0, 0)))
 
     def end(self, position: PointerPosition) -> None:
+        context, self._point_drag_context = self._point_drag_context, None
+        if context is not None:
+            if position.image is not None:
+                if self._creating_path():
+                    self._append_path_point(position.image)
+                elif self._active_transaction is None:
+                    self._begin_create_transaction(point=position.image, context=context)
+            return
         if self._label_drag is not None:
             self._move_label(position.image)
             self._label_drag = None
@@ -575,7 +633,7 @@ class MeasurementController(QObject):
         self._drag_start = None
         self._advance_angle_or_commit()
 
-    def _advance_angle_or_commit(self) -> None:
+    def _advance_angle_or_commit(self, *, keep_invalid=False) -> None:
         transaction = self._active_transaction
         if (isinstance(transaction, CreateMeasurementTransaction)
                 and getattr(transaction.draft, 'kind', None) == MeasurementKind.FREEHAND):
@@ -601,7 +659,7 @@ class MeasurementController(QObject):
             valid = (all(math.isfinite(v) for v in (a.column, a.row, b.column, b.row))
                      and abs(a.column - b.column) >= 1e-3 and abs(a.row - b.row) >= 1e-3)
         if not valid:
-            if not self._creating_angle():
+            if not self._creating_angle() and not keep_invalid:
                 self.cancel_transaction()
             return
         if self._max_per_frame is not None and measurement.measurement_id not in self._measurements:
@@ -639,9 +697,16 @@ class MeasurementController(QObject):
         self._advance_angle_or_commit()
         return self._selected_measurement_state == "completed"
 
-    def selected_copy(self) -> dict | None:
+    @property
+    def selected_committed_measurement(self) -> Measurement | None:
         measurement = self._measurements.get(self._selected_measurement_id)
         if self.has_active_transaction or measurement is None or not self._visible(measurement):
+            return None
+        return measurement
+
+    def selected_copy(self) -> dict | None:
+        measurement = self.selected_committed_measurement
+        if measurement is None:
             return None
         kind = "angle" if isinstance(measurement, AngleMeasurement) else measurement.kind.value
         payload = {"kind": kind, "points": [[p.column, p.row] for p in measurement.points]}
@@ -689,6 +754,7 @@ class MeasurementController(QObject):
             self.selectionChanged.emit()
 
     def cancel_transaction(self) -> None:
+        self._point_drag_context = None
         if self._linked_label_reference is not None:
             uid, _, _, old = self._linked_label_reference
             if old is None:

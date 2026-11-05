@@ -6,7 +6,6 @@ from types import SimpleNamespace
 import numpy as np
 import pydicom
 import pytest
-from PySide6.QtCore import QSize
 from PySide6.QtGui import QImage
 from PySide6.QtTest import QTest
 
@@ -16,7 +15,7 @@ from test_dicom_tags import make_series, wait_until
 
 
 def capture(item):
-    grab = item.grabToImage(QSize(round(item.width()), round(item.height())))
+    grab = item.grabToImage()
     ready = []
     grab.ready.connect(lambda: ready.append(True))
     wait_until(lambda: ready)
@@ -58,11 +57,13 @@ def test_png_removes_all_corner_free_text_and_annotation_text_then_restores_view
     originals = [i.path.read_bytes() for i in series.instances]
     identified = capture(root)
     root.setProperty('anonymousExport', True)
+    root.setProperty('capturingPng', True)
     expected = capture(root)
     assert not overlay.isVisible()
     labels = [i for i in _visual_children(root) if i.objectName().startswith('annotationLabel-')]
     assert labels and not any(i.isVisible() for i in labels)
     root.setProperty('anonymousExport', False)
+    root.setProperty('capturingPng', False)
     assert pixels(identified) != pixels(expected)
     exporter.exportPng(root, 1.0)  # Default is anonymous without a caller flag.
     wait_until(lambda: not exporter.busy)
@@ -70,7 +71,7 @@ def test_png_removes_all_corner_free_text_and_annotation_text_then_restores_view
     image = QImage(str(target))
     assert pixels(image) == pixels(expected)
     assert not image.textKeys()
-    assert root.property('anonymousExport') is False and overlay.isVisible()
+    assert not root.property('anonymousExport') and not root.property('capturingPng') and overlay.isVisible()
     assert all(i.isVisible() for i in labels)
     assert len(text.annotationItems) == 1
     assert [i.path.read_bytes() for i in series.instances] == originals
@@ -112,6 +113,7 @@ def test_capture_cancel_restores_overlay_and_old_callback_cannot_save_new_captur
     exporter.exportPng(view.rootObject(), 1.0)
     wait_until(lambda: not exporter.busy)
     assert not target.exists() and not view.rootObject().property('anonymousExport')
+    assert not view.rootObject().property('capturingPng')
     monkeypatch.setattr(exporter, '_capture_png', original)
     exporter.exportPng(view.rootObject(), 1.0, False)
     exporter._png_ready(old_ids[0])
@@ -205,3 +207,31 @@ def test_montage_anonymous_png_hides_details_without_changing_expanded_state(sid
     assert pixels(QImage(str(target))) == pixels(expected)
     assert controller.detailsExpanded and details.property('opacity') == 1
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize('anonymous', [True, False])
+def test_png_excludes_pointer_over_image(exporter, anonymous):
+    from PySide6.QtCore import QPoint
+    from qt_pointer import move_pointer
+    view, _, exporter, _, target, _ = exporter
+    root = view.rootObject()
+    glyph = next(i for i in _visual_children(root) if i.objectName() == 'viewportCustomCursor')
+    move_pointer(view, QPoint(240, 250))
+    move_pointer(view, QPoint(300, 320))
+    wait_until(lambda: glyph.isVisible() and abs(glyph.x() - 298) < 1 and abs(glyph.y() - 318) < 1)
+    def pointer_crop(image):
+        ratio = image.width() / root.width()
+        return pixels(image.copy(*(round(i * ratio) for i in (295, 315, 48, 42))))
+
+    # Build the comparison from the same image with only its pointer hidden.
+    glyph.setOpacity(0)
+    root.setProperty('anonymousExport', anonymous)
+    expected = pointer_crop(capture(root))
+    root.setProperty('anonymousExport', False)
+    glyph.setOpacity(1)
+    QTest.qWait(35)
+    assert pointer_crop(capture(root)) != expected
+    exporter.exportPng(root, 1., anonymous)
+    wait_until(lambda: not exporter.busy)
+    assert not exporter.isError and glyph.isVisible() and glyph.opacity() == 1
+    assert pointer_crop(QImage(str(target))) == expected

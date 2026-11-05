@@ -158,6 +158,9 @@ def test_selected_freehand_conversion_keeps_measurement_and_can_undo(
     )
     assert identifier
     tab.historyController.capture()
+    # A queued click for a record which is no longer selected must not convert this ROI.
+    assert not controller.convertSelectedRoi(view.viewportId + ":stale-result")
+    assert not controller.busy and not tab.voiController.records
     assert controller.convertSelectedRoi(), controller.message
     wait_until(lambda: not controller.busy)
     assert not controller.isError, controller.message

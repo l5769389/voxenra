@@ -9,7 +9,7 @@ Item {
     property var settingsController: null
     readonly property var styleSettings: preferences.measurement ?? ({})
     property bool draftStyle: isDraft
-    readonly property bool dashed: draftStyle ? (styleSettings.editingDash ?? true) : (styleSettings.completedDash ?? false)
+    readonly property bool dashed: Theme.drawingLineDashed(styleSettings, draftStyle)
     property var labelPosition: null
     required property var measurement
     property var controlPoints: corners
@@ -56,7 +56,7 @@ Item {
         return best
     }
     readonly property Item labelItem: showMetrics ? metricCard : compactLabel
-    readonly property color lineColor: draftStyle ? (styleSettings.editingColor ?? Theme.measurementSelected) : (styleSettings.completedColor ?? Theme.measurementPrimary)
+    readonly property color lineColor: Theme.drawingLineColor(styleSettings, draftStyle)
 
     readonly property string outlinePath: {
         if (!root.corners)

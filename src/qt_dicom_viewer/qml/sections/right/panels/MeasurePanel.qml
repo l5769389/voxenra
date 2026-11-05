@@ -1,34 +1,49 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import "../../../components" as Components
+import QtQuick.Window
+import "../../../components/ScrollFocus.js" as ScrollFocus
 import QtQuick.Layouts
+import QtQuick.Controls.Basic as Basic
 import "../components" as Components
 import "../../../theme"
 import "../../../components" as Widgets
 
-ColumnLayout {
+Item {
     id: measurePanel
-    spacing: 8
+    property real maximumPanelHeight: Infinity
     required property var toolController
     property var resultsController: null
     property var dicomResults: null
     property var viewportController: null
     property bool maskConversionAvailable: false
-    readonly property var measurements: viewportController?.measurementController ?? null
-    readonly property bool selectedFreehand: (measurements?.measurementItems ?? []).some(
-        item => item.measurementId === measurements?.selectedMeasurementId && item.type === "freehand")
+    readonly property var currentAction: toolController?.measureActions.find(
+        entry => entry.action === toolController.activeInteraction)
+    readonly property real toolsTop: heading.implicitHeight + 8
+    readonly property real resultsTop: toolsTop + tools.implicitHeight + 12
+    readonly property real feedbackHeight: conversionMessage.visible ? conversionMessage.implicitHeight + 8 : 0
+    // Leave room to read the results heading and at least one complete row.
+    readonly property bool shortHeight: maximumPanelHeight < resultsTop + feedbackHeight + 120
+    readonly property real listTop: shortHeight ? toolsTop : resultsTop + results.headerHeight
+    implicitHeight: Math.min(maximumPanelHeight, resultsTop + results.implicitHeight + feedbackHeight
+        + (shortHeight ? 0 : results.headerHeight))
 
     signal manualRequested()
+    signal actionTriggered(string action)
 
     RowLayout {
-        Layout.fillWidth: true
+        id: heading
+        width: parent.width
+        height: implicitHeight
         Text {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            wrapMode: Text.Wrap
-            text: qsTrId("text.0292")
+            objectName: "measurementModeHeading"
+            elide: Text.ElideRight
+            text: measurePanel.shortHeight && measurePanel.currentAction
+                ? measurePanel.currentAction.label : qsTrId("measure.tools")
             color: Theme.textPrimary
             font.pixelSize: 14
+            font.weight: Font.DemiBold
         }
         Components.ToolActionButton {
             objectName: "measurementManualButton"
@@ -48,75 +63,113 @@ ColumnLayout {
         }
     }
 
-    signal actionTriggered(string action)
+    // Stable slots keep the grid before the results in the Tab order after resizing.
+    Item { id: fixedTools; y: measurePanel.toolsTop }
+    ColumnLayout {
+        id: tools
+        parent: measurePanel.shortHeight ? scrollingTools : fixedTools
+        width: results.width
+        height: implicitHeight
+        spacing: 8
 
-    Text {
-        objectName: "measurementCalibrationWarning"
-        Layout.fillWidth: true
-        visible: !!measurePanel.viewportController
-            && measurePanel.viewportController.loadState === "ready"
-            && !measurePanel.viewportController.hasPhysicalSpacing
-        text: measurePanel.viewportController?.viewportRole === "curved"
-            ? qsTrId("cpr.measurementHint") : qsTrId("measurement.noCalibration")
-        color: Theme.textSecondary
-        font.pixelSize: 12
-        wrapMode: Text.Wrap
-    }
+        Text {
+            objectName: "measurementCalibrationWarning"
+            Layout.fillWidth: true
+            visible: !!measurePanel.viewportController
+                && measurePanel.viewportController.loadState === "ready"
+                && !measurePanel.viewportController.hasPhysicalSpacing
+            text: measurePanel.viewportController?.viewportRole === "curved"
+                ? qsTrId("cpr.measurementHint") : qsTrId("measurement.noCalibration")
+            color: Theme.textSecondary
+            font.pixelSize: 12
+            wrapMode: Text.Wrap
+        }
 
-    GridLayout {
-        Layout.fillWidth: true
-        enabled: measurePanel.viewportController?.viewportRole !== "curved"
-        columns: 2
-        columnSpacing: 6
-        rowSpacing: 6
-        uniformCellWidths: true
-        Repeater {
-            model: measurePanel.toolController ? measurePanel.toolController.measureActions : []
-            delegate: Components.ToolActionButton {
-                id: measureButton
-                objectName: "measureEntry-" + measureButton.modelData.action.split(":")[1]
-                required property var modelData
-                readonly property bool btnChecked: measureButton.modelData.action === (measurePanel.toolController?.activeInteraction ?? "")
+        GridLayout {
+            Layout.fillWidth: true
+            enabled: measurePanel.viewportController?.viewportRole !== "curved"
+            columns: 2
+            columnSpacing: 6
+            rowSpacing: 6
+            uniformCellWidths: true
+            Repeater {
+                model: measurePanel.toolController ? measurePanel.toolController.measureActions : []
+                delegate: Components.ToolActionButton {
+                    id: measureButton
+                    objectName: "measureEntry-" + measureButton.modelData.action.split(":")[1]
+                    required property var modelData
+                    readonly property bool btnChecked: measureButton.modelData.action === (measurePanel.toolController?.activeInteraction ?? "")
 
-                enabled: measurePanel.viewportController?.hasPhysicalSpacing ?? false
-                checked: measureButton.btnChecked
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                iconName: modelData.iconName
-                label: modelData.label
-                shortLabel: modelData.shortLabel
-                shortcutAction: modelData.action
+                    enabled: measurePanel.viewportController?.hasPhysicalSpacing ?? false
+                    checked: measureButton.btnChecked
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    iconName: modelData.iconName
+                    label: modelData.label
+                    shortLabel: modelData.shortLabel
+                    shortcutAction: modelData.action
 
-                onClicked: {
-                    measurePanel.actionTriggered(modelData.action);
+                    onClicked: {
+                        measurePanel.actionTriggered(modelData.action);
+                    }
                 }
             }
         }
     }
 
-    MeasurementResults {
-        Layout.fillWidth: true
-        controller: measurePanel.resultsController
-    }
-    Widgets.AppButton {
-        objectName: "freehandToSegmentation"
-        Layout.fillWidth: true
-        visible: measurePanel.maskConversionAvailable
-        text: qsTrId("seg.convertRoi")
-        enabled: measurePanel.selectedFreehand
-            && !!measurePanel.dicomResults && !measurePanel.dicomResults.busy
-        onClicked: measurePanel.dicomResults.convertSelectedRoi()
+    Item { id: fixedResultHeader; y: measurePanel.resultsTop }
+    Flickable {
+        id: scroller
+        objectName: "measurementScroll"
+        width: parent.width
+        y: measurePanel.listTop
+        height: Math.max(0, measurePanel.height - y - measurePanel.feedbackHeight)
+        contentWidth: width
+        contentHeight: results.y + results.implicitHeight
+        flickableDirection: Flickable.VerticalFlick
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
+
+        Item { id: scrollingTools }
+        MeasurementResults {
+            id: results
+            fixedHeaderParent: measurePanel.shortHeight ? null : fixedResultHeader
+            y: measurePanel.shortHeight ? tools.implicitHeight + 12 : 0
+            // Keep wrapped rows stable when the scrollbar appears or disappears.
+            width: Math.max(0, scroller.width - 8)
+            height: implicitHeight
+            controller: measurePanel.resultsController
+            dicomResults: measurePanel.dicomResults
+            maskConversionAvailable: measurePanel.maskConversionAvailable && !measurePanel.toolController?.mprProjectionEnabled
+        }
+        Connections {
+            target: scroller.Window.window
+            function onActiveFocusItemChanged() {
+                ScrollFocus.revealFocused(scroller, scroller.Window.window?.activeFocusItem)
+            }
+        }
+        WheelHandler {
+            target: null
+            onWheel: event => {
+                scroller.cancelFlick()
+                const delta = event.pixelDelta.y || event.angleDelta.y / 3
+                scroller.contentY = Math.max(0, Math.min(scroller.contentHeight - scroller.height, scroller.contentY - delta))
+                event.accepted = true
+            }
+        }
+        Basic.ScrollBar.vertical: Widgets.AppScrollBar { width: 5 }
     }
 
     Text {
+        id: conversionMessage
         objectName: "roiConversionMessage"
-        Layout.fillWidth: true
-        visible: measurePanel.maskConversionAvailable && text !== ""
+        anchors.bottom: parent.bottom
+        width: parent.width
+        visible: results.maskConversionAvailable && text !== ""
         text: measurePanel.dicomResults?.operation === "convert" ? measurePanel.dicomResults.message : ""
-        font.pixelSize: 12
         color: measurePanel.dicomResults?.isError ? Theme.dangerColor : Theme.textSecondary
+        font.pixelSize: 12
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
     }
-
 }

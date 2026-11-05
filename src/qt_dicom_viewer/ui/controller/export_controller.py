@@ -135,7 +135,7 @@ class ExportController(QObject):
         self._grab_callback = None
         self._grab_id = None
         self._png_context = None
-        self._anonymous_item = None
+        self._capture_properties = []
         self._png_anonymous = True
         self._png_revision = None
         from .measurement_report_controller import MeasurementReportController
@@ -317,8 +317,11 @@ class ExportController(QObject):
                 if self._png_anonymous:
                     if item.metaObject().indexOfProperty("anonymousExport") < 0:
                         raise ValueError(_msg('text.0465'))
-                    self._anonymous_item = (item, item.property("anonymousExport"))
+                    self._capture_properties.append((item, "anonymousExport", item.property("anonymousExport")))
                     item.setProperty("anonymousExport", True)
+                if item.metaObject().indexOfProperty("capturingPng") >= 0:
+                    self._capture_properties.append((item, "capturingPng", item.property("capturingPng")))
+                    item.setProperty("capturingPng", True)
                 self._grab = item.grabToImage()
                 if self._grab is None:
                     raise ValueError(_msg('text.0466'))
@@ -344,11 +347,10 @@ class ExportController(QObject):
             self._save_png(image, self._png_path)
 
     def _restore_capture(self):
-        if self._anonymous_item is not None:
-            item, previous = self._anonymous_item
-            self._anonymous_item = None
+        for item, name, previous in self._capture_properties:
             if isValid(item):
-                item.setProperty("anonymousExport", previous)
+                item.setProperty(name, previous)
+        self._capture_properties.clear()
 
     def _save_png(self, image, path):
         if self._png_anonymous and not image.isNull():

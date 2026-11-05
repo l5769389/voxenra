@@ -16,7 +16,15 @@ ColumnLayout {
     readonly property bool textMode: viewportController?.activeInteraction === "annotate:text"
     readonly property bool selectedArrow: (viewportController?.measurementController?.measurementItems ?? []).some(
         item => item.type === "arrow" && item.measurementId === viewportController.measurementController.selectedMeasurementId)
-    spacing: 12
+    spacing: 8
+
+    Components.PanelHeading {
+        objectName: "annotationPanelHeading"
+        title: qsTrId("annotation.tools")
+        explanation: (annotatePanel.textMode ? qsTrId("text.1114") : qsTrId("text.1115"))
+            + "\n\n" + I18n.format(qsTrId("annotation.copyHint"), {keys: Qt.platform.os === "osx" ? "⌘+C / ⌘+V" : "Ctrl+C / Ctrl+V"})
+            + (Qt.platform.os === "osx" ? qsTrId("text.1117") : qsTrId("text.1118"))
+    }
 
     RowLayout {
         Layout.fillWidth: true
@@ -41,13 +49,6 @@ ColumnLayout {
             iconName: "annotate-text"
             checked: annotatePanel.viewportController?.activeInteraction === "annotate:text"
             onClicked: annotatePanel.viewportController?.setAnnotationMode(true)
-        }
-        Components.HelpButton {
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
-            explanation: (annotatePanel.textMode ? qsTrId("text.1114") : qsTrId("text.1115"))
-                + "\n\n" + I18n.format(qsTrId("annotation.copyHint"), {keys: Qt.platform.os === "osx" ? "⌘+C / ⌘+V" : "Ctrl+C / Ctrl+V"})
-                + (Qt.platform.os === "osx" ? qsTrId("text.1117") : qsTrId("text.1118"))
         }
     }
 
@@ -107,6 +108,15 @@ ColumnLayout {
         }
     }
 
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.topMargin: 4
+        implicitHeight: 1
+        color: Theme.dividerColor
+    }
+    Components.PanelHeading {
+        title: qsTrId("annotation.style")
+    }
     Text {
         text: qsTrId("text.0839")
         color: Theme.textSecondary
@@ -136,7 +146,7 @@ ColumnLayout {
                 Accessible.name: qsTrId("text.1120") + modelData
                 checked: (annotatePanel.textMode
                     ? annotatePanel.controller?.annotationColor
-                    : annotatePanel.styleSettings.annotationColor) === modelData
+                    : Theme.annotationLineColor(annotatePanel.styleSettings)) === modelData
                 onClicked: {
                     if (annotatePanel.textMode)
                         annotatePanel.controller?.setAnnotationColor(modelData)
@@ -253,7 +263,8 @@ ColumnLayout {
         Layout.fillWidth: true
         text: qsTrId("text.1125")
         compact: true
-        hoverColor: Theme.resetActionHover
+        iconName: "delete"
+        hoverColor: Theme.dangerSurface
         enabled: annotatePanel.textMode ? (annotatePanel.controller?.hasSelection ?? false) : annotatePanel.selectedArrow
         onClicked: annotatePanel.viewportController?.deleteSelectedMeasurement()
     }

@@ -447,7 +447,7 @@ def test_manual_all_chapters_layout_and_examples(scene, size, tmp_path):
 def test_manual_roundtrip_preserves_mpr_measurement_and_segmentation(sidebar_scene):
     from qt_dicom_viewer.model import TabType
     from test_dicom_tags import wait_until
-    from test_measurement_qml import _scene, _mouse_drag
+    from test_measurement_qml import _scene, _mouse_drag, _click_points
     from test_mpr_voi_qml import _owner, settle
 
     window, app, records, warnings = sidebar_scene
@@ -478,7 +478,7 @@ def test_manual_roundtrip_preserves_mpr_measurement_and_segmentation(sidebar_sce
     # Render a frame before mapping image coordinates to mouse positions.
     assert not window.grabWindow().isNull()
     layer = active_layer()
-    _mouse_drag(window, _scene(layer, 15, 18), _scene(layer, 30, 35))
+    _click_points(window, _scene(layer, 15, 18), _scene(layer, 30, 35))
     measurements = viewport.measurementController.measurementItems
     assert len(measurements) == 1
     click(window, find(window, 'measurementManualButton'))

@@ -37,7 +37,7 @@ def open_pair(app, records):
     return tab, list(tab.viewports_by_id.values())
 
 
-def test_pair_picker_eligibility_selection_and_duplicate_activation(comparison):
+def test_pair_picker_eligibility_selection_and_independent_views(comparison):
     app, records = comparison
     panel = app.panelController
     picker = panel.compareController
@@ -59,9 +59,7 @@ def test_pair_picker_eligibility_selection_and_duplicate_activation(comparison):
     assert registry.activeTabType == 'compare2d'
     panel.selectSeriesWithModifiers(second, True)
     picker.request(second)
-    assert registry.activeTab is tab
-    registry.createCompareTab(second, first)
-    assert registry.activeTab is tab and len(registry.tabs) == 1
+    assert registry.activeTab is not tab and len(registry.tabs) == 2
     # A different context series is the anchor, even while another pair is checked.
     picker.request(third)
     assert picker.dialogOpen and picker.anchor['seriesUid'] == third

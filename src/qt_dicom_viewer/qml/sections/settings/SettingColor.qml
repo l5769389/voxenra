@@ -10,6 +10,7 @@ RowLayout {
     required property string title
     required property string value
     property string settingName: ""
+    property var swatchColors: Theme.overlaySwatches
     signal edited(string color)
     spacing: 8
     Text { Layout.fillWidth: true; Layout.minimumWidth: 40; text: root.title; color: root.enabled ? Theme.textSecondary : Theme.textDisabled; font.pixelSize: 12; wrapMode: Text.Wrap }
@@ -40,7 +41,7 @@ RowLayout {
             modal: false
             focus: true
             onOpened: {
-                const index = Theme.overlaySwatches.indexOf(root.value.toLowerCase())
+                const index = root.swatchColors.indexOf(root.value.toLowerCase())
                 const choice = swatches.itemAt(index) ?? closePalette
                 choice.forceActiveFocus(Qt.TabFocusReason)
             }
@@ -67,7 +68,7 @@ RowLayout {
                     columns: 4; rowSpacing: 6; columnSpacing: 6
                     Repeater {
                         id: swatches
-                        model: Theme.overlaySwatches
+                        model: root.swatchColors
                         delegate: Components.AppButton {
                             id: swatch
                             required property string modelData

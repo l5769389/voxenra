@@ -18,7 +18,13 @@ Item {
     property bool cprPanelFocused: false
     property var listPanel: null
     readonly property int listCount: listPanel?.shortcutCount ?? 0
-    function offers(binding) { return binding.listIndex < 0 || binding.listIndex < listCount }
+    function offers(binding) {
+        // An expanded direct tool can show a reset footer with its submenu closed.
+        if (binding.menu && !toolController?.activePanel && binding.action !== "view-reset") return false
+        if (binding.action === "view-reset" && activeMenu === "mpr-layout") return !!tabController?.mprCompare && tabController.ready
+        if (binding.action === "view-reset" && activeMenu === "registration") return !!tabController?.ready
+        return binding.listIndex < 0 || binding.listIndex < listCount
+    }
     signal primaryToolRequested(string tool)
     readonly property var cpr: tabController?.cprController ?? null
     readonly property var menuSequences: activeMenu ? (controller?.bindings ?? [])
@@ -74,11 +80,11 @@ Item {
                 enabled: root.foreground && root.cprPanelFocused && root.activeMenu === "cpr-path" && !!root.cpr
                     && (command.modelData.action === "finish" ? root.cpr.canFinishEditing
                         : command.modelData.action === "cancel" ? root.cpr.canCancelPath
-                        : root.cpr.canDeletePoint)
+                        : root.cpr.canDeleteSelection)
                 onActivated: {
                     if (command.modelData.action === "finish") root.cpr.finishEditing()
                     else if (command.modelData.action === "cancel") root.cpr.cancel_operation()
-                    else root.cpr.deleteSelectedPoint()
+                    else root.cpr.deleteSelection()
                 }
             }
         }

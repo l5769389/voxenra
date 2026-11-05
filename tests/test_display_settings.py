@@ -210,7 +210,7 @@ def test_every_preference_survives_process_restart(tmp_path):
         'measurement': {'editingColor': '#123456', 'completedColor': '#abcdef', 'lineWidth': 2.5,
                         'editingDash': False, 'completedDash': True, 'fontSize': 18,
                         'linkLabelToShape': True, 'cardTransparency': 60, 'decimalPlaces': 3,
-                        'annotationColor': '#234567', 'annotationSize': 20},
+                        'annotationColor': '#234567', 'annotationFollowsCompleted': True, 'annotationSize': 20},
         'services': {'mtfFrequencyUnit': 'lp/cm', 'mtfGaussianEquivalent': False, 'rampThicknessAngle': 45,
                      'segmentationPython': '/tmp/有 空格/python', 'segmentationWeights': '/tmp/models',
                      'segmentationDevice': 'cpu', 'segmentationOrgans': ['liver']},

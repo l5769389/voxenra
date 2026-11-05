@@ -34,6 +34,31 @@ def test_reselect_measure_preserves_pending_angle_through_completion(sidebar_sce
     assert not sidebar_scene[3], sidebar_scene[3]
 
 
+def test_pending_angle_label_retranslates_without_confirming_a_point(sidebar_scene):
+    from qt_dicom_viewer.i18n import localize, message
+    from test_tag_qml import descendants
+    window, app, tab = reading_scene(sidebar_scene)
+    measure = tab.activeViewport.measurementController
+    QTest.keyClick(window, Qt.Key_M)
+    QTest.keyClick(window, Qt.Key_A)
+    pixel = find(window, 'dicomPixelLayer')
+    QTest.mouseClick(window, Qt.LeftButton, pos=pixel.mapToScene(QPointF(30, 30)).toPoint())
+    wait_until(lambda: bool(measure.activeTransaction))
+    QTest.mouseMove(window, pixel.mapToScene(QPointF(60, 30)).toPoint())
+    draft = measure.activeTransaction
+    assert draft['label'] == '选择顶点'
+    label = next(item for item in descendants(window.contentItem())
+                 if item.objectName() == 'measurementLabel' and item.isVisible())
+    for locale in ('en-US', 'pt-BR', 'zh-CN'):
+        app.languageController.selectLanguage(locale)
+        QTest.qWait(30)
+        assert label.property('text') == localize(message('text.0606'))
+        assert measure.activeTransaction['points'] == draft['points']
+        assert measure.activeTransaction['editTarget'] == draft['editTarget']
+        assert not measure.measurementItems
+    assert not sidebar_scene[3], sidebar_scene[3]
+
+
 @pytest.mark.parametrize('remapped', [False, True])
 def test_zoom_slider_keeps_arrow_keys_but_allows_tool_shortcuts(sidebar_scene, remapped):
     window, app, tab = reading_scene(sidebar_scene)
@@ -92,10 +117,11 @@ def test_keyboard_opens_and_reopens_compact_group_without_reset(sidebar_scene):
     assert not sidebar_scene[3], sidebar_scene[3]
 
 
-def test_compact_shortcut_reveals_group_when_rail_is_scrolled(sidebar_scene):
+def test_compact_shortcut_reveals_group_when_rail_is_scrolled(sidebar_scene, monkeypatch):
+    from test_window_sizing import fit_desktop
     window, app, _ = reading_scene(sidebar_scene)
     app.settingsController.setValue('appearance', 'toolLabels', True)
-    window.resize(1200, 620)
+    fit_desktop(window, app, monkeypatch, (1280, 520))
     click(window, find(window, 'toggleRightPanel'))
     rail = find(window, 'compactToolRail')
     rail.setProperty('contentY', rail.property('contentHeight') - rail.height())

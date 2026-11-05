@@ -697,6 +697,7 @@ class DicomFolderScanner:
         folder = Path(folder)
         total_file_count = 0
         skipped_file_count = 0
+        duplicate_file_count = 0
         series_map: dict[tuple[str, str],list[DicomInstanceMeta]] = defaultdict(list)
         instances: list[DicomInstanceMeta] = []
         identities = set()
@@ -715,6 +716,8 @@ class DicomFolderScanner:
             identity = (instance.series_instance_uid, instance.file_identity) if instance else None
             if instance is None or identity in identities:
                 skipped_file_count += 1
+                if instance is not None:
+                    duplicate_file_count += 1
             else:
                 identities.add(identity)
                 instances.append(instance)
@@ -734,6 +737,7 @@ class DicomFolderScanner:
                 total_file_count=total_file_count,
                 dicom_file_count=len(instances),
                 skipped_file_count=total_file_count - len(instances),
+                duplicate_file_count=duplicate_file_count,
                 series=_build_series_from_map(
                     series_map,
                     link_cross_series=False,
@@ -748,6 +752,7 @@ class DicomFolderScanner:
             total_file_count=total_file_count,
             dicom_file_count=len(instances),
             skipped_file_count=total_file_count - len(instances),
+            duplicate_file_count=duplicate_file_count,
             series=_build_series_from_map(series_map),
         )
 

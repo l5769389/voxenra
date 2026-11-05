@@ -9,6 +9,7 @@ Basic.Label {
     property string keyHint: ""
     readonly property string fullCaption: keyHint ? title + " (" + keyHint + ")" : title
     readonly property real preferredWidth: Math.ceil(measure.implicitWidth)
+    property real captionWidth: width
     // Measure independently of the visible label's constrained width. The
     // button also uses this width when a dialog changes its default action.
     Text {
@@ -18,7 +19,7 @@ Basic.Label {
         textFormat: label.textFormat
         text: label.fullCaption
     }
-    text: keyHint && preferredWidth <= width ? fullCaption : title
+    text: keyHint && preferredWidth <= captionWidth ? fullCaption : title
     maximumLineCount: 1
     wrapMode: Text.NoWrap
     textFormat: Text.PlainText

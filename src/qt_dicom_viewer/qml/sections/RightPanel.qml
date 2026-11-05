@@ -2,10 +2,10 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Window
+import "../components/ScrollFocus.js" as ScrollFocus
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "right" as Right
-import "right/components" as ToolControls
 import "../theme"
 import "../components" as Components
 
@@ -19,16 +19,16 @@ Rectangle {
     property bool collapsed: false
     readonly property string readingMenu: visible && enabled && toolVisible && !compactPanel.visible
         && (!collapsed || (compactRail.visible && compactRail.expandedTool === toolController?.activePanel))
-        ? toolController?.activePanel ?? "" : ""
+        ? toolController?.activePanel || (!collapsed && toolController?.canResetActiveTool ? toolController.activeTool : "") : ""
     readonly property var listPanel: collapsed ? compactRail.visiblePalette : toolDetailPanel.loadedPanel
-    property bool expansionAllowed: true
-    signal collapseRequested()
     property var tabController: null
     property var exportController: null
     property Item exportItem: null
     signal manualRequested(string chapter)
     readonly property var volumeController: viewportController && viewportController.viewportType === "volume"
         ? viewportController : null
+    readonly property bool resetEnabled: !!viewportController && !volumeController?.editBusy
+        && (toolController?.activeTool !== "registration" || !!viewportController?.reconstructionController?.ready)
     readonly property string regionCalculationError:
         (tabController?.voiController ?? viewportController?.voiController)?.error ?? ""
     function revealRegionError() {
@@ -131,6 +131,17 @@ Rectangle {
             wrapMode: Text.Wrap
         }
 
+        Item {
+            id: paletteHeadingSlot
+            visible: children.length > 0 && !rightPanel.collapsed
+            Layout.fillWidth: true
+            Layout.leftMargin: 12
+            Layout.rightMargin: 22
+            Layout.topMargin: 10
+            Layout.bottomMargin: 4
+            implicitHeight: childrenRect.height
+        }
+
         Flickable {
             id: detailFlickable
             visible: !rightPanel.collapsed
@@ -139,21 +150,28 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
+            readonly property bool measures: toolDetailPanel.activePanel === "measure"
+            interactive: !measures && contentHeight > height
             contentWidth: width
-            contentHeight: Math.max(
-                height,
-                toolDetailPanel.implicitHeight
-            )
+            contentHeight: Math.max(height, toolDetailPanel.implicitHeight)
             boundsBehavior: Flickable.StopAtBounds
 
+            Connections {
+                target: rightPanel.Window.window
+                function onActiveFocusItemChanged() {
+                    if (detailFlickable.interactive && detailFlickable.visible)
+                        ScrollFocus.revealFocused(detailFlickable, rightPanel.Window.window?.activeFocusItem)
+                }
+            }
             Right.ToolDetailPanel {
                 id: toolDetailPanel
+                paletteHeadingHost: rightPanel.collapsed ? null : paletteHeadingSlot
                 availableHeight: detailFlickable.height
 
                 // Reserve the gutter even before overflow. Otherwise wrapped
                 // text changes the height, which changes this width again and
                 // can trap narrow measurement panels in a Qt layout loop.
-                width: Math.max(0, detailFlickable.width - 10)
+                width: Math.max(0, detailFlickable.width - (detailFlickable.measures ? 0 : 10))
                 height: detailFlickable.contentHeight
                 toolController: rightPanel.toolController
                 activePanel: rightPanel.toolController
@@ -167,7 +185,7 @@ Rectangle {
             }
 
             Basic.ScrollBar.vertical: Components.AppScrollBar {
-                policy: detailFlickable.contentHeight
+                policy: !detailFlickable.measures && detailFlickable.contentHeight
                     > detailFlickable.height
                     ? Basic.ScrollBar.AsNeeded
                     : Basic.ScrollBar.AlwaysOff
@@ -177,21 +195,22 @@ Rectangle {
         Right.ToolResetBar {
             Layout.fillWidth: true
             Layout.minimumHeight: implicitHeight
-            Layout.maximumHeight: implicitHeight
-            collapsed: rightPanel.collapsed
-            expansionAllowed: rightPanel.expansionAllowed
-            playbackActive: rightPanel.tabController?.playing ?? false
-            volumeContext: !!rightPanel.volumeController
-            onCollapseRequested: rightPanel.collapseRequested()
             toolController: rightPanel.toolController
             voiController: rightPanel.tabController?.voiController ?? rightPanel.viewportController?.voiController ?? null
             cprController: rightPanel.tabController?.cprController ?? null
+            collapsed: rightPanel.collapsed
+            volumeContext: !!rightPanel.volumeController
+            playbackActive: rightPanel.tabController?.playing ?? false
+            resetEnabled: rightPanel.resetEnabled
         }
     }
 
     Connections {
         target: rightPanel.toolController ?? null
-        function onActivePanelChanged() { rightPanel.revealRegionError() }
+        function onActivePanelChanged() {
+            detailFlickable.contentY = detailFlickable.originY
+            rightPanel.revealRegionError()
+        }
         function onActiveToolChanged() {
             if (rightPanel.toolController.activeTool !== compactPanel.panelTool) compactPanel.close()
         }
@@ -216,6 +235,7 @@ Rectangle {
             })
         }
         readonly property bool cprActions: panelTool === "cpr-path" && !!rightPanel.tabController?.cprController
+        readonly property real footerHeight: popupFooter.hasActions ? popupFooter.implicitHeight + 4 : 0
         // A native popup remains above the native VTK viewport.
         popupType: Basic.Popup.Window
         x: -width - 8
@@ -225,7 +245,7 @@ Rectangle {
         implicitWidth: 280
         width: implicitWidth
         implicitHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48,
-            compactDetails.implicitHeight + chromeHeight + (cprActions ? 36 : 0))
+            compactDetails.implicitHeight + chromeHeight + footerHeight)
         height: implicitHeight
         title: rightPanel.toolController?.activeToolLabel ?? ""
         closeButtonName: "compactVolumePanelClose"
@@ -236,6 +256,7 @@ Rectangle {
             Layout.fillHeight: true
             clip: true
             contentWidth: width
+            interactive: compactPanel.panelTool !== "measure" && contentHeight > height
             contentHeight: compactDetails.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
             Components.ReadingShortcuts {
@@ -262,8 +283,8 @@ Rectangle {
             Right.ToolDetailPanel {
                 id: compactDetails
                 availableHeight: Math.min(560, (rightPanel.Window.window?.height ?? 640) - 48)
-                    - compactPanel.chromeHeight - (compactPanel.cprActions ? 36 : 0)
-                width: parent.width - 8
+                    - compactPanel.chromeHeight - compactPanel.footerHeight
+                width: parent.width - (compactPanel.panelTool === "measure" ? 0 : 8)
                 height: implicitHeight
                 activePanel: compactPanel.detailsLoaded ? compactPanel.panelTool : ""
                 onManualRequested: chapter => rightPanel.manualRequested(chapter)
@@ -275,12 +296,17 @@ Rectangle {
             }
             Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
         }
-        ToolControls.CprActions {
-            visible: compactPanel.cprActions
+        Right.ToolResetBar {
+            id: popupFooter
+            objectName: "compactPanelFooter"
             Layout.fillWidth: true
-            Layout.minimumHeight: 32
-            Layout.maximumHeight: 32
-            controller: rightPanel.tabController?.cprController ?? null
+            Layout.minimumHeight: implicitHeight
+            panel: compactPanel.panelTool
+            toolController: rightPanel.toolController
+            voiController: rightPanel.tabController?.voiController ?? rightPanel.viewportController?.voiController ?? null
+            cprController: rightPanel.tabController?.cprController ?? null
+            playbackActive: rightPanel.tabController?.playing ?? false
+            resetEnabled: rightPanel.resetEnabled
         }
     }
 }

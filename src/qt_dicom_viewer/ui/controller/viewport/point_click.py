@@ -13,12 +13,13 @@ class PendingPointClick(QObject):
         self._timer.setSingleShot(True)
         self._timer.setTimerType(Qt.PreciseTimer)
         self._timer.timeout.connect(self.confirm)
-        self._window = self._apply = self._cancel = None
+        self._window = self._apply = self._cancel = self._retract = None
 
-    def queue(self, window, position, apply, cancel=None):
+    def queue(self, window, position, apply, cancel=None, *, retract=None):
         self.confirm()  # A distinct single tap, even during rapid point placement.
         self._window, self._position, self._apply = window, position, apply
         self._cancel = cancel
+        self._retract = retract
         window.installEventFilter(self)
         self._timer.start(QGuiApplication.styleHints().mouseDoubleClickInterval())
 
@@ -26,13 +27,14 @@ class PendingPointClick(QObject):
         self._timer.stop()
         if self._window is not None and isValid(self._window):
             self._window.removeEventFilter(self)
-        self._window = self._apply = self._cancel = None
+        self._window = self._apply = self._cancel = self._retract = None
 
-    def discard(self):
-        cancel = self._cancel
+    def discard(self, *, double_tap=False):
+        # An immediate point survives ordinary view changes. Only a recognized
+        # double tap retracts its first tap. Deferred actions still cancel normally.
+        cancel = self._retract if double_tap and self._retract is not None else self._cancel
         self._reset()
-        if cancel is not None:
-            cancel()
+        return bool(cancel and cancel())
 
     @Slot()
     def confirm(self):

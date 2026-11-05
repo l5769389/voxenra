@@ -56,7 +56,13 @@ SettingsSplit {
         settingsController: root.settingsController
         Layout.fillWidth: true
         title: qsTrId("text.0861")
-        SettingColor { Layout.fillWidth: true; title: qsTrId("text.0862"); settingName: "measurement-annotationColor"; value: root.values.annotationColor; onEdited: color => root.settingsController.setValue("measurement", "annotationColor", color) }
+        Components.AppCheckBox {
+            objectName: "setting-measurement-annotationFollowsCompleted"
+            text: qsTrId("measurement.followCompleted")
+            checked: root.values.annotationFollowsCompleted
+            onClicked: root.settingsController.setValue("measurement", "annotationFollowsCompleted", checked)
+        }
+        SettingColor { Layout.fillWidth: true; visible: !root.values.annotationFollowsCompleted; swatchColors: Theme.annotationSwatches; title: qsTrId("text.0862"); settingName: "measurement-annotationColor"; value: root.values.annotationColor; onEdited: color => root.settingsController.setValue("measurement", "annotationColor", color) }
         SettingSlider { Layout.fillWidth: true; title: qsTrId("text.0863"); settingName: "measurement-annotationSize"; from: 8; to: 28; stepSize: 1; value: root.values.annotationSize; onEdited: value => root.settingsController.setValue("measurement", "annotationSize", value) }
     }
     preview: Component {
@@ -75,17 +81,32 @@ SettingsSplit {
                     const ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
                     ctx.fillStyle = Theme.canvasBackground; ctx.fillRect(0, 0, width, height)
-                    ;[{y: 62, color: options.editingColor, dash: options.editingDash, label: qsTrId("text.0857")},
-                      {y: 140, color: options.completedColor, dash: options.completedDash, label: qsTrId("text.0864")}].forEach(row => {
-                        ctx.font = "11px sans-serif"; ctx.fillStyle = Theme.textMuted; ctx.fillText(row.label, 16, row.y - 30)
-                        ctx.strokeStyle = row.color; ctx.fillStyle = row.color; ctx.lineWidth = options.lineWidth
-                        ctx.setLineDash(row.dash ? [6, 4] : [])
+                    const rows = [
+                        {y: 48, editing: true, label: qsTrId("text.0857")},
+                        {y: 108, editing: false, label: qsTrId("text.0859")},
+                        {y: 164, editing: false, reference: true, label: qsTrId("measurement.cprReference")}
+                    ]
+                    for (const row of rows) {
+                        ctx.save()
+                        ctx.font = "11px sans-serif"; ctx.fillStyle = Theme.overlayText
+                        ctx.fillText(row.label, 16, row.y - 26)
+                        ctx.globalAlpha = row.reference ? Theme.referencePathOpacity : 1
+                        ctx.strokeStyle = ctx.fillStyle = Theme.drawingLineColor(options, row.editing)
+                        ctx.lineWidth = options.lineWidth
+                        ctx.setLineDash(Theme.drawingLineDashed(options, row.editing)
+                            ? [4, 2] : [])
                         ctx.beginPath(); ctx.moveTo(22, row.y); ctx.lineTo(width - 22, row.y); ctx.stroke()
                         ctx.setLineDash([])
-                        ;[22, width - 22].forEach(x => { ctx.beginPath(); ctx.arc(x, row.y, 3, 0, Math.PI * 2); ctx.fill() })
-                        ctx.font = options.fontSize + "px sans-serif"; ctx.textAlign = "center"
-                        ctx.fillText(root.settingsController.formatMeasurement(32.456, options.decimalPlaces) + " mm", width / 2, row.y - 9); ctx.textAlign = "left"
-                    })
+                        for (const x of [22, width - 22]) {
+                            ctx.beginPath(); ctx.arc(x, row.y, 3, 0, Math.PI * 2); ctx.fill()
+                        }
+                        if (!row.reference) {
+                            ctx.font = options.fontSize + "px sans-serif"; ctx.textAlign = "center"
+                            ctx.fillText(root.settingsController.formatMeasurement(32.456, options.decimalPlaces)
+                                + " mm", width / 2, row.y - 7)
+                        }
+                        ctx.restore()
+                    }
                 }
             }
             Rectangle {

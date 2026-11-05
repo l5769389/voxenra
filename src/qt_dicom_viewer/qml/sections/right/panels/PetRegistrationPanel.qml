@@ -123,10 +123,11 @@ ColumnLayout {
             enabled: panel.controller?.ready === true && panel.controller.registrationActive && panel.draftValid
             onClicked: panel.applyDraft()
         }
-        RowLayout {
+        Components.AppButton {
             Layout.fillWidth: true
-            Components.AppButton { Layout.fillWidth: true; text: qsTrId("text.1065"); enabled: panel.controller.ready; onClicked: panel.controller.centerAlign() }
-            Components.AppButton { Layout.fillWidth: true; text: qsTrId("text.0282"); enabled: panel.controller.ready; onClicked: panel.controller.resetRegistration() }
+            text: qsTrId("text.1065")
+            enabled: panel.controller.ready
+            onClicked: panel.controller.centerAlign()
         }
         RowLayout {
             Layout.fillWidth: true

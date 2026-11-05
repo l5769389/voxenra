@@ -47,12 +47,19 @@ class TagTreeModel(QAbstractListModel):
     def maxVisibleDepth(self):
         return max((row["depth"] for row in self._rows), default=0)
 
-    def set_nodes(self, nodes: tuple[TagNode, ...]) -> None:
+    @property
+    def expanded_nodes(self):
+        return sorted(self._expanded)
+
+    def set_nodes(self, nodes: tuple[TagNode, ...], *, reset_expansion=True) -> None:
         self._roots = nodes
-        self._expanded.clear()
+        if reset_expansion:
+            self._expanded.clear()
         self._rebuild()
 
-    def set_query(self, query: str) -> None:
+    def set_query(self, query: str, *, expanded=None) -> None:
+        if expanded is not None:
+            self._expanded = set(expanded)
         self._query = query.strip().casefold()
         self._rebuild()
 

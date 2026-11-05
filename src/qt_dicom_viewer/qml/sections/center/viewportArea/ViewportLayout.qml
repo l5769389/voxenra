@@ -260,6 +260,7 @@ Item {
                     color: Theme.canvasBackground
 
                     Viewport {
+                        onPointToolFocusToggleRequested: viewportLayout.toggleSingleView(viewportCell.modelData.viewportId)
                         id: imageViewport
                         objectName: "imageViewport-" + viewportCell.modelData.viewportId
                         multiViewport: !viewportLayout.singleViewMode && viewportLayout.currentTabAllViewports.length > 1

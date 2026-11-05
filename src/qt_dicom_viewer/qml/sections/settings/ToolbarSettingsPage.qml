@@ -10,6 +10,8 @@ Item {
     id: page
     objectName: "toolbarSettingsPage"
     required property var settingsController
+    readonly property alias resetButton: restoreAction
+    property string resetHint: ""
     property string initialProfile: ""
     property bool detailsExpanded: false
     property var editor: settingsController.createToolbarEditor(page)
@@ -340,7 +342,7 @@ Item {
         }
         RowLayout {
             Layout.fillWidth: true
-            Components.AppButton { id: restoreAction; objectName: "toolbarRestore"; text: qsTrId("toolbar.restore"); onClicked: { page.cancelDrag(); page.editor.restoreCurrentDefault() } }
+            Components.AppButton { id: restoreAction; objectName: "toolbarRestore"; shortcutTitle: qsTrId("toolbar.restore"); captionKey: page.resetHint; onClicked: { page.cancelDrag(); page.editor.restoreCurrentDefault() } }
             Item { Layout.fillWidth: true }
             Components.AppButton { objectName: "toolbarCancel"; text: qsTrId("toolbar.cancel"); enabled: page.editor.dirty; onClicked: { page.cancelDrag(); page.editor.cancel() } }
             Components.AppButton { objectName: "toolbarSave"; text: qsTrId("toolbar.save"); actionRole: "primary"; enabled: page.editor.dirty; onClicked: { page.cancelDrag(); page.editor.save() } }

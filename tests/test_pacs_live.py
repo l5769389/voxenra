@@ -177,9 +177,6 @@ def test_real_qml_configure_test_query_import_and_view(scene, live_profile):
 
 @pytest.mark.skipif(os.environ.get("PACS_LAB_NATIVE") != "1", reason="Needs native desktop and OpenGL")
 def test_downloaded_volume_renders_in_native_3d_and_switches_settings(scene, tmp_path):
-    from vtkmodules.vtkRenderingCore import vtkWindowToImageFilter
-    from vtkmodules.vtkIOImage import vtkPNGWriter
-    from vtkmodules.util.numpy_support import vtk_to_numpy
     window, app, warnings = scene
     profile = next(row for row in profiles() if row["key"] == "dcm4chee")
     client = DicomWebClient(PacsProfile.from_dict(profile))
@@ -191,25 +188,18 @@ def test_downloaded_volume_renders_in_native_3d_and_switches_settings(scene, tmp
     viewport = app.workspaceController.activeViewport
     wait_until(lambda: viewport.loadState in ("ready", "error"), 20000)
     assert viewport.loadState == "ready", viewport.errorMessage
-    QTest.qWait(500)
-    assert viewport._host.isVisible()
-    capture = vtkWindowToImageFilter()
-    capture.SetInput(viewport._host.backend.window)
-    capture.ReadFrontBufferOff()
-    capture.Update()
-    pixels = vtk_to_numpy(capture.GetOutput().GetPointData().GetScalars())
+    wait_until(lambda: viewport._host is not None and viewport._host.frame_ready
+               and viewport._host.surface_ready(), 20000)
+    frame = viewport.snapshot_image()
+    rows = np.frombuffer(frame.constBits(), dtype=np.uint8).reshape(frame.height(), frame.bytesPerLine())
+    pixels = rows[:, :3 * frame.width()].reshape(-1, 3)
     assert np.count_nonzero(pixels.max(axis=1) > 80) > 1000
     out = ARTIFACTS / "screenshots/dcm4chee-native-3d.png"
     out.parent.mkdir(parents=True, exist_ok=True)
-    writer = vtkPNGWriter()
-    writer.SetFileName(str(out))
-    writer.SetInputConnection(capture.GetOutputPort())
-    writer.Write()
+    assert frame.save(str(out))
     tab = app.workspaceController.activeTabId
     click(window, find(window, "sidebarSettings"))
-    QTest.qWait(200)
-    assert not viewport._host.isVisible()
+    wait_until(lambda: not viewport._host.isVisible())
     app.workspaceController.activateTabId(tab)
-    QTest.qWait(200)
-    assert viewport._host.isVisible()
+    wait_until(lambda: viewport._host.isVisible() and viewport._host.surface_ready())
     assert not warnings, warnings

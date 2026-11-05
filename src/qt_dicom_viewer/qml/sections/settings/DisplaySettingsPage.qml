@@ -10,6 +10,8 @@ Item {
     required property var settingsController
     required property string category
     required property string title
+    property string resetHint: ""
+    readonly property var resetButton: content.item?.focusedResetButton ?? categoryReset
     onCategoryChanged: resetDialog.close()
     function requestReset(section, title) {
         resetDialog.section = section
@@ -79,8 +81,11 @@ Item {
             Text { Layout.fillWidth: true; text: page.title; color: Theme.textPrimary; font.pixelSize: 18; font.bold: true }
             Text { text: qsTrId("text.0842"); color: Theme.textSubtle; font.pixelSize: 11 }
             Components.AppButton {
+                id: categoryReset
                 objectName: "resetDisplaySettings"
-                text: qsTrId("text.0843"); compact: true; normalColor: "transparent"; baseBorderWidth: 1
+                shortcutTitle: qsTrId("text.0843")
+                captionKey: page.resetButton === categoryReset ? page.resetHint : ""
+                compact: true; normalColor: "transparent"; baseBorderWidth: 1
                 onClicked: page.requestReset(page.category, page.title)
             }
         }
@@ -117,6 +122,7 @@ Item {
         id: inputPage
         InputSettingsPage {
             settingsController: page.settingsController
+            resetHint: page.resetHint
             onResetShortcutsRequested: page.requestReset("shortcuts", qsTrId("input.shortcuts"))
         }
     }

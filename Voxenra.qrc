@@ -1,10 +1,11 @@
 <RCC>
     <qresource>
-        <file>src/qt_dicom_viewer/qml/assets/help/cpr-reference-2.3.0.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/cpr-reference-2.3.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/cpr-reference-2.4.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/cpr-reference-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/cpr-path.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/cpr-results.svg</file>
         <file>src/qt_dicom_viewer/qml/components/ShortcutCaption.js</file>
+        <file>src/qt_dicom_viewer/qml/components/ScrollFocus.js</file>
         <file>src/qt_dicom_viewer/qml/components/ShortcutLabel.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/right/panels/CprParameterField.qml</file>
 
@@ -250,10 +251,10 @@
         <file>src/qt_dicom_viewer/qml/assets/icons/crosshair-rotate.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/save.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/help/manual.json</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/appearance-2.3.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/appearance-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/export-complete-2.1.1.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/ai-workflow-2.1.1.gif</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/appearance-2.3.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/appearance-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/export-complete-2.1.1.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/ai-workflow-2.1.1.gif</file>
         <file>src/qt_dicom_viewer/qml/assets/help/chapters/start.json</file>
@@ -275,7 +276,7 @@
         <file>src/qt_dicom_viewer/qml/assets/help/corner-editor-2.1.5.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/directory-favorites-2.1.5.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/corner-editor-2.1.5.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/measurement-style.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/measurement-style-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/montage.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/mpr.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/overview.png</file>
@@ -287,8 +288,8 @@
         <file>src/qt_dicom_viewer/qml/assets/help/water-qa.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/water-qa-2.1.3.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/workspace.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/workspace-2.1.3.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/measurement.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/workspace-2.4.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/measurement-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/manual.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/feedback.svg</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/visible.svg</file>
@@ -326,8 +327,8 @@
         <file>src/qt_dicom_viewer/qml/assets/help/en/export.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/fusion.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/import.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/measurement-style.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/measurement.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/measurement-style-2.4.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/measurement-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/montage.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/mpr.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/overview.png</file>
@@ -343,7 +344,7 @@
         <file>src/qt_dicom_viewer/qml/assets/help/en/water-qa.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/water-qa-2.1.3.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/workspace.png</file>
-        <file>src/qt_dicom_viewer/qml/assets/help/en/workspace-2.1.3.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/workspace-2.4.0.png</file>
       <file>src/qt_dicom_viewer/qml/sections/right/panels/TwoDLayoutPanel.qml</file>
     <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/TwoDViewportLayout.qml</file>
     <file>src/qt_dicom_viewer/qml/assets/icons/nav-compare-mpr.svg</file>
@@ -382,7 +383,7 @@
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/zip-import.png</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials.json</file>
     <file>src/qt_dicom_viewer/qml/assets/help/pacs-dimse-settings.png</file>
-    <file>src/qt_dicom_viewer/qml/assets/help/window-favorites.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/window-favorites-2.4.0.png</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/pacs-dimse.png</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/pacs-dimse.gif</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/toolbar-customization.png</file>
@@ -390,7 +391,7 @@
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/focus-view.png</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/focus-view.gif</file>
     <file>src/qt_dicom_viewer/qml/assets/help/en/pacs-dimse-settings.png</file>
-    <file>src/qt_dicom_viewer/qml/assets/help/en/window-favorites.png</file>
+    <file>src/qt_dicom_viewer/qml/assets/help/en/window-favorites-2.4.0.png</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-pacs-dimse.png</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-pacs-dimse.gif</file>
     <file>src/qt_dicom_viewer/qml/assets/help/tutorials/en-toolbar-customization.png</file>

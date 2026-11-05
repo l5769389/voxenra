@@ -137,6 +137,8 @@ def decode(value, depth=0, *, budget=None):
         if cls is None or not is_dataclass(cls) or set(value) != {"$type", "fields"}:
             raise ValueError(_msg('text.0116'))
         payload = value["fields"]
+        if cls.__name__ == "TextAnnotation" and isinstance(payload, dict) and "follows_default_color" not in payload:
+            payload = dict(payload, follows_default_color=False)  # Legacy annotations stored an explicit color.
         if cls.__name__ == "RoiMetrics" and isinstance(payload, dict) and "perimeter_mm" not in payload:
             payload = dict(payload, perimeter_mm=None)  # Read workspaces saved before freehand ROI.
         if cls.__name__ == "RoiMeasurement" and isinstance(payload, dict) and "smooth" not in payload:

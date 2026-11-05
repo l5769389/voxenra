@@ -118,12 +118,20 @@ class ShortcutController(QObject):
         if action not in BINDINGS:
             return False
         menu = BINDINGS[action][0]
-        if menu and (tools.activePanel not in menu_scopes(menu)
-                     or (visible_menu is not None and visible_menu != tools.activePanel)
+        # Expanded direct tools (pan / 3D rotation) own a visible reset footer.
+        # Their compact counterparts supply an empty visible_menu.
+        target_menu = tools.activePanel or (tools.activeTool if action == 'view-reset' else '')
+        if menu and (target_menu not in menu_scopes(menu)
+                     or (visible_menu is not None and visible_menu != target_menu)
                      or tab.playing):
             return False
         if action == 'view-reset':
-            if tools.activeTool != tools.activePanel or not tools.canResetActiveTool:
+            if target_menu == 'mpr-layout' and getattr(tab, 'mprCompare', False) and tab.ready:
+                tab.resetActiveOrientation()
+                return True
+            if tools.activeTool != target_menu or not tools.canResetActiveTool:
+                return False
+            if target_menu == 'registration' and not tab.ready:
                 return False
             tools.resetActiveTool()
             return True

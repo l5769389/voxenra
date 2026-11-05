@@ -261,6 +261,8 @@ class DicomFolderScanSnapshot:
     # Display-series UIDs actually read in this batch, before catalog/phase
     # expansion. None preserves the semantics of raw scanner/legacy snapshots.
     incoming_series_uids: frozenset[str] | None = None
+    # Subset of skipped files that are readable copies within the same batch.
+    duplicate_file_count: int = 0
 
 @dataclass(frozen=True, slots=True)
 class SeriesDisplayMeta:

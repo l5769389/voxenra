@@ -292,11 +292,15 @@ class SettingsController(QObject):
                     raise ValueError(_msg('text.0057'))
         except (ValueError, TypeError) as exc:
             return self._error(error_message(exc))
-        if value == self._data[section][key]:
+        picking_arrow_color = section == "measurement" and key == "annotationColor"
+        unlink = picking_arrow_color and self._data["measurement"]["annotationFollowsCompleted"]
+        if value == self._data[section][key] and not unlink:
             self._error("")
             return True
         candidate = deepcopy(self._data)
         candidate[section][key] = value
+        if unlink:
+            candidate[section]["annotationFollowsCompleted"] = False
         return self._commit(section, candidate)
 
     @Slot(str, result=bool)

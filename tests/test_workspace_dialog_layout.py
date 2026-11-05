@@ -27,9 +27,17 @@ def geometry(item):
     return p.x(), p.y(), item.width(), item.height()
 
 
-def test_compact_workspace_save_and_manual_preserve_work(sidebar_scene, tmp_path, monkeypatch):
+@pytest.mark.parametrize('locale, size, opening, saving, save_as_title, changes, saved', [
+    ('zh-CN', (1000, 600), '打开工作区', '保存工作区', '另存为', '保存更改', '已保存'),
+    ('en-US', (1400, 900), 'Open workspace', 'Save workspace', 'Save as', 'Save changes', 'Saved'),
+    ('pt-BR', (1000, 600), 'Abrir espaço de trabalho', 'Salvar espaço de trabalho',
+     'Salvar como', 'Salvar alterações', 'Salvo'),
+], ids=['zh-CN', 'en-US', 'pt-BR'])
+def test_compact_workspace_save_and_manual_preserve_work(
+        sidebar_scene, tmp_path, monkeypatch, locale, size, opening, saving, save_as_title, changes, saved):
     window, app, records, warnings = sidebar_scene
-    window.resize(1000, 600)
+    window.resize(*size)
+    app.languageController.selectLanguage(locale)
     ws, manager = app.workspaceController, app.workspaceDocumentController
     manager._autosave.stop()
     ws.createTab(records[0].series_instance_uid, '2D', '2d')
@@ -40,10 +48,11 @@ def test_compact_workspace_save_and_manual_preserve_work(sidebar_scene, tmp_path
     QTest.qWait(80)
     child = lambda name: dialog.findChild(QObject, name)
     save, save_as, open_button = [child(name) for name in ('saveWorkspace', 'saveWorkspaceAs', 'openWorkspace')]
-    assert dialog.property('width') == 460 and dialog.property('height') == 300
+    assert dialog.property('width') <= window.width() - 24 and dialog.property('height') == 300
     assert save.isVisible() and open_button.isVisible() and not save_as.isVisible()
-    assert save.property('text') == '保存工作区…'
-    for name in ('workspaceRecoveryLocation', 'workspaceManualLink', 'saveWorkspace', 'openWorkspace'):
+    assert open_button.property('displayedButtonCaption') == opening
+    assert save.property('displayedButtonCaption') == f'{saving} (Enter)'
+    for name in ('workspaceRecoveryLocation', 'workspaceManualLink'):
         assert not child(name).property('contentItem').property('truncated'), name
     initial = native.geometry(), geometry(save), geometry(open_button)
     assert native.grabWindow().save(str(tmp_path / 'workspace-temporary.png'))
@@ -55,9 +64,16 @@ def test_compact_workspace_save_and_manual_preserve_work(sidebar_scene, tmp_path
     QTest.qWait(80)
     assert target.is_file() and not manager.isError and not manager.dirty
     assert child('workspaceName').property('text') == '复查计划'
-    assert child('workspaceSaveState').property('text') == '已保存'
-    assert save.property('text') == '保存更改' and save_as.isVisible()
+    assert child('workspaceSaveState').property('text') == saved
+    assert save_as.isVisible() and save_as.property('displayedButtonCaption') == save_as_title
+    assert save.property('displayedButtonCaption') == f'{changes} (Enter)'
     assert (native.geometry(), geometry(save), geometry(open_button)) == initial
+    right_edge = 0
+    for action in (open_button, save_as, save):
+        x = action.mapToScene(QPointF()).x()
+        assert right_edge < x
+        right_edge = x + action.width()
+    assert right_edge < native.width()
     assert native.grabWindow().save(str(tmp_path / 'workspace-saved.png'))
     click(native, child('workspaceManualLink'))
     wait_until(lambda: not dialog.property('visible') and ws.activeTabType == 'manual')

@@ -10,6 +10,7 @@ from PySide6.QtCore import QObject, Property, Signal, Slot
 from PySide6.QtGui import QColor
 
 from qt_dicom_viewer.model.dicom_types import FrameDisplayMeta
+from qt_dicom_viewer.settings.preferences import DEFAULTS
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +25,7 @@ class TextAnnotation:
     color: str
     font_size: int
     frame_key: tuple
+    follows_default_color: bool = False
 
 
 class TextAnnotationController(QObject):
@@ -41,7 +43,8 @@ class TextAnnotationController(QObject):
         self._selected_id = ""
         self._draft_id = ""
         self._text = _msg('text.0307')
-        self._color = "#ffd45c"
+        self._default_color = self._color = DEFAULTS["measurement"]["annotationColor"]
+        self._follows_default_color = True
         self._font_size = 16
 
     def set_current_slice(self, slice_index: int | None) -> None:
@@ -103,7 +106,7 @@ class TextAnnotationController(QObject):
                 "column": annotation.tail_column,
                 "row": annotation.tail_row,
                 "text": annotation.text,
-                "color": annotation.color,
+                "color": self._display_color(annotation),
                 "fontSize": annotation.font_size,
                 "selected": annotation.annotation_id == self._selected_id,
                 "draft": annotation.annotation_id == self._draft_id,
@@ -147,21 +150,22 @@ class TextAnnotationController(QObject):
         self._annotations[selected.annotation_id] = updated
         self.annotationsChanged.emit()
 
+    def _display_color(self, annotation):
+        return self._default_color if annotation.follows_default_color else annotation.color
+
     def applyStyleDefaults(self, *, color=None, font_size=None) -> None:
-        """Apply changed workspace defaults to existing annotations on every frame."""
-        changes = {}
+        """Inherited colors follow the live palette, including on restored annotations."""
+        if color is None and font_size is None:
+            return
         if color is not None and QColor(color).isValid():
-            self._color = QColor(color).name()
-            changes["color"] = self._color
+            self._default_color = QColor(color).name()
+            if self._follows_default_color:
+                self._color = self._default_color
         if font_size is not None:
             self._font_size = max(10, min(int(font_size), 48))
-            changes["font_size"] = self._font_size
-        if not changes:
-            return
-        updated = {key: replace(item, **changes) for key, item in self._annotations.items()}
-        if updated != self._annotations:
-            self._annotations = updated
-            self.annotationsChanged.emit()
+            self._annotations = {key: replace(item, font_size=self._font_size)
+                                 for key, item in self._annotations.items()}
+        self.annotationsChanged.emit()
         self.editorChanged.emit()
 
     @Slot(str)
@@ -179,10 +183,11 @@ class TextAnnotationController(QObject):
         if not value.isValid():
             return
         color = value.name()
-        if color == self._color:
+        if color == self._color and not self._follows_default_color:
             return
         self._color = color
-        self._update_selected(color=color)
+        self._follows_default_color = False
+        self._update_selected(color=color, follows_default_color=False)
         self.editorChanged.emit()
 
     @Slot(int)
@@ -231,6 +236,7 @@ class TextAnnotationController(QObject):
             color=self._color,
             font_size=self._font_size,
             frame_key=self._frame_key,
+            follows_default_color=self._follows_default_color,
         )
         self._annotations[annotation.annotation_id] = annotation
         self._selected_id = annotation.annotation_id
@@ -244,7 +250,7 @@ class TextAnnotationController(QObject):
             return None
         return {"kind": "text", "points": [[annotation.tail_column, annotation.tail_row],
                 [annotation.head_column, annotation.head_row]], "text": annotation.text,
-                "color": annotation.color, "fontSize": annotation.font_size}
+                "color": self._display_color(annotation), "fontSize": annotation.font_size}
 
     def paste_copy(self, payload, points) -> str:
         if self._draft_id or self._frame_key is None or self._current_slice is None:
@@ -258,6 +264,17 @@ class TextAnnotationController(QObject):
         self.selectAnnotation(annotation.annotation_id)
         self.annotationsChanged.emit()
         return annotation.annotation_id
+
+    def place_point(self, column: float, row: float, tolerance: float) -> None:
+        annotation = self._annotations.get(self._draft_id)
+        if annotation is not None:
+            # A repeated press at the tail is not a valid second endpoint.
+            if math.hypot(column - annotation.tail_column, row - annotation.tail_row) >= 0.5:
+                self.finishAnnotation(column, row)
+            return
+        self.selectAnnotationAt(column, row, tolerance)
+        if not self._selected_id:
+            self.beginAnnotation(column, row)
 
     def beginAnnotation(self, tail_column: float, tail_row: float) -> bool:
         if (
@@ -279,6 +296,7 @@ class TextAnnotationController(QObject):
             color=self._color,
             font_size=self._font_size,
             frame_key=self._frame_key,
+            follows_default_color=self._follows_default_color,
         )
         self._annotations[annotation.annotation_id] = annotation
         self._draft_id = annotation.annotation_id
@@ -382,11 +400,12 @@ class TextAnnotationController(QObject):
         self._selected_id = annotation_id
         editor_changed = (
             self._text != annotation.text
-            or self._color != annotation.color
+            or self._color != self._display_color(annotation)
             or self._font_size != annotation.font_size
         )
         self._text = annotation.text
-        self._color = annotation.color
+        self._color = self._display_color(annotation)
+        self._follows_default_color = annotation.follows_default_color
         self._font_size = annotation.font_size
         if selection_changed:
             self.selectionChanged.emit()

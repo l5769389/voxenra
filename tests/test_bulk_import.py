@@ -125,7 +125,8 @@ def test_import_task_reports_limit_and_retry_without_restoring_banner(scene, tmp
     assert not warnings, warnings
 
 
-def test_progress_task_keeps_gui_alive_and_cancel_is_visible(scene, tmp_path, monkeypatch):
+@pytest.mark.parametrize("partial", [False, True])
+def test_progress_task_keeps_gui_alive_and_cancel_is_visible(scene, tmp_path, monkeypatch, partial):
     window, app, warnings = scene
     panel = app.panelController
     entered, release = Event(), Event()
@@ -135,7 +136,17 @@ def test_progress_task_keeps_gui_alive_and_cancel_is_visible(scene, tmp_path, mo
         entered.set()
         assert release.wait(5)
         return prepare(*args, **kwargs)
-    monkeypatch.setattr(panel._import_store, "prepare", slow)
+    if partial:
+        make_series(tmp_path, 3)
+        read = scanner._read_frames
+        def pause_after_read(path):
+            frames = read(path)
+            entered.set()
+            assert release.wait(5)
+            return frames
+        monkeypatch.setattr(scanner, "_read_frames", pause_after_read)
+    else:
+        monkeypatch.setattr(panel._import_store, "prepare", slow)
     pulses = []
     timer = QTimer()
     timer.setInterval(10)
@@ -145,17 +156,18 @@ def test_progress_task_keeps_gui_alive_and_cancel_is_visible(scene, tmp_path, mo
         panel.importUrls([QUrl.fromLocalFile(str(tmp_path))])
         wait_until(entered.is_set)
         dialog = task_dialog(window)
-        wait_until(lambda: "12,000" in panel.statusMessage and len(pulses) > 5)
+        wait_until(lambda: len(pulses) > 5)
         assert dialog.findChild(QObject, "importTaskProgress").property("indeterminate")
         button = dialog.findChild(QObject, "importTaskClose")
         click(button.window(), button)
         release.set()
         wait_until(lambda: not panel.scanning)
         assert "取消" in panel.statusMessage
-        QTest.qWait(4200)
-        assert panel.importTaskOpen and dialog.property("visible")
-        click(button.window(), button)
-        wait_until(lambda: not panel.importTaskOpen)
+        assert panel.hasSeries == partial
+        assert panel.importTaskOpen == dialog.property("visible") == partial
+        if partial:
+            click(button.window(), button)
+            wait_until(lambda: not panel.importTaskOpen)
     finally:
         release.set()
         timer.stop()
@@ -232,8 +244,9 @@ def test_task_window_size_and_buttons_stay_fixed_for_long_progress_and_errors(sc
     assert not warnings, warnings
 
 
-@pytest.mark.parametrize("outcome", ["clean", "duplicate", "existing", "mixed-existing", "non-dicom", "empty", "bad-archive"])
-def test_only_clean_import_closes_immediately_and_other_results_need_acknowledgment(scene, tmp_path, outcome):
+@pytest.mark.parametrize("outcome", ["clean", "duplicate", "existing", "existing-copies", "existing-unreadable",
+                                     "restored", "mixed-existing", "non-dicom", "empty", "bad-archive"])
+def test_import_feedback_matches_outcome(scene, tmp_path, outcome):
     window, app, warnings = scene
     panel = app.panelController
     folder = tmp_path / "images"
@@ -241,35 +254,50 @@ def test_only_clean_import_closes_immediately_and_other_results_need_acknowledgm
     series = make_series(folder, 3)
     paths = [i.path for i in series.instances]
     dialog = window.findChild(QObject, "importTaskDialog")
-    if outcome in ("existing", "mixed-existing"):
-        previous = paths if outcome == "existing" else paths[:2]
+    notice = window.findChild(QObject, "importAlreadyListedNotice")
+    opened = []
+    dialog.visibleChanged.connect(lambda: opened.append(dialog.property("visible")))
+    # Deterministically exercise a scan that finishes before the progress delay.
+    panel._progress_delay.setInterval(10_000)
+    if outcome in ("existing", "existing-copies", "existing-unreadable", "restored", "mixed-existing"):
+        previous = paths[:2] if outcome == "mixed-existing" else paths
         assert panel.importUrls([QUrl.fromLocalFile(str(p)) for p in previous])
         wait_until(lambda: not panel.scanning)
         assert not panel.importTaskOpen and not dialog.property("visible")
-    if outcome == "duplicate":
+        if outcome == "restored":
+            panel.clearSeries()
+            assert not panel.hasSeries
+    if outcome in ("duplicate", "existing-copies"):
         duplicate = folder / "copy.dcm"
         duplicate.write_bytes(paths[0].read_bytes())
         paths.append(duplicate)
-    elif outcome in ("non-dicom", "empty"):
+    elif outcome in ("non-dicom", "existing-unreadable", "empty"):
         unreadable = folder / "not-an-image.txt"
         unreadable.write_text("not a DICOM")
-        paths = paths + [unreadable] if outcome == "non-dicom" else [unreadable]
+        paths = [unreadable] if outcome == "empty" else paths + [unreadable]
     elif outcome == "bad-archive":
         archive = folder / "corrupt.zip"
         archive.write_bytes(b"not a ZIP archive")
         paths = [archive]
     assert panel.importUrls([QUrl.fromLocalFile(str(p)) for p in paths])
     wait_until(lambda: not panel.scanning)
-    if outcome == "clean":
-        # No four-second timer or user interaction is needed after completion.
+    if outcome in ("clean", "existing", "existing-copies", "restored"):
+        assert not any(opened)
         assert not panel.importTaskOpen and not dialog.property("visible")
-        assert not panel.importError
+        assert not panel.importError and panel.hasSeries
+        assert len(app._series_catalog.get_series(series.series_instance_uid).instances) == 3
+        assert notice.property("visible") == (outcome in ("existing", "existing-copies"))
+        if notice.property("visible"):
+            assert notice.property("text") == "影像已在列表中"
+            assert not window.property("shortcutPopupOpen")
+            wait_until(lambda: not notice.property("visible"), timeout=5000)
     else:
         assert panel.importTaskOpen and dialog.property("visible")
+        assert not notice.property("visible")
         assert panel.importError == (outcome in ("empty", "bad-archive"))
-        if outcome in ("existing", "mixed-existing"):
+        if outcome == "mixed-existing":
             assert "已在列表中" in panel.statusMessage
-            assert panel._last_import_snapshot.existing_file_count == (3 if outcome == "existing" else 2)
+            assert panel._last_import_snapshot.existing_file_count == 2
             assert len(app._series_catalog.get_series(series.series_instance_uid).instances) == 3
         elif outcome in ("duplicate", "non-dicom"):
             assert panel._last_import_snapshot.skipped_file_count == 1

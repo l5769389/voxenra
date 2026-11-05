@@ -226,6 +226,8 @@ var labels = {
     ],
     "measurement": [
         "measurement.cardSettings",
+        "measurement.cprReference",
+        "measurement.followCompleted",
         "measurement.integer",
         "measurement.linkHelp",
         "measurement.linkLabel",
@@ -247,7 +249,6 @@ var labels = {
         "text.0861",
         "text.0862",
         "text.0863",
-        "text.0864",
         "text.0865"
     ],
     "roi": [

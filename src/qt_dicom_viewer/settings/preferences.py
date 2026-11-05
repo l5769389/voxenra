@@ -51,7 +51,7 @@ DEFAULTS = {
                     "editingDash": True, "completedDash": False, "fontSize": 13,
                     "linkLabelToShape": False, "cardTransparency": 8,
                     "decimalPlaces": DEFAULT_DECIMAL_PLACES,
-                    "annotationColor": "#ffd166", "annotationSize": 14},
+                    "annotationFollowsCompleted": False, "annotationColor": "#c99cff", "annotationSize": 14},
     "services": {"mtfFrequencyUnit": "lp/mm", "mtfGaussianEquivalent": True,
                  "rampThicknessAngle": 23, "segmentationPython": "", "segmentationWeights": "",
                  "segmentationDevice": "auto", "segmentationOrgans": ["liver", "spleen", "kidney_left", "kidney_right"]},
@@ -225,6 +225,10 @@ def normalize_settings(raw):
                     entries[key] = validate_value(section, key, candidate[key])
                 except (ValueError, TypeError):
                     pass
+    if isinstance(legacy, dict) and "annotationFollowsCompleted" not in legacy and "annotationColor" in legacy:
+        # Old versions stored both colors, but did not record whether they were linked.
+        style = data["measurement"]
+        style["annotationFollowsCompleted"] = style["annotationColor"] == style["completedColor"]
     # Upgrade only the former default layout. A versioned save keeps an
     # explicitly removed field removed on every subsequent launch.
     if raw.get("schemaVersion", 0) == 0:

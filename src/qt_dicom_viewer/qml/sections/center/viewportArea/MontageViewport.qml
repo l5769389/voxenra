@@ -10,6 +10,7 @@ import "../../../theme"
 Item {
     id: montageRoot
 
+    property bool capturingPng: false
     property bool anonymousExport: false
     required property var viewportController
     readonly property var metadataItems: [
@@ -457,7 +458,7 @@ Item {
                 width: 40; height: 32
                 x: gridViewport.cursorPosition.x - 2
                 y: gridViewport.cursorPosition.y - 2
-                visible: !!iconName && (gridHover.hovered || gridViewport.draggedTile !== null)
+                visible: !montageRoot.capturingPng && !!iconName && (gridHover.hovered || gridViewport.draggedTile !== null)
                 z: 100
             }
 

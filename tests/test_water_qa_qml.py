@@ -10,6 +10,7 @@ from shiboken6 import delete
 
 from qt_dicom_viewer.model import ToolType
 from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from test_dicom_tags import wait_until
 from test_measurement_qml import qt_app, _visual_children, _mouse_drag, _scene
 from test_service_panel_qml import _find, _click
 from test_water_qa import water_image
@@ -195,7 +196,10 @@ def test_overlay_tracks_physical_transform_and_parameter_reset(qa_workspace, qt_
     QTest.keyClick(window, Qt.Key_Up)
     wait_qa(qt_app, view.qaController)
     assert view.qaController.roiDiameterMm == 21
-    _click(window, _find(window, "activeToolReset"))
+    reset = _find(window, "activeToolReset")
+    reset.forceActiveFocus(Qt.TabFocusReason)
+    wait_until(lambda: reset.mapToScene(QPointF(0, reset.height())).y() <= window.height())
+    _click(window, reset)
     assert view.qaController.roiItems == [] and not view.qaController.enabled
     _click(window, _find(window, "waterQa-analyze"))
     wait_qa(qt_app, view.qaController)
@@ -240,7 +244,10 @@ def test_qa_row_actions_copy_and_delete_all_rois(qa_workspace, qt_app, tmp_path)
     QTest.qWait(40)
     _click(window, _find(window, 'waterQaDelete-extra-1'))
     assert len(view.qaController.roiItems) == 6
-    _click(window, _find(window, 'waterQaDelete-extra-2'))
+    remaining = _find(window, 'waterQaDelete-extra-2')
+    # Rebuilding the ROI rows after a deletion must preserve the reading position.
+    assert 0 <= remaining.mapToItem(flick, QPointF()).y() <= flick.height() - remaining.height() + 1
+    _click(window, remaining)
     assert view.qaController.currentResult == baseline
     assert not warnings, warnings
 

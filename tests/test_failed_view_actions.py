@@ -48,8 +48,10 @@ def test_double_click_creates_error_tab_and_blocks_png(scene, tmp_path, monkeypa
     assert workspace.tabs[0]["tabLabel"]
     assert reason in workspace.activeLoadState.errorMessage
     panel.openSeriesView(uid, "2d")
-    assert workspace.activeTab is tab and len(workspace.tabs) == 1
-    tab.toolController.activateTool("export")
+    assert workspace.activeTab is not tab and len(workspace.tabs) == 2
+    assert workspace.closeTab(tab.tab_config.tab_id)
+    wait_until(lambda: workspace.activeLoadState.status == 'error')
+    workspace.activeTab.toolController.activateTool("export")
     QTest.qWait(80)
     assert reason in find(window, "workspaceLoadingMessage").property("text")
     assert not any(i.objectName() == "retryWorkspaceLoad" for i in descendants(window.contentItem()))

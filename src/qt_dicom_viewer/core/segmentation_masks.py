@@ -112,6 +112,35 @@ def mask_record(volume, mask, offset, *, name, color="#ed55ed", phase=None, allo
     return record, evaluate_mask(volume, record)
 
 
+def native_roi_plane(volume, frame):
+    """Map a recorded measurement plane to one native layer, or return None for an oblique plane."""
+    if volume is None or frame is None or len(frame) < 6 or len(frame[5]) != 11:
+        return None
+    pose = np.asarray(frame[5], dtype=float)
+    if not np.isfinite(pose).all() or min(pose[:2]) <= 0:
+        return None
+    u, v = pose[5:8], pose[8:11]
+    if not np.allclose(np.array([u, v]) @ np.array([u, v]).T, np.eye(2), atol=1e-5):
+        return None
+    g = volume.geometry
+    inverse = g.patient_to_voxel
+    axes = np.column_stack((u * pose[1], v * pose[0]))
+    native_axes = inverse[:3, :3] @ axes
+    # Parallel planes may use a different display sampling step, but must align
+    # to two different original voxel axes. Oblique contours need a slab policy.
+    indices = np.argmax(abs(native_axes), axis=0)
+    if indices[0] == indices[1] or any(
+        np.max(abs(np.delete(native_axes[:, j], indices[j]))) > 1e-5 for j in (0, 1)
+    ):
+        return None
+    normal = next(i for i in range(3) if i not in indices)
+    anchor = (inverse @ [*pose[2:5], 1])[:3]
+    k = int(np.floor(anchor[normal] + 0.5))
+    if not 0 <= k < volume.modality_pixels.shape[normal]:
+        return None
+    return anchor, native_axes, indices, normal, k
+
+
 def roi_to_mask(volume, measurement, frame, *, phase=None, source_phase_identifier=None):
     """Rasterize a closed freehand ROI on the nearest parallel native voxel layer.
 
@@ -133,28 +162,10 @@ def roi_to_mask(volume, measurement, frame, *, phase=None, source_phase_identifi
         or measurement.series_uid != volume.series_uid
     ):
         raise ValueError(_msg("seg.roiRequired"))
-    pose = np.asarray(frame[5], dtype=float)
-    if not np.isfinite(pose).all() or min(pose[:2]) <= 0:
+    plane = native_roi_plane(volume, frame)
+    if plane is None:
         raise ValueError(_msg("seg.roiPlane"))
-    u, v = pose[5:8], pose[8:11]
-    if not np.allclose(np.array([u, v]) @ np.array([u, v]).T, np.eye(2), atol=1e-5):
-        raise ValueError(_msg("seg.roiPlane"))
-    g = volume.geometry
-    inverse = g.patient_to_voxel
-    axes = np.column_stack((u * pose[1], v * pose[0]))
-    native_axes = inverse[:3, :3] @ axes
-    # Parallel planes may use a different display sampling step, but must align
-    # to two different original voxel axes. Oblique contours need a slab policy.
-    indices = np.argmax(abs(native_axes), axis=0)
-    if indices[0] == indices[1] or any(
-        np.max(abs(np.delete(native_axes[:, j], indices[j]))) > 1e-5 for j in (0, 1)
-    ):
-        raise ValueError(_msg("seg.roiPlane"))
-    normal = next(i for i in range(3) if i not in indices)
-    anchor = (inverse @ [*pose[2:5], 1])[:3]
-    k = int(np.floor(anchor[normal] + 0.5))
-    if not 0 <= k < volume.modality_pixels.shape[normal]:
-        raise ValueError(_msg("seg.roiPlane"))
+    anchor, native_axes, indices, normal, k = plane
     # Express the polygon in the two native in-plane index axes, then use the
     # same boundary-inclusive center rule as ordinary freehand statistics.
     from qt_dicom_viewer.model import ImagePoint

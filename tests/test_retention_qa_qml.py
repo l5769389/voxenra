@@ -120,3 +120,36 @@ def test_reopened_tab_keeps_slice_slider_and_image_in_sync(sidebar_scene, monkey
     assert find(window, 'sliceControl').property('value') == 3
     assert find(window, 'sliceJumpButton').property('text') == '3'
     assert not warnings, warnings
+
+
+def test_series_open_creates_fresh_tabs_and_tab_menu_undo_restores(sidebar_scene, tmp_path):
+    from test_series_sidebar import right_click
+    window, app, records, warnings = sidebar_scene
+    ws, doc = app.workspaceController, app.workspaceDocumentController
+    click(window, find(window, 'series-' + records[0].series_instance_uid))
+    click(window, find(window, 'openView-2d'))
+    wait_until(lambda: ws.activeLoadState.status == 'ready')
+    edited = ws.activeTab
+    draw_length(edited.activeViewport)
+    click(window, find(window, 'openView-2d'))
+    wait_until(lambda: ws.activeLoadState.status == 'ready')
+    fresh = ws.activeTab
+    assert fresh is not edited and not fresh.activeViewport._measure_controller._measurements
+    assert ws.closeTab(edited.tab_config.tab_id)
+    right_click(window, find(window, 'workspaceTab-' + ws.activeTabId))
+    undo = window.findChild(QObject, 'tabMenu-reopen')
+    wait_until(lambda: undo.isVisible() and undo.isEnabled())
+    click(undo.window(), undo)
+    wait_until(lambda: not doc.busy and ws.activeTab is not fresh)
+    assert len(ws.activeViewport._measure_controller._measurements) == 1
+    assert not fresh.activeViewport._measure_controller._measurements
+
+    path = tmp_path / 'independent.voxworkspace'
+    assert doc.save_to(path)
+    wait_until(lambda: not doc.busy)
+    assert doc.restore_from(path)
+    wait_until(lambda: not doc.busy)
+    assert not doc.isError, doc.message
+    assert sorted(len(tab.activeViewport._measure_controller._measurements)
+                  for tab in app.windowManager.ordered_tabs()) == [0, 1]
+    assert not warnings, warnings

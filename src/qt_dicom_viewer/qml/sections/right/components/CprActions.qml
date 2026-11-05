@@ -23,15 +23,6 @@ RowLayout {
         showLabel: true
     }
     PathAction {
-        objectName: "cprNewPath"
-        visible: !actions.drawing && !actions.editing && !actions.hasPath
-        iconName: "add"
-        label: qsTrId("cpr.new")
-        shortcutAction: "cpr-new"
-        enabled: actions.canStart
-        onClicked: actions.controller.startPath()
-    }
-    PathAction {
         objectName: "cprReferenceBrowse"
         visible: actions.hasPath && !actions.drawing && !actions.editing
         iconName: actions.results ? "layout-quad" : "cpr-results"

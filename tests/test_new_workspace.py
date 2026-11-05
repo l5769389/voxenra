@@ -57,6 +57,7 @@ def test_cancel_new_preserves_all_current_content(work, monkeypatch):
 
 
 def test_save_then_new_waits_for_success_and_preserves_measurements(work, tmp_path, monkeypatch):
+    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
     app, doc, _ = work
     draw_length(app.workspaceController.activeViewport)
     app.workspaceController.activeTab.historyController.capture()
@@ -64,8 +65,19 @@ def test_save_then_new_waits_for_success_and_preserves_measurements(work, tmp_pa
     monkeypatch.setattr(doc, '_ask_new_workspace', lambda: QMessageBox.Save)
     monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(path), ''))
-    assert not doc.newWorkspace()
-    assert doc.busy and doc.hasContent
+    release = Event()
+    original_write = module.atomic_write
+
+    def write(path, payload):
+        assert release.wait(5)
+        original_write(path, payload)
+
+    monkeypatch.setattr(module, 'atomic_write', write)
+    try:
+        assert not doc.newWorkspace()
+        assert doc.busy and doc.hasContent
+    finally:
+        release.set()
     wait_until(lambda: not doc.busy)
     assert not doc.hasContent and not doc.path and not doc.dirty
     saved = read_document(path)

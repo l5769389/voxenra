@@ -143,7 +143,10 @@ def tab_snapshot(tab):
     config = tab.tab_config
     record = {"type": config.tab_type.value, "label": config.tab_label,
               "series": [m.series_uid for m in config.series_metas]}
-    if config.tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL, TabType.TAG):
+    if config.tab_type == TabType.TAG:
+        record["tag"] = tab.tagController.browsing_state()
+        return record
+    if config.tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL):
         return record
     focused = tab.viewports_by_id.get(tab.focusedViewportId)
     if focused is None and tab.mprLayout is not None and tab.focusedViewportId == tab.mprLayout.volumeViewport.viewportId:
@@ -212,6 +215,14 @@ def tab_snapshot(tab):
 
 def apply_tab_snapshot(tab, record):
     """Apply after initial loading, then render through the existing scheduler."""
+    if tab.tab_config.tab_type == TabType.TAG:
+        if "tag" in record:
+            state = record["tag"]
+            if state.get("page", 1) != tab.tagController.currentPage:
+                # Wait for the restored instance just as for the initial Tag read.
+                tab.parent()._load_states[tab.tab_config.tab_id].restart()
+            tab.tagController.restore_browsing_state(state)
+        return
     if "views" not in record:
         return
     tab.pausePlayback()

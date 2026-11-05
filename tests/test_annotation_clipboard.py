@@ -15,7 +15,7 @@ from test_measurement_qml import (
     qt_app as qt_app,
     viewport as viewport,
     _scene,
-    _mouse_drag,
+    _click_points,
 )
 from test_viewport_transform import _controller, _render_result
 from test_pacs_qml import scene as scene
@@ -33,7 +33,7 @@ def draw(view, controller, pixels, kind):
         for point in ((35, 40), (70, 105), (140, 85)):
             QTest.mouseClick(view, Qt.LeftButton, pos=_scene(pixels, *point))
     else:
-        _mouse_drag(view, _scene(pixels, 35, 40), _scene(pixels, 140, 115))
+        _click_points(view, _scene(pixels, 35, 40), _scene(pixels, 140, 115))
     QTest.qWait(30)
 
 
@@ -51,7 +51,7 @@ def items(controller, kind):
 def test_copy_paste_selected_geometry_with_real_keyboard(viewport, kind):
     view, controller, pixels, warnings = viewport
     draw(view, controller, pixels, kind)
-    # Copy also confirms the pending final single click on a point-based measurement.
+    # Completed point geometry is immediately available to copy.
     QTest.keySequence(view, QKeySequence(QKeySequence.Copy))
     original = items(controller, kind)[0]
     payload = read_annotation()
@@ -140,7 +140,7 @@ def test_paste_to_other_view_uses_target_slice_spacing_and_can_survive_source_cl
     assert not warnings, warnings
 
 
-def test_clipboard_ignores_incomplete_drag_and_preserves_plain_text(viewport):
+def test_clipboard_ignores_incomplete_points_and_preserves_plain_text(viewport):
     view, controller, pixels, warnings = viewport
     QGuiApplication.clipboard().setText("ordinary text")
     assert not controller.copySelectedAnnotation() and not controller.pasteAnnotation()
@@ -151,7 +151,12 @@ def test_clipboard_ignores_incomplete_drag_and_preserves_plain_text(viewport):
     QTest.mouseMove(view, end, 30)
     assert not controller.copySelectedAnnotation() and not controller.pasteAnnotation()
     QTest.mouseRelease(view, Qt.LeftButton, pos=end)
-    assert controller.copySelectedAnnotation()
+    assert not controller.copySelectedAnnotation()
+    QTest.mousePress(view, Qt.LeftButton, pos=end)
+    try:
+        assert controller.copySelectedAnnotation()
+    finally:
+        QTest.mouseRelease(view, Qt.LeftButton, pos=end)
     assert not warnings, warnings
 
 

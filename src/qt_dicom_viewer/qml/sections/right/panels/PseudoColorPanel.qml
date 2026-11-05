@@ -11,6 +11,7 @@ ColumnLayout {
     id: pseudoColorPanel
     objectName: "pseudoColorPanel"
     required property var viewportController
+    property Item headingHost: null
     property string buttonPrefix: "colorMap-"
     property var settingsController: typeof appController !== "undefined" ? appController.settingsController ?? null : null
     readonly property var favorites: settingsController?.values?.paletteList?.favorites ?? []
@@ -47,12 +48,21 @@ ColumnLayout {
     property string description: qsTrId("text.1068")
     spacing: 6
 
-    Components.PanelHeading {
-        objectName: "PseudoColorPanelHeading"
-        title: qsTrId("text.0309")
-        explanation: pseudoColorPanel.description
+    Item {
+        id: inlineHeading
+        Layout.fillWidth: true
+        implicitHeight: heading.implicitHeight
+        visible: !pseudoColorPanel.headingHost
+        Components.PanelHeading {
+            id: heading
+            parent: pseudoColorPanel.headingHost ?? inlineHeading
+            width: parent.width
+            height: implicitHeight
+            objectName: "PseudoColorPanelHeading"
+            title: qsTrId("text.0309")
+            explanation: pseudoColorPanel.description
+        }
     }
-
 
     Repeater {
         id: rows
@@ -86,7 +96,7 @@ ColumnLayout {
             }
 
             contentItem: RowLayout {
-                spacing: 10
+                spacing: 8
 
                 Components.AppButton {
                     id: star
@@ -112,7 +122,7 @@ ColumnLayout {
                 }
                 Canvas {
                     id: gradientPreview
-                    Layout.preferredWidth: Math.min(80, colorMapButton.width * 0.3)
+                    Layout.preferredWidth: Math.min(56, colorMapButton.width * 0.20)
                     Layout.preferredHeight: 16
 
                     onWidthChanged: requestPaint()

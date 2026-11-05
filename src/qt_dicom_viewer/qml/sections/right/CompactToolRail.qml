@@ -6,6 +6,7 @@ import QtQuick.Controls.Basic as Basic
 import "../../components" as Components
 import "../../theme"
 import "ToolLabels.js" as ToolLabels
+import "../../components/ScrollFocus.js" as ScrollFocus
 import "panels" as Panels
 Flickable {
     id: rail
@@ -22,7 +23,7 @@ Flickable {
     signal panelRequested(string tool, bool closeOnly)
     readonly property var directTools: ["window", "ct-window", "pet-window", "scroll", "pan", "zoom", "volume-rotate", "mpr-rotate-3d"]
     readonly property var groupedTools: ["rotate", "measure", "annotate", "pseudocolor", "volume-direction"]
-    readonly property var tools: (toolController?.orderedToolbarTools ?? []).filter(t => t.available !== false &&
+    readonly property var tools: (toolController?.orderedToolbarTools ?? []).filter(t => t.toolType !== "reset" && t.available !== false &&
         (t.toolType !== "service" || !viewportController?.workspaceTab?.twoDLayout || viewportController.viewportType === "stack"))
     readonly property var panelTools: tools.filter(t => ["panel", "interactionPanel"].includes(t.behavior)
         && !directTools.includes(t.toolType) && !groupedTools.includes(t.toolType)).map(t => t.toolType)
@@ -37,22 +38,12 @@ Flickable {
     onMovementStarted: palettePopup.close()
     onExpandedToolChanged: if (expandedTool !== "pseudocolor") palettePopup.close()
     onVisibleChanged: if (!visible) expandedTool = ""
-    function revealItem(view, item) {
-        if (!item) return
-        let ancestor = item
-        while (ancestor && ancestor !== view.contentItem) ancestor = ancestor.parent
-        if (!ancestor) return
-        const top = item.mapToItem(view.contentItem, 0, 0).y
-        const bottom = top + Math.min(item.height, view.height)
-        const target = top < view.contentY ? top : Math.max(view.contentY, bottom - view.height)
-        view.contentY = Math.max(view.originY, Math.min(target, view.originY + Math.max(0, view.contentHeight - view.height)))
-    }
     Connections {
         target: rail.Window.window
         function onActiveFocusItemChanged() {
             const focus = rail.Window.window?.activeFocusItem
-            rail.revealItem(rail, focus)
-            rail.revealItem(paletteScroll, focus)
+            ScrollFocus.revealFocused(rail, focus)
+            ScrollFocus.revealFocused(paletteScroll, focus)
         }
     }
     Connections {
@@ -63,11 +54,11 @@ Flickable {
         }
     }
     function childrenFor(tool) {
-        if (tool === "volume-direction") return (viewportController?.directionOptions ?? []).map(d => ({
-            action: d.face, label: d.label, iconName: "volume-direction", face: d.face, color: d.color}))
+        const reset = {action: "view-reset", label: toolController.resetLabel, shortLabel: qsTrId("tools.short.reset"), iconName: "reset"}
+        if (tool === "volume-direction") return [...(viewportController?.directionOptions ?? []).map(d => ({
+            action: d.face, label: d.label, iconName: "volume-direction", face: d.face, color: d.color})), reset]
         if (tool === "measure") return toolController?.measureActions ?? []
-        if (tool === "rotate") return [...(toolController?.rotateActions ?? []),
-            {action: "view-reset", label: toolController.resetLabel, shortLabel: qsTrId("tools.short.reset"), iconName: "reset"}]
+        if (tool === "rotate") return [...(toolController?.rotateActions ?? []), reset]
         if (tool === "annotate") return [
             {action: "annotate:arrow", label: qsTrId("text.0377"), shortLabel: qsTrId("tools.action.annotate:arrow"), iconName: "annotate-arrow"},
             {action: "annotate:text", label: qsTrId("text.0378"), shortLabel: qsTrId("tools.action.annotate:text"), iconName: "annotate-text"}]
@@ -83,7 +74,7 @@ Flickable {
         if (expandedTool !== tool) activateGroup(tool, group?.button, false)
         Qt.callLater(function() {
             if (rail.visible && rail.toolController?.activeTool === tool)
-                rail.revealItem(rail, groups.itemAt(index))
+                ScrollFocus.reveal(rail, groups.itemAt(index))
         })
     }
     function activateGroup(tool, anchor, closeOnly) {
@@ -136,7 +127,7 @@ Flickable {
         title: rail.toolController?.activeToolLabel ?? ""
         closeButtonName: "compactPalettePopupClose"
         width: 280
-        height: Math.min(palette.implicitHeight + chromeHeight,
+        height: Math.min(palette.implicitHeight + chromeHeight + paletteFooter.implicitHeight + 4,
             (rail.Window.window?.height ?? 640) - 48, 560)
         onAboutToShow: {
             const position = anchorItem.mapToItem(rail, 0, 0)
@@ -176,6 +167,16 @@ Flickable {
                 buttonPrefix: "compactAction-"
                 onColorSelected: palettePopup.close()
             }
+        }
+        ToolResetBar {
+            id: paletteFooter
+            objectName: "compactPaletteFooter"
+            resetObjectName: "compactPaletteReset"
+            Layout.fillWidth: true
+            Layout.minimumHeight: implicitHeight
+            panel: "pseudocolor"
+            toolController: rail.toolController
+            playbackActive: rail.tabController?.playing ?? false
         }
     }
     Column {

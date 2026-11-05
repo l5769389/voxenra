@@ -11,6 +11,7 @@ from qt_dicom_viewer.model.dicom_core import MprFrame, MprGridSpec
 from qt_dicom_viewer.model.dicom_types import FrameDisplayMeta, ImageGeometryMeta, PixelSpacing
 from qt_dicom_viewer.model.render_models import MprRenderRequest, StackRenderResult
 from qt_dicom_viewer.ui.measurement_source import capture_request, display_parameters
+from qt_dicom_viewer.ui.cpr_sampling_guides import project_sampling_line
 from qt_dicom_viewer.i18n.qt import translated_property as _TextProperty
 from .image_2d_viewport_controller import Image2DViewportController
 
@@ -100,6 +101,14 @@ class CprViewportController(Image2DViewportController):
     def cprPoints(self):
         return self._cpr.projected_points(self)
 
+    @Property("QVariantList", notify=cprChanged)
+    def cprOtherTraces(self):
+        return self._cpr.other_path_traces(self)
+
+    @Property(bool, notify=cprChanged)
+    def cprPathInput(self):
+        return self._cpr.accepts_path_input(self)
+
     @Property(bool, notify=cprChanged)
     def historicalPlane(self):
         return self._historical
@@ -142,12 +151,15 @@ class CprViewportController(Image2DViewportController):
             return {}
         settings = result.curve.settings
         if self.viewportRole == "curved":
+            guides = {}
+            if tab.showSamplingGuides:
+                guides['positionColumn'] = result.section.distance_mm / line.spacing_mm
             # Interval coordinates belong to the edited path, not a stale raster.
-            if not tab.ready or not tab.hasInterval:
-                return {}
-            start, end = tab.interval_mm
-            return dict(startColumn=start / line.spacing_mm, endColumn=end / line.spacing_mm,
-                        length=end - start, startMm=start, endMm=end)
+            if tab.ready and tab.hasInterval:
+                start, end = tab.interval_mm
+                guides.update(startColumn=start / line.spacing_mm, endColumn=end / line.spacing_mm,
+                              length=end - start, startMm=start, endMm=end)
+            return guides
         if self.plane_geometry is None:
             return {}
         if self.viewportRole == "cross":
@@ -159,10 +171,10 @@ class CprViewportController(Image2DViewportController):
         guides = {}
         transform = self.plane_geometry.patient_to_image_index
         if tab.showSamplingGuides:
-            center = result.section.geometry.frame.center_patient
-            depth, row, col, _ = transform @ (*center, 1.)
-            if abs(depth) <= .5:
-                guides.update(stationX=float(col), stationY=float(row))
+            section = result.section.geometry
+            guides['samplingLine'] = project_sampling_line(
+                self.plane_geometry, section.frame.center_patient,
+                section.column_direction_patient, settings.width_mm)
         if tab.ready and tab.hasInterval:
             points = np.asarray(result.cache.path.control_points)
             distances = np.r_[0., np.cumsum(np.linalg.norm(np.diff(points, axis=0), axis=1))]
@@ -267,12 +279,12 @@ class CprViewportController(Image2DViewportController):
 
     @Slot(float, float, float, result=bool)
     def cprCanDragPoint(self, column, row, tolerance):
-        return (self._cpr.can_select_path(self)
-                and self._cpr._hit_point(self, column, row, tolerance) >= 0)
+        return self._cpr.path_hit(self, column, row, tolerance, handles_only=True) is not None
 
     @Slot(float, float, float, result=bool)
-    def cprBeginDrag(self, column, row, tolerance):
-        return self._cpr.begin_path_drag(self, column, row, tolerance)
+    @Slot(float, float, float, bool, result=bool)
+    def cprBeginDrag(self, column, row, tolerance, place_on_release=True):
+        return self._cpr.begin_path_drag(self, column, row, tolerance, place_on_release=place_on_release)
 
     @Slot(float, float, result=bool)
     def cprMoveDrag(self, column, row):
@@ -304,13 +316,17 @@ class CprViewportController(Image2DViewportController):
             return True
         return False
 
+    @Slot()
+    def cprCancelDrag(self):
+        self._cpr.cancel_path_drag()
+
     @Slot(result=bool)
     def cprCancel(self):
         return self._cpr.cancel_operation()
 
     @Slot(result=bool)
     def cprDelete(self):
-        if self.cprEditing:
-            self._cpr.deleteSelectedPoint()
+        if self.cprPathInput:
+            self._cpr.deleteSelection()
             return True
         return False

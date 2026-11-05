@@ -384,7 +384,7 @@ def test_main_qml_two_selection_entry_points(qt_app, paired_series, tmp_path):
         click(window, candidate)
         click(window, find(window, "confirmFusion"))
         assert not panel.fusionDialogOpen
-        assert len(workspace.tabs) == 1
+        assert len(workspace.tabs) == 2
         assert not warnings, warnings
         assert window.grabWindow().save(str(tmp_path / "petct-main.png"))
     finally:

@@ -22,12 +22,16 @@ function resolve(interaction, region, crosshair, measurement) {
         "mpr:rotate3d":"rotate-3d", "volume:rotate":"rotate-3d", "volume:crop":"volume-crop"})[interaction] || "window"
 }
 
-// Specific registration bindings precede the default right-button zoom.
+// Primary drags use the selected tool. Secondary buttons can temporarily override it.
+function dragBinding(buttons, preferences) {
+    if (buttons & 1) return "selected"
+    if (buttons & 2) return preferences?.rightButton ?? "zoom"
+    if (buttons & 4) return preferences?.middleButton ?? "selected"
+    return "none"
+}
+
 function resolveDrag(hover, buttons, registration, preferences) {
-    if (buttons & 1) return hover
-    if ((buttons & 2) && registration) return "rotate-3d"
-    const binding = buttons & 2 ? (preferences?.rightButton ?? "zoom")
-        : buttons & 4 ? (preferences?.middleButton ?? "selected") : "selected"
-    if (binding !== "selected") return binding === "none" ? "" : binding
-    return hover
+    if (!(buttons & 1) && (buttons & 2) && registration) return "rotate-3d"
+    const binding = dragBinding(buttons, preferences)
+    return binding === "selected" ? hover : binding === "none" ? "" : binding
 }

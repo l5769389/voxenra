@@ -28,7 +28,7 @@ Basic.Dialog {
     // Keep a native window above VTK hosts, with the OS caption as the only close control.
     popupType: Basic.Popup.Window
     title: qsTrId("text.0622")
-    implicitWidth: 460
+    implicitWidth: Math.max(460, workspaceFooter.preferredContentWidth)
     implicitHeight: 300
     width: Math.min(implicitWidth, parent ? parent.width - 24 : implicitWidth)
     height: Math.min(implicitHeight, parent ? parent.height - 24 : implicitHeight)
@@ -189,7 +189,7 @@ Basic.Dialog {
                 Components.AppLinkButton {
                     id: recoveryLink
                     objectName: "workspaceRecoveryLocation"
-                    Layout.preferredWidth: 76
+                    Layout.preferredWidth: Math.max(76, implicitWidth)
                     Layout.preferredHeight: 24
                     text: qsTrId("text.0630")
                     Accessible.name: qsTrId("text.0630")
@@ -340,10 +340,12 @@ Basic.Dialog {
         }
     }
     footer: Components.AppDialogFooter {
+        id: workspaceFooter
         leading: Item {
-            implicitWidth: 132
+            implicitWidth: Math.max(132, openButton.implicitWidth, cancelRestoreButton.implicitWidth)
             implicitHeight: 32
             Components.AppButton {
+                id: openButton
                 objectName: "openWorkspace"
                 anchors.fill: parent
                 text: qsTrId("text.0641")
@@ -365,9 +367,10 @@ Basic.Dialog {
             }
         }
         Item {
-            Layout.preferredWidth: 100
+            Layout.preferredWidth: Math.max(100, saveAsButton.implicitWidth)
             Layout.preferredHeight: 32
             Components.AppButton {
+                id: saveAsButton
                 objectName: "saveWorkspaceAs"
                 anchors.fill: parent
                 text: qsTrId("text.0643")
@@ -380,9 +383,19 @@ Basic.Dialog {
         Components.AppButton {
             id: saveButton
             objectName: "saveWorkspace"
-            text: dialog.named ? qsTrId("text.0644") : qsTrId("text.0645")
+            readonly property string namedCaption: qsTrId("text.0644")
+            readonly property string initialCaption: qsTrId("text.0645")
+            text: dialog.named ? namedCaption : initialCaption
             actionRole: "primary"
-            Layout.preferredWidth: 128
+            // Reserve both states, including the default key even while saving disables it.
+            FontMetrics {
+                id: saveMetrics
+                font.pixelSize: saveButton.fontPixelSize
+                font.weight: saveButton.fontWeight
+            }
+            Layout.preferredWidth: Math.max(128, leftPadding + rightPadding + Math.ceil(Math.max(
+                saveMetrics.advanceWidth(initialCaption + " (Enter)"),
+                saveMetrics.advanceWidth(namedCaption + " (Enter)"))))
             compact: true
             enabled: !!dialog.controller && !dialog.working
             onClicked: dialog.controller.save()

@@ -28,7 +28,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-analysis.gif": "38-segmentation-refinement.gif",
     "feature-ai-segmentation.gif": "49-ai-workflow-2.1.1.gif",
     "feature-ai-segmentation.png": "48-ai-complete-2.1.1.png",
-    "feature-measurements.png": "01-2d-measurement.png",
+    "feature-measurements.png": "63-measurement-2.4.0.png",
     "feature-theme-graphite.png": "37-theme-graphite.png",
     "feature-theme-dark.png": "25-theme-dark.png",
     "feature-theme-light.png": "26-theme-light.png",
@@ -41,7 +41,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-mtf.png": "28-mtf-analysis.png",
 }
 for media, source in {
-    'feature-cpr-reference.png': '61-cpr-reference-2.3.0.png',
+    'feature-cpr-reference.png': '61-cpr-reference-2.4.0.png',
     'feature-dimse-settings.png': '51-dimse-settings.png',
     'feature-dimse-import.gif': '52-dimse-import.gif',
     'feature-dimse-import.png': '52-dimse-import.png',
@@ -49,7 +49,7 @@ for media, source in {
     'feature-toolbar.png': '53-toolbar-customization.png',
     'feature-focus.gif': '54-focus-view.gif',
     'feature-focus.png': '54-focus-view.png',
-    'feature-window-favorites.png': '55-window-favorites.png',
+    'feature-window-favorites.png': '55-window-favorites-2.4.0.png',
 }.items():
     PRODUCT_SCREENSHOTS[media] = source
     PRODUCT_SCREENSHOTS['en-' + media] = 'en/' + source

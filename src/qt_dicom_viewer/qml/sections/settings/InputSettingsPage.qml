@@ -8,6 +8,13 @@ ColumnLayout {
     id: page
     required property var settingsController
     signal resetShortcutsRequested()
+    property string resetHint: ""
+    readonly property var focusedResetButton: {
+        if (!shortcutReset.visible) return null
+        for (let item = Window.window?.activeFocusItem; item; item = item.parent)
+            if (item === shortcutsSection) return shortcutReset
+        return null
+    }
     readonly property var shortcuts: appController.shortcutController
     spacing: 12
     Component.onDestruction: shortcuts.cancelRecording()
@@ -55,6 +62,7 @@ ColumnLayout {
         }
     }
     SettingsSection {
+        id: shortcutsSection
         sectionKey: "input-shortcuts"
         settingsController: page.settingsController
         Layout.fillWidth: true
@@ -101,8 +109,10 @@ ColumnLayout {
             }
         }
         Components.AppButton {
+            id: shortcutReset
             objectName: "resetShortcuts"
-            text: qsTrId("text.0843")
+            shortcutTitle: qsTrId("text.0843")
+            captionKey: page.focusedResetButton === shortcutReset ? page.resetHint : ""
             onClicked: {
                 page.shortcuts.cancelRecording()
                 page.resetShortcutsRequested()

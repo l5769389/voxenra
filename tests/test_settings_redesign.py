@@ -391,3 +391,31 @@ def test_service_settings_have_own_navigation_search_and_reset(scene):
     assert find(window, 'settingsCategory-services').property('contentItem').property('text') == 'Service tools'
     assert 'Gaussian equivalent' in find(window, 'setting-services-mtfGaussianEquivalent').property('text')
     assert not warnings, warnings
+
+
+def test_arrow_completion_color_can_follow_or_override_shared_style(scene, tmp_path):
+    window, app, warnings = open_page(scene, 'measurement')
+    settings = app.settingsController
+    toggle = find(window, 'setting-measurement-annotationFollowsCompleted')
+    editor = find_any(window, 'setting-measurement-annotationColor')
+    preview = next(i for i in descendants(window.contentItem()) if i.property('measurementColor') is not None
+                   and i.isVisible() and i.property('measurement').toVariant()['type'] == 'arrow')
+    reveal_setting(window, toggle)
+    assert not toggle.property('checked') and editor.isVisible()
+    assert preview.property('measurementColor') == QColor('#c99cff')
+    settings.setValue('measurement', 'completedColor', '#22c55e')
+    assert preview.property('measurementColor') == QColor('#c99cff')
+    click(window, toggle)
+    assert toggle.property('checked') and not editor.isVisible()
+    assert preview.property('measurementColor') == QColor('#22c55e')
+    click(window, toggle)
+    assert editor.isVisible()
+    type_text(window, editor, '#66d0ff')
+    QTest.keyClick(window, Qt.Key_Tab)
+    assert preview.property('measurementColor') == QColor('#66d0ff')
+    click(window, toggle)
+    assert not editor.isVisible() and preview.property('measurementColor') == QColor('#22c55e')
+    assert window.grabWindow().save(str(tmp_path / 'linked-arrow-settings.png'))
+    click(window, toggle)
+    assert editor.property('text') == '#66d0ff'
+    assert not warnings, warnings

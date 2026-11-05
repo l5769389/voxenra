@@ -70,7 +70,8 @@ Item {
                 arrowBase.x - normalX * arrowHeadHalfWidth,
                 arrowBase.y - normalY * arrowHeadHalfWidth
             )
-            readonly property color arrowColor: modelData.color
+            readonly property color arrowColor: Theme.drawingLineColor(annotationLayer.styleSettings,
+                modelData.draft, modelData.color)
 
             Shape {
                 preferredRendererType: Shape.CurveRenderer
@@ -79,18 +80,15 @@ Item {
                 anchors.fill: parent
                 visible: annotationItem.arrowLength > 1
                 antialiasing: true
-                opacity: draftStyle ? 0.78 : 1
 
                 ShapePath {
                     objectName: "annotationStem"
                     strokeColor: annotationItem.arrowColor
                     strokeWidth: annotationLayer.styleSettings.lineWidth ?? 1.5
                     fillColor: "transparent"
-                    strokeStyle: (annotationItem.modelData.draft
-                        ? (annotationLayer.styleSettings.editingDash ?? true)
-                        : (annotationLayer.styleSettings.completedDash ?? false))
+                    strokeStyle: Theme.drawingLineDashed(annotationLayer.styleSettings, annotationItem.modelData.draft)
                         ? ShapePath.DashLine : ShapePath.SolidLine
-                    dashPattern: [4, 2.5]
+                    dashPattern: [4, 2]
                     capStyle: ShapePath.RoundCap
                     startX: annotationItem.tailPoint.x
                     startY: annotationItem.tailPoint.y

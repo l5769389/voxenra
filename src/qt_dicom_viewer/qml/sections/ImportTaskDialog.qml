@@ -13,7 +13,6 @@ Basic.Dialog {
         defaultButton: dialog.controller.scanning ? null : dialog.controller.importError ? retryButton : closeButton
         escapeButton: closeButton
     }
-    Components.DelayedActivity { id: feedback; active: dialog.visible && dialog.controller.scanning }
     objectName: "importTaskDialog"
     required property var controller
     parent: Basic.Overlay.overlay
@@ -118,7 +117,7 @@ Basic.Dialog {
                 rightPadding: messageArea.effectiveScrollBarWidth
                 readOnly: true
                 selectByMouse: true
-                text: !dialog.controller.scanning || feedback.showing ? dialog.controller.statusMessage : ""
+                text: dialog.controller.statusMessage
                 textFormat: TextEdit.PlainText
                 color: Theme.textPrimary
                 font.pixelSize: 13
@@ -129,7 +128,7 @@ Basic.Dialog {
             objectName: "importTaskProgress"
             Layout.fillWidth: true
             Layout.preferredHeight: 4
-            visible: feedback.showing
+            visible: dialog.controller.scanning
             indeterminate: dialog.controller.importProgress < 0
             value: Math.max(0, dialog.controller.importProgress)
             background: Rectangle {

@@ -242,7 +242,7 @@ def test_late_quantitative_result_cannot_leak_into_another_phase(temporal):
     assert not tab.activeViewport.voiOverlays and not tab.activeViewport.voiMasks
 
 
-def test_four_d_buttons_and_consistent_footer_in_real_qml(temporal):
+def test_four_d_buttons_and_context_actions_in_real_qml(temporal):
     tab, _, _ = temporal
     view = QQuickView()
     view.engine().addImageProvider('navigation', SvgIconProvider())
@@ -258,12 +258,10 @@ def test_four_d_buttons_and_consistent_footer_in_real_qml(temporal):
     view.show()
     QTest.qWait(60)
     try:
-        footer = _find(view, 'toolResetBar')
-        assert footer.height() == 40
         for tool in ('window', 'zoom', 'segmentation', 'voi', 'export'):
             _click(view, _find(view, 'primaryTool-' + tool))
-            assert footer.height() == 40
             visible = [i.objectName() for i in _visual_children(view.rootObject()) if i.isVisible()]
+            assert ('toolResetBar' in visible) == (tool != 'export')
             assert ('activeToolReset' in visible) == (tool in ('window', 'zoom'))
             if tool in ('segmentation', 'voi'):
                 button = _find(view, 'voiClearAll')

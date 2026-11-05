@@ -14,6 +14,7 @@ Rectangle {
     property var tabController: null
     property var exportController: null
     property Item exportItem: null
+    property Item paletteHeadingHost: null
     property real availableHeight: Infinity
     signal manualRequested(string chapter)
     readonly property Item loadedPanel: contentLoader.item as Item
@@ -34,7 +35,7 @@ Rectangle {
 
     implicitHeight: loadedPanel
         ? loadedPanel.implicitHeight + 24
-        : 64
+        : (activePanel === "" ? 0 : 64)
     color: Theme.panelBackgroundSoft
 
     ColumnLayout {
@@ -234,6 +235,14 @@ Rectangle {
         }
     }
 
+    Connections {
+        target: detailPanel.toolController ?? null
+        function onResetRequested(tool) {
+            if (tool === detailPanel.activePanel)
+                detailPanel.loadedPanel?.discardDraft?.()
+        }
+    }
+
     Component {
         id: ctWindowComponent
         Panels.FusionCtWindowPanel {
@@ -258,7 +267,9 @@ Rectangle {
 
     Component {
         id: scalarMappingComponent
-        Panels.ScalarMappingPanel { viewportController: detailPanel.viewportController }
+        Panels.ScalarMappingPanel {
+            viewportController: detailPanel.viewportController
+        }
     }
 
     Component {
@@ -303,6 +314,7 @@ Rectangle {
     Component {
         id: measureComponent
         Panels.MeasurePanel {
+            maximumPanelHeight: Math.max(0, detailPanel.availableHeight - 24)
             resultsController: detailPanel.tabController?.measurementResults ?? null
             dicomResults: detailPanel.exportController?.dicomResults ?? null
             viewportController: detailPanel.viewportController
@@ -340,6 +352,7 @@ Rectangle {
     Component {
         id: pseudoColorComponent
         Panels.PseudoColorPanel {
+            headingHost: detailPanel.paletteHeadingHost
             viewportController: detailPanel.viewportController
         }
     }

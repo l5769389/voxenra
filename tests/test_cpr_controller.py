@@ -143,16 +143,17 @@ def test_other_tools_cancel_draft_without_claiming_measurement_input(cpr):
     assert not cpr.drawing
 
 
-def test_clicking_near_last_draft_point_ignores_jitter_but_allows_a_new_slice(cpr):
+def test_close_distinct_clicks_are_kept_and_exact_duplicate_is_ignored(cpr):
     ref = cpr.viewForRole('reference-a')
     cpr.startPath()
     ref.cprTap(5, 10, .4)
     ref.cprTap(5.1, 10.1, .4)
-    assert len(cpr.controlPoints) == 1
+    ref.cprTap(5.1, 10.1, .4)
+    assert len(cpr.controlPoints) == 2
     ref.setSliceIndex(24)
     wait_until(lambda: ref._frame_meta.slice_index == 24)
     ref.cprTap(5.1, 10.1, .4)
-    assert len(cpr.controlPoints) == 2
+    assert len(cpr.controlPoints) == 3
     assert cpr.finishPath()
 
 
@@ -173,6 +174,69 @@ def test_create_multiplane_path_and_curve_position_sync(cpr):
     assert abs(cpr._result.section.distance_mm-8) <= .5
     section_center = cpr._result.section.geometry.frame.center_patient
     assert cpr.viewForRole("reference-a").plane_geometry.frame.center_patient[2] == pytest.approx(section_center[2])
+
+
+@pytest.mark.parametrize('role', ['curved', 'cross'])
+def test_same_result_slice_navigation_preserves_reference_planes(cpr, role):
+    draw(cpr, ((5, 10), (25, 30)))
+    references = [cpr.viewForRole(r) for r in ('reference-a', 'reference-b')]
+    references[1].setSliceIndex(20)  # Independently browse away from the sample.
+    wait_until(lambda: cpr.ready)
+    before = [view.sliceIndex for view in references]
+    centers = cpr.session_state()['referenceCenters']
+    result = cpr._result
+    view = cpr.viewForRole(role)
+    view.setSliceIndex(view.sliceIndex)
+    wait_until(lambda: cpr.ready)
+    assert cpr.positionMm == 0
+    assert cpr.session_state()['referenceCenters'] == centers
+    assert [ref.sliceIndex for ref in references] == before
+    assert cpr._result is result
+    view.setSliceIndex(1)
+    wait_until(lambda: cpr.ready)
+    assert cpr.positionMm > 0
+    assert references[1].sliceIndex != before[1]
+
+
+def test_finished_path_starts_with_reference_planes_at_first_sample(cpr):
+    draw(cpr, ((5, 10), (25, 30)))
+    references = [cpr.viewForRole(r) for r in ('reference-a', 'reference-b')]
+    assert cpr.positionMm == 0
+    assert [ref.sliceIndex for ref in references] == [20, 10]
+    assert all(ref.cprGuides['samplingLine']['centerOnPlane'] for ref in references)
+    before = [ref.sliceIndex for ref in references]
+    cpr.stepPosition(1)
+    wait_until(lambda: cpr.ready)
+    assert cpr.positionMm > 0
+    assert all(abs(ref.sliceIndex-old) <= 1 for ref, old in zip(references, before))
+
+
+@pytest.mark.parametrize('selection', ['switch', 'delete'])
+def test_selecting_another_path_aligns_its_initial_sample(cpr, selection):
+    draw(cpr, ((5, 10), (25, 30)))
+    first = cpr.selectedPathId
+    draw(cpr, ((5, 30), (25, 35)))
+    cpr.setPositionMm(cpr.totalLength/2)
+    wait_until(lambda: cpr.ready)
+    if selection == 'switch':
+        cpr.selectPath(first)
+    else:
+        cpr.deletePath()
+    wait_until(lambda: cpr.ready)
+    assert cpr.selectedPathId == first and cpr.positionMm == 0
+    assert cpr.viewForRole('reference-b').sliceIndex == 10
+    assert cpr.viewForRole('reference-b').cprGuides['samplingLine']['centerOnPlane']
+
+
+def test_navigation_can_return_to_displayed_slice_while_next_sample_is_pending(cpr):
+    draw(cpr, ((5, 10), (25, 30)))
+    cross = cpr.viewForRole('cross')
+    cpr.setPositionMm(cpr.totalLength/2)
+    assert not cpr.ready and cross.sliceIndex == 0
+    cross.setSliceIndex(0)
+    wait_until(lambda: cpr.ready)
+    assert cpr.positionMm == 0 and cross.sliceIndex == 0
+    assert cpr.viewForRole('reference-b').sliceIndex == 10
 
 
 def test_overlay_distinguishes_source_thickness_from_displayed_cpr_slab(cpr):
@@ -402,7 +466,7 @@ def test_delete_during_drag_ends_transaction_without_moving_successor(cpr, index
     cpr.setPathEditing(True)
     assert view.cprBeginDrag(*start, .4)
     view.cprMoveDrag(start[0]+1, start[1]+1)
-    assert view.cprDelete()
+    cpr.deleteSelectedPoint()
     view.cprMoveDrag(start[0]+2, start[1]+2)
     view.cprEndDrag(start[0]+2, start[1]+2)
     wait_until(lambda: cpr.ready)
@@ -421,8 +485,9 @@ def test_locked_reference_browsing_and_sample_navigation(cpr):
     wait_until(lambda: cpr.ready and not cpr.busy)
     cpr.navigate_view(ref, ref.sliceIndex + 1)
     wait_until(lambda: cpr.ready and not cpr.busy)
-    assert not ref.cprTap(10, 10, .4)
-    assert not ref.cprBeginDrag(15, 10, .4)
+    assert ref.cprBeginDrag(15, 10, .4) and cpr._drag is None
+    assert ref.cprTap(10, 10, .4) and cpr.drawing  # Off-slice geometry is not selected.
+    assert cpr.cancel_operation()
     cpr.deleteSelectedPoint()
     assert cpr.current_path == original
     cpr.setReferenceBrowsing(False)
@@ -505,3 +570,62 @@ def test_sampling_guides_match_the_displayed_section_grid(cpr):
     assert not cross.cprGuides and curved.cprGuides['length'] == 5
     cpr.clearInterval()
     assert not curved.cprGuides
+
+
+def test_reference_clicks_create_edit_and_delete_without_mode_buttons(cpr):
+    ref = draw(cpr)
+    first = cpr.current_path
+    assert ref.cprTap(7, 28, .4) and cpr.drawing and cpr.pointCount == 1
+    assert ref.cprTap(25, 28, .4) and cpr.finishEditing()
+    wait_until(lambda: cpr.ready)
+    second = cpr.current_path
+    assert second.path_id != first.path_id
+    # A visible segment of the other path selects it, without adding a point.
+    assert ref.cprTap(10, 10, .4) and cpr.pathEditing
+    assert cpr.current_path == first
+    assert ref.cprDelete()
+    assert [r['pathId'] for r in cpr.paths] == [second.path_id]
+    assert not cpr.pathEditing and ref.cprPathInput
+    assert ref.cprDelete() and len(cpr.paths) == 1
+    # Clicking an endpoint explicitly selects the path for keyboard deletion.
+    assert ref.cprTap(7, 28, .4) and ref.cprDelete()
+    assert not cpr.paths
+    cpr.cancel_operation()
+    other = cpr.viewForRole('reference-b')
+    cpr.activateViewport(other.viewportId)
+    cpr.focusSingleViewport(other.viewportId)
+    assert other.cprTap(3, 3, .4) and cpr.drawing
+    assert cpr.activeViewport == other and cpr.focusedViewportId == other.viewportId
+    cpr.cancel_operation()
+    assert other.cprPathInput and not cpr.drawing
+    cpr.toolController.activateTool('window')
+    assert not other.cprTap(3, 3, .4) and not other.cprPathInput
+
+
+def test_sampling_guides_link_point_line_rotation_and_visibility(cpr):
+    ref = draw(cpr, ((5, 10), (25, 10)))
+    cpr.setParameter('width', 10)
+    cpr.setPositionMm(cpr.totalLength / 2)
+    wait_until(lambda: cpr.ready)
+    other, curved = cpr.viewForRole('reference-b'), cpr.viewForRole('curved')
+    first = ref.cprGuides['samplingLine']
+    assert first['startColumn'] == pytest.approx(first['endColumn'])
+    assert first['startRow'] == pytest.approx(first['endRow'])
+    assert not first['projected']
+    second = other.cprGuides['samplingLine']
+    assert not second['projected']
+    assert abs(second['endRow'] - second['startRow']) * other.plane_geometry.row_spacing == pytest.approx(10)
+    assert curved.cprGuides['positionColumn'] == pytest.approx(ref.cprMarkerColumn)
+    cpr.setParameter('angle', 45)
+    # The overlay belongs to the accepted raster while the new angle is pending.
+    assert ref.cprGuides['samplingLine'] == first
+    wait_until(lambda: cpr.ready)
+    angled = ref.cprGuides['samplingLine']
+    assert angled['projected']
+    assert angled['startRow'] != angled['endRow']
+    cpr.setShowSamplingGuides(False)
+    assert not ref.cprGuides and not other.cprGuides and not curved.cprGuides
+    cpr.setShowSamplingGuides(True)
+    assert ref.cprGuides['samplingLine'] == angled
+    cpr.startPath()
+    assert not ref.cprGuides and not other.cprGuides and not curved.cprGuides

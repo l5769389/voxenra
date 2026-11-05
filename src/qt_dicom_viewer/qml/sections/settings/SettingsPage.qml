@@ -12,6 +12,26 @@ Rectangle {
     required property var pacsController
     required property var settingsController
     property var workspaceController: null
+    readonly property var resetBinding: (typeof appController !== "undefined" ? appController.shortcutController?.bindings ?? [] : [])
+        .find(binding => binding.action === "view-reset")
+    readonly property var resetTarget: categoryPage.item?.resetButton ?? null
+    function ownsFocus(item) {
+        for (let current = item; current; current = current.parent)
+            if (current === page) return true
+        return false
+    }
+    Shortcut {
+        sequence: page.resetBinding?.sequence ?? ""
+        context: Qt.WindowShortcut
+        autoRepeat: false
+        enabled: page.visible && page.enabled && !!page.resetBinding?.sequence && !!page.resetTarget?.visible && page.resetTarget.enabled
+            && page.Window.window?.workspaceController?.activeTabType === "settings"
+            && page.ownsFocus(page.Window.window.activeFocusItem)
+            && !!page.Window.window.standardShortcutsAllowed && !page.Window.window.editingText
+            && !(page.resetBinding.sequence === "Space" && (page.Window.window.activeFocusItem?.checkable !== undefined
+                || page.Window.window.activeFocusItem instanceof Basic.Slider))
+        onActivated: if (appController.shortcutController.pointerIdle()) page.resetTarget.click()
+    }
     readonly property var toolbarEditor: settingsController.createToolbarEditor(page)
     Component.onCompleted: toolbarEditor.selectProfile(page.workspaceController?.toolbarProfileForEditing?.() ?? "")
     readonly property string searchQuery: search.text.trim().toLocaleLowerCase()
@@ -259,6 +279,7 @@ Rectangle {
             }
         }
         Loader {
+            id: categoryPage
             Layout.minimumWidth: 360
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -271,6 +292,7 @@ Rectangle {
         id: toolbarComponent
         ToolbarSettingsPage {
             settingsController: page.settingsController
+            resetHint: page.resetBinding?.display ?? ""
             editor: page.toolbarEditor
         }
     }
@@ -278,6 +300,7 @@ Rectangle {
         id: displayComponent
         DisplaySettingsPage {
             settingsController: page.settingsController
+            resetHint: page.resetBinding?.display ?? ""
             category: page.selectedCategory
             title: page.categories.find(item => item.key === page.selectedCategory)?.title ?? ""
         }

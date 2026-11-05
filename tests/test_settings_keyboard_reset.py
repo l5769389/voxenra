@@ -75,7 +75,10 @@ def test_shortcut_reset_requires_confirmation_and_preserves_mouse_settings(sideb
     before = deepcopy(settings.values)
     reset = find(window, 'resetShortcuts')
     reveal_setting(window, reset)
-    click(window, reset)
+    reset.forceActiveFocus(Qt.TabFocusReason)
+    assert reset.property('text').endswith('(R)')
+    assert not find(window, 'resetDisplaySettings').property('text').endswith('(R)')
+    QTest.keyClick(window, Qt.Key_R)
     assert settings.values == before
     assert window.property('shortcutPopupOpen')
     impact = find(window, 'settingsResetImpact').property('text')
@@ -83,10 +86,14 @@ def test_shortcut_reset_requires_confirmation_and_preserves_mouse_settings(sideb
     assert window.grabWindow().save(str(tmp_path / 'shortcut-reset-confirmation.png'))
     click(window, find(window, 'cancelSettingsReset'))
     assert settings.values == before
+    reveal_setting(window, reset)
     click(window, reset)
+    assert window.property('shortcutPopupOpen')
     QTest.keyClick(window, Qt.Key_Escape)
     assert settings.values == before
+    reveal_setting(window, reset)
     click(window, reset)
+    assert window.property('shortcutPopupOpen')
     confirm = find(window, 'confirmSettingsReset')
     assert confirm.property('dialogKeyHint') == 'Enter'
     cancel = find(window, 'cancelSettingsReset')
@@ -94,11 +101,43 @@ def test_shortcut_reset_requires_confirmation_and_preserves_mouse_settings(sideb
     cancel.forceActiveFocus(Qt.TabFocusReason)
     QTest.keyClick(window, Qt.Key_Return)
     assert settings.values == before and not cancel.isVisible()
+    reveal_setting(window, reset)
     click(window, reset)
+    assert window.property('shortcutPopupOpen')
     QTest.keyClick(window, Qt.Key_Enter, Qt.KeypadModifier)
     assert app.shortcutController.hint('window') == 'W'
     assert settings.section('input') == before['input']
     restored = SettingsController(path=settings._path)
     assert restored.section('shortcuts') == settings.section('shortcuts')
     assert restored.section('input') == before['input']
+    assert not warnings, warnings
+
+
+def test_category_reset_key_opens_confirmation_only_in_settings(sidebar_scene):
+    window, app, _, warnings = sidebar_scene
+    app.workspaceController.openSettings()
+    settings = app.settingsController
+    settings.selectCategory('input')
+    settings.setValue('input', 'reverseWheel', True)
+    window.requestActivate()
+    search = find(window, 'settingsSearch')
+    search.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_R)
+    assert search.property('text').lower() == 'r'
+    assert not window.property('shortcutPopupOpen')
+    search.setProperty('text', '')
+    reset = find(window, 'resetDisplaySettings')
+    reset.forceActiveFocus(Qt.TabFocusReason)
+    assert reset.property('text').endswith('(R)')
+    QTest.keyClick(window, Qt.Key_R)
+    assert window.property('shortcutPopupOpen') and settings.section('input')['reverseWheel']
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert not window.property('shortcutPopupOpen') and settings.section('input')['reverseWheel']
+    assert app.shortcutController.assign('view-reset', 'F8')
+    assert reset.property('text').endswith('(F8)')
+    QTest.keyClick(window, Qt.Key_R)
+    assert not window.property('shortcutPopupOpen')
+    QTest.keyClick(window, Qt.Key_F8)
+    QTest.keyClick(window, Qt.Key_Return)
+    assert not settings.section('input')['reverseWheel']
     assert not warnings, warnings

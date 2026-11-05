@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 from i18n_support import install_default_language
 from test_series_sidebar import phantom_series
 from test_dicom_tags import wait_until
-from test_tag_qml import find, click
+from test_tag_qml import find, click, settled_point
 from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
 from qt_dicom_viewer.model import ImagePoint, MeasurementKind
 from qt_dicom_viewer.ui.app_controller import AppController
@@ -66,15 +66,19 @@ def screenshot(name):
     assert window.grabWindow().save(str(output / f"{name}.png"))
 
 
-def reveal(name):
-    item, flickable = find(window, name), find(window, "toolDetailFlickable")
+def reveal(name, scroller="toolDetailFlickable"):
+    item, flickable = find(window, name), find(window, scroller)
+    # Loading a populated panel creates the rows before its Flickable is laid out.
+    settled_point(item)
     edge = item.mapToScene(QPointF(0, item.height())).y()
     bottom = flickable.mapToScene(QPointF(0, flickable.height())).y()
     if edge > bottom:
         flickable.setProperty(
-            "contentY", flickable.property("contentY") + edge - bottom + 8
+            "contentY", min(flickable.property("contentHeight") - flickable.height(),
+                            flickable.property("contentY") + edge - bottom + 8)
         )
-    QTest.qWait(100)
+    wait_until(lambda: 0 <= item.mapToItem(flickable, QPointF()).y()
+               <= flickable.height() - item.height() + 1)
     return item
 
 
@@ -94,12 +98,10 @@ try:
     layer = find(window, "dicomPixelLayer")
     path = [(28, 28), (64, 28), (69, 48), (59, 65), (49, 55), (29, 66), (28, 28)]
     position = lambda p: layer.mapToScene(QPointF(p[0] + 0.5, p[1] + 0.5)).toPoint()
-    QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, position(path[0]))
-    for point in path[1:]:
-        QTest.mouseMove(window, position(point), 30)
-    QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, position(path[-1]))
-    QTest.qWait(100)
-    assert len(view._measure_controller.committed_measurements) == 1
+    for point in path:
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, position(point))
+        QTest.qWait(30)
+    wait_until(lambda: len(view._measure_controller.committed_measurements) == 1)
     screenshot("freehand")
     # The 2D SR button exports the pointer-drawn contour.
     view._tool_controller.activateTool("export")
@@ -131,6 +133,10 @@ try:
     screenshot("segmentation")
     tab.toolController.activateTool("measure")
     view = tab.activeViewport
+    # Put the target ROI below the fold to exercise the results scroller.
+    length_context = view._measurement_context(1, 0.1, kind=MeasurementKind.LENGTH)
+    for index in range(20):
+        assert view._measure_controller.paste_points([ImagePoint(25, 25), ImagePoint(40 + index, 30)], length_context)
     context = view._measurement_context(1, 0.1, kind=MeasurementKind.FREEHAND)
     identifier = view._measure_controller.paste_points(
         [
@@ -142,7 +148,7 @@ try:
         context,
     )
     assert identifier
-    click(window, reveal("freehandToSegmentation"))
+    click(window, reveal("freehandToSegmentation", "measurementScroll"))
     wait_until(lambda: not app.exportController.dicomResults.busy)
     assert not app.exportController.dicomResults.isError, (
         app.exportController.dicomResults.message
@@ -150,6 +156,12 @@ try:
     assert (
         len(controller.records) == 2 and controller.records[-1]["mask_origin"] == "roi"
     )
+    status = find(window, "roiConversionMessage")
+    assert status.property("text") == app.exportController.dicomResults.message
+    scroller = find(window, "measurementScroll")
+    assert scroller.property("contentY") > 0
+    assert scroller.mapToScene(QPointF(0, scroller.height())).y() <= status.mapToScene(QPointF()).y()
+    assert status.mapToScene(QPointF(0, status.height())).y() <= window.height()
     screenshot("freehand-to-segmentation")
     tab.toolController.activateTool("export")
     window.resize(1000, 600)

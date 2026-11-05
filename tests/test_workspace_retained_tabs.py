@@ -25,9 +25,14 @@ def test_close_retains_results_without_prompt_and_reopen_restores(edited, monkey
     monkeypatch.setattr(QMessageBox, 'exec', lambda self: pytest.fail('Close prompted'))
     assert ws.closeTab(key)
     assert not ws.tabs and doc.closedTabCount == 1 and doc.hasContent
-    ws.createTab(record.series_instance_uid, 'Same image', '2d')
+    app.panelController.openSeriesView(record.series_instance_uid, '2d')
+    wait_until(lambda: ws.activeLoadState and ws.activeLoadState.status == 'ready')
+    fresh = ws.activeTab
+    assert not fresh.activeViewport._measure_controller._measurements
+    assert doc.closedTabCount == 1 and doc.reopenLastClosed()
     wait_until(lambda: not doc.busy)
-    assert ws.activeTab is not None and not doc.isError
+    assert ws.activeTab is not fresh and not doc.isError
+    assert not fresh.activeViewport._measure_controller._measurements
     assert len(ws.activeViewport._measure_controller._measurements) == 1
     assert doc.closedTabCount == 0
 
@@ -123,3 +128,55 @@ def test_reopen_snapshot_failure_keeps_retained_result(edited, monkeypatch):
     monkeypatch.setattr(module, 'loads', lambda value: (_ for _ in ()).throw(MemoryError('full')))
     assert not doc.reopenLastClosed()
     assert doc.closedTabCount == 1 and doc.hasContent and doc.isError and not doc.busy
+
+
+def test_unedited_image_tab_can_be_reopened_in_session(qt_app, tmp_path):
+    app, record = populated_app(tmp_path, settings_path=False)
+    ws, doc = app.workspaceController, app.workspaceDocumentController
+    try:
+        ws.activeViewport.apply_slice_index(1)
+        wait_until(lambda: ws.activeViewport.sliceIndex == 1)
+        assert ws.closeTab(ws.activeTabId) and doc.canReopenClosed
+        path = tmp_path / 'browse.voxworkspace'
+        assert doc.save_to(path)
+        wait_until(lambda: not doc.busy)
+        assert read_document(path)['tabs'] == []
+        assert doc.reopenLastClosed()
+        wait_until(lambda: not doc.busy)
+        assert ws.activeViewport.sliceIndex == 1 and not doc.closedTabCount
+    finally:
+        app.shutdown()
+
+
+def test_browsing_history_limit_preserves_edited_result(edited, tmp_path):
+    app, record = edited
+    ws, doc = app.workspaceController, app.workspaceDocumentController
+    assert ws.closeTab(ws.activeTabId)
+    for _ in range(21):
+        ws.activeWorkspace(record.series_instance_uid, '2d')
+        wait_until(lambda: ws.activeLoadState.status == 'ready')
+        assert ws.closeTab(ws.activeTabId)
+    assert doc.closedTabCount == 21
+    path = tmp_path / 'retained.voxworkspace'
+    assert doc.save_to(path)
+    wait_until(lambda: not doc.busy)
+    assert len(read_document(path)['tabs']) == 1
+    assert doc.restore_from(path)
+    wait_until(lambda: not doc.busy)
+    assert doc.closedTabCount == 1 and doc.reopenLastClosed()
+    wait_until(lambda: not doc.busy)
+    assert len(ws.activeViewport._measure_controller._measurements) == 1
+
+
+def test_unsuccessful_reopen_does_not_modify_another_open_tab(edited, monkeypatch):
+    app, record = edited
+    ws, doc = app.workspaceController, app.workspaceDocumentController
+    assert ws.closeTab(ws.activeTabId)
+    ws.activeWorkspace(record.series_instance_uid, '2d')
+    wait_until(lambda: ws.activeLoadState.status == 'ready')
+    fresh = ws.activeTab
+    monkeypatch.setattr(ws, 'createTab', lambda *args, **kwargs: None)
+    assert doc.reopenLastClosed()
+    wait_until(lambda: not doc.busy)
+    assert doc.isError and doc.closedTabCount == 1
+    assert ws.activeTab is fresh and not fresh.activeViewport._measure_controller._measurements

@@ -51,6 +51,7 @@ Item {
                         sourceComponent: Component {
                             Viewport {
                                 objectName: "imageViewport-" + (cell.view?.viewportId ?? "empty")
+                                onPointToolFocusToggleRequested: if (cells.count > 1) root.tabController.focusSingleViewport(root.focusedId ? "" : cell.view.viewportId)
                                 viewportController: cell.view
                                 twoDViewMode: cell.modelData.mode
                                 hasTabs: true

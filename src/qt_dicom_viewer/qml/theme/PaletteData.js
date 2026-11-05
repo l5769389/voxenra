@@ -309,7 +309,7 @@ var data = {
     "scaleText": "#f8fafc",
     "scaleOutline": "#aa000000",
     "crosshairPreview": "#4fd9e8",
-    "annotationDefault": "#ffd166",
+    "annotationDefault": "#c99cff",
     "previewGradientTop": "#35414b",
     "previewGradientMiddle": "#78818a",
     "previewGradientBottom": "#111b23",

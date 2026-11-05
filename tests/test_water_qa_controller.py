@@ -76,7 +76,7 @@ def test_service_activation_runs_worker_and_returns_five_rois_on_gui_thread(qa_v
     assert qa.enabled and len(qa.roiItems) == 5
     assert qa.currentResult["noise_hu"] == pytest.approx(5, abs=1)
     assert tools.activeInteraction == "service:qa"
-    assert tools.resetLabel == "重置水模 QA"
+    assert tools.resetLabel == "清除水模 QA 结果"
     assert view.measurementController.measurementItems == []
     assert view.mtfController.roiController.measurementItems == []
     assert all(thread == view.thread() for thread in threads)

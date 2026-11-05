@@ -142,7 +142,7 @@ def test_bed_toggle_coexists_with_tools_and_crop_reset(qt_app, loaded_tab, ct_vo
     assert tools.activeTool == "pan"
     bed = view.visible_mask.copy()
     draw(view)
-    assert tools.resetLabel == "重置裁剪"
+    assert tools.resetLabel == "清除裁剪"
     wait_edit(qt_app, view)
     crop = view.crop_mask.copy()
     np.testing.assert_array_equal(view.visible_mask, bed & crop)

@@ -91,7 +91,8 @@ ColumnLayout {
     Components.AppButton {
         objectName: "compareMprResetOrientation"
         Layout.fillWidth: true
-        text: qsTrId("compare.mpr.resetOrientation")
+        shortcutTitle: qsTrId("compare.mpr.resetOrientation")
+        captionKey: KeysText.hint("view-reset", panel.bindings)
         compact: true
         enabled: panel.controller?.ready ?? false
         onClicked: panel.controller.resetActiveOrientation()

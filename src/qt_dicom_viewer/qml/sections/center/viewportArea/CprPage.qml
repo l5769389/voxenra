@@ -9,6 +9,7 @@ Item {
     id: page
     objectName: "cprPage"
     required property var controller
+    property bool capturingPng: false
     property bool anonymousExport: false
     readonly property bool results: controller?.resultView ?? false
     readonly property bool stackedResults: results && width < 720
@@ -122,6 +123,7 @@ Item {
                         anchors.fill: parent
                         Viewport {
                             id: viewport
+                            onPointToolFocusToggleRequested: page.controller.focusSingleViewport(cell.focused ? "" : cell.modelData.viewportId)
                             objectName: "cprViewport-" + cell.modelData.viewportRole
                             anchors.fill: parent
                             cprKeysActive: (page.Window.window?.activeReadingMenu ?? page.controller?.toolController?.activePanel) === "cpr-path"
@@ -129,6 +131,7 @@ Item {
                             twoDViewMode: cell.index < 2 && !cell.modelData.historicalPlane
                                 ? page.controller?.referencePlanes[cell.index] ?? "axial" : ""
                             hasTabs: true
+                            capturingPng: page.capturingPng
                             anonymousExport: page.anonymousExport
                             multiViewport: !cell.focused
                             overlayStatusText: cell.modelData.historicalPlane ? qsTrId("cpr.statusHistoricalPlane")

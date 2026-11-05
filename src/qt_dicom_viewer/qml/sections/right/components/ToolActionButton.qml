@@ -12,6 +12,7 @@ Components.AppButton {
     required property string label
     property bool placeholder: false
     property bool textOnly: false
+    property bool centerLabel: false
     property string shortLabel: label
     property bool showLabel: !textOnly && width >= 60
         && (typeof appController !== "undefined" ? appController.settingsController?.values.appearance.toolLabels ?? false : false)
@@ -21,6 +22,8 @@ Components.AppButton {
     property string shortcutAction: ""
     property string shortcutHint: KeysText.hint(shortcutAction, shortcutOwner?.bindings ?? [])
     property string tooltipText: label + (shortcutHint ? " (" + shortcutHint + ")" : "") + (placeholder ? qsTrId("text.0710") : "")
+    readonly property real labeledWidth: leftPadding + iconSize + 5 + caption.preferredWidth + rightPadding
+    fontPixelSize: 11
     iconSize: 24
     implicitHeight: Theme.toolbarButtonHeight
     minimumButtonWidth: 44
@@ -36,7 +39,8 @@ Components.AppButton {
     contentItem: Item {
         RowLayout {
             anchors.centerIn: parent
-            width: actionButton.showLabel ? parent.width : actionButton.iconSize
+            width: !actionButton.showLabel ? actionButton.iconSize : actionButton.centerLabel
+                ? Math.min(parent.width, actionButton.iconSize + spacing + caption.preferredWidth) : parent.width
             spacing: 5
             visible: !actionButton.textOnly
             Components.AppIcon {
@@ -53,9 +57,11 @@ Components.AppButton {
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 0
                 title: actionButton.shortLabel
+                // The row has not assigned the label width during Loader transitions.
+                captionWidth: Math.max(0, actionButton.availableWidth - actionButton.iconSize - 5)
                 keyHint: actionButton.shortcutHint
                 color: actionButton.foregroundColor
-                font.pixelSize: 11
+                font.pixelSize: actionButton.fontPixelSize
                 verticalAlignment: Text.AlignVCenter
             }
         }

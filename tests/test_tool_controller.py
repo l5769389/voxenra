@@ -81,7 +81,7 @@ def test_annotation_tool_activates_arrow_and_exposes_scoped_reset() -> None:
     controller.resetRequested.connect(resets.append)
     controller.activateTool("annotate")
 
-    assert controller.resetLabel == "重置标注"
+    assert controller.resetLabel == "清除标注"
     assert controller.canResetActiveTool is True
 
     controller.resetActiveTool()

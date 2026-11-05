@@ -154,6 +154,23 @@ class TagController(QObject):
         if not self._loading:
             self._load()
 
+    def browsing_state(self):
+        return dict(page=self._page, query=self._query, scroll=self._scroll,
+                    selected=self._selected, expanded=self._model.expanded_nodes)
+
+    def restore_browsing_state(self, state):
+        page = state.get("page", 1)
+        if not 1 <= page <= self.pageCount:
+            raise ValueError(_msg('text.0569', value1=self.pageCount))
+        if page != self._page:
+            self.setPage(page)
+        self._query = state.get("query", "")
+        self._scroll = state.get("scroll", 0.)
+        self._selected = state.get("selected", "")
+        self._model.set_query(self._query, expanded=state.get("expanded", []))
+        self.queryChanged.emit()
+        self.viewStateChanged.emit()
+
     def start(self) -> None:
         self._load()
 
@@ -178,7 +195,9 @@ class TagController(QObject):
             return
         self._loading = False
         self._error = result.error
-        self._model.set_nodes(result.nodes if not result.error else ())
+        # Page changes clear expansion in _load. A restored page can receive its
+        # saved expansion while the requested metadata is still being read.
+        self._model.set_nodes(result.nodes if not result.error else (), reset_expansion=False)
         self.stateChanged.emit()
 
     def dispose(self) -> None:

@@ -90,6 +90,35 @@ def test_compare_pair_context_menu_in_collapsed_sidebar(sidebar_scene):
     assert not warnings, warnings
 
 
+@pytest.mark.parametrize('mode', ['relative', 'spatial'])
+def test_navigation_notice_retranslates_without_changing_comparison(sidebar_scene, tmp_path, mode):
+    from qt_dicom_viewer.i18n import localize, message
+    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
+    window, app, records, warnings = sidebar_scene
+    workspace = app.workspaceController
+    workspace.createCompareTab(*(record.series_instance_uid for record in records[:2]))
+    wait_until(lambda: workspace.activeLoadState.status == 'ready')
+    tab = workspace.activeTab
+    tab.setScrollMode(mode)
+    click(window, find(window, 'primaryTool-viewport-settings'))
+    panel = find(window, 'viewportSettingsPanel')
+    notice = next(item for item in descendants(panel)
+                  if item.property('text') == tab.navigationNotice)
+    saved = tab_snapshot(tab)
+    app.workspaceDocumentController._autosave.stop()
+    app.workspaceDocumentController._dirty = False
+    key = 'compare.relativeNotice' if mode == 'relative' else 'compare.unlinkedSpace'
+    for locale in ('en-US', 'pt-BR', 'zh-CN'):
+        app.languageController.selectLanguage(locale)
+        QTest.qWait(30)
+        assert notice.isVisible()
+        assert notice.property('text') == localize(message(key))
+        assert tab_snapshot(tab) == saved and not app.workspaceDocumentController.dirty
+        if locale == 'en-US':
+            assert window.grabWindow().save(str(tmp_path / ('compare-notice-' + mode + '.png')))
+    assert not warnings, warnings
+
+
 def test_compare_detach_preserves_pair_and_window_local_tools(sidebar_scene):
     from test_tab_windows import detached
     from test_workspace_persistence import draw_length
@@ -115,7 +144,8 @@ def test_compare_detach_preserves_pair_and_window_local_tools(sidebar_scene):
     assert single.toolController.activeTool == 'window'
     registry.createCompareTab(*(r.series_instance_uid for r in reversed(records[:2])))
     assert app.windowManager.owner(tab.tab_config.tab_id) is session
-    assert len(registry._tab_dict) == 2
+    assert len(registry._tab_dict) == 3 and registry.activeTab is not tab
+    assert registry.closeTab(registry.activeTabId)
     app.windowManager.moveToMain(tab.tab_config.tab_id)
     wait_until(lambda: len(app.windowManager.sessions) == 1)
     assert list(tab.viewports_by_id.values()) == views

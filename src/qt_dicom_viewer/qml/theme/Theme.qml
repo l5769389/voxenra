@@ -177,6 +177,24 @@ QtObject {
     readonly property var annotationSwatches: PaletteData.data.swatches.annotation
     readonly property var overlaySwatches: PaletteData.data.swatches.overlay
 
+    // Annotations may carry their own completed color. Editing always uses
+    // the shared state color, without modifying the object's stored style.
+    readonly property real referencePathOpacity: 0.55
+
+    function annotationLineColor(settings) {
+        return settings.annotationFollowsCompleted ? (settings.completedColor ?? measurementPrimary)
+            : (settings.annotationColor ?? annotationDefault)
+    }
+
+    function drawingLineColor(settings, editing, completedOverride) {
+        if (editing) return settings.editingColor ?? measurementSelected
+        return completedOverride ?? settings.completedColor ?? measurementPrimary
+    }
+
+    function drawingLineDashed(settings, editing) {
+        return editing ? (settings.editingDash ?? true) : (settings.completedDash ?? false)
+    }
+
     function previewColors(theme) {
         return Object.assign({}, PaletteData.data.defaults, PaletteData.data.themes[theme] || {}, PaletteData.data.imaging)
     }

@@ -65,6 +65,7 @@ class WorkspaceController(QObject):
         self._tag_read_service = TagReadService(self)
         self._window_manager = None
         self._closed_tab_snapshots = {}
+        self._session_only_closed = []
         self._identity_views = WeakKeyDictionary()
         self.tabPresentationChanged.connect(self._i18n_tabs.emit)
         settings = getattr(parent, "_settings_controller", None)
@@ -121,31 +122,40 @@ class WorkspaceController(QObject):
             return False
         tab_ids = list(dict.fromkeys(key for key in tab_ids if key in self._tab_dict))
         snapshots = {}
+        session_only = []
         try:
             for key in tab_ids:
                 tab = self._tab_dict[key]
                 if any(getattr(v, "editBusy", False) for v in tab.viewports_by_id.values()):
                     raise ValueError(_msg('text.0410'))
-                if self._has_editing_work(tab):
-                    # Closing several CPR sessions for one series must retain each result.
-                    snapshot_key = str(uuid4()) if tab.tab_config.tab_type == TabType.CPR else key
-                    snapshots[snapshot_key] = dumps(tab_snapshot(tab))
+                if tab.tab_config.tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL):
+                    continue
+                has_edits = self._has_editing_work(tab)
+                state = self._load_states.get(key)
+                if not has_edits and state is not None and state.status != "ready":
+                    continue  # Cancelling an incomplete open has no reading state to restore.
+                snapshot_key = key if key not in self._closed_tab_snapshots else str(uuid4())
+                snapshots[snapshot_key] = dumps(tab_snapshot(tab))
+                if not has_edits:
+                    session_only.append(snapshot_key)
         except Exception as error:
             if document is not None:
                 document._message, document._error = error_message(error), True
                 document.changed.emit()
             return False
         self._closed_tab_snapshots.update(snapshots)
+        self._session_only_closed.extend(session_only)
+        # Browsing history is bounded independently of saved editing results.
+        while len(self._session_only_closed) > 20:
+            self._closed_tab_snapshots.pop(self._session_only_closed.pop(0))
         for key in tab_ids:
             self._close_tab(key)
         return True
 
-    def _reopen_retained(self, tab_id):
-        document = getattr(self.parent(), "workspaceDocumentController", None)
-        if tab_id not in self._closed_tab_snapshots or document is None or document.restoring:
-            return False
-        document.reopen_closed(tab_id)
-        return True
+    def _view_id(self, base, *, new_session):
+        if new_session:
+            return f"{uuid4()}/{base}" if base in self._tab_dict else base
+        return next((key for key in self._tab_mru if key == base or key.endswith("/" + base)), base)
 
     @staticmethod
     def _has_editing_work(tab):
@@ -351,7 +361,7 @@ class WorkspaceController(QObject):
     def createTab(self,series_uid: str,
                         tab_label: str,
                         tab_type: TabType,
-                        *, phase_identifiers=None, restore_cpr=False,
+                        *, phase_identifiers=None, new_session=False,
                    ):
         try:
             tab_type = TabType(tab_type)
@@ -360,20 +370,7 @@ class WorkspaceController(QObject):
             return
         if tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL, TabType.COMPARE_2D, TabType.COMPARE_MPR):
             return
-        tab_id = f'{series_uid}_{tab_type}'
-        if tab_type == TabType.CPR:
-            if restore_cpr:
-                if tab_id in self._tab_dict:
-                    tab_id = f'{tab_id}:{uuid4()}'
-            else:
-                for key in self._tab_mru:
-                    existing = self._tab_dict.get(key)
-                    if (existing is not None and existing.tab_config.tab_type == TabType.CPR
-                            and existing.tab_config.series_metas[0].series_uid == series_uid):
-                        self.activateTabId(key)
-                        return
-        elif self._reopen_retained(tab_id):
-            return
+        tab_id = self._view_id(f'{series_uid}_{tab_type}', new_session=new_session)
         tab, created = self._create_or_activate_tab(
             series_uid,
             tab_label,
@@ -573,12 +570,7 @@ class WorkspaceController(QObject):
         if first_uid == second_uid or not all(supports_mpr_compare(self._series_catalog.get_series(uid))
                                               for uid in (first_uid, second_uid)):
             return
-        tab_id = "comparempr:" + ":".join(sorted((first_uid, second_uid)))
-        if self._reopen_retained(tab_id):
-            return
-        if tab_id in self._tab_dict:
-            self.activateTabId(tab_id)
-            return
+        tab_id = self._view_id("comparempr:" + ":".join(sorted((first_uid, second_uid))), new_session=True)
         metas = tuple(self._series_catalog.get_series_display_meta(uid) for uid in (first_uid, second_uid))
         label = " / ".join(meta.series_description or meta.modality for meta in metas)
         tab = CompareMprTabController(TabConfig(tab_id, label, TabType.COMPARE_MPR, metas), self)
@@ -600,13 +592,7 @@ class WorkspaceController(QObject):
         if not 2 <= len(series_uids) <= 4 or len(set(series_uids)) != len(series_uids) or not all(
                 supports_compare(self._series_catalog.get_series(uid)) for uid in series_uids):
             return
-        # Opening the same pair in reverse order activates its existing window.
-        tab_id = "compare2d:" + ":".join(sorted(series_uids))
-        if self._reopen_retained(tab_id):
-            return
-        if tab_id in self._tab_dict:
-            self.activateTabId(tab_id)
-            return
+        tab_id = self._view_id("compare2d:" + ":".join(sorted(series_uids)), new_session=True)
         metas = tuple(self._series_catalog.get_series_display_meta(uid) for uid in series_uids)
         label = " / ".join(meta.series_description or meta.modality for meta in metas)
         tab = CompareTabController(TabConfig(tab_id, label, TabType.COMPARE_2D, metas), self)
@@ -622,15 +608,8 @@ class WorkspaceController(QObject):
         pet = self._series_catalog.get_series(pet_uid)
         if ct is None or pet is None or ct.modality.upper() != "CT" or pet.modality.upper() != "PT":
             return
-        tab_id = f"petct:{ct_uid}:{pet_uid}"
-        if not isolated and self._reopen_retained(tab_id):
-            return
-        if not isolated and tab_id in self._tab_dict:
-            self.activateTabId(tab_id)
-            return
-        if isolated:
-            from uuid import uuid4
-            tab_id = "restore-source:" + uuid4().hex
+        tab_id = ("restore-source:" + uuid4().hex if isolated else
+                  self._view_id(f"petct:{ct_uid}:{pet_uid}", new_session=True))
         config = TabConfig(tab_id=tab_id, tab_label=f"{ct.patient_name} · PET/CT",
             tab_type=TabType.PETCT_FUSION, series_metas=(
                 self._series_catalog.get_series_display_meta(ct_uid),
@@ -663,9 +642,9 @@ class WorkspaceController(QObject):
         from qt_dicom_viewer.ui.controller.tab.pet_volume_tab_controller import PetVolumeTabController
         if source._closed or not source.ready or not source.isFusion:
             return
-        tab_id = target_id or source._tab_config.tab_id + ":volume"
-        if self._reopen_retained(tab_id):
-            return
+        # A live fusion source owns its own 3D tab, including duplicate pairs.
+        tab_id = (self._view_id(target_id, new_session=True) if target_id is not None
+                  else source.tab_config.tab_id + ":volume")
         if tab_id not in self._tab_dict:
             config = TabConfig(tab_id=tab_id, tab_label=source._tab_config.tab_label + " · 3D", tab_type=TabType.THREE_D,
                                series_metas=source._tab_config.series_metas)
@@ -732,4 +711,4 @@ class WorkspaceController(QObject):
         if series is None:
             return
         label = series.patient_name.strip() or series.series_description.strip() or _msg('text.0258')
-        self.createTab(series_uid,label,tab_type)
+        self.createTab(series_uid, label, tab_type, new_session=True)

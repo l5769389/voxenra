@@ -9,6 +9,7 @@ import "../../components" as Components
 Basic.TabBar {
     id: workspaceTabs
 
+    property var documentController: null
     required property var workspaceController
     readonly property var windowManager: workspaceController.windowManager ?? null
     property real dropPosition: -1
@@ -216,6 +217,13 @@ Basic.TabBar {
             text: qsTrId("tabs.closeAll")
             enabled: workspaceTabs.tabCount > 0 && !!workspaceTabs.windowManager
             onTriggered: workspaceTabs.workspaceController.closeTabs(tabMenu.tabId, "all")
+        }
+        TabMenuItem {
+            objectName: "tabMenu-reopen"
+            iconName: "undo"
+            text: qsTrId("workspace.reopenClosed")
+            enabled: workspaceTabs.documentController?.canReopenClosed ?? false
+            onTriggered: workspaceTabs.documentController.reopenLastClosed()
         }
     }
 

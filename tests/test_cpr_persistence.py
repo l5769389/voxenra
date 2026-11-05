@@ -223,11 +223,11 @@ def test_delete_during_drag_is_one_undoable_edit(cpr_app):
     view.cprMoveDrag(46, 41)
     assert view.cprDelete()
     view.cprEndDrag(47, 42)
-    wait_until(lambda: tab.ready)
-    assert tab.current_path.control_points == (before[0], before[2])
+    wait_until(lambda: not tab.busy)
+    assert not tab.paths
     tab._edit_history.undo()
     wait_until(lambda: tab.ready)
     assert tab.current_path.control_points == before
     tab._edit_history.redo()
-    wait_until(lambda: tab.ready)
-    assert tab.current_path.control_points == (before[0], before[2])
+    wait_until(lambda: not tab.busy)
+    assert not tab.paths

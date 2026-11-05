@@ -15,7 +15,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 - [DIMSE 查询、勾选与导入](52-dimse-import.gif) · [English](en/52-dimse-import.gif)
 - [六类视图与工具栏拖拽保存](53-toolbar-customization.gif) · [English](en/53-toolbar-customization.gif)
 - [最大化视图区与还原](54-focus-view.gif) · [English](en/54-focus-view.gif)
-- [收藏窗模板](55-window-favorites.png) · [English](en/55-window-favorites.png)
+- [收藏窗模板](55-window-favorites-2.4.0.png) · [English](en/55-window-favorites-2.4.0.png)
 
 这些素材均捕获自实际应用的中、英文界面，使用三实例合成 CT 模体和本机 DIMSE 演示对端。查询、回传和导入实际执行并核对像素；工具栏保存、收藏及侧栏恢复均核对了界面和结果状态。回环地址与临时端口只适用于本机演示。
 
@@ -25,7 +25,8 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 - [本地 AI 自动分割：器官选择、失败重试与成功导入](49-ai-workflow-2.1.1.gif)（合成模体流程演示，模拟推理输出）
 - [ZIP 压缩包拖拽导入](06-zip-drag.gif)
-- [自由形状 ROI 绘制与统计](01-freehand-measurement.gif)
+- [测量工具与分组结果列表](63-measurement-2.4.0.png) · [English](en/63-measurement-2.4.0.png)
+- [绘图样式设置](64-drawing-styles-2.4.0.png) · [English](en/64-drawing-styles-2.4.0.png)
 - [画笔、橡皮与撤销重做](38-segmentation-refinement.gif)
 - [4D 多时相播放](03-4d-playback.gif)
 - [CT 3D 模板与旋转](04-volume-presets.gif)
@@ -59,11 +60,11 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 完成路径后留在参考视图。按 `V` 切换到结果双视图，曲面图上 A、B 标出沿中心线测量的区间，横截面上的实线和虚线标出采样宽度与投影厚度。
 
-[参考四视图（中文）](61-cpr-reference-2.3.0.png) · [English](en/61-cpr-reference-2.3.0.png)
+[参考四视图（中文）](61-cpr-reference-2.4.0.png) · [English](en/61-cpr-reference-2.4.0.png)
 
-[结果双视图（中文）](60-cpr-results-2.3.0.png) · [Results (English)](en/60-cpr-results-2.3.0.png)
+[结果双视图（中文）](60-cpr-results-2.4.0.png) · [Results (English)](en/60-cpr-results-2.4.0.png)
 
-![CPR 曲面图与垂直横截面](61-cpr-reference-2.3.0.png)
+![CPR 曲面图与垂直横截面](61-cpr-reference-2.4.0.png)
 
 ## 三维与融合
 
@@ -129,7 +130,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>整序列导出完成</b><br><a href="46-export-complete-2.1.1.png"><img src="46-export-complete-2.1.1.png" alt="导出" width="100%"></a></td>
-<td width="50%"><b>工作区保存对话框</b><br><a href="17-workspace-2.1.3.png"><img src="17-workspace-2.1.3.png" alt="工作区保存对话框" width="100%"></a></td>
+<td width="50%"><b>工作区保存对话框</b><br><a href="17-workspace-2.4.0.png"><img src="17-workspace-2.4.0.png" alt="工作区保存对话框" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>独立窗口</b><br><a href="13-detached-tabs.png"><img src="13-detached-tabs.png" alt="独立窗口" width="100%"></a></td>
@@ -151,7 +152,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 ![中性深灰主题下的 MR 阅片](37-theme-graphite.png)
 
-- [跟随系统主题（中文）](62-appearance-2.3.0.png) · [Follow system (English)](en/62-appearance-2.3.0.png)
+- [跟随系统主题（中文）](62-appearance-2.4.0.png) · [Follow system (English)](en/62-appearance-2.4.0.png)
 - [本地 JSON 窗模板](39-window-presets.png)
 
 ## 设置与开始页面

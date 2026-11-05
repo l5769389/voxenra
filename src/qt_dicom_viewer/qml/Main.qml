@@ -35,8 +35,9 @@ ApplicationWindow {
         return false
     }
     readonly property string activeReadingMenu: rightPanel.readingMenu
-    readonly property int readingListCount: rightPanel.listPanel?.shortcutCount ?? 0
+    readonly property alias readingMenuSequences: readingKeys.menuSequences
     Components.ReadingShortcuts {
+        id: readingKeys
         listPanel: rightPanel.listPanel
         controller: window.shortcuts
         activeMenu: window.activeReadingMenu
@@ -344,6 +345,10 @@ ApplicationWindow {
             canMaximizeViewport: window.canMaximizeViewport
             viewportMaximized: window.maximizedReadingArea
             onToggleViewportMaximize: window.viewportMaximized = !window.viewportMaximized
+            toolsPanelVisible: rightPanel.visible
+            toolsPanelCollapsed: rightPanel.collapsed
+            canToggleToolsPanel: rightPanel.enabled && !window.compactToolsRequired
+            onToggleToolsPanel: appController.settingsController?.setValue("layout", "rightPanelCollapsed", !rightPanel.collapsed)
         }
 
         Components.WidthResizeHandle {
@@ -370,8 +375,6 @@ ApplicationWindow {
             readonly property real desiredWidth: dragWidth >= 0 ? dragWidth
                 : (appController.settingsController?.values.layout.rightPanelWidth ?? 300)
             collapsed: window.rightCollapsedByUser || window.compactToolsRequired
-            expansionAllowed: !window.compactToolsRequired
-            onCollapseRequested: appController.settingsController?.setValue("layout", "rightPanelCollapsed", !collapsed)
             readonly property real actualWidth: collapsed ? 44 : Math.min(widthLimit, desiredWidth)
             enabled: !["loading", "error"].includes(window.workspaceController.activeLoadState?.status ?? "")
             onManualRequested: chapter => window.workspaceController.openManual(chapter)
@@ -473,6 +476,33 @@ ApplicationWindow {
         active: !window.detached
         sourceComponent: Item {
             Sections.ImportTaskDialog { controller: window.panelController }
+            Label {
+                id: duplicateNotice
+                objectName: "importAlreadyListedNotice"
+                parent: window.contentItem
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                anchors.margins: 20
+                anchors.bottomMargin: 58
+                z: 2
+                visible: noticeTimer.running
+                padding: 10
+                text: qsTrId("import.imagesAlreadyListed")
+                Accessible.role: Accessible.StaticText
+                color: Theme.textPrimary
+                background: Rectangle {
+                    radius: Theme.controlRadius
+                    color: Theme.elevatedBackground
+                    border.color: Theme.borderStrong
+                }
+                Timer { id: noticeTimer; interval: 3000 }
+                Connections {
+                    target: window.panelController
+                    function onImagesAlreadyListed() { noticeTimer.restart() }
+                    function onScanningChanged() { if (window.panelController.scanning) noticeTimer.stop() }
+                    function onImportTaskChanged() { if (window.panelController.importTaskOpen) noticeTimer.stop() }
+                }
+            }
             Sections.ExportDialog {
                 controller: window.seriesExportController
                 settingsController: appController.settingsController ?? null

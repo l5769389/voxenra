@@ -104,7 +104,7 @@ def test_display_tool_panels_change_live_viewport_state(display_panel):
     assert not warnings, warnings
 
 
-def test_viewport_drag_renders_arrow_label_scale_and_color_overlays(
+def test_viewport_point_placement_renders_arrow_label_scale_and_color_overlays(
         viewport,
         tmp_path,
 ):
@@ -132,6 +132,10 @@ def test_viewport_drag_renders_arrow_label_scale_and_color_overlays(
     QTest.mouseMove(view, end, 20)
     QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
     QTest.qWait(40)
+    assert controller.textAnnotationController.annotationItems[0]["draft"]
+    QTest.mousePress(view, Qt.LeftButton, Qt.NoModifier, end)
+    assert not controller.textAnnotationController.annotationItems[0]["draft"]
+    QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
     item = controller.textAnnotationController.annotationItems[0]
     assert not item["draft"]
     assert item["tailColumn"] == pytest.approx(60, abs=1)

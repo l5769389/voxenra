@@ -11,7 +11,7 @@ from PySide6.QtTest import QTest
 from shiboken6 import delete
 
 from qt_dicom_viewer import __version__
-from test_measurement_qml import qt_app, viewport, _scene, _mouse_drag, _visual_children, _move_pointer
+from test_measurement_qml import qt_app, viewport, _scene, _mouse_drag, _click_points, _visual_children, _move_pointer
 from test_pacs_qml import scene
 from test_tag_qml import find
 from test_dicom_tags import wait_until
@@ -69,11 +69,12 @@ def rendered_geometry(view, kind):
 
 
 @pytest.mark.parametrize("kind", ["length", "rect", "ellipse", "arrow", "text", "angle"])
-def test_release_uses_completed_style_while_remaining_selected(viewport, tmp_path, kind):
+def test_final_press_uses_completed_style_while_remaining_selected(viewport, tmp_path, kind):
     view, c, image_layer, warnings = viewport
     settings = c.settingsController
     settings.setValue("measurement", "editingColor", "#00ffff")
     settings.setValue("measurement", "completedColor", "#ffff00")
+    settings.setValue("measurement", "annotationColor", "#ff0088")
     settings.setValue("measurement", "editingDash", True)
     settings.setValue("measurement", "completedDash", False)
     c._tool_controller.selectInteraction(("annotate:" if kind in ("arrow", "text") else "measure:") + kind)
@@ -87,11 +88,21 @@ def test_release_uses_completed_style_while_remaining_selected(viewport, tmp_pat
         QTest.mouseMove(view, end, 30)
         QTest.qWait(40)
         geometry = rendered_geometry(view, kind)
+        if kind in ("arrow", "text"):
+            color = (geometry.parentItem().property("arrowColor") if kind == "text"
+                     else geometry.property("measurementColor"))
+            assert color == QColor("#00ffff")
         if kind != "text":
             assert geometry.property("dashed")
         else:
             assert geometry.property("draftStyle")
         QTest.mouseRelease(view, Qt.LeftButton, pos=end)
+        assert c.measurementController.has_active_transaction or c.textAnnotationController._draft_id
+        QTest.mousePress(view, Qt.LeftButton, pos=end)
+        try:
+            assert not c.measurementController.has_active_transaction and not c.textAnnotationController._draft_id
+        finally:
+            QTest.mouseRelease(view, Qt.LeftButton, pos=end)
         QTest.qWait(40)
     measure = c.measurementController
     text = c.textAnnotationController
@@ -100,14 +111,15 @@ def test_release_uses_completed_style_while_remaining_selected(viewport, tmp_pat
     geometry = rendered_geometry(view, kind)
     if kind == "text":
         assert not geometry.property("draftStyle")
+        assert geometry.parentItem().property("arrowColor") == QColor("#ff0088")
         # Access the real ShapePath to distinguish selected from editing.
         stem = geometry.findChild(QObject, "annotationStem")
         assert QQmlExpression(QQmlEngine.contextForObject(stem), stem, "strokeStyle === ShapePath.SolidLine").evaluate()[0] is True
     else:
         assert not geometry.property("isDraft") and geometry.property("isSelected")
         assert not geometry.property("dashed")
-        if kind != "arrow":
-            assert geometry.property("lineColor" if kind != "length" else "measurementColor") == QColor("#ffff00")
+        color_key = "measurementColor" if kind in ("length", "arrow") else "lineColor"
+        assert geometry.property(color_key) == QColor("#ff0088" if kind == "arrow" else "#ffff00")
     _move_pointer(view, _scene(image_layer, 200, 230))
     assert not measure.has_active_transaction and not text._draft_id
     if kind != "text":
@@ -121,8 +133,7 @@ def test_release_uses_completed_style_while_remaining_selected(viewport, tmp_pat
         assert geometry.property("isSelected") and not geometry.property("isDraft")
         assert geometry.property("draftStyle") and geometry.property("dashed")
         assert not measure.has_active_transaction and measure.measurementItems == original
-        if kind != "arrow":
-            assert geometry.property("measurementColor" if kind == "length" else "lineColor") == QColor("#00ffff")
+        assert geometry.property(color_key) == QColor("#00ffff")
         assert view.grabWindow().save(str(tmp_path / (kind + "-clicked-selected-draft.png")))
     if kind not in ("text", "angle"):
         # Re-entering a real edit uses the editing style; release restores completion again.
@@ -199,4 +210,20 @@ def test_version_matches_runtime_build_and_settings_header(scene, tmp_path):
         key: label.property(key) for key in
         ("width", "height", "implicitWidth", "implicitHeight", "contentWidth", "contentHeight")
     }
+    assert not warnings, warnings
+
+
+def test_default_colors_distinguish_measurement_and_arrow_on_one_slice(viewport, tmp_path):
+    view, controller, image, warnings = viewport
+    for tool, y in (('measure:length', 85), ('annotate:arrow', 115)):
+        controller._tool_controller.selectInteraction(tool)
+        _click_points(view, _scene(image, 50, y), _scene(image, 160, y - 20))
+    controller._tool_controller.activateTool('window')
+    items = [item for item in _visual_children(view.rootObject())
+             if item.isVisible() and item.property('measurementColor') is not None]
+    colors = {item.property('measurement')['type']: item.property('measurementColor').name()
+              for item in items}
+    assert colors == {'length': '#ffd45c', 'arrow': '#c99cff'}
+    assert all(not item.property('dashed') for item in items)
+    assert view.grabWindow().save(str(tmp_path / 'measurement-and-arrow.png'))
     assert not warnings, warnings
