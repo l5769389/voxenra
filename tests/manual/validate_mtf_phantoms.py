@@ -12,6 +12,7 @@ from pathlib import Path
 
 import numpy as np
 from qt_dicom_viewer.core.bead_mtf import compute_point_source_mtf, _windowed_point_source_mtf
+from qt_dicom_viewer.core.mtf_quality import metric_quality
 
 
 def main():
@@ -40,7 +41,9 @@ def main():
                         rows.append({'size': size, 'dx': dx, 'dy': dy,
                             'values': [None if v is None else v*10 for a in (calculated.x, calculated.y)
                                        for v in (a.mtf50, a.mtf10)],
-                            'withheld': [list(calculated.x.unreliable_metrics), list(calculated.y.unreliable_metrics)]})
+                            'quality': [metric_quality(axis, metric, calculated.sensitivity_threshold, direction)
+                                        for direction, axis in (('X', calculated.x), ('Y', calculated.y))
+                                        for metric in ('mtf50', 'mtf10')]})
             milliseconds = (time.perf_counter()-start)*1000/len(rows)
             values = np.array([r['values'] for r in rows], dtype=float)
             valid = np.all(np.isfinite(values), axis=0)
@@ -99,8 +102,12 @@ def main():
         ax.axhline(.5, color='gray', lw=.6); ax.axhline(.1, color='gray', lw=.6)
         ax.set(xlabel='Spatial frequency (lp/cm)', ylabel='MTF', xlim=(0, 25.6), ylim=(0, None),
                title='Helical / slice 11' if name.startswith('helical') else 'Head STD-QA / slice 151')
-        if calculated.y.unreliable_metrics:
-            ax.text(.98, .94, 'Y MTF50 withheld: processing sensitivity', ha='right', va='top',
+        flagged = [f'{direction} {metric.upper()}'
+                   for direction, axis in (('X', calculated.x), ('Y', calculated.y))
+                   for metric in ('mtf50', 'mtf10')
+                   if metric_quality(axis, metric, calculated.sensitivity_threshold, direction)['message']]
+        if flagged:
+            ax.text(.98, .94, ', '.join(flagged) + ': review processing sensitivity', ha='right', va='top',
                     transform=ax.transAxes, fontsize=9, color='#986010')
         ax.legend(loc='upper left'); ax.grid(alpha=.15)
     fig.suptitle('Source-scaled support; DC normalization; independently measured thresholds')

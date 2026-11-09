@@ -361,6 +361,23 @@ def test_mtf_equivalent_setting_default_toggle_and_reset(scene, tmp_path, width)
     assert not warnings, warnings
 
 
+def test_mtf_advanced_warning_threshold_is_editable_and_resettable(scene, tmp_path):
+    window, app, warnings = open_page(scene, 'services', 1000)
+    button = find(window, 'mtfAdvancedSettings')
+    assert not find_any(window, 'settingInput-services-mtfSensitivityPercent').isVisible()
+    click(window, button)
+    control = find(window, 'settingInput-services-mtfSensitivityPercent')
+    reveal_setting(window, control)
+    type_text(window, control, '35')
+    QTest.keyClick(window, Qt.Key_Return)
+    assert app.settingsController.section('services')['mtfSensitivityPercent'] == 35
+    assert '不隐藏数值' in find(window, 'mtfSensitivitySettingHelp').property('text')
+    app.settingsController.resetSection('services')
+    assert control.property('numberValue') == 20
+    assert window.grabWindow().save(str(tmp_path/'mtf-sensitivity-settings.png'))
+    assert not warnings, warnings
+
+
 def test_service_settings_have_own_navigation_search_and_reset(scene):
     window, app, warnings = open_page(scene, 'measurement')
     settings = app.settingsController

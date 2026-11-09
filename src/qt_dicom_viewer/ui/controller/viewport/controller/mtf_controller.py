@@ -14,6 +14,8 @@ import numpy as np
 
 from PySide6.QtCore import QObject, Property, QRunnable, QThreadPool, Qt, Signal, Slot
 
+from qt_dicom_viewer.core.mtf_quality import metric_quality, quality_warnings, sensitivity_details
+from qt_dicom_viewer.i18n.messages import localize
 from qt_dicom_viewer.core.measurement_format import format_measurement
 from qt_dicom_viewer.core.bead_mtf import (
     compute_mtf_with_context, extract_rect_pixels, gaussian_equivalent_from_mtf10,
@@ -33,6 +35,7 @@ class MtfRequest:
     measurement_method: str
     analysis_method: str
     ramp_direction: str = "x"
+    sensitivity_threshold: float = .20
 
 
 @dataclass
@@ -69,6 +72,7 @@ class _MtfTask(QRunnable):
                     context=self.context,
                     measurement_method=self.request.measurement_method,
                     analysis_method=self.request.analysis_method,
+                    sensitivity_threshold=self.request.sensitivity_threshold,
                 )
         except Exception as exc:
             self.signals.completed.emit(self.request, None, error_message(exc) or _msg('text.0579'))
@@ -89,6 +93,9 @@ class MtfController(QObject):
     stateChanged = Signal()
     recordsChanged = Signal()
     _i18n_provenance = Signal()
+    _i18n_calculationDetails = Signal()
+    _i18n_resultOrigin = Signal()
+    _i18n_warnings = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -483,14 +490,38 @@ class MtfController(QObject):
         if self._show_y:
             axes.append(("Y", result.y))
         def frequency_metric(axis, name):
-            return "—" if name in axis.unreliable_metrics else metric(self._display_frequency(getattr(axis, name)))
+            model_unavailable = result.analysis_method == 'gaussian_equivalent' and name == 'mtf50' and axis.mtf10 is None
+            value = "—" if name in axis.unreliable_metrics or model_unavailable else metric(self._display_frequency(getattr(axis, name)))
+            quality = metric_quality(axis, name, result.sensitivity_threshold, '')
+            return value + (' ⚠' if quality['message'] else '')
 
         line50 = " · ".join(f"{name} {frequency_metric(axis, 'mtf50')}" for name, axis in axes)
         line10 = " · ".join(f"{name} {frequency_metric(axis, 'mtf10')}" for name, axis in axes)
+        label50 = localize(_msg("mtf.imageModel50")) if result.analysis_method == "gaussian_equivalent" else "MTF50"
+        label10 = localize(_msg("mtf.imageMeasured10")) if result.analysis_method == "gaussian_equivalent" else "MTF10"
+        if result.analysis_method == 'gaussian':
+            label50, label10 = localize(_msg('mtf.imageFit50')), localize(_msg('mtf.imageFit10'))
+        measured_sensitive = self._modeled_reference_directions(result)
+        qualities = [metric_quality(axis, key, result.sensitivity_threshold, direction)
+                     for direction, axis in axes for key in ('mtf50', 'mtf10')]
+        review_labels = []
+        if any(q['status'] == 'sensitive' for q in qualities):
+            review_labels.append(localize(_msg('mtf.imageSensitive')))
+        if any(q['incomplete'] for q in qualities):
+            review_labels.append(localize(_msg('mtf.imageIncomplete')))
+        if any(q['missingCrossing'] for q in qualities):
+            review_labels.append(localize(_msg('mtf.imageCrossingMissing')))
         return (
             f"{basic}\n"
-            f"MTF50  {line50} {self.frequencyUnit}\n"
-            f"MTF10  {line10} {self.frequencyUnit}"
+            f"{label50}  {line50} {self.frequencyUnit}\n"
+            f"{label10}  {line10} {self.frequencyUnit}"
+            + ("\n" + _msg('mtf.warningLabel', percent=f'{result.sensitivity_threshold*100:g}',
+                            status=' · '.join(review_labels) or localize(_msg('mtf.review')))
+               if result.sensitivity_threshold is not None and (measured_sensitive or any(
+                   metric_quality(axis, key, result.sensitivity_threshold, direction)['message']
+                   for direction, axis in axes for key in ('mtf50', 'mtf10'))) else "")
+            + ("\n" + _msg('mtf.imageMeasuredSensitive', directions=' / '.join(measured_sensitive))
+               if measured_sensitive else "")
         )
 
     @_TextProperty('QVariantMap', notify=_i18n_currentResult, notify_name='_i18n_currentResult', source_notify='stateChanged')
@@ -514,6 +545,10 @@ class MtfController(QObject):
             for field in ("lsf", "frequency", "mtf", "unreliable_metrics"):
                 payload[direction][field] = list(payload[direction][field])
             axis = payload[direction]
+            axis['quality'] = {key: metric_quality(getattr(result, direction), key,
+                result.sensitivity_threshold, direction.upper()) for key in ('mtf50', 'mtf10')}
+            axis['sensitivity'] = [dict(sample, mtf50=self._display_frequency(sample['mtf50']),
+                mtf10=self._display_frequency(sample['mtf10'])) for sample in axis['sensitivity']]
             axis["frequency"] = [value * scale for value in axis["frequency"]]
             for field in ("mtf50", "mtf10"):
                 axis[field] = self._display_frequency(axis[field])
@@ -526,10 +561,49 @@ class MtfController(QObject):
         analysis = self._current_analysis()
         return analysis.error if self.status == "error" else ""
 
-    @Property("QStringList", notify=stateChanged)
+    @_TextProperty("QStringList", notify=_i18n_warnings, notify_name='_i18n_warnings', source_notify='stateChanged')
     def warnings(self):
         result = self._presented_result()
+        if isinstance(result, BeadMtfResult):
+            return quality_warnings(result) + [
+                _msg('mtf.modeledReferenceWarning', direction=direction)
+                for direction in self._modeled_reference_directions(result)]
         return list(result.warnings) if result is not None else []
+
+    def _modeled_reference_directions(self, result):
+        if not isinstance(result, BeadMtfResult) or result.analysis_method != 'gaussian_equivalent':
+            return []
+        measured = self._current_analysis().result
+        return [direction for direction in ('X', 'Y')
+                if metric_quality(getattr(measured, direction.lower()), 'mtf50',
+                                  measured.sensitivity_threshold, direction)['status']
+                   in ('sensitive', 'missing-crossing', 'incomplete')
+                and getattr(result, direction.lower()).mtf50 is not None
+                and not metric_quality(getattr(result, direction.lower()), 'mtf50',
+                                       result.sensitivity_threshold, direction)['message']]
+
+    @_TextProperty(str, notify=_i18n_resultOrigin, notify_name='_i18n_resultOrigin', source_notify='stateChanged')
+    def resultOrigin(self):
+        method = self.actualAnalysisMethod
+        if not method or self._measurement_method == 'ramp':
+            return ''
+        return _msg('mtf.equivalentSource' if method == 'gaussian_equivalent' else
+                    'mtf.gaussianSource' if method == 'gaussian' else 'mtf.measuredSource')
+
+    @_TextProperty(str, notify=_i18n_calculationDetails, notify_name='_i18n_calculationDetails', source_notify='stateChanged')
+    def calculationDetails(self):
+        result = self._presented_result()
+        if not isinstance(result, BeadMtfResult):
+            return ''
+        measured = self._current_analysis().result
+        parts = [localize(note) for note in measured.notes]
+        if result.analysis_method == 'gaussian_equivalent':
+            parts.append(localize(_msg('mtf.modelSensitivity')))
+            # Measured MTF50 sensitivity does not apply to the modeled MTF50.
+            parts.extend(localize(warning) for warning in quality_warnings(measured))
+        parts.append(sensitivity_details(measured, self.frequencyUnit))
+        return '\n\n'.join(str(part) for part in parts if part)
+
 
     @Slot()
     def _on_geometry_changed(self):
@@ -562,6 +636,7 @@ class MtfController(QObject):
             self._measurement_method,
             self._analysis_method,
             self._ramp_direction,
+            self._settings_controller.section("services")["mtfSensitivityPercent"] / 100.,
         )
         analysis = _Analysis(request, preferences=dict(self._settings_controller.section("services")),
                              fingerprint=self._pixel_fingerprint(), source=dict(
@@ -612,7 +687,7 @@ class MtfController(QObject):
                 method=request.measurement_method, analysis=request.analysis_method,
                 direction=request.ramp_direction, result=result,
                 presented=analysis.presented, preferences=analysis.preferences,
-                timestamp=analysis.timestamp, fingerprint=analysis.fingerprint, algorithm="1", app=__version__)
+                timestamp=analysis.timestamp, fingerprint=analysis.fingerprint, algorithm="2" if isinstance(result, BeadMtfResult) else "1", app=__version__)
             self.recordsChanged.emit()
         self.stateChanged.emit()
 

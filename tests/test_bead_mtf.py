@@ -173,11 +173,11 @@ def test_crop_does_not_silently_clip_or_expand(points, pattern):
         extract_rect_pixels(np.zeros((20, 20)), points)
 
 
-def test_multiple_beads_cause_crossing_warning():
+def test_multiple_beads_record_crossing_rule_in_details():
     pixels = np.zeros((64, 64))
     pixels[32, 20] = pixels[32, 40] = 10
     result = compute_point_source_mtf(pixels, 1, 1)
-    assert any("多次穿越" in message for message in result.warnings)
+    assert any("多次穿越" in message for message in result.notes)
 
 
 def test_background_band_uses_ceil_of_ten_percent_short_side():
@@ -449,6 +449,24 @@ def test_small_roi_perturbations_are_stable_for_noisy_sharp_target():
     assert np.all(np.ptp(values,axis=0)/np.median(values,axis=0)<.025)
 
 
+@pytest.mark.parametrize('noise_scale, sensitive', [(130, False), (135, True)])
+def test_windowed_sensitivity_marks_both_sides_of_twenty_percent(noise_scale, sensitive):
+    # Fixed synthetic noise places X MTF10 sensitivity on either side of 20%:
+    # 19.959% and 20.107%. Exercise the full background/window/FFT pipeline.
+    yy, xx = np.mgrid[-32:33, -32:33]
+    pixels = (80 + 1000*np.exp(-.5*((xx/1.6)**2 + (yy/1.8)**2))
+              + noise_scale*np.random.default_rng(7).normal(size=(65, 65)))
+    result = compute_point_source_mtf(pixels, .1953, .1953, analysis_method='tukey_fft')
+    from qt_dicom_viewer.core.mtf_quality import metric_quality
+    assert result.x.mtf10 is not None
+    assert not result.x.unreliable_metrics
+    assert np.interp(result.x.mtf10, result.x.frequency, result.x.mtf) == pytest.approx(.1)
+    quality = metric_quality(result.x, 'mtf10', result.sensitivity_threshold, 'X')
+    assert (quality['status'] == 'sensitive') == sensitive
+    assert len(result.x.mtf) > 0
+
+
+
 def test_windowed_missing_crossings_are_not_filled_using_fwhm():
     pixels=np.zeros((33,33));pixels[16,16]=10
     result=compute_point_source_mtf(pixels,.1,.1,analysis_method='tukey_fft')
@@ -499,10 +517,11 @@ def test_real_phantom_roi_changes_keep_support_and_metric_validity(sample):
             roi = pixels[48+dy-r:49+dy+r, 48+dx-r:49+dx+r]
             result = compute_point_source_mtf(roi, .1953125, .1953125, analysis_method='tukey_fft')
             assert not result.x.unreliable_metrics
-            assert result.y.unreliable_metrics == (('mtf50',) if sample == 'qa_slice151' else ())
+            assert not result.y.unreliable_metrics
             if sample == 'qa_slice151':
-                assert result.y.mtf50 is None
-                assert any('Y：MTF50' in w for w in result.warnings)
+                from qt_dicom_viewer.core.mtf_quality import metric_quality
+                assert result.y.mtf50 is not None
+                assert metric_quality(result.y, 'mtf50', result.sensitivity_threshold, 'Y')['status'] == 'sensitive'
             measured.append([result.x.mtf50, result.x.mtf10, result.y.mtf10])
             for axis in (result.x, result.y):
                 # Reported thresholds must still lie on the displayed spectrum.
@@ -552,7 +571,7 @@ def test_gaussian_equivalent_never_invents_an_anchor(f10, unreliable):
     axis = MtfAxisResult((0., 1., 0.), (0., 1., 2.), (1., .5, .2), .8, f10, .53, unreliable)
     result = gaussian_equivalent_from_mtf10(BeadMtfResult(axis, axis, 0., 1., ()))
     assert result.x.mtf50 is None and result.x.mtf10 is None and result.x.mtf == ()
-    assert 'mtf50' in result.x.unreliable_metrics
+    assert result.x.unreliable_metrics == unreliable
     assert any('无可靠 MTF10' in warning for warning in result.warnings)
 
 
@@ -570,7 +589,7 @@ def test_small_phantom_selections_match_complete_roi_and_preserve_validity(sampl
                 row, col = 48+dy-size//2, 48+dx-size//2
                 result = compute_mtf_with_context(image[row:row+size, col:col+size],
                     .1953125, .1953125, context=(image, (row, col)))
-                assert any('自动取样' in w for w in result.warnings)
+                assert any('自动取样' in w for w in result.notes)
                 for actual, expected in ((result.x, reference.x), (result.y, reference.y)):
                     assert actual.unreliable_metrics == expected.unreliable_metrics
                     for key in ('mtf50', 'mtf10'):
@@ -589,7 +608,7 @@ def test_background_expansion_keeps_selected_peak_despite_brighter_neighbor():
     expected = math.sqrt(math.log(10)/(2*math.pi**2*.2**2))
     assert result.x.mtf10 == pytest.approx(expected, rel=.004)
     assert result.y.mtf10 == pytest.approx(expected, rel=.004)
-    assert any('自动取样' in w for w in result.warnings)
+    assert any('自动取样' in w for w in result.notes)
 
 
 def test_background_expansion_rejects_image_edge_instead_of_padding():

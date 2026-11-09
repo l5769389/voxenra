@@ -4,6 +4,14 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class MtfSensitivitySample:
+    variant: str
+    mtf50: float | None
+    mtf10: float | None
+    error: str = ""
+
+
+@dataclass(frozen=True)
 class MtfAxisResult:
     lsf: tuple[float, ...]
     frequency: tuple[float, ...]
@@ -11,8 +19,9 @@ class MtfAxisResult:
     mtf50: float | None
     mtf10: float | None
     fwhm: float | None
-    # Distinguish a sensitivity rejection from a curve that never reaches a level.
+    # Legacy withheld results stay unavailable until explicitly recalculated.
     unreliable_metrics: tuple[str, ...] = ()
+    sensitivity: tuple[MtfSensitivitySample, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -23,6 +32,8 @@ class BeadMtfResult:
     noise: float
     warnings: tuple[str, ...]
     analysis_method: str = "direct_fft"
+    notes: tuple[str, ...] = ()
+    sensitivity_threshold: float | None = None
 
 
 @dataclass(frozen=True)

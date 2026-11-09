@@ -9,11 +9,14 @@ from numpy.fft import rfft, rfftfreq
 from numpy.linalg import solve
 
 from qt_dicom_viewer.i18n import message as _msg
-from qt_dicom_viewer.model.mtf import BeadMtfResult, MtfAxisResult
+from qt_dicom_viewer.i18n.messages import error_message
+from qt_dicom_viewer.model.mtf import BeadMtfResult, MtfAxisResult, MtfSensitivitySample
 
 
 MEASUREMENT_METHODS = ("bead", "wire")
 ANALYSIS_METHODS = ("direct_fft", "gaussian", "tukey_fft")
+# Processing sensitivity limit, not a confidence interval or accuracy bound.
+MTF_SENSITIVITY_LIMIT = 0.20
 
 
 class MtfSupportError(ValueError):
@@ -27,7 +30,8 @@ class MtfSupportError(ValueError):
 
 
 def compute_mtf_with_context(roi, row_spacing, column_spacing, *, context=None,
-                             measurement_method='bead', analysis_method='tukey_fft'):
+                             measurement_method='bead', analysis_method='tukey_fft',
+                             sensitivity_threshold=MTF_SENSITIVITY_LIMIT):
     """Identify the source in the selection; extend only from real image pixels.
 
     Complete selections retain the existing calculation. With insufficient
@@ -37,7 +41,8 @@ def compute_mtf_with_context(roi, row_spacing, column_spacing, *, context=None,
     """
     try:
         return compute_point_source_mtf(roi, row_spacing, column_spacing,
-            measurement_method=measurement_method, analysis_method=analysis_method)
+            measurement_method=measurement_method, analysis_method=analysis_method,
+            sensitivity_threshold=sensitivity_threshold)
     except MtfSupportError as exc:
         if context is None or analysis_method != 'tukey_fft':
             raise
@@ -54,14 +59,15 @@ def compute_mtf_with_context(roi, row_spacing, column_spacing, *, context=None,
             raise ValueError(_msg('text.0251'))
         try:
             result = _windowed_point_source_mtf(pixels, row_spacing, column_spacing,
-                                               source_index=tuple(radii))
+                                               source_index=tuple(radii),
+                                               sensitivity_threshold=sensitivity_threshold)
         except MtfSupportError as exc:
             radii = np.maximum(radii+2, exc.radii)
             continue
         notice = _msg('mtf.backgroundExpanded',
             width=f'{pixels.shape[1]*column_spacing:.1f}',
             height=f'{pixels.shape[0]*row_spacing:.1f}')
-        return replace(result, warnings=(*result.warnings, notice))
+        return replace(result, notes=(*result.notes, notice))
     raise ValueError(_msg('mtf.supportNotConverged'))
 
 
@@ -81,9 +87,8 @@ def gaussian_equivalent_from_mtf10(result: BeadMtfResult) -> BeadMtfResult:
         if (f10 is None or not math.isfinite(f10) or f10 <= 0
                 or 'mtf10' in axis.unreliable_metrics):
             warnings.append(_msg('mtf.equivalentUnavailable', direction=direction))
-            invalid = ('mtf50', 'mtf10') if f10 is not None else ('mtf50',)
-            return replace(axis, mtf=(), mtf50=None, mtf10=None,
-                unreliable_metrics=tuple(dict.fromkeys((*axis.unreliable_metrics, *invalid))))
+            # A new missing/invalid anchor is not a legacy withheld value.
+            return replace(axis, mtf=(), mtf50=None, mtf10=None)
         f50 = f10*math.sqrt(math.log(2.)/math.log(10.))
         # Include the exact anchor/crossing in the plot, making curve and
         # displayed thresholds consistent even on a coarse measured grid.
@@ -91,7 +96,10 @@ def gaussian_equivalent_from_mtf10(result: BeadMtfResult) -> BeadMtfResult:
         response = np.exp(-math.log(10.)*(frequencies/f10)**2)
         return replace(axis, frequency=tuple(map(float, frequencies)),
             mtf=tuple(map(float, response)), mtf50=f50,
-            unreliable_metrics=tuple(key for key in axis.unreliable_metrics if key != 'mtf50'))
+            unreliable_metrics=tuple(key for key in axis.unreliable_metrics if key != 'mtf50'),
+            sensitivity=tuple(replace(sample,
+                mtf50=sample.mtf10*math.sqrt(math.log(2.)/math.log(10.))
+                      if sample.mtf10 is not None else None) for sample in axis.sensitivity))
 
     x, y = equivalent(result.x, 'X'), equivalent(result.y, 'Y')
     return replace(result, x=x, y=y, analysis_method='gaussian_equivalent',
@@ -218,7 +226,7 @@ def has_negative_sidelobes(lsf: np.ndarray, noise_floor: float) -> bool:
 
 
 def _axis_result(lsf: np.ndarray, spacing: float, direction: str,
-                 warnings: list[str], *, taper=False) -> MtfAxisResult:
+                 warnings: list[str], *, taper=False, notes=None) -> MtfAxisResult:
     if not np.all(np.isfinite(lsf)):
         raise ValueError(_msg('text.0236', value1=direction))
     nfft = 1 << (max(1024, 16 * len(lsf)) - 1).bit_length()
@@ -245,7 +253,7 @@ def _axis_result(lsf: np.ndarray, spacing: float, direction: str,
     mtf50, multiple50 = threshold_frequency(frequency, response, 0.5)
     mtf10, multiple10 = threshold_frequency(frequency, response, 0.1)
     if multiple50 or multiple10:
-        warnings.append(_msg('text.0239', value1=direction))
+        (notes if notes is not None else warnings).append(_msg('text.0239', value1=direction))
     peak = float(np.max(lsf))
     if peak <= 0 or max(abs(float(lsf[0])), abs(float(lsf[-1]))) > 0.05 * peak:
         warnings.append(_msg('text.0240', value1=direction))
@@ -448,11 +456,12 @@ def _source_window(xx: np.ndarray, yy: np.ndarray, widths: np.ndarray,
 
 
 def _windowed_point_source_mtf(pixels: np.ndarray, row_spacing: float, column_spacing: float,
-                               *, check_stability: bool = True, source_index=None) -> BeadMtfResult:
+                               *, check_stability: bool = True, source_index=None,
+                               sensitivity_threshold=MTF_SENSITIVITY_LIMIT) -> BeadMtfResult:
     psf, background, noise, widths, xx, yy = _source_support(
         pixels, row_spacing, column_spacing, source_index=source_index)
     peak = float(np.max(psf) if source_index is None else psf[source_index])
-    warnings = []
+    warnings, notes = [], []
     if noise > 0 and peak < 5*noise:
         warnings.append(_msg('text.0254', value1=_msg('text.0248')))
     window = _source_window(xx, yy, widths)
@@ -460,7 +469,7 @@ def _windowed_point_source_mtf(pixels: np.ndarray, row_spacing: float, column_sp
     if np.any(tapered) and np.max(np.abs(psf[tapered])) > max(.05*peak, 5*noise):
         warnings.append(_msg('mtf.windowSignal'))
 
-    def axes(response, weights, messages):
+    def axes(response, weights, messages, notices=None, comparison=None):
         # Discard exactly-zero padding so FFT sampling depends on the source
         # support, not on unrelated pixels inside a larger drawn rectangle.
         rows, columns = np.nonzero(weights)
@@ -470,53 +479,52 @@ def _windowed_point_source_mtf(pixels: np.ndarray, row_spacing: float, column_sp
         # Keep a zero sample outside each end for valid half-height crossings.
         weighted = weighted[max(0, rows.min()-1):rows.max()+2,
                             max(0, columns.min()-1):columns.max()+2]
-        return (_axis_result(weighted.sum(0)*row_spacing, column_spacing, 'X', messages),
-                _axis_result(weighted.sum(1)*column_spacing, row_spacing, 'Y', messages))
-
-    x, y = axes(psf, window, warnings)
-    if check_stability:
-        # Moving a rectangle containing identical support is no longer a useful
-        # uncertainty check. Perturb the actual taper and background instead.
-        # 8% is an engineering sensitivity threshold, not a confidence interval.
-        variants = []
-        for scale in (.9, 1.1):
-            variants.append((psf, _source_window(xx, yy, widths, scale)))
-        unreliable = set()
-        try:
-            other_psf, _, _, other_widths, _, _ = _source_support(
-                pixels, row_spacing, column_spacing, background_extent=5.5,
-                source_index=source_index)
-            variants.append((other_psf, _source_window(xx, yy, other_widths)))
-        except ValueError:
-            unreliable.update((direction, name) for direction in ('X', 'Y')
-                              for name in ('mtf50', 'mtf10'))
-        for response, weights in variants:
+        outputs = []
+        for lsf, spacing, direction in ((weighted.sum(0)*row_spacing, column_spacing, 'X'),
+                                         (weighted.sum(1)*column_spacing, row_spacing, 'Y')):
             try:
-                others = axes(response, weights, [])
-            except ValueError:
-                unreliable.update((direction, name) for direction in ('X', 'Y')
-                                  for name in ('mtf50', 'mtf10'))
-                continue
-            for a, b, direction in zip((x, y), others, ('X', 'Y')):
-                for name in ('mtf50', 'mtf10'):
-                    v, alt = getattr(a, name), getattr(b, name)
-                    if v is not None and (alt is None or abs(alt-v)/v > .08):
-                        unreliable.add((direction, name))
-        for direction, name in sorted(unreliable):
-            warnings.append(_msg('mtf.unreliableThreshold', direction=direction, metric=name.upper()))
-            if direction == 'X':
-                x = replace(x, **{name: None}, unreliable_metrics=(*x.unreliable_metrics, name))
-            else:
-                y = replace(y, **{name: None}, unreliable_metrics=(*y.unreliable_metrics, name))
+                axis = _axis_result(lsf, spacing, direction, messages, notes=notices)
+                outputs.append(axis if comparison is None else
+                               MtfSensitivitySample(comparison, axis.mtf50, axis.mtf10))
+            except ValueError as exc:
+                if comparison is None:
+                    raise
+                outputs.append(MtfSensitivitySample(comparison, None, None, error_message(exc)))
+        return tuple(outputs)
+
+    x, y = axes(psf, window, warnings, notes)
+    if check_stability:
+        # Parameter perturbations are diagnostics, never a veto on the baseline.
+        comparisons = []
+        for name, scale in (('window90', .9), ('window110', 1.1), ('background55', None)):
+            try:
+                if scale is None:
+                    response, _, _, other_widths, _, _ = _source_support(
+                        pixels, row_spacing, column_spacing, background_extent=5.5,
+                        source_index=source_index)
+                    weights = _source_window(xx, yy, other_widths)
+                else:
+                    response, weights = psf, _source_window(xx, yy, widths, scale)
+                comparisons.append(axes(response, weights, [], [], comparison=name))
+            except ValueError as exc:
+                failed = MtfSensitivitySample(name, None, None, error_message(exc))
+                comparisons.append((failed, failed))
+        x = replace(x, sensitivity=tuple(pair[0] for pair in comparisons))
+        y = replace(y, sensitivity=tuple(pair[1] for pair in comparisons))
     _warn_axis_mismatch(x, y, warnings)
-    return BeadMtfResult(x, y, background, noise, tuple(dict.fromkeys(warnings)), 'tukey_fft')
+    return BeadMtfResult(x, y, background, noise, tuple(dict.fromkeys(warnings)), 'tukey_fft',
+                         tuple(dict.fromkeys(notes)), sensitivity_threshold if check_stability else None)
 
 
 def compute_point_source_mtf(roi: np.ndarray, row_spacing: float,
                              column_spacing: float, *,
                              measurement_method: str = "bead",
-                             analysis_method: str = "direct_fft") -> BeadMtfResult:
+                             analysis_method: str = "direct_fft",
+                             sensitivity_threshold: float = MTF_SENSITIVITY_LIMIT) -> BeadMtfResult:
     """计算微珠或垂直扫描平面细丝截面的两方向 MTF。"""
+    if (isinstance(sensitivity_threshold, bool) or not isinstance(sensitivity_threshold, (float, int))
+            or not math.isfinite(sensitivity_threshold) or not .01 <= sensitivity_threshold <= 1.):
+        raise ValueError(_msg('mtf.invalidSensitivityThreshold'))
     if measurement_method not in MEASUREMENT_METHODS:
         raise ValueError(_msg('text.0246'))
     if analysis_method not in ANALYSIS_METHODS:
@@ -534,7 +542,8 @@ def compute_point_source_mtf(roi: np.ndarray, row_spacing: float,
     if not np.all(np.isfinite(pixels)):
         raise ValueError(_msg('text.0251'))
     if analysis_method == 'tukey_fft':
-        return _windowed_point_source_mtf(pixels, row_spacing, column_spacing)
+        return _windowed_point_source_mtf(pixels, row_spacing, column_spacing,
+                                            sensitivity_threshold=sensitivity_threshold)
     band = max(1, math.ceil(min(pixels.shape) * 0.1))
     border = np.ones(pixels.shape, dtype=bool)
     border[band:-band, band:-band] = False
@@ -603,14 +612,16 @@ def compute_point_source_mtf(roi: np.ndarray, row_spacing: float,
         (y_lsf, noise * math.sqrt(pixels.shape[1]) * column_spacing, "Y"),
     ) if has_negative_sidelobes(lsf, estimate)]
     if negative_axes and analysis_method == 'gaussian':
-        result = _windowed_point_source_mtf(pixels, row_spacing, column_spacing)
+        result = _windowed_point_source_mtf(pixels, row_spacing, column_spacing,
+                                            sensitivity_threshold=sensitivity_threshold)
         return replace(result, warnings=(_msg('mtf.autoWeighted', directions=' / '.join(negative_axes)),
                                          *result.warnings))
     if negative_axes:
         warnings.append(_msg('mtf.negativeMeasured', directions=' / '.join(negative_axes)))
+    notes = []
     axis_builder = _gaussian_axis_result if analysis_method == 'gaussian' else _axis_result
-    x = axis_builder(x_lsf, column_spacing, "X", warnings)
-    y = axis_builder(y_lsf, row_spacing, "Y", warnings)
+    x = axis_builder(x_lsf, column_spacing, "X", warnings, **({"notes": notes} if analysis_method != "gaussian" else {}))
+    y = axis_builder(y_lsf, row_spacing, "Y", warnings, **({"notes": notes} if analysis_method != "gaussian" else {}))
     _warn_axis_mismatch(x, y, warnings)
     return BeadMtfResult(x, y, background, noise,
-                         tuple(dict.fromkeys(warnings)), analysis_method)
+                         tuple(dict.fromkeys(warnings)), analysis_method, tuple(notes))

@@ -638,7 +638,7 @@ def test_info_button_theme_colors_and_accessible_popup(qt_app):
         delete(view)
 
 
-def test_sensitive_metric_is_dash_with_explanation_and_other_metrics_preserved(workspace, tmp_path):
+def test_sensitive_metric_is_visible_with_inline_warning_and_details(workspace, tmp_path):
     from qt_dicom_viewer.model import PixelSpacing
     view, controller, pixels, warnings = workspace
     frame = bead_render(controller)
@@ -655,18 +655,31 @@ def test_sensitive_metric_is_dash_with_explanation_and_other_metrics_preserved(w
     QTest.qWait(50)
     c = controller.mtfController
     assert c.status == 'ready'
-    assert c.currentResult['y']['unreliable_metrics'] == ['mtf50']
-    assert _find(view, 'mtfMetric-4').property('text') == '—'
+    assert c.currentResult['y']['unreliable_metrics'] == []
+    assert c.currentResult['y']['quality']['mtf50']['status'] == 'sensitive'
+    assert '⚠' in _find(view, 'mtfMetric-4').property('text')
+    assert float(_find(view, 'mtfMetric-4').property('text').replace('⚠', '').strip()) > 0
     assert float(_find(view, 'mtfMetric-1').property('text')) > 0
     assert float(_find(view, 'mtfMetric-5').property('text')) > 0
-    assert 'Y —' in c.roiMetricLabel and '未达到' not in c.roiMetricLabel
+    assert '⚠' in c.roiMetricLabel and '20%' in c.roiMetricLabel
+    assert '实测' in _find(view, 'mtfResultOrigin').property('text')
+    assert any(item.objectName().startswith('mtfQualityWarning-') and item.isVisible()
+               for item in _visual_children(view.contentItem()))
     assert not any(item.objectName().startswith('mtfInfoWarning-') and item.isVisible()
                    for item in _visual_children(view.contentItem()))
     _click(view, _find(view, 'mtfInfoButton'))
     QTest.qWait(50)
-    assert any('Y：MTF50' in str(item.property('text')) and item.isVisible()
+    assert any('Y MTF50' in str(item.property('text')) and item.isVisible()
                for item in _visual_children(view.contentItem()))
     assert view.grabWindow().save(str(tmp_path/'mtf-sensitive-metric.png'))
+    QTest.keyClick(view, Qt.Key_Escape)
+    c.settingsController.setValue('services', 'mtfGaussianEquivalent', True)
+    _click(view, _find(view, 'recalculateAnalysis'))
+    wait_result(c)
+    QTest.qWait(40)
+    assert c.currentResult['y']['quality']['mtf50']['status'] == 'ok'
+    assert any('Y 实测 MTF50' in warning and '模型估计' in warning for warning in c.warnings)
+    assert '实测 MTF50 需复核' in c.roiMetricLabel
     assert not warnings
 
 
@@ -736,7 +749,8 @@ def test_small_roi_area_visible_before_and_after_analysis_without_method_in_view
     assert label.startswith(basic+'\n') and 'MTF50' in label
     assert '高斯' not in label and '取样' not in label
     assert '高斯等效' in _find(view, 'mtfActualMethod').property('text')
-    assert any('自动取样' in w for w in c.warnings)
+    assert '自动取样' in c.calculationDetails
+    assert not any('自动取样' in w for w in c.warnings)
     assert view.grabWindow().save(str(tmp_path/'mtf-small-roi-ready.png'))
     assert not warnings, warnings
 

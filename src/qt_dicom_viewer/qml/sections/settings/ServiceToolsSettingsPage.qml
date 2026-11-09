@@ -8,6 +8,7 @@ ColumnLayout {
     id: root
     required property var settingsController
     readonly property var values: settingsController.values.services
+    property bool advancedMtfExpanded: false
     spacing: 12
     SettingsSection {
         sectionKey: "services-mtf"
@@ -42,6 +43,32 @@ ColumnLayout {
             model: ["lp/mm", "lp/cm"]
             currentIndex: root.values.mtfFrequencyUnit === "lp/cm" ? 1 : 0
             onActivated: index => root.settingsController.setValue("services", "mtfFrequencyUnit", model[index])
+        }
+        Components.AppButton {
+            objectName: "mtfAdvancedSettings"
+            Layout.fillWidth: true
+            text: qsTrId("mtf.advanced")
+            iconName: root.advancedMtfExpanded ? "chevron-up" : "chevron-down"
+            checked: root.advancedMtfExpanded
+            onClicked: root.advancedMtfExpanded = !root.advancedMtfExpanded
+        }
+        SettingSlider {
+            visible: root.advancedMtfExpanded
+            Layout.fillWidth: true
+            settingName: "services-mtfSensitivityPercent"
+            title: qsTrId("mtf.sensitivitySetting")
+            value: root.values.mtfSensitivityPercent
+            from: 1; to: 100; stepSize: 1; suffix: "%"
+            onEdited: value => root.settingsController.setValue("services", "mtfSensitivityPercent", value)
+        }
+        Text {
+            objectName: "mtfSensitivitySettingHelp"
+            visible: root.advancedMtfExpanded
+            Layout.fillWidth: true
+            text: qsTrId("mtf.sensitivitySettingHelp")
+            color: Theme.textMuted
+            font.pixelSize: 11
+            wrapMode: Text.Wrap
         }
     }
     SettingsSection {

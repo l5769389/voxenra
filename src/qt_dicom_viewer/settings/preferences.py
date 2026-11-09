@@ -52,7 +52,7 @@ DEFAULTS = {
                     "linkLabelToShape": False, "cardTransparency": 8,
                     "decimalPlaces": DEFAULT_DECIMAL_PLACES,
                     "annotationFollowsCompleted": False, "annotationColor": "#c99cff", "annotationSize": 14},
-    "services": {"mtfFrequencyUnit": "lp/mm", "mtfGaussianEquivalent": True,
+    "services": {"mtfFrequencyUnit": "lp/mm", "mtfGaussianEquivalent": True, "mtfSensitivityPercent": 20,
                  "rampThicknessAngle": 23, "segmentationPython": "", "segmentationWeights": "",
                  "segmentationDevice": "auto", "segmentationOrgans": ["liver", "spleen", "kidney_left", "kidney_right"]},
     "roi": {key: True for key in METRICS},
@@ -152,7 +152,7 @@ def validate_value(section, key, value):
         value = int(value)
     elif isinstance(default, (int, float)):
         limits = {"fontSize": (10, 20), "lineHeight": (1, 1.8), "lineWidth": (1, 6), "annotationSize": (8, 28),
-                  "cardTransparency": (0, 100), "rightPanelWidth": (240, 420), "settingsNavigationWidth": (156, 300), "manualNavigationWidth": (220, 400)}
+                  "mtfSensitivityPercent": (1, 100), "cardTransparency": (0, 100), "rightPanelWidth": (240, 420), "settingsNavigationWidth": (156, 300), "manualNavigationWidth": (220, 400)}
         # Preserve legacy narrow-panel preferences at the new usable minimum.
         if key == "rightPanelWidth" and type(value) in (int, float) and 220 <= value < 240:
             value = 240

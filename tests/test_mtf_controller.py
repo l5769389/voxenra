@@ -84,10 +84,63 @@ def finish(view, job):
         context=context,
         measurement_method=token.measurement_method,
         analysis_method=token.analysis_method,
+        sensitivity_threshold=token.sensitivity_threshold,
     )
     target = view.fwhmController if token.measurement_method == "ramp" else view.mtfController
     target._receive_result(token, result, "")
     return result
+
+
+def test_mtf_sensitivity_threshold_is_frozen_in_request_result_and_workspace(mtf_viewport, monkeypatch):
+    from qt_dicom_viewer.core.workspace_state import dumps, loads
+    view, frame = mtf_viewport
+    c = view.mtfController
+    jobs = capture_tasks(view, monkeypatch)
+    c.settingsController.setValue('services', 'mtfSensitivityPercent', 35)
+    draw(view)
+    assert jobs[-1][0].sensitivity_threshold == .35
+    c.settingsController.setValue('services', 'mtfSensitivityPercent', 10)
+    finish(view, jobs[-1])
+    record = next(iter(c.persistent_state()['records'].values()))
+    assert record['result'].sensitivity_threshold == .35
+    assert record['preferences']['mtfSensitivityPercent'] == 35
+    assert '35%' in c.calculationDetails
+    restored = loads(dumps(c.persistent_state()))
+    c.reset()
+    c.restore_state(restored)
+    assert '35%' in c.calculationDetails
+    assert c.currentResult['x']['sensitivity']
+    c.recalculate()
+    finish(view, jobs[-1])
+    assert '10%' in c.calculationDetails
+
+
+def test_mtf_image_label_identifies_modeled_metric_for_export(mtf_viewport, monkeypatch):
+    view, _ = mtf_viewport
+    c = view.mtfController
+    c.settingsController.setValue('services', 'mtfGaussianEquivalent', True)
+    jobs = capture_tasks(view, monkeypatch)
+    draw(view)
+    finish(view, jobs[-1])
+    assert 'MTF50（模型）' in c.roiMetricLabel
+    assert 'MTF10（实测）' in c.roiMetricLabel
+
+
+def test_image_export_warning_distinguishes_incomplete_comparison(mtf_viewport, monkeypatch):
+    from qt_dicom_viewer.model.mtf import MtfSensitivitySample
+    view, _ = mtf_viewport
+    c = view.mtfController
+    jobs = capture_tasks(view, monkeypatch)
+    draw(view)
+    result = finish(view, jobs[-1])
+    incomplete = replace(result, x=replace(result.x, sensitivity=(
+        MtfSensitivitySample('window90', None, None, 'Comparison failed'),)))
+    c._receive_result(jobs[-1][0], incomplete, '')
+    assert '检查未完成' in c.roiMetricLabel
+    assert '20%' in c.roiMetricLabel
+    c.setAnalysisMethod('gaussian')
+    finish(view, jobs[-1])
+    assert 'MTF50（拟合）' in c.roiMetricLabel
 
 
 def test_numeric_roi_commit_is_atomic_square_and_rejects_stale_results(mtf_viewport, monkeypatch):
@@ -188,9 +241,9 @@ def test_method_defaults_switching_and_analysis_recalculation(mtf_viewport, monk
     assert controller.statusText == ""
     assert controller.roiMetricLabel == (
         "ROI  11.00 × 11.00 mm · 121.00 mm²\n"
-        f"MTF50  X {controller.currentResult['x']['mtf50']:.2f} · "
+        f"MTF50（拟合）  X {controller.currentResult['x']['mtf50']:.2f} · "
         f"Y {controller.currentResult['y']['mtf50']:.2f} lp/mm\n"
-        f"MTF10  X {controller.currentResult['x']['mtf10']:.2f} · "
+        f"MTF10（拟合）  X {controller.currentResult['x']['mtf10']:.2f} · "
         f"Y {controller.currentResult['y']['mtf10']:.2f} lp/mm"
     )
 
@@ -654,7 +707,8 @@ def test_small_selection_automatically_samples_background_in_worker(mtf_viewport
     draw(view, (10, 10), (95, 95))
     wait_result(view.mtfController)
     assert view.mtfController.status == "ready"
-    assert any("自动取样" in w for w in view.mtfController.warnings)
+    assert "自动取样" in view.mtfController.calculationDetails
+    assert not any("自动取样" in w for w in view.mtfController.warnings)
     assert view.mtfController.currentResult["x"]["mtf10"] > 0
 
 

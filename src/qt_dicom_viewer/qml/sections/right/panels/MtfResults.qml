@@ -167,7 +167,7 @@ ColumnLayout {
             Layout.minimumWidth: 0
             wrapMode: Text.Wrap
             Layout.fillHeight: true
-            text: qsTrId("text.1141")
+            text: qsTrId("mtf.target")
             color: Theme.textMuted
             font.pixelSize: 11
             verticalAlignment: Text.AlignVCenter
@@ -274,13 +274,23 @@ ColumnLayout {
         explanation: [(panel.rampMode ? qsTrId("ramp.info")
             : panel.controller?.actualAnalysisMethod === "gaussian_equivalent" ? qsTrId("mtf.equivalentHint")
             : panel.controller?.actualAnalysisMethod === "tukey_fft" ? qsTrId("mtf.weightedHint")
-            : panel.controller?.analysisMethod === "gaussian" ? qsTrId("mtf.gaussianHint") : qsTrId("mtf.directHint")), panel.controller?.provenance ?? "", qsTrId("analysis.savedHint")]
+            : panel.controller?.analysisMethod === "gaussian" ? qsTrId("mtf.gaussianHint") : qsTrId("mtf.directHint")), panel.controller?.calculationDetails ?? "", panel.controller?.provenance ?? "", qsTrId("analysis.savedHint")]
             .filter(part => part.trim().length > 0).join("\n\n")
         warnings: panel.qualityWarnings
     }
     Connections {
         target: panel.controller
         function onStateChanged() { if (!panel.ready) infoPopup.close() }
+    }
+    Text {
+        objectName: "mtfResultOrigin"
+        Layout.fillWidth: true
+        visible: panel.ready && !panel.rampMode
+        text: panel.controller?.resultOrigin ?? ""
+        color: Theme.textSecondary
+        font.pixelSize: 12
+        wrapMode: Text.Wrap
+        Accessible.name: text
     }
     GridLayout {
         objectName: "rampMetrics"
@@ -358,8 +368,12 @@ ColumnLayout {
                 for (const [name, axis, color] of axes) {
                     cells.push({text: name, color: color, axisCell: true})
                     for (const key of ["mtf50", "mtf10"]) {
-                        const missing = (axis.unreliable_metrics ?? []).indexOf(key) >= 0 ? "—" : qsTrId("text.0589")
-                        cells.push({text: panel.metric(axis[key], missing), color: color, axisCell: false})
+                        const noModel = panel.controller?.actualAnalysisMethod === "gaussian_equivalent"
+                            && key === "mtf50" && axis.mtf10 === null
+                        const missing = noModel || (axis.unreliable_metrics ?? []).indexOf(key) >= 0 ? "—" : qsTrId("text.0589")
+                        const warning = axis.quality?.[key]?.message ?? ""
+                        cells.push({text: panel.metric(axis[key], missing) + (warning ? " ⚠" : ""),
+                            color: warning ? Theme.warningColor : color, axisCell: false})
                     }
                 }
                 return cells
@@ -377,6 +391,30 @@ ColumnLayout {
                 wrapMode: Text.Wrap
             }
         }
+    }
+    Repeater {
+        model: panel.ready && !panel.rampMode ? panel.qualityWarnings : []
+        Text {
+            required property string modelData
+            required property int index
+            objectName: "mtfQualityWarning-" + index
+            Layout.fillWidth: true
+            text: modelData
+            textFormat: Text.PlainText
+            color: Theme.warningColor
+            font.pixelSize: 11
+            wrapMode: Text.Wrap
+            Accessible.name: text
+        }
+    }
+    Text {
+        objectName: "mtfErrorAction"
+        Layout.fillWidth: true
+        visible: !panel.rampMode && panel.controller?.status === "error"
+        text: qsTrId("mtf.failureAction")
+        color: Theme.textSecondary
+        font.pixelSize: 11
+        wrapMode: Text.Wrap
     }
     Components.AppButton {
         objectName: "rampDetailsToggle"
