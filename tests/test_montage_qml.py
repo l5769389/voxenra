@@ -20,7 +20,7 @@ def test_montage_entry_and_center_loader_are_wired(sidebar_scene) -> None:
     click(window, find(window, "series-" + records[0].series_instance_uid))
     button = find(window, "openView-montage")
     assert button.isEnabled()
-    assert button.parentItem().property("tooltipText") == "平铺视图"
+    assert button.parentItem().property("tooltipText") == "平铺视图 (O)"
     click(window, button)
     assert app.workspaceController.activeTabType == "montage"
     assert find(window, "montageGrid").isVisible()

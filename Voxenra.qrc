@@ -1,5 +1,10 @@
 <RCC>
     <qresource>
+        <file>src/qt_dicom_viewer/qml/assets/help/measurement-2.5.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/measurement-2.5.0.png</file>
+        <file>src/qt_dicom_viewer/qml/components/SeriesViewShortcuts.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/LabelPlacement.js</file>
+        <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/ViewportPinchHandler.qml</file>
         <file>src/qt_dicom_viewer/qml/assets/help/cpr-reference-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/cpr-reference-2.4.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/icons/cpr-path.svg</file>
