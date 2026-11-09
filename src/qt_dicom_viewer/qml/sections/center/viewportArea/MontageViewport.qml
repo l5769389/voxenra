@@ -275,9 +275,20 @@ Item {
                 y: montageGrid.gutter / 2
                 clip: true
                 color: Theme.canvasBackground
-                border.width: tileHover.hovered ? 1 : 0
-                border.color: Theme.selectionBorder
                 radius: 4
+                // A parent's border is painted below its children. Keep the
+                // hover frame above transformed images and inside the clip,
+                // including cells whose grid dimensions are fractional.
+                Rectangle {
+                    objectName: "montageHoverFrame-" + tile.sliceIndex
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    z: 30
+                    color: "transparent"
+                    radius: tile.radius
+                    border.width: tileHover.hovered ? 1 : 0
+                    border.color: Theme.selectionBorder
+                }
 
                 Item {
                     id: imageScene
@@ -452,6 +463,18 @@ Item {
             // One cursor for the whole grid: crossing tile edges must not
             // duplicate it or clip the pointer/tool badge against a tile.
             HoverHandler { id: gridHover }
+            ViewportPinchHandler {
+                viewportController: montageRoot.viewportController
+                anchorGeometry: position => {
+                    const p = gridViewport.mapToItem(montageGrid, position)
+                    const index = montageGrid.indexAt(p.x + montageGrid.contentX, p.y + montageGrid.contentY)
+                    const tile = index >= 0 ? montageGrid.itemAtIndex(index) : null
+                    const local = tile ? gridViewport.mapToItem(tile, position) : Qt.point(NaN, NaN)
+                    return { x: local.x, y: local.y,
+                        width: tile ? tile.width : montageGrid.cellWidth - montageGrid.gutter,
+                        height: tile ? tile.height : montageGrid.cellHeight - montageGrid.gutter }
+                }
+            }
             CursorGlyph {
                 objectName: "montageToolCursor"
                 iconName: gridViewport.cursorTile ? gridViewport.cursorTile.cursorKind : ""

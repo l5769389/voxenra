@@ -330,6 +330,7 @@ class MeasurementController(QObject):
         item = {"locked": self.presentation(measurement.measurement_id)["locked"], "measurementId": measurement.measurement_id,
                 "points": [{"column": p.column, "row": p.row} for p in measurement.points]}
         if isinstance(measurement, (LengthMeasurement, LengthMeasurementDraft)):
+            item["metricsReady"] = math.isfinite(measurement.length_mm) and measurement.length_mm > 1e-9
             item.update(type=measurement.kind.value, startColumn=measurement.points[0].column,
                         startRow=measurement.points[0].row, endColumn=measurement.points[-1].column,
                         endRow=measurement.points[-1].row, label="" if measurement.kind == MeasurementKind.ARROW else f"{format_measurement(measurement.length_mm, self._decimal_places)} mm")
@@ -337,9 +338,19 @@ class MeasurementController(QObject):
                 from qt_dicom_viewer.core.curve_geometry import sample_curve
                 item["renderPoints"] = [{"column": p.column, "row": p.row} for p in sample_curve(measurement.points)]
         elif isinstance(measurement, (AngleMeasurement, AngleMeasurementDraft)):
+            # Drafts reserve all endpoints at creation; coincident placeholders
+            # do not yet form two arms, even if a prior preview cached an angle.
+            a, vertex, b = measurement.points
+            item["metricsReady"] = (math.isfinite(measurement.angle)
+                                    and point_distance(a, vertex) > 1e-9
+                                    and point_distance(b, vertex) > 1e-9)
             label = f"{format_measurement(measurement.angle, self._decimal_places)}°"
             item.update(type="angle", label=label)
         else:
+            points = measurement.points
+            item["metricsReady"] = (len(points) >= (3 if measurement.kind == MeasurementKind.FREEHAND else 2)
+                                    and max(p.column for p in points) - min(p.column for p in points) > 1e-9
+                                    and max(p.row for p in points) - min(p.row for p in points) > 1e-9)
             item["smooth"] = measurement.smooth
             if measurement.kind == MeasurementKind.FREEHAND:
                 from qt_dicom_viewer.core.freehand_roi import roi_outline
@@ -347,13 +358,15 @@ class MeasurementController(QObject):
                 item["renderPoints"] = [{"column": p.column, "row": p.row} for p in boundary]
             item.update(type=measurement.kind.value, metrics=asdict(measurement.metrics),
                         label=_msg('measurement.freehand') if measurement.kind == MeasurementKind.FREEHAND else _msg('text.0375') if measurement.kind == MeasurementKind.RECT else _msg('text.0376'))
-            if self.secondary_pixels is not None and self._current_frame is not None:
+            if item["metricsReady"] and self.secondary_pixels is not None and self._current_frame is not None:
                 from qt_dicom_viewer.core.measurement_geometry import roi_metrics
                 spacing = self._current_frame.geometry.pixel_spacing
                 item["secondaryMetrics"] = asdict(roi_metrics(measurement.points,
                     measurement.kind, self.secondary_pixels, row_spacing=spacing.row,
                     column_spacing=spacing.column, unit="HU", smooth=measurement.smooth))
         anchor = self._label_positions.get(measurement.measurement_id)
+        if measurement.measurement_id in self._measurements:
+            item["name"] = self.measurement_name(self._measurements[measurement.measurement_id])
         if anchor is not None:
             item["labelPosition"] = {"column": anchor.column, "row": anchor.row}
         return item

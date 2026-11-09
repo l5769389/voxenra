@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../LabelPlacement.js" as LabelPlacement
 import QtQuick.Shapes
 import "../../../../theme"
 
@@ -11,17 +12,23 @@ Item {
     property bool draftStyle: isDraft
     readonly property bool dashed: Theme.drawingLineDashed(styleSettings, draftStyle)
     property var labelPosition: null
+    property var reservedRegions: []
     required property var measurement
     property var controlPoints: corners
     required property var corners
     required property bool isDraft
     required property bool isSelected
     property bool showMetrics: true
+    readonly property bool expandedMetrics: showMetrics && (isDraft || isSelected)
     property string shortLabel: ""
     property var avoidanceRegions: []
     readonly property bool compactAnalysis: width < 420 || height < 360
     readonly property string analysisLabel: compactAnalysis
         ? shortLabel.split("\n")[0].split(" · ")[0] : shortLabel
+    readonly property string compactTextLabel: showMetrics
+        ? [measurement?.name || measurement?.label || "ROI",
+           preferences.roi?.area === false ? "" : metricCard.format(measurement?.metrics?.area_mm2) + " mm²"].filter(Boolean).join(" · ")
+        : analysisLabel
 
     // Keep automatic badges inside the direction markers and choose the least
     // obstructed side. Explicit user placement is retained by the bindings below.
@@ -55,7 +62,7 @@ Item {
         }
         return best
     }
-    readonly property Item labelItem: showMetrics ? metricCard : compactLabel
+    readonly property Item labelItem: expandedMetrics ? metricCard : compactLabel
     readonly property color lineColor: Theme.drawingLineColor(styleSettings, draftStyle)
 
     readonly property string outlinePath: {
@@ -117,29 +124,33 @@ Item {
         id: metricCard
         settingsController: root.settingsController
         objectName: "roiMetricCard"
-        visible: root.showMetrics && (root.corners?.length ?? 0) >= 3
+        visible: root.expandedMetrics && root.measurement?.metricsReady !== false && (root.corners?.length ?? 0) >= 3
                  && !(root.measurement?.creating && root.measurement?.type === "freehand")
         measurement: root.measurement
         accentColor: root.lineColor
         visibleMetrics: root.preferences.roi ?? ({})
         metricFontSize: root.styleSettings.fontSize ?? 13
         width: Math.max(0, Math.min(implicitWidth, root.width - 16))
-        x: Math.max(8, Math.min(root.width - width - 8,
-            root.labelPosition ? root.labelPosition.x : root.rightEdge + width + 12 <= root.width ? root.rightEdge + 12 : root.leftEdge - width - 12))
-        y: Math.max(8, Math.min(root.height - height - 8, root.labelPosition ? root.labelPosition.y : root.topEdge))
+        readonly property var displayPosition: LabelPlacement.place(root.labelPosition || root.analysisLabelPosition(width, height),
+            width, height, root.width, root.height, root.reservedRegions, root.avoidanceRegions, !!root.labelPosition)
+        x: displayPosition.x
+        y: displayPosition.y
     }
     Rectangle {
         id: compactLabel
-        objectName: "mtfRoiMetricBadge"
-        visible: !root.showMetrics && (root.corners?.length ?? 0) >= 3 && root.shortLabel.length > 0
+        objectName: root.showMetrics ? "roiCompactLabel" : "mtfRoiMetricBadge"
+        readonly property string text: root.compactTextLabel
+        visible: !root.expandedMetrics && root.measurement?.metricsReady !== false && (root.corners?.length ?? 0) >= 3 && text.length > 0
+                 && !(root.measurement?.creating && root.measurement?.type === "freehand")
         implicitWidth: compactText.implicitWidth + 14
         width: Math.min(implicitWidth, Math.max(0, root.width - 56))
         implicitHeight: compactText.implicitHeight + 8
-        readonly property var automaticPosition: root.analysisLabelPosition(width, height)
-        x: root.labelPosition ? Math.max(4, Math.min(root.width - width - 4, root.labelPosition.x)) : automaticPosition.x
-        y: root.labelPosition ? Math.max(4, Math.min(root.height - height - 4, root.labelPosition.y)) : automaticPosition.y
+        readonly property var displayPosition: LabelPlacement.place(root.labelPosition || root.analysisLabelPosition(width, height),
+            width, height, root.width, root.height, root.reservedRegions, root.avoidanceRegions, !!root.labelPosition)
+        x: displayPosition.x
+        y: displayPosition.y
         Accessible.role: Accessible.StaticText
-        Accessible.name: root.shortLabel
+        Accessible.name: text
         color: Qt.rgba(0.035, 0.065, 0.095, 1 - (root.styleSettings.cardTransparency ?? 8) / 100)
         border.width: 1
         border.color: root.lineColor
@@ -148,11 +159,11 @@ Item {
         Text {
             id: compactText
             width: Math.max(0, compactLabel.width - 14)
-            wrapMode: root.compactAnalysis ? Text.NoWrap : Text.Wrap
-            elide: root.compactAnalysis ? Text.ElideRight : Text.ElideNone
+            wrapMode: root.showMetrics || root.compactAnalysis ? Text.NoWrap : Text.Wrap
+            elide: root.showMetrics || root.compactAnalysis ? Text.ElideRight : Text.ElideNone
             objectName: "mtfRoiLabel"
             anchors.centerIn: parent
-            text: root.analysisLabel
+            text: compactLabel.text
             color: Theme.overlayText
             font.pixelSize: root.styleSettings.fontSize ?? 13
             font.weight: Font.DemiBold

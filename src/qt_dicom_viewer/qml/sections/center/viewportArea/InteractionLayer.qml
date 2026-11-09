@@ -276,26 +276,22 @@ Item {
                 )
 
                 // DragHandler 用本次 move 激活时，不一定再发一次
-                // activeTranslationChanged。立即转发激活点，避免 ROI 的首个位移丢失。
-                if (interactionLayer.immediateDrag) {
-                    const current = dragHandler.centroid.position
-                    const initial = Qt.point(
-                        current.x - interactionLayer.dragStart.x,
-                        current.y - interactionLayer.dragStart.y
+                // activeTranslationChanged。所有工具都转发激活点，避免快速拖动丢失。
+                // 普通视图操作仍由 dragThreshold 过滤点击时的微小位移。
+                const current = dragHandler.centroid.position
+                const initial = Qt.point(
+                    current.x - interactionLayer.dragStart.x,
+                    current.y - interactionLayer.dragStart.y
+                )
+                if (initial.x !== 0 || initial.y !== 0) {
+                    interactionLayer.dragMoved(
+                        interactionLayer.dragStart,
+                        current,
+                        initial,
+                        initial
                     )
-                    if (initial.x !== 0 || initial.y !== 0) {
-                        interactionLayer.dragMoved(
-                            interactionLayer.dragStart,
-                            current,
-                            initial,
-                            initial
-                        )
-                    }
-                    interactionLayer.lastPosition = current
-                } else {
-                    interactionLayer.lastPosition =
-                        dragHandler.centroid.position
                 }
+                interactionLayer.lastPosition = current
             } else {
                 interactionLayer.dragCursorKind = null
 

@@ -4,6 +4,7 @@ import logging
 from qt_dicom_viewer.core.dicom_loader import DicomLoader
 from dataclasses import replace
 from math import isfinite
+from qt_dicom_viewer.core.zoom_anchor import anchored_pan
 
 import numpy as np
 from PySide6.QtCore import QObject, Signal, Slot, Property, QPointF, Qt
@@ -1342,6 +1343,17 @@ class Image2DViewportController(ViewportController):
         # overlayInfo 中显示了 zoom，因此也要更新
         self.overlayChanged.emit()
 
+    def _apply_pinch_zoom(self, zoom, anchor, size):
+        state = self._state
+        if not all(isfinite(v) and v > 0 for v in size):
+            size = (state.width, state.height)
+        pan = anchored_pan((state.pan_x, state.pan_y), state.zoom, zoom, anchor, size)
+        # Publish one transform so linked views and overlays never see an
+        # intermediate frame with the new zoom and the old anchor.
+        self._state = replace(state, zoom=zoom, pan_x=pan[0], pan_y=pan[1])
+        self.transformChanged.emit()
+        self.overlayChanged.emit()
+
     def apply_rotation(self, angle: float) -> None:
         if not isfinite(angle):
             return
@@ -1556,7 +1568,9 @@ class Image2DViewportController(ViewportController):
 
     @Property(str, notify=displayStyleChanged)
     def canvasBackgroundColor(self) -> str:
-        return self._state.display_style.no_data_color
+        # Canvas padding is not a sampled pixel. Keep the LUT's no-data color
+        # inside rendered images, independent of the neutral viewport surround.
+        return "#000000"
 
     @Property(bool, notify=viewportSettingsChanged)
     def showWindowAnnotations(self) -> bool:

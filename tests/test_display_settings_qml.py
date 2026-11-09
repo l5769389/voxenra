@@ -132,6 +132,17 @@ def test_real_image_color_map_window_templates_and_mpr(scene, tmp_path):
     workspace = app.workspaceController
     wait_until(lambda: workspace.activeViewport is not None and bool(workspace.activeViewport.imageSource))
     viewport = workspace.activeViewport
+    viewport.applyColorMap('cardiac')
+    wait_until(lambda: viewport.loadState == 'ready')
+    QTest.qWait(100)
+    canvas = find(window, 'dicomPixelLayer').parentItem().parentItem().parentItem()
+    # The image keeps its LUT; only the letterbox outside it stays black.
+    assert viewport._state.display_style.no_data_color != '#000000'
+    screenshot = window.grabWindow()
+    padding = QPointF(8, canvas.height()/4) if canvas.width() > canvas.height() else QPointF(canvas.width()/4, 8)
+    corner = canvas.mapToScene(padding)
+    ratio = screenshot.devicePixelRatio()
+    assert screenshot.pixelColor(round(corner.x()*ratio), round(corner.y()*ratio)).name() == '#000000'
     previous_revision = viewport._image_revision
     app.workspaceController.openSettings()
     QTest.qWait(50)

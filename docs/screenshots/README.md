@@ -2,6 +2,13 @@
 
 Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
 
+## 2.5.0 更新（2026-11-09）
+
+- [紧凑测量标签与结果列表](63-measurement-2.5.0.png) · [English](en/63-measurement-2.5.0.png)
+- [序列右键菜单与视图快捷键](65-view-shortcuts-2.5.0.png) · [English](en/65-view-shortcuts-2.5.0.png)
+
+来自当前源码的原生应用窗口，使用匿名展示影像；核对测量记录和菜单按键后截图。其余图集与动画按对应功能复核，未改变的功能保留原素材。
+
 ## 2.1.5 新增演示（2026-10-29）
 
 - [收藏目录快捷切换](57-directory-favorites-2.1.5.png) · [English](en/57-directory-favorites-2.1.5.png)
@@ -25,7 +32,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 - [本地 AI 自动分割：器官选择、失败重试与成功导入](49-ai-workflow-2.1.1.gif)（合成模体流程演示，模拟推理输出）
 - [ZIP 压缩包拖拽导入](06-zip-drag.gif)
-- [测量工具与分组结果列表](63-measurement-2.4.0.png) · [English](en/63-measurement-2.4.0.png)
+- [测量工具与分组结果列表](63-measurement-2.5.0.png) · [English](en/63-measurement-2.5.0.png)
 - [绘图样式设置](64-drawing-styles-2.4.0.png) · [English](en/64-drawing-styles-2.4.0.png)
 - [画笔、橡皮与撤销重做](38-segmentation-refinement.gif)
 - [4D 多时相播放](03-4d-playback.gif)

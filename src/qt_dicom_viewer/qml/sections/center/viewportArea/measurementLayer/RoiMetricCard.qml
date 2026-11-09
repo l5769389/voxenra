@@ -61,19 +61,33 @@ Rectangle {
     ].filter(row => root.visibleMetrics[row.key] !== false)
     // Stacked values share one column, so its reservation is the widest row.
     readonly property real geometryReservedWidth: root.geometryRows.reduce((widest, row) => Math.max(widest, row.reservedWidth), 0)
-    readonly property var rows: (measurement?.type === "freehand" ? [{key: "perimeter", label: "Perimeter", value: format(metrics.perimeter_mm) + " mm"}] : []).concat([
-        {key: "mean", label: "Mean", value: format(metrics.mean) + unitSuffix},
-        {key: "std", label: "SD", value: format(metrics.std) + unitSuffix},
-        {key: "minimum", label: "Min", value: format(metrics.minimum) + unitSuffix},
-        {key: "maximum", label: "Max", value: format(metrics.maximum) + unitSuffix},
-        {key: "count", label: "Pixels", value: String(metrics.pixel_count ?? 0)}
-    ]).concat(secondary ? [
-        {key: "mean", label: "CT Mean", value: format(secondary.mean) + " HU"},
-        {key: "std", label: "CT SD", value: format(secondary.std) + " HU"},
-        {key: "minimum", label: "CT Min", value: format(secondary.minimum) + " HU"},
-        {key: "maximum", label: "CT Max", value: format(secondary.maximum) + " HU"},
-        {key: "count", label: "CT Pixels", value: String(secondary.pixel_count ?? 0)}
-    ] : []).filter(row => root.visibleMetrics[row.key] !== false)
+    readonly property bool showIntensity: ["mean", "std", "minimum", "maximum", "count"]
+        .some(key => root.visibleMetrics[key] !== false)
+    function intensityRows(values, prefix, suffix) {
+        const count = Number(values.pixel_count ?? 0)
+        const rows = count > 0 ? [
+            {key: "mean", label: prefix + "Mean", value: format(values.mean) + suffix},
+            {key: "std", label: prefix + "SD", value: format(values.std) + suffix},
+            {key: "minimum", label: prefix + "Min", value: format(values.minimum) + suffix},
+            {key: "maximum", label: prefix + "Max", value: format(values.maximum) + suffix}
+        ] : []
+        rows.push({key: "count", label: prefix + "Pixels", value: String(count)})
+        return rows
+    }
+    readonly property var rows: (measurement?.type === "freehand"
+        ? [{key: "perimeter", label: "Perimeter", value: format(metrics.perimeter_mm) + " mm"}] : [])
+        .concat(intensityRows(metrics, "", unitSuffix))
+        .concat(secondary ? intensityRows(secondary, "CT ", " HU") : [])
+        .filter(row => root.visibleMetrics[row.key] !== false)
+    readonly property string emptySampleText: {
+        if (!showIntensity) return ""
+        const missingPrimary = Number(metrics.pixel_count ?? 0) === 0
+        const missingSecondary = secondary && Number(secondary.pixel_count ?? 0) === 0
+        if (missingPrimary && (!secondary || missingSecondary)) return qsTrId("measurement.noValidPixels")
+        if (missingPrimary) return "PET: " + qsTrId("measurement.noValidPixels")
+        if (missingSecondary) return "CT: " + qsTrId("measurement.noValidPixels")
+        return ""
+    }
     TextMetrics {
         id: geometryLabelMetrics
         font.pixelSize: root.metricFontSize
@@ -134,6 +148,16 @@ Rectangle {
                     }
                 }
             }
+        }
+        Text {
+            objectName: "roiNoValidSamples"
+            Layout.fillWidth: true
+            visible: text.length > 0
+            text: root.emptySampleText
+            color: Theme.overlayMuted
+            font.pixelSize: root.metricFontSize
+            wrapMode: Text.Wrap
+            Accessible.name: text
         }
         Repeater {
             model: root.rows

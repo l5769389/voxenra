@@ -550,7 +550,7 @@ class TabController(QObject):
             self._try_start_next_mpr_render()
             return
 
-        if isinstance(viewport, (StackViewportController, VolumeViewportController, MontageViewportController)):
+        if isinstance(viewport, (Image2DViewportController, VolumeViewportController, MontageViewportController)):
             viewport.reset_all_view_state()
 
     @Slot(str)

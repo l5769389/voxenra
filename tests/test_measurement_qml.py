@@ -92,6 +92,49 @@ def _click_points(view, *points):
     QTest.qWait(40)
 
 
+def test_roi_details_follow_selection_and_release_space_for_next_drawing(viewport):
+    view, controller, pixels, warnings = viewport
+    measure = controller.measurementController
+    controller._tool_controller.selectInteraction('measure:rect')
+    _click_points(view, _scene(pixels, 30, 35), _scene(pixels, 70, 75))
+    first = measure.measurementItems[0]['measurementId']
+    measure.clear_selection()
+    controller._tool_controller.selectInteraction('measure:ellipse')
+    _click_points(view, _scene(pixels, 90, 50), _scene(pixels, 130, 90))
+    assert len(measure.measurementItems) == 2
+
+    def visible(name):
+        return [i for i in _visual_children(view.rootObject())
+                if i.objectName() == name and i.isVisible()]
+
+    assert len(visible('roiMetricCard')) == 1
+    badges = visible('roiCompactLabel')
+    assert len(badges) == 1
+    assert 'ROI 1' in badges[0].property('text') and 'mm²' in badges[0].property('text')
+    # Selecting the compact label expands its details without changing geometry.
+    original = [i['points'] for i in measure.measurementItems]
+    badge = badges[0]
+    _click_points(view, badge.mapToScene(QPointF(badge.width()/2, badge.height()/2)).toPoint())
+    assert measure.selectedMeasurementId == first
+    assert len(visible('roiMetricCard')) == 1 and len(visible('roiCompactLabel')) == 1
+    assert [i['points'] for i in measure.measurementItems] == original
+    from PySide6.QtCore import QRectF
+    card = visible('roiMetricCard')[0]
+    card_bounds = QRectF(card.mapToScene(QPointF()), card.size())
+    neighbor = QRectF(_scene(pixels, 90, 50), _scene(pixels, 130, 90))
+    assert not card_bounds.intersects(neighbor)
+    # Clear selection and place a point in space formerly occupied by the card.
+    card = visible('roiMetricCard')[0]
+    released_space = card.mapToScene(QPointF(card.width()/2, card.height()-15)).toPoint()
+    measure.clear_selection()
+    QTest.qWait(30)
+    assert not visible('roiMetricCard') and len(visible('roiCompactLabel')) == 2
+    _click_points(view, released_space)
+    assert measure.activeTransaction.get('creating')
+    assert len(measure.activeTransaction['points']) == 2
+    assert not warnings, warnings
+
+
 @pytest.mark.parametrize("kind", ["rect", "ellipse"])
 def test_real_point_placement_renders_roi_metrics_and_keeps_card_upright(viewport, tmp_path, kind):
     view, controller, pixel_layer, warnings = viewport
@@ -281,16 +324,14 @@ def test_label_hit_moves_card_without_changing_measurement(viewport, kind, trans
         controller.applyTransformAction("rotate:mirror-h")
         controller.apply_zoom(1.1)
     QTest.qWait(40)
-    label_name = "roiMetricCard" if kind in ("rect", "ellipse") else "measurementLabel"
+    label_name = "roiCompactLabel" if kind in ("rect", "ellipse") else "measurementLabel"
     labels = [item for item in _visual_children(view.rootObject())
               if item.objectName() == label_name and item.isVisible()]
     assert len(labels) == 1
     label = labels[0]
     label_center = label.mapToScene(QPointF(label.width() / 2, label.height() / 2)).toPoint()
-    # 点击标签应选中所属测量，角度工具下也不能误建新的角度草稿。
-    QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, label_center)
-    wait_until(lambda: measurement_controller.selectedMeasurementId == original["measurementId"])
-    assert not measurement_controller.has_active_transaction
+    # Hit-test the badge before selection replaces it with a larger card that
+    # may move to avoid the ROI or viewport metadata.
     image_position = pixel_layer.mapFromScene(QPointF(label_center))
     hit = measurement_controller.hit_test(
         ImagePoint(image_position.x() - .5, image_position.y() - .5),
@@ -299,6 +340,18 @@ def test_label_hit_moves_card_without_changing_measurement(viewport, kind, trans
     )
     assert hit.target.kind == EditTargetKind.LABEL
     assert hit.target.index is None
+    # 点击标签应选中所属测量，角度工具下也不能误建新的角度草稿。
+    QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, label_center)
+    wait_until(lambda: measurement_controller.selectedMeasurementId == original["measurementId"])
+    assert not measurement_controller.has_active_transaction
+    if kind in ("rect", "ellipse"):
+        # Selection expands the compact badge. Drag the now-visible card.
+        QTest.qWait(30)
+        label_name = 'roiMetricCard'
+        label = next(item for item in _visual_children(view.rootObject())
+                     if item.objectName() == 'roiMetricCard' and item.isVisible())
+        label_center = label.mapToScene(QPointF(label.width()/2, label.height()/2)).toPoint()
+        image_position = pixel_layer.mapFromScene(QPointF(label_center))
     end = label_center + QPoint(24, 18)
     delta = pixel_layer.mapFromScene(QPointF(end)) - image_position
     targets = []

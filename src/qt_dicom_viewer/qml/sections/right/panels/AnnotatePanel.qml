@@ -30,6 +30,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Controls.ToolActionButton {
             objectName: "annotateArrowMode"
+            shortcutAction: "annotate:arrow"
             Layout.fillWidth: true
             compact: true
             momentary: true
@@ -41,6 +42,7 @@ ColumnLayout {
         }
         Controls.ToolActionButton {
             objectName: "annotateTextMode"
+            shortcutAction: "annotate:text"
             Layout.fillWidth: true
             compact: true
             momentary: true

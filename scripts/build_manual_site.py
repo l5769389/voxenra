@@ -28,7 +28,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-analysis.gif": "38-segmentation-refinement.gif",
     "feature-ai-segmentation.gif": "49-ai-workflow-2.1.1.gif",
     "feature-ai-segmentation.png": "48-ai-complete-2.1.1.png",
-    "feature-measurements.png": "63-measurement-2.4.0.png",
+    "feature-measurements.png": "63-measurement-2.5.0.png",
     "feature-theme-graphite.png": "37-theme-graphite.png",
     "feature-theme-dark.png": "25-theme-dark.png",
     "feature-theme-light.png": "26-theme-light.png",

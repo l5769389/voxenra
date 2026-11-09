@@ -1,4 +1,7 @@
-from PySide6.QtCore import QObject, Property, Signal, Slot
+from math import isfinite
+
+from PySide6.QtCore import QObject, Property, Signal, Slot, QPointF
+from PySide6.QtGui import QCursor
 
 from qt_dicom_viewer.model import RenderResult, ViewportConfig
 
@@ -27,6 +30,32 @@ class ViewportController(QObject):
 
     displayMappingChanged = Signal()
     displayMappingKindChanged = Signal()
+
+    @Slot(QObject, result=QPointF)
+    def pinchCursorPosition(self, item):
+        if item is None:
+            return QPointF(float('nan'), float('nan'))
+        return item.mapFromGlobal(QPointF(QCursor.pos()))
+
+    @Slot(float)
+    @Slot(float, float, float, float, float)
+    def pinchZoom(self, factor: float, x=float('nan'), y=float('nan'), width=0., height=0.) -> None:
+        """Apply a gesture increment through the same state as zoom controls."""
+        if (not isfinite(factor) or factor <= 0 or factor == 1
+                or getattr(self, "_disposed", False)
+                or getattr(self, "_load_state", "ready") != "ready"):
+            return
+        tab = self.workspaceTab
+        if tab is not None:
+            tab.activateViewport(self.viewportId)
+        # Clamp each increment, so reversing direction responds immediately at
+        # either limit. Do not retain a separate gesture-specific zoom value.
+        zoom = max(0.1, min(self.zoom * factor, 20.0))
+        if zoom != self.zoom:
+            self._apply_pinch_zoom(zoom, (x, y), (width, height))
+
+    def _apply_pinch_zoom(self, zoom, anchor, size):
+        self.setZoom(zoom)
 
     @Slot()
     def closeTab(self):

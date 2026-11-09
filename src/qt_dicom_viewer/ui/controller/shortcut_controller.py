@@ -24,7 +24,10 @@ class ShortcutController(QObject):
     @Property('QVariantList', notify=changed)
     def bindings(self):
         values = dict(DEFAULT_BINDINGS, **self.settings.section('shortcuts')['bindings'])
-        return [dict(action=action, labelId=label, menu=menu, menus=list(menu_scopes(menu)), menuLabelId=MENU_LABELS[menu],
+        return [dict(action=action, labelId=label, menu=menu, menus=list(menu_scopes(menu)),
+                     group='open-views' if action.startswith('open-view-') else menu,
+                     menuLabelId='input.openViews' if action.startswith('open-view-') else MENU_LABELS[menu],
+                     viewType=action.removeprefix('open-view-') if action.startswith('open-view-') else '',
                      listIndex=int(action.split('-')[1]) - 1 if menu == 'preset-lists' else -1,
                      sequence=values[action], display=QKeySequence(values[action]).toString(QKeySequence.NativeText))
                 for action, (menu, _, label) in BINDINGS.items()]
@@ -125,6 +128,13 @@ class ShortcutController(QObject):
                      or (visible_menu is not None and visible_menu != target_menu)
                      or tab.playing):
             return False
+        if action == 'reset':
+            view = tab.activeViewport
+            if (view is None or tab.playing or getattr(view, 'editBusy', False)
+                    or self.primaryToolFor(action, tools) != 'reset'):
+                return False
+            tools.activateTool('reset')
+            return True
         if action == 'view-reset':
             if target_menu == 'mpr-layout' and getattr(tab, 'mprCompare', False) and tab.ready:
                 tab.resetActiveOrientation()
@@ -156,6 +166,12 @@ class ShortcutController(QObject):
             if not getattr(view, 'hasPhysicalSpacing', False) or getattr(view, 'viewportRole', '') == 'curved':
                 return False
             tools.selectInteraction(action)
+            return tools.activeInteraction == action
+        if menu == 'annotate':
+            view = tab.activeViewport
+            if view is None or not hasattr(view, 'setAnnotationMode'):
+                return False
+            view.setAnnotationMode(action == 'annotate:text')
             return tools.activeInteraction == action
         if menu == 'segmentation':
             voi = getattr(tab, 'voiController', None)

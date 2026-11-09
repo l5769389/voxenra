@@ -34,7 +34,7 @@ def test_reselect_measure_preserves_pending_angle_through_completion(sidebar_sce
     assert not sidebar_scene[3], sidebar_scene[3]
 
 
-def test_pending_angle_label_retranslates_without_confirming_a_point(sidebar_scene):
+def test_pending_angle_instruction_retranslates_without_showing_metrics_or_confirming_a_point(sidebar_scene):
     from qt_dicom_viewer.i18n import localize, message
     from test_tag_qml import descendants
     window, app, tab = reading_scene(sidebar_scene)
@@ -47,12 +47,14 @@ def test_pending_angle_label_retranslates_without_confirming_a_point(sidebar_sce
     QTest.mouseMove(window, pixel.mapToScene(QPointF(60, 30)).toPoint())
     draft = measure.activeTransaction
     assert draft['label'] == '选择顶点'
-    label = next(item for item in descendants(window.contentItem())
-                 if item.objectName() == 'measurementLabel' and item.isVisible())
+    instruction = next(item for item in descendants(window.contentItem())
+                       if item.objectName() == 'measurementInstruction' and item.isVisible())
     for locale in ('en-US', 'pt-BR', 'zh-CN'):
         app.languageController.selectLanguage(locale)
         QTest.qWait(30)
-        assert label.property('text') == localize(message('text.0606'))
+        assert instruction.property('text') == localize(message('text.0607'))
+        assert not any(item.objectName() == 'measurementLabel' and item.isVisible()
+                       for item in descendants(window.contentItem()))
         assert measure.activeTransaction['points'] == draft['points']
         assert measure.activeTransaction['editTarget'] == draft['editTarget']
         assert not measure.measurementItems

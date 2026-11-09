@@ -117,7 +117,8 @@ def test_measure_keys_remap_focus_and_visibility(sidebar_scene, tmp_path):
     assert window.grabWindow().save(str(tmp_path / 'measure-bindings.png'))
     assert app.shortcutController.assign('measure:ellipse', 'P')  # shadows general Pan only here
     QTest.keyClick(window, Qt.Key_E)
-    assert tools.activeInteraction == 'measure:length'
+    assert tools.activePanel == 'export'  # The released E now opens general Export.
+    QTest.keyClick(window, Qt.Key_M)
     QTest.keyClick(window, Qt.Key_P)
     assert tools.activeInteraction == 'measure:ellipse'
     search = find(window, 'sidebarPatientSearch')
@@ -141,7 +142,7 @@ def test_measure_keys_remap_focus_and_visibility(sidebar_scene, tmp_path):
     QTest.keyClick(window, Qt.Key_F12)
     assert window.property('maximizedReadingArea') and not window.property('activeReadingMenu')
     QTest.keyClick(window, Qt.Key_A)
-    assert tools.activeInteraction == 'measure:ellipse'
+    assert tools.activeInteraction == 'annotate:arrow'  # The hidden measure menu releases A.
     QTest.keyClick(window, Qt.Key_P)
     assert tools.activeInteraction == 'pan'
     for key in (Qt.Key_V, Qt.Key_F, Qt.Key_R):

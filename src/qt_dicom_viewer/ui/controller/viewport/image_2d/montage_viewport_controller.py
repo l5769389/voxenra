@@ -14,6 +14,7 @@ from qt_dicom_viewer.core.dicom_loader import DicomLoader
 from qt_dicom_viewer.core.color_maps import apply_color_map
 from dataclasses import replace
 from math import isfinite
+from qt_dicom_viewer.core.zoom_anchor import anchored_pan
 
 from PySide6.QtCore import (
     QAbstractListModel,
@@ -858,6 +859,15 @@ class MontageViewportController(ViewportController):
         if abs(zoom - self._state.zoom) < 0.0001:
             return
         self._state = replace(self._state, zoom=zoom)
+        self.transformChanged.emit()
+
+    def _apply_pinch_zoom(self, zoom, anchor, size):
+        if not all(isfinite(v) and v > 0 for v in size):
+            size = (self._interaction_width, self._interaction_height)
+        state = self._state
+        pan = anchored_pan((state.pan_x * size[0], state.pan_y * size[1]),
+                           state.zoom, zoom, anchor, size)
+        self._state = replace(state, zoom=zoom, pan_x=pan[0]/size[0], pan_y=pan[1]/size[1])
         self.transformChanged.emit()
 
     @Slot(str)

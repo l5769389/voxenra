@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 from PySide6.QtCore import QCoreApplication, QPoint, QPointF, QUrl, Qt
-from PySide6.QtGui import QWheelEvent
+from PySide6.QtGui import QColor, QWheelEvent
 from PySide6.QtQuick import QQuickItem, QQuickView
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
@@ -183,6 +183,59 @@ def test_first_tile_renders_when_bootstrap_finishes_before_grid(qt_app, tmp_path
         color = screenshot.pixelColor(round(point.x() * ratio), round(point.y() * ratio))
         assert color.red() == color.green() == color.blue() == 180
         assert screenshot.save(str(tmp_path / "montage-first-tile.png"))
+        # A transformed image must not paint over the tile's hover frame.
+        # Use real rendered pixels: hover properties alone miss this regression.
+        from qt_pointer import move_pointer
+        tile = first.parentItem().parentItem().parentItem()
+        bounds = (tile.mapToScene(QPointF()), tile.size())
+        move_pointer(view, tile.mapToScene(QPointF(tile.width() * .4, tile.height() * .4)).toPoint())
+
+        def check_border(stage):
+            QTest.qWait(40)
+            image = view.grabWindow()
+            assert image.save(str(tmp_path / f"montage-frame-{stage}.png"))
+            sample = tile.mapToScene(QPointF(tile.width() * .65, tile.height() * .65))
+            assert image.pixelColor(round(sample.x() * ratio), round(sample.y() * ratio)) == QColor(180, 180, 180)
+            for fraction in (.2, .5, .8):
+                edges = [QPointF(1, tile.height() * fraction),
+                         QPointF(tile.width() - 2, tile.height() * fraction),
+                         QPointF(tile.width() * fraction, 1),
+                         QPointF(tile.width() * fraction, tile.height() - 2)]
+                for local in edges:
+                    p = tile.mapToScene(local)
+                    x, y = round(p.x() * ratio), round(p.y() * ratio)
+                    # Grid cells can have fractional heights; Qt snaps their
+                    # one-pixel borders to the nearest device pixel.
+                    colors = [image.pixelColor(x + dx, y + dy)
+                              for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+                    assert QColor('#579fc6') in colors, (stage, local, [c.name() for c in colors])
+            assert (tile.mapToScene(QPointF()), tile.size()) == bounds
+
+        controller.setZoom(.5)
+        check_border('fit')
+        controller.setZoom(3)
+        check_border('zoom')
+        controller._tool_controller.selectInteraction('pan')
+        start = tile.mapToScene(QPointF(tile.width() * .4, tile.height() * .4)).toPoint()
+        end = start + QPoint(30, -20)
+        QTest.mousePress(view, Qt.LeftButton, Qt.NoModifier, start)
+        move_pointer(view, start + QPoint(15, -10))
+        QTest.qWait(20)
+        move_pointer(view, end)
+        QTest.qWait(20)
+        QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
+        assert controller.panX != 0 and controller.panY != 0
+        check_border('pan')
+        controller.applyTransformAction('rotate:cw90')
+        controller.applyTransformAction('rotate:mirror-h')
+        check_border('rotate-flip')
+        move_pointer(view, QPoint(2, 2))
+        QTest.qWait(40)
+        image = view.grabWindow()
+        p = tile.mapToScene(QPointF(1, tile.height() / 2))
+        x, y = round(p.x() * ratio), round(p.y() * ratio)
+        assert all(image.pixelColor(x + dx, y + dy) != QColor('#579fc6')
+                   for dx in (-1, 0, 1) for dy in (-1, 0, 1))
         assert not warnings, "\n".join(warnings)
     finally:
         controller.dispose()

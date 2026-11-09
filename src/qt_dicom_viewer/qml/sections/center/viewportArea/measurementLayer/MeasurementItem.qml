@@ -16,6 +16,7 @@ Item {
     property bool showRoiMetrics: true
     property string roiLabel: ""
     property var avoidanceRegions: []
+    property var reservedRegions: []
     z: isSelected ? 2 : 1
 
     readonly property Item labelItem: (root.measurement?.type === "length" || root.measurement?.type === "arrow" || root.measurement?.type === "curve")
@@ -74,6 +75,7 @@ Item {
         visible: (root.measurement?.type === "length" || root.measurement?.type === "arrow" || root.measurement?.type === "curve")
         preferences: root.preferences
         measurement: root.measurement
+        reservedRegions: root.reservedRegions
         labelPosition: root.labelPosition
         mappedPoints: root.mappedPoints
         renderedPoints: root.renderPoints
@@ -87,6 +89,7 @@ Item {
         visible: root.measurement?.type === "angle"
         preferences: root.preferences
         measurement: root.measurement
+        reservedRegions: root.reservedRegions
         labelPosition: root.labelPosition
         mappedPoints: root.mappedPoints
         isDraft: root.isDraft
@@ -103,6 +106,7 @@ Item {
         visible: root.measurement?.type === "rect" || root.measurement?.type === "ellipse" || root.measurement?.type === "freehand"
         preferences: root.preferences
         measurement: root.measurement
+        reservedRegions: root.reservedRegions
         labelPosition: root.labelPosition
         corners: root.corners
         controlPoints: root.mappedPoints

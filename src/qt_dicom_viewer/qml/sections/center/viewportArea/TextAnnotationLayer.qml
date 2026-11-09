@@ -1,12 +1,15 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "LabelPlacement.js" as LabelPlacement
 import QtQuick.Shapes
 import "../../../theme"
 
 Item {
     id: annotationLayer
     objectName: "textAnnotationLayer"
+    property var reservedRegions: []
+    property var avoidanceRegions: []
     required property var annotationController
     required property var coordinateMapper
     required property var transformState
@@ -152,14 +155,11 @@ Item {
             Rectangle {
                 id: annotationLabel
                 objectName: "annotationLabel-" + annotationItem.modelData.annotationId
-                x: Math.max(4, Math.min(
-                    annotationItem.width - width - 4,
-                    annotationItem.tailPoint.x + 9
-                ))
-                y: Math.max(4, Math.min(
-                    annotationItem.height - height - 4,
-                    annotationItem.tailPoint.y - height - 9
-                ))
+                readonly property var displayPosition: LabelPlacement.place(
+                    Qt.point(annotationItem.tailPoint.x + 9, annotationItem.tailPoint.y - height - 9),
+                    width, height, annotationItem.width, annotationItem.height, annotationLayer.reservedRegions, annotationLayer.avoidanceRegions)
+                x: displayPosition.x
+                y: displayPosition.y
                 width: annotationText.implicitWidth + 12
                 height: annotationText.implicitHeight + 8
                 radius: 4

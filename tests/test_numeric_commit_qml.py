@@ -15,6 +15,43 @@ from test_standalone_pet_volume import pet_volume, ready as ready_pet_volume
 from test_tag_qml import find, click, type_text
 
 
+@pytest.mark.parametrize('cancel', ['escape', 'button'])
+def test_template_cancel_clears_name_and_restores_scoped_shortcuts(sidebar_scene, cancel):
+    window, app, records, warnings = sidebar_scene
+    ws = app.workspaceController
+    ws.createTab(records[0].series_instance_uid, 'CT A', '2d')
+    wait_until(lambda: ws.activeLoadState.status == 'ready')
+    viewport = ws.activeViewport
+    click(window, find(window, 'primaryTool-window'))
+    before = app.settingsController.values['window']['custom']
+    type_text(window, find(window, 'windowWidthInput'), '1234')
+    click(window, find(window, 'beginSaveWindowTemplate'))
+    name = find(window, 'quickWindowTemplateName')
+    type_text(window, name, 'cancel me')
+    if cancel == 'escape':
+        QTest.keyClick(window, Qt.Key_Escape)
+    else:
+        click(window, find(window, 'cancelSaveWindowTemplate'))
+    QTest.qWait(30)
+    assert not name.isVisible() and not name.hasActiveFocus()
+    assert name.property('text') == ''
+    assert app.settingsController.values['window']['custom'] == before
+    assert viewport.windowWidth == 400
+    assert find(window, 'windowWidthInput').property('text') == '1234'
+    # No hidden text field should consume the active window-menu shortcut.
+    QTest.keyClick(window, Qt.Key_1)
+    preset = viewport._tool_controller.windowPresets[0]
+    assert viewport.windowWidth == preset['width']
+    assert viewport.windowCenter == preset['center']
+    click(window, find(window, 'beginSaveWindowTemplate'))
+    assert name.isVisible() and name.property('text') == ''
+    type_text(window, name, 'saved with Enter')
+    QTest.keyClick(window, Qt.Key_Return)
+    assert not name.isVisible()
+    assert len(app.settingsController.values['window']['custom']) == len(before) + 1
+    assert not warnings, warnings
+
+
 @pytest.fixture
 def number_scene(qt_app, tmp_path):
     components = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/components'

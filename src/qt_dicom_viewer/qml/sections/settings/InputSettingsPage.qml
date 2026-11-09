@@ -77,7 +77,7 @@ ColumnLayout {
                 required property int index
                 Layout.fillWidth: true
                 Text {
-                    visible: row.index === 0 || shortcutRows.model[row.index - 1]?.menu !== row.modelData.menu
+                    visible: row.index === 0 || shortcutRows.model[row.index - 1]?.group !== row.modelData.group
                     Layout.fillWidth: true
                     Layout.topMargin: row.index > 0 ? 8 : 0
                     text: qsTrId(row.modelData.menuLabelId)

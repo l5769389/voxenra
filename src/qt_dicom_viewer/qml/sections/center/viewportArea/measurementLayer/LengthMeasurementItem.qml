@@ -1,4 +1,5 @@
 import QtQuick
+import "../LabelPlacement.js" as LabelPlacement
 import QtQuick.Shapes
 import "../../../../theme"
 
@@ -10,6 +11,7 @@ Item {
     property bool draftStyle: isDraft
     readonly property bool dashed: Theme.drawingLineDashed(styleSettings, draftStyle)
     property var labelPosition: null
+    property var reservedRegions: []
     required property var measurement
 
     required property var isDraft
@@ -98,10 +100,12 @@ Item {
     Text {
         id: measurementLabel
         objectName: "measurementLabel"
-        x: root.labelPosition ? root.labelPosition.x : (root.startX + root.endX) / 2 + 6
-        y: root.labelPosition ? root.labelPosition.y : (root.startY + root.endY) / 2 - height - 4
+        readonly property var displayPosition: LabelPlacement.place(root.labelPosition || Qt.point((root.startX + root.endX)/2 + 6, (root.startY + root.endY)/2 - height - 4),
+            width, height, root.width, root.height, root.reservedRegions)
+        x: displayPosition.x
+        y: displayPosition.y
 
-        visible: root.measurement?.type !== "arrow"
+        visible: root.measurement?.type !== "arrow" && root.measurement?.metricsReady !== false
         text: root.measurement?.label ?? "--"
         color:  root.measurementColor
         font.pixelSize: root.styleSettings.fontSize ?? 13

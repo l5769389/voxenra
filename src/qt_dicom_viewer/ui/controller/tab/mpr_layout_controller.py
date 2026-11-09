@@ -116,6 +116,13 @@ class ReferenceVolumeMixin:
         self._layout_owner.activate()
         super().wheel_zoom(angle_delta, pixel_delta)
 
+    @Slot(float)
+    @Slot(float, float, float, float, float)
+    def pinchZoom(self, factor, *anchor):
+        if np.isfinite(factor) and factor > 0 and factor != 1 and self.loadState == "ready":
+            self._layout_owner.activate()
+        super().pinchZoom(factor, *anchor)
+
     def cancel_drag(self):
         self._marker_drag = None
         super().cancel_drag()

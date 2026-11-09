@@ -134,7 +134,9 @@ def test_settings_reach_open_viewports_and_render_requests():
     requests = []
     controller.renderRequested.connect(requests.append)
     assert settings.setValue('colormap', 'gray', 'bwInverse')
-    assert controller.colorMap == 'bwInverse' and controller.canvasBackgroundColor == '#ffffff'
+    assert controller.colorMap == 'bwInverse'
+    # The LUT changes image pixels; padding outside the image remains black.
+    assert controller.canvasBackgroundColor == '#000000'
     assert requests[-1].color_map == 'bwInverse'
     original_pixels = controller._modality_pixel.copy()
     settings.setValue('roi', 'mean', False)

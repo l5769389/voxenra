@@ -76,6 +76,7 @@ class CompareStackViewportController(StackViewportController):
     apply_slice_index = display_command(StackViewportController.apply_slice_index)
     apply_pan = display_command(StackViewportController.apply_pan)
     apply_zoom = display_command(StackViewportController.apply_zoom)
+    _apply_pinch_zoom = display_command(StackViewportController._apply_pinch_zoom)
     apply_window_level = display_command(StackViewportController.apply_window_level)
     reset_tool_state = display_command(StackViewportController.reset_tool_state)
     reset_all_view_state = display_command(StackViewportController.reset_all_view_state)

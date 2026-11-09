@@ -39,6 +39,8 @@ Rectangle {
         width: 32
         height: 32
         buttonObjectName: "compactToolReset"
+        shortcutAction: "reset"
+        explanation: qsTrId("hint.resetAll")
         iconName: "reset"
         label: root.volumeContext ? qsTrId("mpr.tools.resetVolume") : qsTrId("tools.resetAll")
         tooltipPlacement: "left"

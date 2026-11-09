@@ -5,6 +5,10 @@ import "../../../theme"
 Rectangle {
     id: imageCanvasRoot
     required property var viewportController
+    property var reservedRegions: []
+    property real instructionBottomMargin: 32
+    readonly property var measurementLabelRegions: measurementOverlay.labelHitRegions(imageCanvasRoot).concat(mtfOverlay.labelHitRegions(imageCanvasRoot))
+    readonly property var instructionRegions: measurementOverlay.instructionRegions.concat(mtfOverlay.instructionRegions)
     anchors.fill: parent
     color: viewportController
         ? viewportController.canvasBackgroundColor
@@ -349,6 +353,8 @@ Rectangle {
 
     MeasurementLayer.MeasurementLayer {
         id: measurementOverlay
+        reservedRegions: imageCanvasRoot.reservedRegions
+        instructionBottomMargin: imageCanvasRoot.instructionBottomMargin
         preferences: imageCanvasRoot.viewportController?.settingsController.values ?? ({})
         anchors.fill: parent
         coordinateMapper: imageCanvasRoot
@@ -359,6 +365,8 @@ Rectangle {
 
     MeasurementLayer.MeasurementLayer {
         id: mtfOverlay
+        reservedRegions: imageCanvasRoot.reservedRegions
+        instructionBottomMargin: imageCanvasRoot.instructionBottomMargin
         preferences: imageCanvasRoot.viewportController?.settingsController.values ?? ({})
         objectName: "mtfOverlay"
         anchors.fill: parent

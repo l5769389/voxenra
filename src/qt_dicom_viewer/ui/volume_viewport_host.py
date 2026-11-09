@@ -30,6 +30,20 @@ class VolumeInteractor(QVTKRenderWindowInteractor):
         return self.devicePixelRatioF()
 
     def event(self, event):
+        if event.type() == QEvent.NativeGesture:
+            kind = event.gestureType()
+            if kind == Qt.ZoomNativeGesture:
+                owner = self.host.controller._native_owner
+                window = owner.window() if owner is not None else None
+                if window is None or not window.property("shortcutPopupOpen"):
+                    position = event.position()
+                    self.host.controller.pinchZoom(1.0 + event.value(), position.x(), position.y(),
+                                                   self.width(), self.height())
+                event.accept()
+                return True
+            if kind in (Qt.BeginNativeGesture, Qt.EndNativeGesture):
+                event.accept()
+                return True
         handled = super().event(event)
         if event.type() == QEvent.DevicePixelRatioChange and "_RenderWindow" in self.__dict__:
             self.resizeEvent(None)

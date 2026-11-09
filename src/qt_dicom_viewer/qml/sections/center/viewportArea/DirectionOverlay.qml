@@ -10,6 +10,10 @@ Item {
     readonly property int directionMargin: 4
     readonly property real horizontalLabelWidth: Math.max(topDirection.implicitWidth, bottomDirection.implicitWidth)
 
+    readonly property var occupiedRegions: visible
+        ? [topDirection, bottomDirection, leftDirection, rightDirection].filter(item => item.visible)
+            .map(item => ({x: item.x, y: item.y, width: item.width, height: item.height})) : []
+
     component DirectionText: Text {
         visible: text.length > 0
         color: Theme.overlayText
@@ -28,6 +32,7 @@ Item {
     }
 
     DirectionText {
+        id: rightDirection
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         anchors.rightMargin: directionOverlay.directionMargin
@@ -43,6 +48,7 @@ Item {
     }
 
     DirectionText {
+        id: leftDirection
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         anchors.leftMargin: directionOverlay.directionMargin

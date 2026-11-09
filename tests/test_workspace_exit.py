@@ -119,6 +119,7 @@ def test_remembered_discard_skips_prompt_until_settings_restore_it(exit_app, mon
 
 @pytest.mark.parametrize('remembered', [False, True])
 def test_save_choice_waits_for_file_before_exit(exit_app, tmp_path, monkeypatch, remembered):
+    import qt_dicom_viewer.ui.controller.workspace_document_controller as module
     app, manager, quits = exit_app
     target = tmp_path / 'work.voxworkspace'
     manager._path = str(target)
@@ -127,14 +128,29 @@ def test_save_choice_waits_for_file_before_exit(exit_app, tmp_path, monkeypatch,
         monkeypatch.setattr(manager, '_ask_exit_behavior', lambda: pytest.fail('Unexpected exit prompt'))
     else:
         monkeypatch.setattr(manager, '_ask_exit_behavior', lambda: ('save', True))
-    assert not manager.requestClose()
-    assert not quits
-    if not remembered:
-        assert preference(app) == 'ask'
-    wait_until(lambda: not manager.busy)
-    assert target.is_file() and quits == [True] and manager.requestClose()
-    assert not manager.dirty
-    assert SettingsController(path=app.settingsController._path).section('workspace')['exitBehavior'] == 'save'
+    # A tiny file may finish before add_done_callback() is registered, in which
+    # case completion runs immediately. Hold the write to test the actual
+    # contract: no quit until the file has been successfully saved.
+    release, entered = Event(), Event()
+    write = module.atomic_write
+    def held_write(path, payload):
+        entered.set()
+        assert release.wait(5)
+        write(path, payload)
+    monkeypatch.setattr(module, 'atomic_write', held_write)
+    try:
+        assert not manager.requestClose()
+        assert entered.wait(2)
+        assert manager.busy and not target.exists() and not quits
+        if not remembered:
+            assert preference(app) == 'ask'
+        release.set()
+        wait_until(lambda: not manager.busy)
+        assert target.is_file() and quits == [True] and manager.requestClose()
+        assert not manager.dirty
+        assert SettingsController(path=app.settingsController._path).section('workspace')['exitBehavior'] == 'save'
+    finally:
+        release.set()
 
 
 @pytest.mark.parametrize('failure', ['cancel', 'write', 'new-edits'])

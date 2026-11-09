@@ -36,6 +36,18 @@ ApplicationWindow {
     }
     readonly property string activeReadingMenu: rightPanel.readingMenu
     readonly property alias readingMenuSequences: readingKeys.menuSequences
+    Components.SeriesViewShortcuts {
+        controller: window.shortcuts
+        panelController: window.panelController
+        seriesUid: window.panelController.activeSeriesUid
+        suppressedSequences: window.readingMenuSequences
+        controlFocused: window.activeFocusItem?.checkable !== undefined
+            || window.activeFocusItem instanceof Slider
+            || window.activeFocusItem?.Accessible.role === Accessible.Button
+        allowed: !window.detached && window.standardShortcutsAllowed && !window.editingText
+            && !window.documentController?.busy && !(window.windowManager?.dragging ?? false)
+        onViewRequested: viewType => window.panelController.openSeriesView(seriesUid, viewType)
+    }
     Components.ReadingShortcuts {
         id: readingKeys
         listPanel: rightPanel.listPanel
@@ -43,6 +55,7 @@ ApplicationWindow {
         activeMenu: window.activeReadingMenu
         toolController: window.toolController
         tabController: window.workspaceController.activeTab
+        viewportController: window.viewportController
         controlFocused: window.activeFocusItem?.checkable !== undefined || window.activeFocusItem instanceof Slider
         onPrimaryToolRequested: tool => rightPanel.selectPrimaryTool(tool)
         cprPanelFocused: window.isCprPanelControl(window.activeFocusItem)

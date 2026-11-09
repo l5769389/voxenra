@@ -20,6 +20,9 @@ Item {
     }
     readonly property real barPixels: lengthMm * pixelsPerMm
     visible: options.enabled !== false && lengthMm > 0
+    readonly property real inkWidth: Math.max(barPixels, scaleText.implicitWidth)
+    readonly property var occupiedRegions: visible
+        ? [{x: (width - inkWidth)/2, y: scaleText.y, width: inkWidth, height: height - scaleText.y + 4}] : []
     height: 28
     Rectangle {
         id: line
@@ -32,6 +35,7 @@ Item {
         Rectangle { width: 1; height: 7; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; color: line.color }
     }
     Text {
+        id: scaleText
         objectName: "scaleBarLabel"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: line.top

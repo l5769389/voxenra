@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../LabelPlacement.js" as LabelPlacement
 import QtQuick.Shapes
 import "../../../../theme"
 
@@ -10,6 +11,7 @@ Item {
     property bool draftStyle: isDraft
     readonly property bool dashed: Theme.drawingLineDashed(styleSettings, draftStyle)
     property var labelPosition: null
+    property var reservedRegions: []
     required property var measurement
     required property var mappedPoints
     required property bool isDraft
@@ -72,8 +74,11 @@ Item {
     Text {
         id: measurementLabel
         objectName: "measurementLabel"
-        x: Math.max(4, Math.min(root.width - width - 4, root.labelPosition ? root.labelPosition.x : root.vertex.x + 14))
-        y: Math.max(4, Math.min(root.height - height - 4, root.labelPosition ? root.labelPosition.y : root.vertex.y + 14))
+        readonly property var displayPosition: LabelPlacement.place(root.labelPosition || Qt.point(root.vertex.x + 14, root.vertex.y + 14),
+            width, height, root.width, root.height, root.reservedRegions)
+        x: displayPosition.x
+        y: displayPosition.y
+        visible: root.measurement?.metricsReady !== false
         text: root.measurement?.label ?? ""
         color: root.lineColor
         font.pixelSize: root.styleSettings.fontSize ?? 13

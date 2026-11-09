@@ -132,6 +132,8 @@ Item {
 
     // 显示影像
     ImageCanvas {
+        reservedRegions: viewportRoot.labelReservedRegions
+        instructionBottomMargin: viewportRoot.drawingInstructionInset
         id: imageCanvas
         anchors.fill: parent
         z: 0
@@ -204,6 +206,17 @@ Item {
         }
     }
 
+    readonly property var labelReservedRegions: metadataOverlay.occupiedRegions.map(r =>
+        ({x: r.x + metadataOverlay.x, y: r.y + metadataOverlay.y, width: r.width, height: r.height}))
+        .concat(directionOverlay.occupiedRegions)
+        .concat(viewportScale.occupiedRegions.map(r =>
+            ({x: r.x + viewportScale.x, y: r.y + viewportScale.y, width: r.width, height: r.height})))
+        .concat(viewportColorBar.visible
+            ? [{x: viewportColorBar.x, y: viewportColorBar.y, width: viewportColorBar.width, height: viewportColorBar.height}] : [])
+    readonly property real drawingInstructionInset: Math.max(32,
+        metadataOverlay.visible ? metadataOverlay.bottomTextHeight + 24 : 0,
+        viewportScale.visible ? height - viewportScale.y + 8 : 0)
+
     // 四角信息
     Overlay {
         id: metadataOverlay
@@ -227,6 +240,7 @@ Item {
     }
 
     ScaleBar {
+        id: viewportScale
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -284,6 +298,8 @@ Item {
     }
 
     TextAnnotationLayer {
+        avoidanceRegions: imageCanvas.measurementLabelRegions
+        reservedRegions: viewportRoot.labelReservedRegions.concat(imageCanvas.instructionRegions)
         hideText: viewportRoot.anonymousExport
         preferences: viewportRoot.viewportController?.settingsController.values ?? ({})
         anchors.fill: parent
@@ -325,6 +341,9 @@ Item {
 
     InteractionLayer {
         id: interactionLayer
+        ViewportPinchHandler {
+            viewportController: viewportRoot.viewportController
+        }
         opacity: viewportRoot.capturingPng ? 0 : 1
         cprPathInput: viewportRoot.viewportController?.cprPathInput ?? false
         mousePreferences: viewportRoot.viewportController?.settingsController?.values.input ?? null

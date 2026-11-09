@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import "../components" as Components
+import "../components/PopupShortcuts.js" as PopupShortcuts
 import "../theme"
 
 Rectangle {
@@ -132,6 +133,7 @@ Rectangle {
             iconName: actionData.icon
             readonly property string viewError: leftPanel.panelController.activeMrViewErrors[actionData.type] ?? ""
             fixedShortcutAction: isFileAction && !leftPanel.panelController.scanning ? "open" : ""
+            shortcutAction: "open-view-" + actionData.type
             tooltipText: viewError || label + (shortcutHint ? " (" + shortcutHint + ")" : "")
             placeholder: !actionData.supported
             actionEnabled: isFileAction
@@ -608,6 +610,9 @@ Rectangle {
         property bool danger: false
 
         objectName: "seriesContextAction-" + actionCode
+        readonly property string shortcutHint: (typeof appController !== "undefined"
+            ? appController.shortcutController?.bindings ?? [] : [])
+            .find(binding => binding.viewType === actionCode)?.display ?? ""
         readonly property string viewError: leftPanel.panelController.seriesViewError(seriesContextMenu.contextSeriesUid, actionCode)
         Components.AppToolTip {
             text: seriesMenuItem.viewError
@@ -652,6 +657,11 @@ Rectangle {
                 font.pixelSize: 12
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
+            }
+            Text {
+                text: seriesMenuItem.shortcutHint ? "(" + seriesMenuItem.shortcutHint + ")" : ""
+                color: seriesMenuItem.enabled ? Theme.textSecondary : Theme.textDisabled
+                font.pixelSize: 12
             }
         }
 
@@ -740,6 +750,15 @@ Rectangle {
                 leftPanel.panelController.removeSeries(seriesUid)
                 contextSeriesUid = ""
             }
+        }
+
+        Components.SeriesViewShortcuts {
+            controller: typeof appController !== "undefined" ? appController.shortcutController ?? null : null
+            panelController: leftPanel.panelController
+            seriesUid: seriesContextMenu.contextSeriesUid
+            allowed: seriesContextMenu.opened && !leftPanel.documentController?.busy
+                && !PopupShortcuts.blocked(Window.window, controller?.focusWindow, Basic.Overlay.overlay, seriesContextMenu)
+            onViewRequested: viewType => seriesContextMenu.triggerAction(viewType)
         }
 
         background: Rectangle {

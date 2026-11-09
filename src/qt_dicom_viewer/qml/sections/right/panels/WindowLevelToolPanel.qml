@@ -97,11 +97,16 @@ ColumnLayout {
         if (settingsController.saveWindowTemplate("", templateName.text, value.width, value.center)) {
             widthInput.text = String(value.width)
             centerInput.text = String(value.center)
-            namingTemplate = false
-            templateName.text = ""
+            closeTemplateNaming()
         } else {
             errorText = settingsController.message
         }
+    }
+    function closeTemplateNaming() {
+        namingTemplate = false
+        templateName.text = ""
+        errorText = ""
+        windowPanel.forceActiveFocus()
     }
     onCurrentCenterChanged: discardDraft()
     onCurrentWidthChanged: discardDraft()
@@ -238,6 +243,10 @@ ColumnLayout {
             ColumnLayout {
                 visible: windowPanel.namingTemplate
                 Layout.fillWidth: true
+                Keys.onEscapePressed: event => {
+                    windowPanel.closeTemplateNaming()
+                    event.accepted = true
+                }
                 Components.AppTextField {
                     id: templateName
                     objectName: "quickWindowTemplateName"
@@ -251,7 +260,7 @@ ColumnLayout {
                     Components.AppButton {
                         objectName: "cancelSaveWindowTemplate"
                         text: qsTrId("text.0539"); compact: true; Layout.fillWidth: true
-                        onClicked: { windowPanel.namingTemplate = false; windowPanel.errorText = "" }
+                        onClicked: windowPanel.closeTemplateNaming()
                     }
                     Components.AppButton {
                         objectName: "quickSaveWindowTemplate"

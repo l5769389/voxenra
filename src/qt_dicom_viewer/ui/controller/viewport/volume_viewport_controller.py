@@ -6,6 +6,7 @@ from dataclasses import replace
 import uuid
 import logging
 import numpy as np
+from qt_dicom_viewer.core.zoom_anchor import anchored_pan
 
 from PySide6.QtCore import QObject, Property, Signal, Slot, QThreadPool, Qt
 
@@ -114,6 +115,17 @@ class VolumeViewportController(ViewportController):
             return
         self._drag = None
         self._set_state(replace(self.state, zoom=max(0.1, min(float(zoom), 20.0))))
+
+    def _apply_pinch_zoom(self, zoom, anchor, size):
+        if not all(np.isfinite(v) and v > 0 for v in size):
+            widget = self._host.vtk_widget if self._host is not None else None
+            size = (max(1, widget.width()), max(1, widget.height())) if widget is not None else (1., 1.)
+        # Both camera pan axes are fractions of viewport height.
+        height = size[1]
+        pan = anchored_pan(tuple(v * height for v in self.state.pan),
+                           self.state.zoom, zoom, anchor, size)
+        self._drag = None
+        self._set_state(replace(self.state, zoom=zoom, pan=tuple(v / height for v in pan)))
 
     @Property(str, notify=loadStateChanged)
     def loadState(self):

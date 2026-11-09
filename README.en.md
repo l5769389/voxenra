@@ -78,6 +78,10 @@ Recorded in the current application using a synthetic phantom and simulated infe
 
 Switch each viewport between original slices and axial/coronal/sagittal reconstructions, retaining its position and display state. CT/MR support windowing and inversion; PET uses quantitative display ranges. Drag series into layouts, create grids up to 6 × 6, or double-click to enlarge a viewport.
 
+**Pinch zoom** works across image views without changing tools, anchored at the finger midpoint on touchscreens or the pointer on trackpads. With a series selected, **D / X / T / Y** open 2D / MPR / 3D / CPR; context menus show available shortcuts. **A** opens annotations and **E** export. Active tool menus, text fields, and dialogs take priority. **Q** resets the current view and clears its corresponding measurements and annotations; save results first.
+
+[![Series context menu and view shortcuts](docs/screenshots/en/65-view-shortcuts-2.5.0.png)](https://l5769389.github.io/voxenra/en/tabs.html)
+
 **Compare 2–4 series** with separate switches for scrolling, windowing, zoom, and other display operations. Re-enabling a sync option uses the selected viewport as its source. Compatible patient spaces support position linking, reference lines, and Alt-click location; relative-progress mode compares series with different slice counts. MR defaults to independent windowing and inversion. Neither linking mode performs automatic registration.
 
 <table>
@@ -148,7 +152,9 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 **Free-shape measurement.** Click to place at least three control points, then press Enter or double-click to close the contour and view its statistics. Double-clicking finishes at the last point placed.
 
-![Measurement tools and grouped results](docs/screenshots/en/63-measurement-2.4.0.png)
+Unselected ROIs use compact labels and expand their statistics when selected. Metrics wait for enough valid points. Partly out-of-image ROIs use valid pixels for intensity statistics while retaining their full drawn area and dimensions.
+
+![Measurement tools and grouped results](docs/screenshots/en/63-measurement-2.5.0.png)
 
 **Curve measurement.** Click at least three control points, then press Enter or double-click to measure the physical arc length of the smooth path.
 

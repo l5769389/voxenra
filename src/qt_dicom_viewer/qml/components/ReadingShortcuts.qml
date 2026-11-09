@@ -8,6 +8,7 @@ Item {
     required property var controller
     required property var toolController
     required property var tabController
+    property var viewportController: null
     property var ownerPopup: null
     readonly property bool foreground: allowed && (!ownerPopup || !PopupShortcuts.blocked(
         Window.window, controller?.focusWindow, Basic.Overlay.overlay, ownerPopup))
@@ -27,11 +28,29 @@ Item {
     }
     signal primaryToolRequested(string tool)
     readonly property var cpr: tabController?.cprController ?? null
+    readonly property bool cprPathActive: activeMenu === "cpr-path" && !!cpr
+    readonly property bool measurementDraft: !!viewportController?.measurementController?.activeTransaction?.measurementId
+    function canRunDrawingCommand(action) {
+        if (cprPathActive) {
+            if (action === "delete") return cprPanelFocused && cpr.canDeleteSelection
+            if (cprPanelFocused || !menuOnly)
+                return action === "finish" ? cpr.canFinishEditing : cpr.canCancelPath
+        }
+        return !menuOnly && action !== "delete" && measurementDraft
+    }
+    function runDrawingCommand(action) {
+        if (cprPathActive) {
+            if (action === "finish") cpr.finishEditing()
+            else if (action === "cancel") cpr.cancel_operation()
+            else cpr.deleteSelection()
+        } else if (action === "finish") viewportController.finishMeasurement()
+        else if (action === "cancel") viewportController.cancelMeasurement()
+    }
     readonly property var menuSequences: activeMenu ? (controller?.bindings ?? [])
         .filter(binding => binding.menus.includes(activeMenu) && offers(binding) && binding.sequence)
         .map(binding => binding.sequence) : []
     Repeater {
-        model: root.controller?.bindings ?? []
+        model: (root.controller?.bindings ?? []).filter(binding => !binding.viewType)
         delegate: Item {
             id: bindingItem
             required property var modelData
@@ -52,7 +71,8 @@ Item {
                     if (binding.listIndex >= 0) {
                         if (!root.tabController?.playing && root.controller.pointerIdle())
                             root.listPanel.selectShortcutIndex(binding.listIndex)
-                    } else if (!binding.menu && binding.action !== "play") {
+                    } else if (!binding.menu && !["play", "reset"].includes(binding.action)) {
+                        if (root.tabController?.playing || root.tabController?.activeViewport?.editBusy) return
                         const tool = root.controller.primaryToolFor(binding.action, root.toolController)
                         if (tool) root.primaryToolRequested(tool)
                     } else {
@@ -62,8 +82,9 @@ Item {
             }
         }
     }
-    // A panel button must not strand CPR commands in the viewport's Keys handler.
-    // Keep ordinary image keys there, and leave text fields/popups to their owner.
+    // A tab or sidebar button must not strand an active drawing transaction.
+    // The window supplies only its active viewport and gates text/popup focus;
+    // Shortcut consumes the command before the viewport's local Keys handler.
     Repeater {
         model: [
             {key: "Return", action: "finish"}, {key: "Enter", action: "finish"},
@@ -77,15 +98,8 @@ Item {
                 sequence: command.modelData.key
                 context: Qt.WindowShortcut
                 autoRepeat: false
-                enabled: root.foreground && root.cprPanelFocused && root.activeMenu === "cpr-path" && !!root.cpr
-                    && (command.modelData.action === "finish" ? root.cpr.canFinishEditing
-                        : command.modelData.action === "cancel" ? root.cpr.canCancelPath
-                        : root.cpr.canDeleteSelection)
-                onActivated: {
-                    if (command.modelData.action === "finish") root.cpr.finishEditing()
-                    else if (command.modelData.action === "cancel") root.cpr.cancel_operation()
-                    else root.cpr.deleteSelection()
-                }
+                enabled: root.foreground && root.canRunDrawingCommand(command.modelData.action)
+                onActivated: root.runDrawingCommand(command.modelData.action)
             }
         }
     }

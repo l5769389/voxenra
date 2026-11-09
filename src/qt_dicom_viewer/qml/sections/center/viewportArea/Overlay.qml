@@ -10,7 +10,9 @@ Item {
     readonly property string technicalContext: {
         if (cprWorkspace && viewportController?.imageRows > 0
                 && (overlay.cprHistorical || !value("cprRole").startsWith("reference")))
-            return [overlay.cprHistorical ? qsTrId("cpr.statusHistoricalPlane") : qsTrId("cpr.statusCurrentResult"), value("cprPathContext")].filter(Boolean).join("\n")
+            return [overlay.cprHistorical ? qsTrId("cpr.statusHistoricalPlane") : (statusText || qsTrId("cpr.statusCurrentResult")), value("cprPathContext")].filter(Boolean).join("\n")
+        if (cprWorkspace)
+            return statusText
         return value("phaseNumber") ? "Phase: " + value("phaseNumber") + " / " + value("phaseCount") : ""
     }
     property bool hideSensitiveInfo: false
@@ -70,6 +72,16 @@ Item {
     readonly property bool lightBackground: backgroundColor.r * 0.299 + backgroundColor.g * 0.587 + backgroundColor.b * 0.114 > 0.6
     readonly property color textColor: options.colorMode === "custom" ? options.color : lightBackground ? Theme.overlayDarkText : Theme.overlayText
     visible: technicalContext.length > 0 || (!technicalOnly && options.enabled !== false)
+
+    readonly property var occupiedRegions: {
+        if (!visible) return []
+        const regions = [topLeft, topRight, bottomLeft, bottomRight].filter(item => item.visible)
+            .map(item => ({x: item.x + (item.horizontalAlignment === Text.AlignRight ? item.width - item.inkWidth : 0),
+                           y: item.y, width: item.inkWidth, height: item.height}))
+        if (modeRow.visible)
+            regions.push({x: modeRow.x, y: modeRow.y, width: modeRow.width, height: modeRow.height})
+        return regions
+    }
 
     function value(key) {
         const text = String(overlay[key] ?? "").trim()
@@ -176,6 +188,16 @@ Item {
         height: rows.length * rowHeight
         clip: true
         visible: root.viewportController !== null && text.length > 0
+        readonly property real inkWidth: Math.min(width, inkSizing.implicitWidth)
+        Text {
+            id: inkSizing
+            visible: false
+            textFormat: Text.PlainText
+            text: corner.rows.join("\n")
+            font.pixelSize: corner.pixelSize
+            font.features: root.cprWorkspace ? ({ "tnum": 1 }) : ({})
+            font.weight: root.overlay.compactOverlay ? Font.Normal : Font.DemiBold
+        }
         Column {
             width: parent.width
             Repeater {
@@ -255,7 +277,7 @@ Item {
         reservedHeight: root.hasViewSelector && !root.technicalOnly ? modeRow.height : 0
         text: root.lines("topLeft")
     }
-    CornerText { objectName: "overlay-topRight"; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 2; horizontalAlignment: Text.AlignRight; text: [root.technicalContext, root.technicalOnly ? "" : root.cprWorkspace ? (root.overlay.cprHistorical ? "" : root.statusText) : root.lines("topRight")].filter(Boolean).join("\n") }
+    CornerText { id: topRight; objectName: "overlay-topRight"; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 2; horizontalAlignment: Text.AlignRight; text: [root.technicalContext, root.technicalOnly || root.cprWorkspace ? "" : root.lines("topRight")].filter(Boolean).join("\n") }
     CornerText { id: bottomLeft; objectName: "overlay-bottomLeft"; anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 2; text: root.lines("bottomLeft") }
     CornerText { id: bottomRight; objectName: "overlay-bottomRight"; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 2; horizontalAlignment: Text.AlignRight; text: root.lines("bottomRight") }
 }

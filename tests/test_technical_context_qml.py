@@ -12,6 +12,28 @@ from test_dicom_tags import wait_until
 from test_workspace_persistence import draw_length
 
 
+@pytest.mark.parametrize('anonymous', [False, True])
+def test_cpr_result_has_one_status_while_new_path_is_being_drawn(cpr_app, anonymous):
+    _, tab, _ = cpr_app
+    with displayed_cpr_page(tab) as (window, _):
+        window.rootObject().setProperty('anonymousExport', anonymous)
+        current = QCoreApplication.translate('', 'cpr.statusCurrentResult')
+        previous = QCoreApplication.translate('', 'cpr.statusPreviousResult')
+        overlays = [named_item(named_item(window.rootObject(), 'cprViewport-' + role),
+                               'overlay-topRight') for role in ('curved', 'cross')]
+        tab.startPath()
+        QTest.qWait(40)
+        for overlay in overlays:
+            text = overlay.property('text')
+            assert previous in text and current not in text
+            assert text.count(previous) == 1 and 'Path 1' in text and 'r1' in text
+        tab.cancel_operation()
+        QTest.qWait(40)
+        for overlay in overlays:
+            text = overlay.property('text')
+            assert current in text and previous not in text
+
+
 def test_anonymous_historical_cpr_keeps_saved_technical_context(cpr_app, tmp_path):
     _, tab, _ = cpr_app
     cross = tab.viewForRole('cross')

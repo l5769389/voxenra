@@ -11,6 +11,8 @@ BINDINGS = {
     'pan': ('', 'P', 'input.action.pan'), 'zoom': ('', 'Z', 'input.action.zoom'),
     'measure': ('', 'M', 'text.0292'), 'play': ('', 'Space', 'input.action.play'),
     'pseudocolor': ('', 'C', 'text.0309'), 'mpr-layout': ('', 'G', 'layout.title'),
+    'annotate': ('', 'A', 'text.0307'), 'export': ('', 'E', 'text.0315'),
+    'reset': ('', 'Q', 'tools.resetAll'),
     'view-reset': ('view-tools', 'R', 'input.resetCurrentViewTool'),
     'scroll-prev': ('scroll', 'J', 'input.previousSlice'), 'scroll-next': ('scroll', 'K', 'input.nextSlice'),
     'scroll-first': ('scroll', 'H', 'text.1027'), 'scroll-last': ('scroll', 'L', 'text.1028'),
@@ -19,17 +21,25 @@ BINDINGS = {
     'measure:length': ('measure', 'L', 'text.0321'), 'measure:angle': ('measure', 'A', 'text.0322'),
     'measure:rect': ('measure', 'R', 'text.0323'), 'measure:ellipse': ('measure', 'E', 'text.0324'),
     'measure:curve': ('measure', 'V', 'measurement.curve'), 'measure:freehand': ('measure', 'F', 'measurement.freehand'),
+    'annotate:arrow': ('annotate', 'A', 'text.0377'), 'annotate:text': ('annotate', 'T', 'text.0378'),
     'paint': ('segmentation', 'B', 'seg.paint'), 'erase': ('segmentation', 'E', 'seg.erase'),
     'cpr-new': ('cpr-path', 'N', 'cpr.new'), 'cpr-edit': ('cpr-path', 'R', 'cpr.edit'),
     'cpr-start': ('cpr-path', 'S', 'cpr.markStart'), 'cpr-end': ('cpr-path', 'E', 'cpr.markEnd'),
     'cpr-prev': ('cpr-path', 'J', 'cpr.previousSample'), 'cpr-next': ('cpr-path', 'K', 'cpr.nextSample'),
     'cpr-view': ('cpr-path', 'V', 'cpr.toggleViews'),
+    'open-view-2d': ('', 'D', 'text.0698'),
+    'open-view-mpr': ('', 'X', 'text.0700'),
+    'open-view-3d': ('', 'T', 'text.0701'),
+    'open-view-cpr': ('', 'Y', 'cpr.title'),
+    'open-view-montage': ('', 'O', 'text.0699'),
+    'open-view-4d': ('', 'U', 'text.0702'),
+    'open-view-tag': ('', 'I', 'text.0703'),
 }
 DEFAULT_BINDINGS = {action: sequence for action, (_, sequence, _) in BINDINGS.items()}
 ACTION_LABELS = {action: label for action, (_, _, label) in BINDINGS.items()}
 MENU_LABELS = {'': 'input.generalReading', 'view-tools': 'input.viewToolMenus', 'scroll': 'text.0287',
                'preset-lists': 'input.presetLists', 'zoom': 'input.action.zoom',
-               'measure': 'text.0292', 'segmentation': 'seg.manage', 'cpr-path': 'cpr.title'}
+               'measure': 'text.0292', 'annotate': 'text.0307', 'segmentation': 'seg.manage', 'cpr-path': 'cpr.title'}
 RETIRED_ACTIONS = {'cpr-guides', 'cpr-details', 'cpr-advanced', 'cpr-interval'}
 
 FIXED = {'reopenClosedTab': ('workspace.reopenClosed', 'Ctrl+Shift+T'), 'newWorkspace': ('workspace.new.action', 'Ctrl+N'), 'open': ('input.action.open', 'Ctrl+O'), 'save': ('input.action.save', 'Ctrl+S'),

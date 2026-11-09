@@ -5,13 +5,14 @@
 function shortcutAction(tool, playbackTool) {
     if (tool === playbackTool) return "play"
     if (tool === "ct-window") return "window"
-    return ["window", "scroll", "zoom", "pan", "measure", "pseudocolor", "mpr-layout"].includes(tool) ? tool : ""
+    return ["window", "scroll", "zoom", "pan", "measure", "annotate", "export", "reset", "pseudocolor", "mpr-layout"].includes(tool) ? tool : ""
 }
 
 // Explain the gesture or its effect where the tool name alone is insufficient.
 function explanation(tool) {
     const ids = {scroll: "hint.scroll", zoom: "hint.zoom", pan: "hint.pan",
-                 measure: "hint.measure", pseudocolor: "hint.palette", "cpr-path": "hint.cpr"}
+                 measure: "hint.measure", pseudocolor: "hint.palette", "cpr-path": "hint.cpr",
+                 annotate: "hint.annotate", export: "hint.export", reset: "hint.resetAll"}
     return ids[tool] ? qsTrId(ids[tool]) : ""
 }
 

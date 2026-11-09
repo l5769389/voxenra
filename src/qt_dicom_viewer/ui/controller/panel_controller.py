@@ -775,16 +775,25 @@ class PanelController(QObject):
         drag.setPixmap(preview)
         drag.exec(Qt.CopyAction)
 
+    @Slot(str, str, result=bool)
+    def canOpenSeriesView(self, series_uid: str, tab_type: str) -> bool:
+        if series_uid not in self._scan_series_record or tab_type not in ('2d', 'mpr', '3d', 'cpr', 'montage', '4d', 'tag'):
+            return False
+        series = self._series_catalog.get_series(series_uid)
+        if series is None:
+            return False
+        if tab_type == "4d" and not series.supports_four_d:
+            return False
+        modality = series.modality.strip().upper()
+        if modality == "PT" and tab_type not in ("2d", "tag", "mpr", "3d"):
+            return False
+        if tab_type == 'cpr' and modality not in ('CT', 'MR'):
+            return False
+        return tab_type != 'montage' or not self._scanning
+
     @Slot(str, str)
     def openSeriesView(self, active_series_uid: str, tab_type: str):
-        if active_series_uid not in self._scan_series_record:
-            return
-        series = self._series_catalog.get_series(active_series_uid)
-        if series is None:
-            return
-        if tab_type == "4d" and not series.supports_four_d:
-            return
-        if series.modality.upper() == "PT" and tab_type not in ("2d", "tag", "mpr", "3d"):
+        if not self.canOpenSeriesView(active_series_uid, tab_type):
             return
         self.tabCreateRequested.emit(active_series_uid, tab_type)
 
