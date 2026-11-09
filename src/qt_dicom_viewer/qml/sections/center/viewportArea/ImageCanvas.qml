@@ -375,7 +375,7 @@ Rectangle {
         measurementController: imageCanvasRoot.viewportController?.activeProfileController?.roiController ?? null
         showRoiMetrics: false
         avoidanceRegions: measurementOverlay.labelHitRegions(mtfOverlay)
-        roiLabel: imageCanvasRoot.viewportController?.activeProfileController?.roiMetricLabel ?? ""
+        roiLabels: imageCanvasRoot.viewportController?.activeProfileController?.roiMetricLabels ?? ({})
     }
 
 }

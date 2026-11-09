@@ -12,7 +12,7 @@
 - 普通自动取样和交点规则放入中性“计算详情”，重要提醒直接可见。
 - 设置 → 服务工具 → MTF → 高级提示设置，默认 20%，可设 1–100%。这是工程提示阈值，不是误差或合格标准。
 - 阈值和对照数据随结果保存；设置变化不改写历史结果，重新计算才采用新设置。老工作区中已被删除的数值不伪造恢复。
-- 图像结果标记实测/模型/拟合来源，区分处理敏感、检查未完成和对照无交点；完整对照保存在工作区。
+- 按最新要求，图像结果只保留尺寸、指标和实测/模型/拟合来源；处理敏感、检查未完成和对照无交点的提醒保留在右侧面板，完整对照保存在工作区。
 - 旧文件或未来算法提供的未知对照名称安全显示，非法阈值及异常对照数据拒绝载入。
 
 ## 验证
@@ -33,6 +33,14 @@
 - [实测结果及逐项提醒](../../build/mtf-sensitivity/media/measured-zh-CN.png)
 - [模型来源及实测值复核提醒](../../build/mtf-sensitivity/media/equivalent-en-US.png)
 - [计算详情与对照值](../../build/mtf-sensitivity/media/details-zh-CN.png)
+
+## 后续：精简图像标签及隔离绘制状态
+
+- 用户确认问题发生在画新框期间：旧框和新框的指标一起变化。原 `MeasurementLayer` 将同一份当前标签传给所有 ROI；MTF 与 FWHM 都已通过原生鼠标事件复现。
+- 标签改为按 ROI ID 读取。旧框使用其已提交几何与结果；新框只显示自身几何；编辑原框时暂不显示旧分析值。取消新绘制保留原结果，完成后沿用每帧一个分析 ROI 的替换规则。
+- 按用户要求移除影像标签中的警告图标、提示阈值及复核文字，包括图像导出；右侧面板与计算详情仍保留诊断信息。
+- 回归：9 个测试文件、244 项通过；Cocoa 原生 6 项通过，覆盖新建、拖动、取消、完成、编辑、MTF/FWHM 标签及敏感指标。
+- 记录：`build/mtf-label-isolation/regression/results.json`、`native.log`。截图：[MTF 绘制隔离](../../build/mtf-label-isolation/native/test_new_analysis_draft_keeps_0/mtf-independent-draft.png)、[FWHM 绘制隔离](../../build/mtf-label-isolation/native/test_new_analysis_draft_keeps_1/fwhm-independent-draft.png)。
 
 ## 后续算法接入约定
 

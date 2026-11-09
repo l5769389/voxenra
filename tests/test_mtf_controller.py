@@ -126,7 +126,7 @@ def test_mtf_image_label_identifies_modeled_metric_for_export(mtf_viewport, monk
     assert 'MTF10（实测）' in c.roiMetricLabel
 
 
-def test_image_export_warning_distinguishes_incomplete_comparison(mtf_viewport, monkeypatch):
+def test_image_label_keeps_metrics_while_incomplete_check_stays_in_panel(mtf_viewport, monkeypatch):
     from qt_dicom_viewer.model.mtf import MtfSensitivitySample
     view, _ = mtf_viewport
     c = view.mtfController
@@ -136,8 +136,10 @@ def test_image_export_warning_distinguishes_incomplete_comparison(mtf_viewport, 
     incomplete = replace(result, x=replace(result.x, sensitivity=(
         MtfSensitivitySample('window90', None, None, 'Comparison failed'),)))
     c._receive_result(jobs[-1][0], incomplete, '')
-    assert '检查未完成' in c.roiMetricLabel
-    assert '20%' in c.roiMetricLabel
+    assert len(c.roiMetricLabel.splitlines()) == 3
+    assert '⚠' not in c.roiMetricLabel
+    assert any('检查未完成' in warning for warning in c.warnings)
+    assert '20%' in c.calculationDetails
     c.setAnalysisMethod('gaussian')
     finish(view, jobs[-1])
     assert 'MTF50（拟合）' in c.roiMetricLabel

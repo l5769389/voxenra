@@ -223,6 +223,55 @@ def test_method_and_axis_selectors_apply_simple_rules(workspace):
 
 
 @pytest.mark.parametrize("service", ["mtf", "fwhm"])
+def test_new_analysis_draft_keeps_previous_roi_label_unchanged(workspace, service, tmp_path):
+    view, controller, pixels, warnings = workspace
+    controller._tool_controller.selectService("service:" + service)
+    analysis = controller.mtfController if service == "mtf" else controller.fwhmController
+    assert analysis.applyRoi(63, 63, 3, 2)
+    wait_result(analysis)
+    QTest.qWait(50)
+    assert analysis.status == "ready"
+    previous_id = analysis.roiController.measurementItems[0]["measurementId"]
+    previous_label = analysis.roiMetricLabel
+    previous_result = analysis.currentResult
+    overlay = _find(view, "mtfOverlay")
+
+    def visible_labels():
+        return [item.property("text") for item in _visual_children(overlay)
+                if item.objectName() == "mtfRoiLabel" and item.isVisible()]
+
+    assert visible_labels() == [previous_label]
+    start = _scene(pixels, 12, 103)
+    end = _scene(pixels, 32, 117)
+    QTest.mousePress(view, Qt.LeftButton, Qt.NoModifier, start)
+    QTest.mouseMove(view, end, 20)
+    QTest.qWait(30)
+    draft = analysis.roiController.activeTransaction
+    assert draft["creating"] and draft["measurementId"] != previous_id
+    assert len(visible_labels()) == 2
+    assert previous_label in visible_labels()
+    draft_label = next(text for text in visible_labels() if text != previous_label)
+    assert draft_label.startswith("ROI ") and "\n" not in draft_label
+    QTest.mouseMove(view, _scene(pixels, 38, 120), 20)
+    QTest.qWait(30)
+    assert previous_label in visible_labels()
+    assert draft_label not in visible_labels()
+    assert view.grabWindow().save(str(tmp_path / (service + "-independent-draft.png")))
+    QTest.keyClick(view, Qt.Key_Escape)
+    QTest.mouseRelease(view, Qt.LeftButton, Qt.NoModifier, end)
+    QTest.qWait(30)
+    assert visible_labels() == [previous_label]
+    assert analysis.currentResult == previous_result
+    assert analysis.roiController.measurementItems[0]["measurementId"] == previous_id
+    _mouse_drag(view, start, end)
+    wait_result(analysis)
+    QTest.qWait(30)
+    assert len(visible_labels()) == 1 and previous_label not in visible_labels()
+    assert analysis.roiController.measurementItems[0]["measurementId"] != previous_id
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize("service", ["mtf", "fwhm"])
 def test_analysis_badge_moves_without_geometry_or_recalculation(workspace, service):
     view, controller, pixels, warnings = workspace
     controller._tool_controller.selectService("service:"+service)
@@ -661,7 +710,8 @@ def test_sensitive_metric_is_visible_with_inline_warning_and_details(workspace, 
     assert float(_find(view, 'mtfMetric-4').property('text').replace('⚠', '').strip()) > 0
     assert float(_find(view, 'mtfMetric-1').property('text')) > 0
     assert float(_find(view, 'mtfMetric-5').property('text')) > 0
-    assert '⚠' in c.roiMetricLabel and '20%' in c.roiMetricLabel
+    assert len(c.roiMetricLabel.splitlines()) == 3
+    assert '⚠' not in c.roiMetricLabel
     assert '实测' in _find(view, 'mtfResultOrigin').property('text')
     assert any(item.objectName().startswith('mtfQualityWarning-') and item.isVisible()
                for item in _visual_children(view.contentItem()))
@@ -679,7 +729,8 @@ def test_sensitive_metric_is_visible_with_inline_warning_and_details(workspace, 
     QTest.qWait(40)
     assert c.currentResult['y']['quality']['mtf50']['status'] == 'ok'
     assert any('Y 实测 MTF50' in warning and '模型估计' in warning for warning in c.warnings)
-    assert '实测 MTF50 需复核' in c.roiMetricLabel
+    assert len(c.roiMetricLabel.splitlines()) == 3
+    assert 'MTF50（模型）' in c.roiMetricLabel
     assert not warnings
 
 

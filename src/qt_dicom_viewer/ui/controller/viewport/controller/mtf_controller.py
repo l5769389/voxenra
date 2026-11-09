@@ -88,6 +88,7 @@ class MtfController(QObject):
     _i18n_error = Signal()
     _i18n_measurementMethods = Signal()
     _i18n_roiMetricLabel = Signal()
+    _i18n_roiMetricLabels = Signal()
     _i18n_statusText = Signal()
 
     stateChanged = Signal()
@@ -278,11 +279,16 @@ class MtfController(QObject):
     def _presented_result(self):
         if self.status != "ready":
             return None
-        if self._current_analysis().presented is not None:
-            return self._current_analysis().presented
-        result = self._current_analysis().result
+        return self._presented_analysis_result(self._current_analysis())
+
+    def _presented_analysis_result(self, analysis):
+        if analysis is None or analysis.error:
+            return None
+        if analysis.presented is not None:
+            return analysis.presented
+        result = analysis.result
         if (isinstance(result, BeadMtfResult)
-                and (self._current_analysis().preferences or self._settings_controller.section("services"))["mtfGaussianEquivalent"]):
+                and (analysis.preferences or self._settings_controller.section("services"))["mtfGaussianEquivalent"]):
             return gaussian_equivalent_from_mtf10(result)
         return result
 
@@ -419,7 +425,10 @@ class MtfController(QObject):
         visible = self._roi.visible_measurements
         if self._frame is None or not visible:
             return None
-        analysis = self._analyses.get(visible[-1].measurement_id)
+        return self._analysis_for_roi(visible[-1].measurement_id)
+
+    def _analysis_for_roi(self, roi_id):
+        analysis = self._analyses.get(roi_id)
         if (analysis and analysis.request.frame_key == self._roi.frame_key
                 and analysis.request.measurement_method == self._measurement_method
                 and analysis.request.analysis_method == self._analysis_method
@@ -451,23 +460,38 @@ class MtfController(QObject):
 
     @_TextProperty(str, notify=_i18n_roiMetricLabel, notify_name='_i18n_roiMetricLabel', source_notify='stateChanged')
     def roiMetricLabel(self):
+        draft = self._roi.activeTransaction
+        visible = self._roi.visible_measurements
+        roi_id = draft.get('measurementId') if draft else visible[-1].measurement_id if visible else None
+        return self.roiMetricLabels.get(roi_id, '')
+
+    @_TextProperty('QVariantMap', notify=_i18n_roiMetricLabels, notify_name='_i18n_roiMetricLabels', source_notify='stateChanged')
+    def roiMetricLabels(self):
+        """Each completed ROI keeps its result while a separate draft changes."""
         if self._frame is None:
+            return {}
+        labels = {}
+        draft = self._roi.activeTransaction
+        for roi in self._roi.visible_measurements:
+            if roi.measurement_id == draft.get('measurementId'):
+                continue
+            result = self._presented_analysis_result(self._analysis_for_roi(roi.measurement_id))
+            labels[roi.measurement_id] = self._format_roi_label(
+                [(p.column, p.row) for p in roi.points], result)
+        if draft:
+            labels[draft['measurementId']] = self._format_roi_label(
+                [(p['column'], p['row']) for p in draft.get('points', [])])
+        return labels
+
+    def _format_roi_label(self, points, result=None):
+        if len(points) != 2:
             return ""
         places = self._settings_controller.section("measurement")["decimalPlaces"]
 
         def metric(value):
             return _msg('text.0589') if value is None else format_measurement(value, places)
 
-        # Geometry is available while drawing and when analysis fails. Never
-        # reuse cached geometry/results while a control point is being moved.
-        draft = self._roi.activeTransaction
-        if draft:
-            points = [(p['column'], p['row']) for p in draft.get('points', [])]
-        else:
-            visible = self._roi.visible_measurements
-            points = [(p.column, p.row) for p in visible[-1].points] if visible else []
-        if len(points) != 2:
-            return ""
+        # Drafts and failed/pending analyses show their own geometry only.
         width, height = (abs(points[1][i]-points[0][i]) for i in (0, 1))
         spacing = self._frame.instance_meta.pixel_spacing
         physical = (spacing is not None and len(spacing) == 2
@@ -476,9 +500,8 @@ class MtfController(QObject):
             width, height = width*spacing[1], height*spacing[0]
         unit = 'mm' if physical else 'px'
         basic = f"ROI  {metric(width)} × {metric(height)} {unit} · {metric(width*height)} {unit}²"
-        if self.status != 'ready':
+        if result is None:
             return basic
-        result = self._presented_result()
         if isinstance(result, RampFwhmResult):
             thickness = ramp_slice_thickness(result.fwhm, self.rampAngle)
             return (f"{basic}\n"
@@ -491,9 +514,7 @@ class MtfController(QObject):
             axes.append(("Y", result.y))
         def frequency_metric(axis, name):
             model_unavailable = result.analysis_method == 'gaussian_equivalent' and name == 'mtf50' and axis.mtf10 is None
-            value = "—" if name in axis.unreliable_metrics or model_unavailable else metric(self._display_frequency(getattr(axis, name)))
-            quality = metric_quality(axis, name, result.sensitivity_threshold, '')
-            return value + (' ⚠' if quality['message'] else '')
+            return "—" if name in axis.unreliable_metrics or model_unavailable else metric(self._display_frequency(getattr(axis, name)))
 
         line50 = " · ".join(f"{name} {frequency_metric(axis, 'mtf50')}" for name, axis in axes)
         line10 = " · ".join(f"{name} {frequency_metric(axis, 'mtf10')}" for name, axis in axes)
@@ -501,27 +522,10 @@ class MtfController(QObject):
         label10 = localize(_msg("mtf.imageMeasured10")) if result.analysis_method == "gaussian_equivalent" else "MTF10"
         if result.analysis_method == 'gaussian':
             label50, label10 = localize(_msg('mtf.imageFit50')), localize(_msg('mtf.imageFit10'))
-        measured_sensitive = self._modeled_reference_directions(result)
-        qualities = [metric_quality(axis, key, result.sensitivity_threshold, direction)
-                     for direction, axis in axes for key in ('mtf50', 'mtf10')]
-        review_labels = []
-        if any(q['status'] == 'sensitive' for q in qualities):
-            review_labels.append(localize(_msg('mtf.imageSensitive')))
-        if any(q['incomplete'] for q in qualities):
-            review_labels.append(localize(_msg('mtf.imageIncomplete')))
-        if any(q['missingCrossing'] for q in qualities):
-            review_labels.append(localize(_msg('mtf.imageCrossingMissing')))
         return (
             f"{basic}\n"
             f"{label50}  {line50} {self.frequencyUnit}\n"
             f"{label10}  {line10} {self.frequencyUnit}"
-            + ("\n" + _msg('mtf.warningLabel', percent=f'{result.sensitivity_threshold*100:g}',
-                            status=' · '.join(review_labels) or localize(_msg('mtf.review')))
-               if result.sensitivity_threshold is not None and (measured_sensitive or any(
-                   metric_quality(axis, key, result.sensitivity_threshold, direction)['message']
-                   for direction, axis in axes for key in ('mtf50', 'mtf10'))) else "")
-            + ("\n" + _msg('mtf.imageMeasuredSensitive', directions=' / '.join(measured_sensitive))
-               if measured_sensitive else "")
         )
 
     @_TextProperty('QVariantMap', notify=_i18n_currentResult, notify_name='_i18n_currentResult', source_notify='stateChanged')

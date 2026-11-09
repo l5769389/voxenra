@@ -2934,18 +2934,12 @@
         "mtf.equivalentSource": "MTF10 is measured; MTF50 and the curve are model estimates.",
         "mtf.gaussianSource": "MTF50, MTF10 and the curve come from Gaussian fitting.",
         "mtf.modelSensitivity": "Model sensitivity follows measured MTF10; measured-spectrum comparisons are in Calculation details.",
-        "mtf.warningLabel": "Warning threshold {percent}%; ⚠ {status}",
         "mtf.failureAction": "This method could not complete the calculation. Check that the ROI includes the target and surrounding background, adjust and recalculate. This does not establish an image-quality failure.",
         "mtf.imageModel50": "MTF50 (model)",
         "mtf.imageMeasured10": "MTF10 (measured)",
         "mtf.modeledReferenceWarning": "{direction} measured MTF50 needs review. The displayed MTF50 is a model estimate; measured comparisons are in Calculation details.",
-        "mtf.imageMeasuredSensitive": "{directions} measured MTF50 needs review; model shown",
         "mtf.imageFit50": "MTF50 (fit)",
         "mtf.imageFit10": "MTF10 (fit)",
-        "mtf.imageSensitive": "Processing sensitive",
-        "mtf.imageIncomplete": "Check incomplete",
-        "mtf.imageCrossingMissing": "Comparison crossing missing",
-        "mtf.review": "Review",
         "mtf.target": "Target"
     }
 }

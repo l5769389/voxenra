@@ -11,7 +11,7 @@ Item {
     required property var transformState
     property var preferences: ({})
     property bool showRoiMetrics: true
-    property string roiLabel: ""
+    property var roiLabels: ({})
     property var avoidanceRegions: []
     property var reservedRegions: []
     property real instructionBottomMargin: 32
@@ -79,7 +79,7 @@ Item {
             preferences: measurementLayer.preferences
             settingsController: measurementLayer.measurementController?.settingsController ?? null
             showRoiMetrics: measurementLayer.showRoiMetrics
-            roiLabel: measurementLayer.roiLabel
+            roiLabel: measurementLayer.roiLabels[modelData.measurementId] ?? ""
             reservedRegions: measurementLayer.reservedRegions.concat(measurementLayer.instructionRegions)
             avoidanceRegions: measurementLayer.labelObstacles(modelData.measurementId, index)
             isSelected: measurementLayer.measurementController
@@ -106,7 +106,7 @@ Item {
         preferences: measurementLayer.preferences
         settingsController: measurementLayer.measurementController?.settingsController ?? null
         showRoiMetrics: measurementLayer.showRoiMetrics
-        roiLabel: measurementLayer.roiLabel
+        roiLabel: measurementLayer.roiLabels[measurement?.measurementId] ?? ""
         reservedRegions: measurementLayer.reservedRegions.concat(measurementLayer.instructionRegions)
         avoidanceRegions: measurementLayer.labelObstacles(measurement?.measurementId, measurements.count)
         isSelected: false

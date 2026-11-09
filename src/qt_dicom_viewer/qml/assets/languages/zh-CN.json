@@ -2934,18 +2934,12 @@
         "mtf.equivalentSource": "MTF10 来自实测；MTF50 和曲线为模型估计。",
         "mtf.gaussianSource": "MTF50、MTF10 和曲线来自高斯拟合。",
         "mtf.modelSensitivity": "模型值的敏感性由实测 MTF10 传递；实测频谱的对照见计算详情。",
-        "mtf.warningLabel": "提示阈值 {percent}%；⚠ {status}",
         "mtf.failureAction": "当前方法无法完成本次计算。请检查 ROI 是否包含目标及周围背景，调整后重新计算；这不代表影像质量不合格。",
         "mtf.imageModel50": "MTF50（模型）",
         "mtf.imageMeasured10": "MTF10（实测）",
         "mtf.modeledReferenceWarning": "{direction} 实测 MTF50 需复核；当前显示的是模型估计值，实测对照见计算详情。",
-        "mtf.imageMeasuredSensitive": "{directions} 实测 MTF50 需复核；当前为模型估计",
         "mtf.imageFit50": "MTF50（拟合）",
         "mtf.imageFit10": "MTF10（拟合）",
-        "mtf.imageSensitive": "处理敏感",
-        "mtf.imageIncomplete": "检查未完成",
-        "mtf.imageCrossingMissing": "对照未达到交点",
-        "mtf.review": "请复核",
         "mtf.target": "测量目标"
     }
 }

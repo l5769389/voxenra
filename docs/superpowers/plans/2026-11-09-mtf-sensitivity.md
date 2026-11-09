@@ -2,7 +2,7 @@
 
 **Goal:** Implement the two reviewed discussions: retain computable MTF values, expose processing sensitivity, and separate model estimates, warnings and calculation details.
 
-**Architecture:** Store three comparison samples per measured axis, with a frozen warning threshold per result. A shared presenter derives metric-specific warnings and comparison text without changing numerical values. Workspace records retain measured and modeled results; image labels retain warning marks and the threshold.
+**Architecture:** Store three comparison samples per measured axis, with a frozen warning threshold per result. A shared presenter derives metric-specific warnings and comparison text without changing numerical values. Workspace records retain measured and modeled results. Per the user's follow-up, image labels contain only geometry, metrics and provenance; warnings remain in the side panel and details.
 
 **Tech stack:** Python/NumPy, PySide6, QML, existing versioned workspace serialization.
 
@@ -21,7 +21,7 @@
 - [x] Add failing controller/QML tests for inline warning, details, frozen threshold, model provenance and workspace roundtrip.
 - [x] Add advanced service warning threshold; capture it in each background request and result.
 - [x] Present values with metric-specific warning marks, concise warnings and neutral calculation details. Show comparison values in current frequency units.
-- [x] Keep warning/threshold information in exported image labels and saved workspace data.
+- [x] Keep warning/threshold information in saved workspace data. The user's follow-up removes warnings from image labels and image exports.
 - [x] Update English/Chinese help and release notes.
 
 ## Task 3: Verification
