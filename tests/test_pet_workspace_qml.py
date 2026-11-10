@@ -372,6 +372,7 @@ def test_main_qml_two_selection_entry_points(qt_app, paired_series, tmp_path):
         assert set(panel.selectedSeriesUids) == {pet.series_instance_uid, ct.series_instance_uid}
         click(window, find(window, "openView-fusion"))
         assert workspace.activeTabType == "petctfusion"
+        fusion_tab = workspace.activeTab
         assert len(workspace.currentTabAllViewports) == 4
         click(window, find(window, "series-" + ct.series_instance_uid))
         click(window, find(window, "openView-fusion"))
@@ -384,7 +385,7 @@ def test_main_qml_two_selection_entry_points(qt_app, paired_series, tmp_path):
         click(window, candidate)
         click(window, find(window, "confirmFusion"))
         assert not panel.fusionDialogOpen
-        assert len(workspace.tabs) == 2
+        assert len(workspace.tabs) == 1 and workspace.activeTab is fusion_tab
         assert not warnings, warnings
         assert window.grabWindow().save(str(tmp_path / "petct-main.png"))
     finally:

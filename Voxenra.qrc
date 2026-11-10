@@ -277,6 +277,10 @@
         <file>src/qt_dicom_viewer/qml/assets/help/export.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/fusion.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/import.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/image-sources-2.5.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/workspace-2.5.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/image-sources-2.5.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/workspace-2.5.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/directory-favorites-2.1.5.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/corner-editor-2.1.5.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/directory-favorites-2.1.5.png</file>

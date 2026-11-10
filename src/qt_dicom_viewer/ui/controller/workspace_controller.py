@@ -152,10 +152,17 @@ class WorkspaceController(QObject):
             self._close_tab(key)
         return True
 
-    def _view_id(self, base, *, new_session):
-        if new_session:
-            return f"{uuid4()}/{base}" if base in self._tab_dict else base
-        return next((key for key in self._tab_mru if key == base or key.endswith("/" + base)), base)
+    def _view_id(self, base, *, new_session, tab_type=None, series_uids=()):
+        if not new_session:
+            sources = set(series_uids)
+            for key in self._tab_mru:
+                tab = self._tab_dict.get(key)
+                if (tab is not None and tab.tab_config.tab_type == tab_type
+                        and {meta.series_uid for meta in tab.tab_config.series_metas} == sources):
+                    return key
+        # Cell replacement can change a tab's sources without changing its ID.
+        # Keep that session intact when allocating a view for the original source.
+        return f"{uuid4()}/{base}" if base in self._tab_dict else base
 
     @staticmethod
     def _has_editing_work(tab):
@@ -370,7 +377,8 @@ class WorkspaceController(QObject):
             return
         if tab_type in (TabType.SETTINGS, TabType.PACS, TabType.MANUAL, TabType.COMPARE_2D, TabType.COMPARE_MPR):
             return
-        tab_id = self._view_id(f'{series_uid}_{tab_type}', new_session=new_session)
+        tab_id = self._view_id(f'{series_uid}_{tab_type}', new_session=new_session,
+                               tab_type=tab_type, series_uids=(series_uid,))
         tab, created = self._create_or_activate_tab(
             series_uid,
             tab_label,
@@ -391,7 +399,8 @@ class WorkspaceController(QObject):
         tab_type: TabType,
         *, tab_id=None, phase_identifiers=None,
     ) -> tuple[TabController | None, bool]:
-        tab_id = tab_id or f'{series_uid}_{tab_type}'
+        tab_id = tab_id or self._view_id(
+            f'{series_uid}_{tab_type}', new_session=False, tab_type=tab_type, series_uids=(series_uid,))
         if tab_id == self._active_tab_id:
             self.activateTabId(tab_id)
             return self._tab_dict.get(tab_id), False
@@ -564,13 +573,18 @@ class WorkspaceController(QObject):
         tab.handleRenderResult(result)
 
     @Slot(str, str)
-    def createMprCompareTab(self, first_uid, second_uid):
+    def createMprCompareTab(self, first_uid, second_uid, *, new_session=False):
         from qt_dicom_viewer.core.compare import supports_mpr_compare
         from .tab.compare_mpr_tab_controller import CompareMprTabController
         if first_uid == second_uid or not all(supports_mpr_compare(self._series_catalog.get_series(uid))
                                               for uid in (first_uid, second_uid)):
             return
-        tab_id = self._view_id("comparempr:" + ":".join(sorted((first_uid, second_uid))), new_session=True)
+        tab_id = self._view_id("comparempr:" + ":".join(sorted((first_uid, second_uid))),
+                               new_session=new_session, tab_type=TabType.COMPARE_MPR,
+                               series_uids=(first_uid, second_uid))
+        if tab_id in self._tab_dict:
+            self.activateTabId(tab_id)
+            return
         metas = tuple(self._series_catalog.get_series_display_meta(uid) for uid in (first_uid, second_uid))
         label = " / ".join(meta.series_description or meta.modality for meta in metas)
         tab = CompareMprTabController(TabConfig(tab_id, label, TabType.COMPARE_MPR, metas), self)
@@ -581,18 +595,22 @@ class WorkspaceController(QObject):
         tab.init_render()
 
     @Slot(str, str)
-    def createCompareTab(self, first_uid, second_uid):
-        self.createMultiCompareTab([first_uid, second_uid])
+    def createCompareTab(self, first_uid, second_uid, *, new_session=False):
+        self.createMultiCompareTab([first_uid, second_uid], new_session=new_session)
 
     @Slot('QVariantList')
     @Slot(object)
-    def createMultiCompareTab(self, series_uids):
+    def createMultiCompareTab(self, series_uids, *, new_session=False):
         from qt_dicom_viewer.core.compare import supports_compare
         from .tab.compare_tab_controller import CompareTabController
         if not 2 <= len(series_uids) <= 4 or len(set(series_uids)) != len(series_uids) or not all(
                 supports_compare(self._series_catalog.get_series(uid)) for uid in series_uids):
             return
-        tab_id = self._view_id("compare2d:" + ":".join(sorted(series_uids)), new_session=True)
+        tab_id = self._view_id("compare2d:" + ":".join(sorted(series_uids)),
+                               new_session=new_session, tab_type=TabType.COMPARE_2D, series_uids=series_uids)
+        if tab_id in self._tab_dict:
+            self.activateTabId(tab_id)
+            return
         metas = tuple(self._series_catalog.get_series_display_meta(uid) for uid in series_uids)
         label = " / ".join(meta.series_description or meta.modality for meta in metas)
         tab = CompareTabController(TabConfig(tab_id, label, TabType.COMPARE_2D, metas), self)
@@ -603,13 +621,17 @@ class WorkspaceController(QObject):
         tab.init_render()
 
     @Slot(str, str)
-    def createFusionTab(self, ct_uid, pet_uid, *, isolated=False):
+    def createFusionTab(self, ct_uid, pet_uid, *, isolated=False, new_session=False):
         ct = self._series_catalog.get_series(ct_uid)
         pet = self._series_catalog.get_series(pet_uid)
         if ct is None or pet is None or ct.modality.upper() != "CT" or pet.modality.upper() != "PT":
             return
         tab_id = ("restore-source:" + uuid4().hex if isolated else
-                  self._view_id(f"petct:{ct_uid}:{pet_uid}", new_session=True))
+                  self._view_id(f"petct:{ct_uid}:{pet_uid}", new_session=new_session,
+                                tab_type=TabType.PETCT_FUSION, series_uids=(ct_uid, pet_uid)))
+        if tab_id in self._tab_dict:
+            self.activateTabId(tab_id)
+            return
         config = TabConfig(tab_id=tab_id, tab_label=f"{ct.patient_name} · PET/CT",
             tab_type=TabType.PETCT_FUSION, series_metas=(
                 self._series_catalog.get_series_display_meta(ct_uid),
@@ -711,4 +733,4 @@ class WorkspaceController(QObject):
         if series is None:
             return
         label = series.patient_name.strip() or series.series_description.strip() or _msg('text.0258')
-        self.createTab(series_uid, label, tab_type, new_session=True)
+        self.createTab(series_uid, label, tab_type)

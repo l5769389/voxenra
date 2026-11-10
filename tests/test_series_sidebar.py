@@ -399,14 +399,15 @@ def test_split_toolbar_and_series_context_menu(sidebar_scene, tmp_path):
     wait_until(lambda: workspace.activeTabType == "tag"
                and not workspace.activeTab.tagController.loading)
     tab_count = len(workspace.tabs)
+    tag_tab = workspace.activeTab
     assert tab_count == 3
     right_click(window, find(window, "series-" + first_uid))
     click(window, find(window, "seriesContextAction-tag"))
-    assert len(workspace.tabs) == tab_count + 1
+    assert len(workspace.tabs) == tab_count and workspace.activeTab is tag_tab
     right_click(window, find(window, "series-" + first_uid))
     click(window, find(window, "seriesContextAction-remove"))
     assert not any(row["seriesInstanceUid"] == first_uid for row in panel.sidebarItems)
-    assert len(workspace.tabs) == tab_count + 1 and workspace.activeTabType == "tag"
+    assert len(workspace.tabs) == tab_count and workspace.activeTab is tag_tab
     assert records[0].first_file.exists()
     QTest.qWait(40)
     assert window.grabWindow().save(str(tmp_path / "dicom-series-removed.png"))

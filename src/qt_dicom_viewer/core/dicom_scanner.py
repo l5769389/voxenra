@@ -692,7 +692,8 @@ class DicomFolderScanner:
 
     def scan_files(self, files, *, folder, cancelled=lambda: False,
                    snapshot_interval=0.0, can_publish=lambda: True,
-                   progress=lambda processed, dicom, skipped: None):
+                   progress=lambda processed, dicom, skipped: None,
+                   image_found=lambda path: None):
         """Group a mixed file selection with the same spatial/4D rules as folders."""
         folder = Path(folder)
         total_file_count = 0
@@ -713,6 +714,8 @@ class DicomFolderScanner:
             total_file_count += 1
             frames = _read_frames(file_path)
             instance = frames[0] if frames else None
+            if instance is not None:
+                image_found(file_path)
             identity = (instance.series_instance_uid, instance.file_identity) if instance else None
             if instance is None or identity in identities:
                 skipped_file_count += 1

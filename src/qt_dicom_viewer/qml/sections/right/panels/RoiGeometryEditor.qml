@@ -9,7 +9,6 @@ Components.AppButton {
     id: root
     required property var controller
     readonly property var geometry: controller?.roiGeometry ?? ({})
-    readonly property bool ramp: controller?.measurementMethod === "ramp"
     objectName: "editAnalysisRoi"
     text: qsTrId("analysis.editRoi")
     enabled: geometry.columns !== undefined && controller?.status !== "editing"
@@ -48,10 +47,9 @@ Components.AppButton {
             cx.selectAll()
         }
         function apply() {
-            if (!cx.acceptableInput || !cy.acceptableInput || !rw.acceptableInput
-                    || (root.ramp && !rh.acceptableInput)) return
+            if (!cx.acceptableInput || !cy.acceptableInput || !rw.acceptableInput || !rh.acceptableInput) return
             if (root.controller.applyRoi(Number(cx.text), Number(cy.text), Number(rw.text),
-                    root.ramp ? Number(rh.text) : Number(rw.text))) close()
+                    Number(rh.text))) close()
             else failure.visible = true
         }
         Connections {
@@ -87,10 +85,10 @@ Components.AppButton {
                 Input { id: cx; objectName: "analysisRoiCenterX"; Accessible.name: qsTrId("analysis.centerX") }
                 Label { text: qsTrId("analysis.centerY") }
                 Input { id: cy; objectName: "analysisRoiCenterY"; Accessible.name: qsTrId("analysis.centerY") }
-                Label { text: root.ramp ? qsTrId("analysis.width") : qsTrId("analysis.side") }
-                Input { id: rw; objectName: "analysisRoiWidth"; Accessible.name: root.ramp ? qsTrId("analysis.width") : qsTrId("analysis.side") }
-                Label { visible: root.ramp; text: qsTrId("analysis.height") }
-                Input { id: rh; visible: root.ramp; objectName: "analysisRoiHeight"; Accessible.name: qsTrId("analysis.height") }
+                Label { text: qsTrId("analysis.width") }
+                Input { id: rw; objectName: "analysisRoiWidth"; Accessible.name: qsTrId("analysis.width") }
+                Label { text: qsTrId("analysis.height") }
+                Input { id: rh; objectName: "analysisRoiHeight"; Accessible.name: qsTrId("analysis.height") }
             }
             Text {
                 id: failure
@@ -109,7 +107,7 @@ Components.AppButton {
                 Layout.fillWidth: true
                 text: qsTrId("analysis.applyRoi")
                 actionRole: "primary"
-                enabled: cx.acceptableInput && cy.acceptableInput && rw.acceptableInput && (!root.ramp || rh.acceptableInput)
+                enabled: cx.acceptableInput && cy.acceptableInput && rw.acceptableInput && rh.acceptableInput
                 onClicked: editor.apply()
             }
         }

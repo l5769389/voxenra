@@ -363,6 +363,52 @@ Rectangle {
             ? imageCanvasRoot.viewportController.measurementController : null
     }
 
+    Canvas {
+        id: samplingOverlay
+        objectName: "mtfSamplingOverlay"
+        anchors.fill: parent
+        readonly property var analysis: imageCanvasRoot.viewportController?.activeProfileController ?? null
+        readonly property var geometry: analysis?.samplingGeometry ?? ({})
+        readonly property var transforms: imageCanvasRoot.measurementTransformState
+        property int mappingRevision: 0
+        visible: (analysis?.showSampling ?? false) && Object.keys(geometry).length > 0
+        function remap() { mappingRevision += 1 }
+        onTransformsChanged: Qt.callLater(remap)
+        readonly property var mappedBounds: {
+            if (mappingRevision < 0 || !transforms || !geometry.halfWidth) return []
+            return [[geometry.halfWidth, geometry.halfHeight],
+                    [geometry.backgroundHalfWidth, geometry.backgroundHalfHeight],
+                    [geometry.backgroundInnerHalfWidth, geometry.backgroundInnerHalfHeight]].map(size =>
+                [[-1,-1], [1,-1], [1,1], [-1,1]].map(sign => {
+                    const p = imageCanvasRoot.mapDicomPixelToItem(samplingOverlay,
+                        geometry.centerX+sign[0]*size[0], geometry.centerY+sign[1]*size[1])
+                    return {x:p.x, y:p.y}
+                }))
+        }
+        onMappedBoundsChanged: requestPaint()
+        onVisibleChanged: requestPaint()
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            if (!visible || mappedBounds.length !== 3) return
+            for (let i=2; i>=0; i--) {
+                const corners = mappedBounds[i]
+                ctx.strokeStyle = i === 0 ? Theme.crosshairPreview : Theme.overlayText
+                ctx.lineWidth = 1.5
+                ctx.setLineDash(i === 0 ? [] : [5,4])
+                ctx.beginPath(); ctx.moveTo(corners[0].x, corners[0].y)
+                for (let j=1; j<4; j++) ctx.lineTo(corners[j].x, corners[j].y)
+                ctx.closePath(); ctx.stroke()
+            }
+            const center = imageCanvasRoot.mapDicomPixelToItem(samplingOverlay, geometry.centerX, geometry.centerY)
+            ctx.setLineDash([]); ctx.strokeStyle = Theme.crosshairPreview
+            ctx.beginPath(); ctx.moveTo(center.x-4,center.y); ctx.lineTo(center.x+4,center.y)
+            ctx.moveTo(center.x,center.y-4); ctx.lineTo(center.x,center.y+4); ctx.stroke()
+        }
+    }
+
     MeasurementLayer.MeasurementLayer {
         id: mtfOverlay
         reservedRegions: imageCanvasRoot.reservedRegions

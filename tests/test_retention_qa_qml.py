@@ -1,16 +1,27 @@
 import pytest
-from PySide6.QtCore import QObject, QPointF, Qt
+from PySide6.QtCore import QObject, QMetaObject, QPointF, Qt
 from PySide6.QtTest import QTest
 from test_dicom_tags import qt_app, wait_until
-from test_series_sidebar import sidebar_scene
+from test_series_sidebar import sidebar_scene, right_click
 from test_tag_qml import find, click
 from test_workspace_dialog_layout import workspace_dialog
 from test_workspace_persistence import draw_length
 from test_water_qa_controller import water_render, deliver_frame
 
 
+def tab_strip_reopen_item(window, app):
+    bar = app.windowManager.bars['main']
+    wait_until(bar.isVisible)
+    right_click(window, bar)
+    menu = window.findChild(QObject, 'tabContextMenu')
+    wait_until(lambda: menu.property('visible'))
+    undo = window.findChild(QObject, 'tabMenu-reopen')
+    assert undo.isVisible() and undo.isEnabled()
+    return undo
+
+
 @pytest.mark.parametrize('locale', ['zh-CN', 'en-US', 'pt-BR'])
-def test_retained_tab_home_dialog_and_shortcut(sidebar_scene, tmp_path, locale):
+def test_retained_tab_strip_and_shortcut(sidebar_scene, tmp_path, locale):
     window, app, records, warnings = sidebar_scene
     app.languageController.selectLanguage(locale)
     window.resize(1000, 600)
@@ -21,21 +32,21 @@ def test_retained_tab_home_dialog_and_shortcut(sidebar_scene, tmp_path, locale):
     draw_length(ws.activeViewport)
     assert ws.closeTab(ws.activeTabId)
     QTest.qWait(80)
-    home = find(window, 'homeReopenClosedTab')
-    assert home.isVisible() and home.isEnabled()
-    click(window, home)
-    wait_until(lambda: not doc.busy)
-    assert len(ws.activeViewport._measure_controller._measurements) == 1
-    ws.closeTab(ws.activeTabId)
+    assert find(window, 'workspaceEmptyState').isVisible()
+    assert window.findChild(QObject, 'homeReopenClosedTab') is None
     dialog, native = workspace_dialog(window)
-    button = dialog.findChild(QObject, 'reopenClosedTab')
-    assert button.isVisible() and button.isEnabled()
-    manual = dialog.findChild(QObject, 'workspaceManualLink')
-    assert button.x() >= manual.x() + manual.width()
-    assert button.width() >= button.implicitWidth()
-    native.grabWindow().save(str(tmp_path/f'reopen-{locale}.png'))
-    click(native, button)
-    wait_until(lambda: not doc.busy and not dialog.property('visible'))
+    assert dialog.findChild(QObject, 'reopenClosedTab') is None
+    QMetaObject.invokeMethod(dialog, 'close')
+    wait_until(lambda: not dialog.property('visible'))
+    QTest.qWait(60)
+    undo = tab_strip_reopen_item(window, app)
+    assert undo.property('text') != 'workspace.reopenClosed'
+    caption = next(item for item in undo.property('contentItem').childItems()
+                   if item.property('text') == undo.property('text'))
+    assert not caption.property('truncated')
+    assert undo.window().grabWindow().save(str(tmp_path/f'reopen-{locale}.png'))
+    click(undo.window(), undo)
+    wait_until(lambda: not doc.busy and ws.activeTab is not None)
     assert len(ws.activeViewport._measure_controller._measurements) == 1
     ws.closeTab(ws.activeTabId)
     window.requestActivate(); wait_until(window.isActive)
@@ -112,7 +123,8 @@ def test_reopened_tab_keeps_slice_slider_and_image_in_sync(sidebar_scene, monkey
         finally:
             doc._restore_timer.start()
     monkeypatch.setattr(module, 'apply_tab_snapshot', restore_after_slider_is_visible)
-    click(window, find(window, 'homeReopenClosedTab'))
+    undo = tab_strip_reopen_item(window, app)
+    click(undo.window(), undo)
     wait_until(lambda: not doc.busy and ws.activeLoadState.status == 'ready')
     assert ws.activeViewport.sliceIndex == 2
     assert ws.activeViewport._frame_meta.slice_index == 2
@@ -122,8 +134,7 @@ def test_reopened_tab_keeps_slice_slider_and_image_in_sync(sidebar_scene, monkey
     assert not warnings, warnings
 
 
-def test_series_open_creates_fresh_tabs_and_tab_menu_undo_restores(sidebar_scene, tmp_path):
-    from test_series_sidebar import right_click
+def test_series_open_reuses_tab_and_tab_menu_undo_preserves_fresh_view(sidebar_scene, tmp_path):
     window, app, records, warnings = sidebar_scene
     ws, doc = app.workspaceController, app.workspaceDocumentController
     click(window, find(window, 'series-' + records[0].series_instance_uid))
@@ -133,9 +144,13 @@ def test_series_open_creates_fresh_tabs_and_tab_menu_undo_restores(sidebar_scene
     draw_length(edited.activeViewport)
     click(window, find(window, 'openView-2d'))
     wait_until(lambda: ws.activeLoadState.status == 'ready')
+    assert ws.activeTab is edited and len(ws.tabs) == 1
+    assert len(edited.activeViewport._measure_controller._measurements) == 1
+    assert ws.closeTab(edited.tab_config.tab_id)
+    click(window, find(window, 'openView-2d'))
+    wait_until(lambda: ws.activeLoadState.status == 'ready')
     fresh = ws.activeTab
     assert fresh is not edited and not fresh.activeViewport._measure_controller._measurements
-    assert ws.closeTab(edited.tab_config.tab_id)
     right_click(window, find(window, 'workspaceTab-' + ws.activeTabId))
     undo = window.findChild(QObject, 'tabMenu-reopen')
     wait_until(lambda: undo.isVisible() and undo.isEnabled())

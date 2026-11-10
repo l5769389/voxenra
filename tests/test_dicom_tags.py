@@ -277,7 +277,7 @@ def test_service_coalesces_pending_and_discards_closed_results(qt_app, tmp_path)
     service.shutdown()  # idempotent
 
 
-def test_workspace_tag_independent_sessions_and_no_render(qt_app, tmp_path):
+def test_workspace_tag_reuse_explicit_sessions_and_no_render(qt_app, tmp_path):
     series = make_series(tmp_path)
     catalog = catalog_for(series, tmp_path)
     other = replace(series, series_instance_uid=series.series_instance_uid + ".2")
@@ -298,6 +298,9 @@ def test_workspace_tag_independent_sessions_and_no_render(qt_app, tmp_path):
         workspace.activeWorkspace(other.series_instance_uid, "tag")
         assert workspace.activeTab.tagController.currentPage == 1
         workspace.activeWorkspace(series.series_instance_uid, "tag")
+        assert workspace.activeTab is first and len(workspace.tabs) == 2
+        assert controller.currentPage == 2 and controller.searchText == "PatientName"
+        workspace.createTab(series.series_instance_uid, "Independent tags", "tag", new_session=True)
         assert workspace.activeTab is not first and len(workspace.tabs) == 3
         assert workspace.activeTab.tagController.currentPage == 1
         assert workspace.activeTab.tagController.searchText == ""

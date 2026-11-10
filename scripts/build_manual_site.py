@@ -38,7 +38,7 @@ PRODUCT_SCREENSHOTS = {
     "feature-workspace-overview.png": "45-workspace-home-2.1.3.png",
     "feature-4d.gif": "03-4d-playback.gif",
     "feature-water-qa.png": "19-water-qa-2.1.3.png",
-    "feature-mtf.png": "28-mtf-analysis.png",
+    "feature-mtf.png": "67-mtf-analysis-2.5.0.png",
 }
 for media, source in {
     'feature-cpr-reference.png': '61-cpr-reference-2.4.0.png',

@@ -15,7 +15,7 @@ ColumnLayout {
     readonly property var result: controller ? controller.currentResult : ({})
     readonly property bool rampMode: controller?.measurementMethod === "ramp"
     readonly property bool ready: rampMode ? result.ramp !== undefined : result.x !== undefined && result.y !== undefined
-    readonly property var qualityWarnings: controller?.warnings ?? []
+    readonly property var qualityWarnings: rampMode ? (controller?.warnings ?? []) : []
     property bool rampDetailsExpanded: false
     spacing: 14
     onVisibleChanged: { if (!visible && infoPopup) infoPopup.close() }
@@ -157,6 +157,23 @@ ColumnLayout {
         Layout.fillWidth: true
         controller: panel.controller
     }
+    Components.AppCheckBox {
+        objectName: "mtfShowSampling"
+        Layout.fillWidth: true
+        visible: !panel.rampMode
+        enabled: Object.keys(panel.controller?.samplingGeometry ?? {}).length > 0
+        text: qsTrId("mtf.showSampling")
+        checked: panel.controller?.showSampling ?? false
+        onToggled: panel.controller?.setShowSampling(checked)
+    }
+    Text {
+        Layout.fillWidth: true
+        visible: !panel.rampMode && (panel.controller?.showSampling ?? false)
+        text: qsTrId("mtf.samplingLegend")
+        wrapMode: Text.Wrap
+        color: Theme.textSecondary
+        font.pixelSize: 11
+    }
     RowLayout {
         Layout.fillWidth: true
         visible: !panel.rampMode
@@ -271,26 +288,14 @@ ColumnLayout {
     AnalysisInfoPopup {
         id: infoPopup
         anchorItem: infoButton
-        explanation: [(panel.rampMode ? qsTrId("ramp.info")
-            : panel.controller?.actualAnalysisMethod === "gaussian_equivalent" ? qsTrId("mtf.equivalentHint")
-            : panel.controller?.actualAnalysisMethod === "tukey_fft" ? qsTrId("mtf.weightedHint")
-            : panel.controller?.analysisMethod === "gaussian" ? qsTrId("mtf.gaussianHint") : qsTrId("mtf.directHint")), panel.controller?.calculationDetails ?? "", panel.controller?.provenance ?? "", qsTrId("analysis.savedHint")]
+        explanation: [panel.rampMode ? qsTrId("ramp.info") : panel.controller?.calculationDetails || qsTrId("mtf.emptyDetails"),
+            panel.controller?.provenance ?? "", panel.rampMode ? qsTrId("analysis.savedHint") : ""]
             .filter(part => part.trim().length > 0).join("\n\n")
         warnings: panel.qualityWarnings
     }
     Connections {
         target: panel.controller
         function onStateChanged() { if (!panel.ready) infoPopup.close() }
-    }
-    Text {
-        objectName: "mtfResultOrigin"
-        Layout.fillWidth: true
-        visible: panel.ready && !panel.rampMode
-        text: panel.controller?.resultOrigin ?? ""
-        color: Theme.textSecondary
-        font.pixelSize: 12
-        wrapMode: Text.Wrap
-        Accessible.name: text
     }
     GridLayout {
         objectName: "rampMetrics"
@@ -371,9 +376,8 @@ ColumnLayout {
                         const noModel = panel.controller?.actualAnalysisMethod === "gaussian_equivalent"
                             && key === "mtf50" && axis.mtf10 === null
                         const missing = noModel || (axis.unreliable_metrics ?? []).indexOf(key) >= 0 ? "—" : qsTrId("text.0589")
-                        const warning = axis.quality?.[key]?.message ?? ""
-                        cells.push({text: panel.metric(axis[key], missing) + (warning ? " ⚠" : ""),
-                            color: warning ? Theme.warningColor : color, axisCell: false})
+                        cells.push({text: panel.metric(axis[key], missing),
+                            color: color, axisCell: false})
                     }
                 }
                 return cells
@@ -390,21 +394,6 @@ ColumnLayout {
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
             }
-        }
-    }
-    Repeater {
-        model: panel.ready && !panel.rampMode ? panel.qualityWarnings : []
-        Text {
-            required property string modelData
-            required property int index
-            objectName: "mtfQualityWarning-" + index
-            Layout.fillWidth: true
-            text: modelData
-            textFormat: Text.PlainText
-            color: Theme.warningColor
-            font.pixelSize: 11
-            wrapMode: Text.Wrap
-            Accessible.name: text
         }
     }
     Text {

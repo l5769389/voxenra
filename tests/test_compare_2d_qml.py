@@ -155,8 +155,8 @@ def test_compare_detach_preserves_pair_and_window_local_tools(sidebar_scene):
     assert single.toolController.activeTool == 'window'
     registry.createCompareTab(*(r.series_instance_uid for r in reversed(records[:2])))
     assert app.windowManager.owner(tab.tab_config.tab_id) is session
-    assert len(registry._tab_dict) == 3 and registry.activeTab is not tab
-    assert registry.closeTab(registry.activeTabId)
+    assert len(registry._tab_dict) == 2 and registry.activeTab is tab
+    assert app.windowManager.focusedWindowId == session.windowId
     app.windowManager.moveToMain(tab.tab_config.tab_id)
     wait_until(lambda: len(app.windowManager.sessions) == 1)
     assert list(tab.viewports_by_id.values()) == views

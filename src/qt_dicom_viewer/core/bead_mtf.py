@@ -10,13 +10,16 @@ from numpy.linalg import solve
 
 from qt_dicom_viewer.i18n import message as _msg
 from qt_dicom_viewer.i18n.messages import error_message
-from qt_dicom_viewer.model.mtf import BeadMtfResult, MtfAxisResult, MtfSensitivitySample
+from qt_dicom_viewer.model.mtf import BeadMtfResult, MtfAxisResult, MtfSensitivitySample, MtfSampling
 
 
 MEASUREMENT_METHODS = ("bead", "wire")
 ANALYSIS_METHODS = ("direct_fft", "gaussian", "tukey_fft")
 # Processing sensitivity limit, not a confidence interval or accuracy bound.
 MTF_SENSITIVITY_LIMIT = 0.20
+# Formal integration only. Keep support detection/background fitting on the
+# existing baseline so this is exactly the former window110 comparison.
+MTF_INTEGRATION_SCALE = 1.10
 
 
 class MtfSupportError(ValueError):
@@ -24,6 +27,7 @@ class MtfSupportError(ValueError):
 
     def __init__(self, peak, radii, row_spacing, column_spacing):
         self.peak, self.radii = tuple(peak), tuple(radii)
+        self.fallback_warnings = ()
         super().__init__(_msg('mtf.roiSupportIncomplete',
             width=f'{(2*radii[1]+1)*column_spacing:.1f}',
             height=f'{(2*radii[0]+1)*row_spacing:.1f}'))
@@ -31,20 +35,22 @@ class MtfSupportError(ValueError):
 
 def compute_mtf_with_context(roi, row_spacing, column_spacing, *, context=None,
                              measurement_method='bead', analysis_method='tukey_fft',
-                             sensitivity_threshold=MTF_SENSITIVITY_LIMIT):
+                             sensitivity_threshold=MTF_SENSITIVITY_LIMIT, check_stability=False):
     """Identify the source in the selection; extend only from real image pixels.
 
     Complete selections retain the existing calculation. With insufficient
     background, lock the original peak and extend around it; never search for
     a replacement source or synthesize padding. Context is a task snapshot
     (image, ROI row/column origin), separate from the measured ROI geometry.
+    Processing comparisons are opt-in development diagnostics; normal calls
+    calculate only the configured integration support.
     """
     try:
         return compute_point_source_mtf(roi, row_spacing, column_spacing,
             measurement_method=measurement_method, analysis_method=analysis_method,
-            sensitivity_threshold=sensitivity_threshold)
+            sensitivity_threshold=sensitivity_threshold, check_stability=check_stability)
     except MtfSupportError as exc:
-        if context is None or analysis_method != 'tukey_fft':
+        if context is None or (analysis_method != 'tukey_fft' and not exc.fallback_warnings):
             raise
         needed = exc
     image, origin = context
@@ -60,14 +66,26 @@ def compute_mtf_with_context(roi, row_spacing, column_spacing, *, context=None,
         try:
             result = _windowed_point_source_mtf(pixels, row_spacing, column_spacing,
                                                source_index=tuple(radii),
-                                               sensitivity_threshold=sensitivity_threshold)
+                                               sensitivity_threshold=sensitivity_threshold,
+                                               check_stability=check_stability)
         except MtfSupportError as exc:
-            radii = np.maximum(radii+2, exc.radii)
+            # The requested radius is ceil(required support)+1, so at least
+            # the deficient axis advances. Do not add padding to an already
+            # complete axis on every retry; thin image contexts would fail.
+            radii = np.maximum(radii, exc.radii)
             continue
         notice = _msg('mtf.backgroundExpanded',
             width=f'{pixels.shape[1]*column_spacing:.1f}',
             height=f'{pixels.shape[0]*row_spacing:.1f}')
-        return replace(result, notes=(*result.notes, notice))
+        # Expanded-buffer coordinates must remain relative to the original ROI
+        # for saved geometry and overlays on the original image.
+        sampling = result.sampling
+        if sampling is not None:
+            offset = low-np.asarray(origin)
+            sampling = replace(sampling, center=(sampling.center[0]+float(offset[1]),
+                                                 sampling.center[1]+float(offset[0])))
+        return replace(result, notes=(*result.notes, notice), sampling=sampling,
+                       warnings=(*needed.fallback_warnings, *result.warnings))
     raise ValueError(_msg('mtf.supportNotConverged'))
 
 
@@ -384,12 +402,113 @@ def _background_plane(pixels: np.ndarray) -> tuple[np.ndarray, float, float, np.
 def _source_support(pixels: np.ndarray, row_spacing: float, column_spacing: float,
                     *, background_extent: float = 6., source_index=None) -> tuple[
                         np.ndarray, float, float, np.ndarray, np.ndarray, np.ndarray]:
-    """Anchor integration and background to the source, not the drawn rectangle.
+    """Expand support while the taper/background still contains a response.
 
-    Central-profile FWHMs determine support only, never MTF thresholds. The
-    background annulus is 4--6 widths from the peak; cosine weights and Huber
-    fitting limit boundary/noise effects. Refine width and background together.
-    Require the complete annulus: padding/cropping would invent background.
+    FWHM provides an initial scale, not evidence that the full PSF is included.
+    A coherent taper-to-background residual can be a positive
+    tail or a negative sidelobe. Keep the source fixed while extending into
+    real pixels; the caller handles insufficient image/selection coverage.
+    """
+    scale = np.ones(2)
+    for _ in range(8):
+        support = _fit_source_support(pixels, row_spacing, column_spacing,
+            background_extent=background_extent, source_index=source_index,
+            support_scale=scale)
+        psf, _, noise, widths, xx, yy = support
+        source_index = (int(-yy[0, 0]), int(-xx[0, 0]))
+        radius = np.maximum(np.abs(xx)/widths[0], np.abs(yy)/widths[1])
+        # Inspect the taper too: by the time a weak tail reaches the background
+        # ring, noise can hide it even though truncating it changes the DC/MTF.
+        inner = (radius > 3.) & (radius < 4.)
+        outer = (radius >= 4.) & (radius < background_extent)
+        # Use all four sectors so an isolated adjacent structure does not force
+        # unlimited expansion. Winsorization limits outliers without clipping
+        # negative values from the actual PSF used by the Fourier calculation.
+        peak = float(psf[source_index])
+        # Scale each inspected region's stopping floor to 0.1% of weighted
+        # signal mass. Otherwise tiny noiseless remnants of an already
+        # complete response can demand unbounded background.
+        # This is a stopping tolerance, not an accuracy/confidence bound.
+        mass = abs(float(np.sum(psf*_source_window(xx, yy, widths))))
+        floor = max(abs(peak)*1e-6, np.finfo(float).eps)
+        # A narrow tail can occupy less than half a sector. Do not clip its
+        # detection samples down to the numerical decision floor when noise is
+        # near zero; that would erase every sparse, coherent diagonal response.
+        clip_limit = max(6*noise, abs(peak)*.01, floor)
+        def contrast(masks):
+            samples = [psf[mask] for mask in masks]
+            if min(map(len, samples)) < 3:
+                return 0., math.inf
+            means = [np.mean(np.clip(values, np.median(values)-clip_limit,
+                                     np.median(values)+clip_limit)) for values in samples]
+            # A narrow strip must use its own sampled area. Using the entire
+            # surrounding ring here makes it chase negligible tail remnants
+            # and can demand background well beyond a complete response.
+            return float(means[0]-means[1]), max(floor, .001*mass/sum(map(len, samples)),
+                                                3*noise*math.sqrt(sum(1/len(v) for v in samples)))
+
+        def connected_tail(mask, distance, value, limit):
+            if abs(value) <= limit:
+                return False
+            # Permit an asymmetric PSF, but require a continuous signed trail
+            # from outside the core into the taper. A separate isolated bright
+            # pixel cannot expand the range merely by occupying one sector.
+            sign = np.sign(value)
+            for start in (2., 2.5, 3., 3.5):
+                samples = psf[mask & (distance >= start) & (distance < start+.5)]
+                if len(samples) < 3:
+                    return False
+                mean = float(np.mean(np.clip(samples, np.median(samples)-clip_limit,
+                                             np.median(samples)+clip_limit)))
+                if sign*mean <= max(floor, .001*mass/(4*len(samples)), 3*noise/math.sqrt(len(samples))):
+                    return False
+            return True
+
+        grow = np.zeros(2, dtype=bool)
+        for axis, (along, across) in enumerate(((xx/widths[0], yy/widths[1]),
+                                               (yy/widths[1], xx/widths[0]))):
+            # Attribute a trail to the edge it actually crosses. Enlarging
+            # both axes for a horizontal tail needlessly demands vertical
+            # background and rejects otherwise complete thin image contexts.
+            edge = np.abs(along) >= np.abs(across)
+            contrasts, limits, sectors = [], [], []
+            for sx, sy in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+                sector = edge & ((xx >= 0) if sx > 0 else (xx < 0)) & ((yy >= 0) if sy > 0 else (yy < 0))
+                value, limit = contrast([mask & sector for mask in (inner, outer)])
+                contrasts.append(value)
+                limits.append(limit)
+                sectors.append(sector)
+            # A narrow oblique response may occupy just two opposed sectors;
+            # a unilateral response must additionally connect to the core.
+            grow[axis] = any((contrasts[a] > limits[a] and contrasts[b] > limits[b])
+                             or (contrasts[a] < -limits[a] and contrasts[b] < -limits[b])
+                             for a, b in ((0, 3), (1, 2)))
+            if not grow[axis]:
+                grow[axis] = any(connected_tail(sector, radius, value, limit)
+                                 for sector, value, limit in zip(sectors, contrasts, limits))
+            # Supplement sector averages with narrow axial strips, so a fine
+            # response is not diluted by irrelevant pixels in a wide sector.
+            sides = []
+            for sign in (-1, 1):
+                distance = sign*along
+                band = np.abs(across) <= 1.
+                value, limit = contrast([band & (distance > 3.) & (distance < 4.),
+                                         band & (distance >= 4.) & (distance < background_extent)])
+                sides.append((value, limit))
+                grow[axis] |= connected_tail(band, distance, value, limit)
+            grow[axis] |= (all(c > limit for c, limit in sides)
+                           or all(c < -limit for c, limit in sides))
+        if not np.any(grow):
+            return support
+        scale[grow] *= 1.5
+    raise ValueError(_msg('mtf.supportNotConverged'))
+
+
+def _fit_source_support(pixels: np.ndarray, row_spacing: float, column_spacing: float,
+                        *, background_extent: float, source_index, support_scale: np.ndarray):
+    """Refine peak width and a robust background plane at a fixed support scale.
+
+    Require the complete annulus; padding/cropping would invent background.
     """
     psf, background, noise, _ = _background_plane(pixels)
     if np.max(psf) <= 0:
@@ -412,19 +531,20 @@ def _source_support(pixels: np.ndarray, row_spacing: float, column_spacing: floa
     widths = source_widths(psf)
     floor = max(float(np.ptp(pixels))*1e-12, np.finfo(float).eps)
     for _ in range(30):
+        support_widths = widths*support_scale
         available = np.array([min(px, pixels.shape[1]-1-px),
                               min(py, pixels.shape[0]-1-py)])
-        if np.any(available < background_extent*widths):
-            radii = (math.ceil(background_extent*widths[1])+1,
-                     math.ceil(background_extent*widths[0])+1)
+        if np.any(available < background_extent*support_widths):
+            radii = (math.ceil(background_extent*support_widths[1])+1,
+                     math.ceil(background_extent*support_widths[0])+1)
             raise MtfSupportError(peak_index, radii, row_spacing, column_spacing)
-        radius = np.maximum(np.abs(xx)/widths[0], np.abs(yy)/widths[1])
+        radius = np.maximum(np.abs(xx)/support_widths[0], np.abs(yy)/support_widths[1])
         annulus = (radius > 4.) & (radius < background_extent)
         if np.count_nonzero(annulus) < 12:
             raise ValueError(_msg('mtf.roiIncomplete'))
         base_weights = np.sin(np.pi*(radius[annulus]-4.)/(background_extent-4.))**2
         design = np.column_stack((np.ones(np.count_nonzero(annulus)),
-                                  xx[annulus]/widths[0], yy[annulus]/widths[1]))
+                                  xx[annulus]/support_widths[0], yy[annulus]/support_widths[1]))
         offset = float(np.median(pixels[annulus]))
         values = pixels[annulus]-offset
         weights = base_weights.copy()
@@ -436,18 +556,18 @@ def _source_support(pixels: np.ndarray, row_spacing: float, column_spacing: floa
             weights = base_weights*np.minimum(1., 1.5*max(noise, floor)
                                                / np.maximum(np.abs(residual), floor))
         background = float(offset+coefficients[0])
-        psf = pixels-(background+coefficients[1]*xx/widths[0]
-                     +coefficients[2]*yy/widths[1])
+        psf = pixels-(background+coefficients[1]*xx/support_widths[0]
+                     +coefficients[2]*yy/support_widths[1])
         refined = source_widths(psf)
         if np.max(np.abs(refined/widths-1.)) < 1e-6:
-            return psf, background, noise, widths, xx, yy
+            return psf, background, noise, support_widths, xx, yy
         widths = (widths+refined)/2.
     raise ValueError(_msg('mtf.supportNotConverged'))
 
 
 def _source_window(xx: np.ndarray, yy: np.ndarray, widths: np.ndarray,
                    scale: float = 1.) -> np.ndarray:
-    """Keep +/-3 FWHM unchanged; cosine fade to zero at +/-4 FWHM."""
+    """Keep +/-3 support units unchanged; cosine fade to zero at +/-4."""
     window = np.ones(xx.shape)
     for coordinate, width in ((xx, widths[0]), (yy, widths[1])):
         distance = np.abs(coordinate)/(width*scale)
@@ -456,15 +576,24 @@ def _source_window(xx: np.ndarray, yy: np.ndarray, widths: np.ndarray,
 
 
 def _windowed_point_source_mtf(pixels: np.ndarray, row_spacing: float, column_spacing: float,
-                               *, check_stability: bool = True, source_index=None,
+                               *, check_stability: bool = False, source_index=None,
                                sensitivity_threshold=MTF_SENSITIVITY_LIMIT) -> BeadMtfResult:
     psf, background, noise, widths, xx, yy = _source_support(
         pixels, row_spacing, column_spacing, source_index=source_index)
-    peak = float(np.max(psf) if source_index is None else psf[source_index])
+    peak_index = (int(-yy[0, 0]), int(-xx[0, 0]))
+    peak = float(psf[peak_index])
     warnings, notes = [], []
     if noise > 0 and peak < 5*noise:
         warnings.append(_msg('text.0254', value1=_msg('text.0248')))
-    window = _source_window(xx, yy, widths)
+    window = _source_window(xx, yy, widths, MTF_INTEGRATION_SCALE)
+    core_widths = np.asarray((lsf_fwhm(psf[peak_index[0], :], 1., peak_index=peak_index[1]),
+                             lsf_fwhm(psf[:, peak_index[1]], 1., peak_index=peak_index[0])))
+    # Expansion can put a distinct object inside the full-weight region. A
+    # fixed peak index prevents target switching but cannot prevent mixing its
+    # response with a neighbor. Report this separately from taper truncation.
+    distant = ((np.abs(xx) > 2*core_widths[0]) | (np.abs(yy) > 2*core_widths[1])) & (window > 0)
+    if np.any(distant) and np.max(psf[distant]*window[distant]) > max(.25*peak, 5*noise):
+        warnings.append(_msg('mtf.additionalPeak'))
     tapered = (window > 0) & (window < 1)
     if np.any(tapered) and np.max(np.abs(psf[tapered])) > max(.05*peak, 5*noise):
         warnings.append(_msg('mtf.windowSignal'))
@@ -496,13 +625,13 @@ def _windowed_point_source_mtf(pixels: np.ndarray, row_spacing: float, column_sp
     if check_stability:
         # Parameter perturbations are diagnostics, never a veto on the baseline.
         comparisons = []
-        for name, scale in (('window90', .9), ('window110', 1.1), ('background55', None)):
+        for name, scale in (('window90', .9), ('window100', 1.), ('background55', None)):
             try:
                 if scale is None:
                     response, _, _, other_widths, _, _ = _source_support(
                         pixels, row_spacing, column_spacing, background_extent=5.5,
                         source_index=source_index)
-                    weights = _source_window(xx, yy, other_widths)
+                    weights = _source_window(xx, yy, other_widths, MTF_INTEGRATION_SCALE)
                 else:
                     response, weights = psf, _source_window(xx, yy, widths, scale)
                 comparisons.append(axes(response, weights, [], [], comparison=name))
@@ -512,16 +641,27 @@ def _windowed_point_source_mtf(pixels: np.ndarray, row_spacing: float, column_sp
         x = replace(x, sensitivity=tuple(pair[0] for pair in comparisons))
         y = replace(y, sensitivity=tuple(pair[1] for pair in comparisons))
     _warn_axis_mismatch(x, y, warnings)
+    sampling = MtfSampling((float(-xx[0, 0]), float(-yy[0, 0])),
+                           tuple(map(float, 4*widths*MTF_INTEGRATION_SCALE)),
+                           tuple(map(float, 6*widths)), tuple(map(float, 4*widths)))
+    notes.append(_msg('mtf.scaledSamplingDetails', percent=f'{100*MTF_INTEGRATION_SCALE:.0f}',
+        width=f'{8*widths[0]*column_spacing*MTF_INTEGRATION_SCALE:.2f}',
+        height=f'{8*widths[1]*row_spacing*MTF_INTEGRATION_SCALE:.2f}',
+        innerWidth=f'{8*widths[0]*column_spacing:.2f}', innerHeight=f'{8*widths[1]*row_spacing:.2f}',
+        backgroundWidth=f'{12*widths[0]*column_spacing:.2f}',
+        backgroundHeight=f'{12*widths[1]*row_spacing:.2f}'))
     return BeadMtfResult(x, y, background, noise, tuple(dict.fromkeys(warnings)), 'tukey_fft',
-                         tuple(dict.fromkeys(notes)), sensitivity_threshold if check_stability else None)
+                         tuple(dict.fromkeys(notes)), sensitivity_threshold if check_stability else None,
+                         sampling, MTF_INTEGRATION_SCALE)
 
 
 def compute_point_source_mtf(roi: np.ndarray, row_spacing: float,
                              column_spacing: float, *,
                              measurement_method: str = "bead",
                              analysis_method: str = "direct_fft",
-                             sensitivity_threshold: float = MTF_SENSITIVITY_LIMIT) -> BeadMtfResult:
-    """计算微珠或垂直扫描平面细丝截面的两方向 MTF。"""
+                             sensitivity_threshold: float = MTF_SENSITIVITY_LIMIT,
+                             check_stability: bool = False) -> BeadMtfResult:
+    """Calculate X/Y MTF; check_stability opts into extra audit comparisons."""
     if (isinstance(sensitivity_threshold, bool) or not isinstance(sensitivity_threshold, (float, int))
             or not math.isfinite(sensitivity_threshold) or not .01 <= sensitivity_threshold <= 1.):
         raise ValueError(_msg('mtf.invalidSensitivityThreshold'))
@@ -543,7 +683,8 @@ def compute_point_source_mtf(roi: np.ndarray, row_spacing: float,
         raise ValueError(_msg('text.0251'))
     if analysis_method == 'tukey_fft':
         return _windowed_point_source_mtf(pixels, row_spacing, column_spacing,
-                                            sensitivity_threshold=sensitivity_threshold)
+                                            sensitivity_threshold=sensitivity_threshold,
+                                            check_stability=check_stability)
     band = max(1, math.ceil(min(pixels.shape) * 0.1))
     border = np.ones(pixels.shape, dtype=bool)
     border[band:-band, band:-band] = False
@@ -612,10 +753,17 @@ def compute_point_source_mtf(roi: np.ndarray, row_spacing: float,
         (y_lsf, noise * math.sqrt(pixels.shape[1]) * column_spacing, "Y"),
     ) if has_negative_sidelobes(lsf, estimate)]
     if negative_axes and analysis_method == 'gaussian':
-        result = _windowed_point_source_mtf(pixels, row_spacing, column_spacing,
-                                            sensitivity_threshold=sensitivity_threshold)
-        return replace(result, warnings=(_msg('mtf.autoWeighted', directions=' / '.join(negative_axes)),
-                                         *result.warnings))
+        notice = _msg('mtf.autoWeighted', directions=' / '.join(negative_axes))
+        try:
+            result = _windowed_point_source_mtf(pixels, row_spacing, column_spacing,
+                                                sensitivity_threshold=sensitivity_threshold,
+                                                check_stability=check_stability)
+        except MtfSupportError as exc:
+            # Context expansion must retain both the fixed target and the
+            # reason for switching methods, even across multiple retries.
+            exc.fallback_warnings = (notice,)
+            raise
+        return replace(result, warnings=(notice, *result.warnings))
     if negative_axes:
         warnings.append(_msg('mtf.negativeMeasured', directions=' / '.join(negative_axes)))
     notes = []

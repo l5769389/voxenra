@@ -262,8 +262,6 @@ var labels = {
         "mtf.equivalentSettingHelp",
         "mtf.frequencyUnit",
         "mtf.settingsHelp",
-        "mtf.sensitivitySetting",
-        "mtf.sensitivitySettingHelp",
         "ramp.angle23",
         "ramp.angle45",
         "ramp.conversion",

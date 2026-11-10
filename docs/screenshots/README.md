@@ -2,8 +2,11 @@
 
 Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首页](../../README.md) · [English README](../../README.en.md)
 
-## 2.5.0 更新（2026-11-09）
+## 2.5.0 更新（2026-11-10）
 
+- [影像来源与最近记录](66-image-sources-2.5.0.png) · [English](en/66-image-sources-2.5.0.png)
+- [工作区操作](17-workspace-2.5.0.png) · [English](en/17-workspace-2.5.0.png)
+- [MTF 结果](67-mtf-analysis-2.5.0.png) · [English](en/67-mtf-analysis-2.5.0.png)
 - [紧凑测量标签与结果列表](63-measurement-2.5.0.png) · [English](en/63-measurement-2.5.0.png)
 - [序列右键菜单与视图快捷键](65-view-shortcuts-2.5.0.png) · [English](en/65-view-shortcuts-2.5.0.png)
 
@@ -107,7 +110,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 <td width="50%"><b>CT 水模 QA</b><br><a href="19-water-qa-2.1.3.png"><img src="19-water-qa-2.1.3.png" alt="CT 水模 QA" width="100%"></a></td>
 </tr>
 <tr>
-<td width="50%"><b>点源 MTF</b><br><a href="28-mtf-analysis.png"><img src="28-mtf-analysis.png" alt="点源 MTF" width="100%"></a></td>
+<td width="50%"><b>点源 MTF</b><br><a href="67-mtf-analysis-2.5.0.png"><img src="67-mtf-analysis-2.5.0.png" alt="点源 MTF" width="100%"></a></td>
 <td width="50%"><b>自由形状 ROI 转分割</b><br><a href="31-freehand-to-seg.png"><img src="31-freehand-to-seg.png" alt="自由形状 ROI 转分割" width="100%"></a></td>
 </tr>
 <tr>

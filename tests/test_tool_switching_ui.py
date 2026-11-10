@@ -110,7 +110,8 @@ def test_keyboard_opens_and_reopens_compact_group_without_reset(sidebar_scene):
     assert find(window, 'compactAction-measure:angle').property('checked')
     reveal(window, rail, find(window, 'compactTool-measure'))
     assert window.property('activeReadingMenu') == ''
-    QTest.keyClick(window, Qt.Key_E)
+    # F has only a measurement binding; E now intentionally opens Export globally.
+    QTest.keyClick(window, Qt.Key_F)
     assert tab.activeViewport.activeInteraction == 'measure:angle'
     QTest.keyClick(window, Qt.Key_M)
     assert find(window, 'compactAction-measure:angle').property('checked')

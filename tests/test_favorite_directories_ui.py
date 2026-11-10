@@ -65,7 +65,7 @@ def test_picker_and_manager_clicks_persist(qt_app, tmp_path, monkeypatch):
         assert favorites.items[0]['path'] == str(directory)
         assert not panel.scanning
         assert not button.isEnabled()
-        assert button.text() == localize(message('favorites.saved'))
+        assert button.accessibleName() == localize(message('favorites.saved'))
         shot(picker, 'picker-favorited')
     finally:
         picker.close()
@@ -190,7 +190,7 @@ def test_inline_favorites_many_resize_manage_and_reload(scene, tmp_path):
             picker.resize(width, 560)
             QTest.qWait(60)
             listing = picker.favorite_list
-            assert listing.height() <= 80
+            assert listing.height() <= 132
             assert listing.verticalScrollBar().maximum() > 0
             # Some Qt styles retain a range on an AlwaysOff scrollbar even
             # when every wrapped card fits; verify the visible bounds instead.

@@ -29,7 +29,7 @@ def main():
             def crop(size, dx=0, dy=0):
                 r = size//2
                 return pixels[48+dy-r:49+dy+r, 48+dx-r:49+dx+r]
-            baseline = compute_point_source_mtf(crop(65), .1953125, .1953125, analysis_method='tukey_fft')
+            baseline = compute_point_source_mtf(crop(65), .1953125, .1953125, analysis_method='tukey_fft', check_stability=True)
             raw = _windowed_point_source_mtf(crop(65), .1953125, .1953125, check_stability=False)
             rows = []
             start = time.perf_counter()
@@ -37,7 +37,7 @@ def main():
                 for dx in range(-2, 3):
                     for dy in range(-2, 3):
                         calculated = compute_point_source_mtf(crop(size, dx, dy), .1953125, .1953125,
-                                                              analysis_method='tukey_fft')
+                                                              analysis_method='tukey_fft', check_stability=True)
                         rows.append({'size': size, 'dx': dx, 'dy': dy,
                             'values': [None if v is None else v*10 for a in (calculated.x, calculated.y)
                                        for v in (a.mtf50, a.mtf10)],
@@ -78,7 +78,7 @@ def main():
             small_rois = []
             for size in (17, 25, 33, 41, 49):
                 try:
-                    r = compute_point_source_mtf(crop(size), .1953125, .1953125, analysis_method='tukey_fft')
+                    r = compute_point_source_mtf(crop(size), .1953125, .1953125, analysis_method='tukey_fft', check_stability=True)
                     small_rois.append({'size': size, 'accepted': True})
                 except ValueError as exc:
                     small_rois.append({'size': size, 'accepted': False, 'error': str(exc)})

@@ -349,7 +349,7 @@ def test_mtf_equivalent_setting_default_toggle_and_reset(scene, tmp_path, width)
     assert 'MTF10' in checkbox.property('text')
     reveal_setting(window, checkbox)
     help_text = find(window, 'mtfEquivalentSettingHelp')
-    assert '模型估计' in help_text.property('text')
+    assert '0.54866' in help_text.property('text') and '重新计算' in help_text.property('text')
     inside_width(help_text, window.contentItem())
     assert window.grabWindow().save(str(tmp_path/f'mtf-equivalent-settings-{width}.png'))
     click(window, checkbox)
@@ -361,20 +361,13 @@ def test_mtf_equivalent_setting_default_toggle_and_reset(scene, tmp_path, width)
     assert not warnings, warnings
 
 
-def test_mtf_advanced_warning_threshold_is_editable_and_resettable(scene, tmp_path):
+def test_mtf_settings_show_only_calculation_and_units(scene, tmp_path):
     window, app, warnings = open_page(scene, 'services', 1000)
-    button = find(window, 'mtfAdvancedSettings')
-    assert not find_any(window, 'settingInput-services-mtfSensitivityPercent').isVisible()
-    click(window, button)
-    control = find(window, 'settingInput-services-mtfSensitivityPercent')
-    reveal_setting(window, control)
-    type_text(window, control, '35')
-    QTest.keyClick(window, Qt.Key_Return)
-    assert app.settingsController.section('services')['mtfSensitivityPercent'] == 35
-    assert '不隐藏数值' in find(window, 'mtfSensitivitySettingHelp').property('text')
-    app.settingsController.resetSection('services')
-    assert control.property('numberValue') == 20
-    assert window.grabWindow().save(str(tmp_path/'mtf-sensitivity-settings.png'))
+    assert find(window, 'setting-services-mtfGaussianEquivalent').isVisible()
+    assert find(window, 'setting-services-mtfFrequencyUnit').isVisible()
+    assert not any(item.objectName() in ('mtfAdvancedSettings', 'settingInput-services-mtfSensitivityPercent')
+                   for item in descendants(window.contentItem()))
+    assert window.grabWindow().save(str(tmp_path/'mtf-compact-settings.png'))
     assert not warnings, warnings
 
 

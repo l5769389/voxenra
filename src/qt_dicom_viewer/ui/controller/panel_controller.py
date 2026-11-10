@@ -47,11 +47,13 @@ class PanelController(QObject):
     fusionDialogChanged = Signal()
 
     # parent=self 是 Qt 的对象所有权关系，不是业务上的“父子 Controller 调用关系”。
-    def __init__(self, parent=None, series_catalog=None, *, image_provider=None, import_blocker=None, favorite_path=None) -> None:
+    def __init__(self, parent=None, series_catalog=None, *, image_provider=None, import_blocker=None, favorite_path=None, recent_path=None) -> None:
         super().__init__(parent)
         self._import_blocker = import_blocker or (lambda: "")
         from .favorite_directories_controller import FavoriteDirectoriesController
         self._favorite_directories = FavoriteDirectoriesController(self, favorite_path)
+        from .recent_image_paths_controller import RecentImagePathsController
+        self._recent_image_paths = RecentImagePathsController(self, recent_path)
         self._pacs_import_source_uids = None
         self.selectionChanged.connect(self.viewSupportChanged.emit)
         self._scan_thread: QThread | None = None
@@ -68,7 +70,7 @@ class PanelController(QObject):
         self._progress_delay.setInterval(300)
         self._progress_delay.timeout.connect(self._show_import_task)
         self._last_import_paths = []
-        self._last_import_directory = ""
+        self._last_import_directory = self._recent_image_paths.last_directory
         self._import_store = LocalImportStore()
         self._last_import_snapshot = None
         self._select_after_local_import = False
@@ -108,6 +110,10 @@ class PanelController(QObject):
         return self._favorite_directories
 
     @Property(QObject, constant=True)
+    def recentImagePaths(self):
+        return self._recent_image_paths
+
+    @Property(QObject, constant=True)
     def compareController(self):
         return self._compare_controller
 
@@ -133,8 +139,10 @@ class PanelController(QObject):
         self._local_import_restorable_uids = set(self._removed_series_uids)
         self._set_scanning(True)
         thread = QThread(self)
+        pacs = getattr(self.parent(), '_pacs_controller', None)
         worker = DicomScanWorker(paths, self._import_store,
-            base_series=self._series_catalog.snapshot() if self._series_catalog else {})
+            base_series=self._series_catalog.snapshot() if self._series_catalog else {},
+            excluded_recent_roots=([pacs._import_root] if pacs is not None else []))
         self._progress_delay.start()
         self.importTaskChanged.emit()
 
@@ -247,6 +255,11 @@ class PanelController(QObject):
         elif final is None or not final.dicom_file_count:
             self._set_status(_msg('text.0475'), True)
         else:
+            recent_error = ''
+            if self._scan_worker and self._scan_worker.recent_paths:
+                self._last_import_directory = self._scan_worker.recent_directory
+                if not self._recent_image_paths.record(self._scan_worker.recent_paths, self._last_import_directory):
+                    recent_error = _msg('recent.saveFailed')
             if self._select_after_local_import and not self._selected_series_uids:
                 requested = final.incoming_series_uids
                 if requested is None:
@@ -256,8 +269,11 @@ class PanelController(QObject):
                     self.selectSeries(first_uid)
             self._set_status(_msg('text.0476', value1=len(final.series), value2=final.dicom_file_count)
                              + (_msg('text.0477', value1=final.skipped_file_count) if final.skipped_file_count else "")
-                             + (_msg('import.alreadyLoaded', count=final.existing_file_count) if final.existing_file_count else ""))
-            if not final.skipped_file_count and not final.existing_file_count:
+                             + (_msg('import.alreadyLoaded', count=final.existing_file_count) if final.existing_file_count else "")
+                             + (' · ' + recent_error if recent_error else ''))
+            if recent_error:
+                self._import_outcome = 'review'
+            elif not final.skipped_file_count and not final.existing_file_count:
                 self._import_outcome = 'complete'
             elif (final.existing_file_count == final.dicom_file_count
                   and final.skipped_file_count == final.duplicate_file_count):
@@ -310,11 +326,9 @@ class PanelController(QObject):
             return
         if self._import_is_blocked():
             return
-        paths = select_import_paths(self._last_import_directory, self._favorite_directories)
+        paths = select_import_paths(self._recent_image_paths.last_directory or self._last_import_directory,
+                                    self._favorite_directories, self._recent_image_paths)
         if paths:
-            from pathlib import Path
-            chosen = Path(paths[0])
-            self._last_import_directory = str(chosen if chosen.is_dir() else chosen.parent)
             self._start_import(paths)
 
     def cleanup_imports(self):

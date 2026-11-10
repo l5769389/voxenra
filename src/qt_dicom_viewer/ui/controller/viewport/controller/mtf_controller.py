@@ -14,7 +14,7 @@ import numpy as np
 
 from PySide6.QtCore import QObject, Property, QRunnable, QThreadPool, Qt, Signal, Slot
 
-from qt_dicom_viewer.core.mtf_quality import metric_quality, quality_warnings, sensitivity_details
+from qt_dicom_viewer.core.mtf_quality import metric_quality, quality_warnings
 from qt_dicom_viewer.i18n.messages import localize
 from qt_dicom_viewer.core.measurement_format import format_measurement
 from qt_dicom_viewer.core.bead_mtf import (
@@ -106,7 +106,6 @@ class MtfController(QObject):
             max_per_frame=1,
             geometry_only=True,
             adaptive_roi_hit_tolerance=True,
-            physical_square_roi=self.TARGET_METHODS[0] != "ramp",
         )
         self._pool = QThreadPool(self)
         self._pool.setMaxThreadCount(1)
@@ -124,6 +123,7 @@ class MtfController(QObject):
         # 点源 MTF 的 X/Y 方向显示选择：默认只看 X，至少保留一个方向。
         self._show_x = True
         self._show_y = False
+        self._show_sampling = False
         self._closed = False
         self._frame = None
         self._pixels = None
@@ -235,6 +235,36 @@ class MtfController(QObject):
     def showY(self):
         return self._show_y
 
+    @Property(bool, notify=stateChanged)
+    def showSampling(self):
+        return self._show_sampling
+
+    @Slot(bool)
+    def setShowSampling(self, visible):
+        if bool(visible) != self._show_sampling:
+            self._show_sampling = bool(visible)
+            self.stateChanged.emit()
+
+    @Property('QVariantMap', notify=stateChanged)
+    def samplingGeometry(self):
+        result = self._presented_result()
+        if not isinstance(result, BeadMtfResult) or result.sampling is None:
+            return {}
+        analysis = self._current_analysis()
+        roi = next((m for m in self._roi.committed_measurements
+                    if m.measurement_id == analysis.request.roi_id), None)
+        if roi is None:
+            return {}
+        column = math.ceil(min(p.column for p in roi.points))
+        row = math.ceil(min(p.row for p in roi.points))
+        sampling = result.sampling
+        inner = sampling.background_inner_half_size or sampling.half_size
+        return dict(centerX=column+sampling.center[0], centerY=row+sampling.center[1],
+                    halfWidth=sampling.half_size[0], halfHeight=sampling.half_size[1],
+                    backgroundInnerHalfWidth=inner[0], backgroundInnerHalfHeight=inner[1],
+                    backgroundHalfWidth=sampling.background_half_size[0],
+                    backgroundHalfHeight=sampling.background_half_size[1])
+
     @Slot(bool)
     def setShowX(self, visible):
         visible = bool(visible)
@@ -328,8 +358,6 @@ class MtfController(QObject):
         if (not all(math.isfinite(v) for v in (center_x, center_y, width_mm, height_mm))
                 or width_mm <= 0 or height_mm <= 0):
             return False
-        if self._measurement_method != 'ramp':
-            height_mm = width_mm
         row_spacing, column_spacing = self._frame.instance_meta.pixel_spacing
         dx, dy = width_mm / column_spacing / 2, height_mm / row_spacing / 2
         points = [ImagePoint(center_x-dx, center_y-dy), ImagePoint(center_x+dx, center_y+dy)]
@@ -370,7 +398,6 @@ class MtfController(QObject):
         self._measurement_method = method
         self._analyses.clear()
         self._roi.clear_all()
-        self._roi.set_physical_square_roi(method != "ramp")
         self.stateChanged.emit()
 
     @Slot(str)
@@ -518,14 +545,10 @@ class MtfController(QObject):
 
         line50 = " · ".join(f"{name} {frequency_metric(axis, 'mtf50')}" for name, axis in axes)
         line10 = " · ".join(f"{name} {frequency_metric(axis, 'mtf10')}" for name, axis in axes)
-        label50 = localize(_msg("mtf.imageModel50")) if result.analysis_method == "gaussian_equivalent" else "MTF50"
-        label10 = localize(_msg("mtf.imageMeasured10")) if result.analysis_method == "gaussian_equivalent" else "MTF10"
-        if result.analysis_method == 'gaussian':
-            label50, label10 = localize(_msg('mtf.imageFit50')), localize(_msg('mtf.imageFit10'))
         return (
             f"{basic}\n"
-            f"{label50}  {line50} {self.frequencyUnit}\n"
-            f"{label10}  {line10} {self.frequencyUnit}"
+            f"MTF50  {line50} {self.frequencyUnit}\n"
+            f"MTF10  {line10} {self.frequencyUnit}"
         )
 
     @_TextProperty('QVariantMap', notify=_i18n_currentResult, notify_name='_i18n_currentResult', source_notify='stateChanged')
@@ -600,13 +623,28 @@ class MtfController(QObject):
         if not isinstance(result, BeadMtfResult):
             return ''
         measured = self._current_analysis().result
-        parts = [localize(note) for note in measured.notes]
+        method_key = {'tukey_fft': 'mtf.usedWeighted', 'gaussian': 'mtf.usedGaussian',
+                      'gaussian_equivalent': 'mtf.usedEquivalent'}.get(result.analysis_method, 'mtf.usedDirect')
+        parts = [localize(_msg(method_key))]
         if result.analysis_method == 'gaussian_equivalent':
-            parts.append(localize(_msg('mtf.modelSensitivity')))
-            # Measured MTF50 sensitivity does not apply to the modeled MTF50.
-            parts.extend(localize(warning) for warning in quality_warnings(measured))
-        parts.append(sensitivity_details(measured, self.frequencyUnit))
-        return '\n\n'.join(str(part) for part in parts if part)
+            parts.append(localize(_msg('mtf.equivalentFormula')))
+        # Summarize the saved calculation geometry, never global settings or
+        # verbose historical notes. Full diagnostics remain in the result data.
+        sampling = measured.sampling
+        spacing = self._frame.instance_meta.pixel_spacing if self._frame else None
+        percent = f'{measured.integration_scale*100:g}'
+        if sampling is not None and spacing is not None:
+            row_spacing, column_spacing = spacing
+            def dimensions(half_size):
+                return f'{2*half_size[0]*column_spacing:.2f} × {2*half_size[1]*row_spacing:.2f}'
+            inner = sampling.background_inner_half_size or sampling.half_size
+            parts.append(localize(_msg('mtf.integrationSummary',
+                size=dimensions(sampling.half_size), percent=percent)))
+            parts.append(localize(_msg('mtf.backgroundSummary',
+                inner=dimensions(inner), outer=dimensions(sampling.background_half_size))))
+        elif measured.analysis_method == 'tukey_fft':
+            parts.append(localize(_msg('mtf.integrationScaleSummary', percent=percent)))
+        return '\n'.join(parts)
 
 
     @Slot()
@@ -657,7 +695,7 @@ class MtfController(QObject):
             if spacing is None:
                 raise ValueError(_msg('text.0590'))
             context = None
-            if self._measurement_method != 'ramp' and self._analysis_method == 'tukey_fft':
+            if self._measurement_method != 'ramp' and self._analysis_method in ('tukey_fft', 'gaussian'):
                 origin = (math.ceil(min(p.row for p in measurement.points)),
                           math.ceil(min(p.column for p in measurement.points)))
                 image = np.array(self._pixels, dtype=np.float64, copy=True)
@@ -691,7 +729,7 @@ class MtfController(QObject):
                 method=request.measurement_method, analysis=request.analysis_method,
                 direction=request.ramp_direction, result=result,
                 presented=analysis.presented, preferences=analysis.preferences,
-                timestamp=analysis.timestamp, fingerprint=analysis.fingerprint, algorithm="2" if isinstance(result, BeadMtfResult) else "1", app=__version__)
+                timestamp=analysis.timestamp, fingerprint=analysis.fingerprint, algorithm="4" if isinstance(result, BeadMtfResult) else "1", app=__version__)
             self.recordsChanged.emit()
         self.stateChanged.emit()
 

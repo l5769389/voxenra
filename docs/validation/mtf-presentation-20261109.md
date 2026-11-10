@@ -21,7 +21,7 @@
 - Cocoa 原生 UI：7 项通过，包含敏感数值、显式重新计算、精确 ROI 和高级提示阈值。
 - 截图复核后将英文目标标签精简为 Target，避免单词拆行；再次执行全部 MTF 原生 QML 测试 22 项通过，语言回归 31 项通过。
 - 使用用户指定第 26 张的原始像素，10 mm ROI：第二点 Y 实测 MTF50 = 15.3280 lp/cm，最大参数变化 63.6%；第三点 = 11.0839 lp/cm，变化 31.6%。默认频谱值未改。
-- 第一点 X559/Y433 仍无法归一化，未人为生成数值。
+- 当时沿用的 X559/Y433 无法归一化。**2026-11-10 更正：该坐标并非用户截图中的第一亮点；用户确认第一点为 X600/Y432，复算可正常输出数值。** 详见[位置对应更正](mtf-point-correspondence-20261110.md)。
 - 原生窗口通过精确 ROI 对话框输入第二点的局部坐标，检查中/英文实测与模型结果、计算详情、窄面板及记录往返。匿名测试元数据替换真实 DICOM 头信息。
 - 两组去除 DICOM 头的模体数据各进行 150 个 ROI 大小/位置对照；独立 Fourier 求和与 FFT 曲线差异小于 5e-15。此项仅验证数值实现保持一致，不验证背景估计或归一化的物理正确性。
 - 本地记录：`build/mtf-sensitivity/verified/results.json`、`real-results.json`、`phantoms/final-results.json`、`media/`；原生测试日志 `build/mtf-sensitivity-native-final.log` 和 `build/mtf-sensitivity/native-mtf-final.log`。

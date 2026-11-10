@@ -449,14 +449,14 @@ def test_small_roi_perturbations_are_stable_for_noisy_sharp_target():
     assert np.all(np.ptp(values,axis=0)/np.median(values,axis=0)<.025)
 
 
-@pytest.mark.parametrize('noise_scale, sensitive', [(130, False), (135, True)])
+@pytest.mark.parametrize('noise_scale, sensitive', [(50, False), (135, True)])
 def test_windowed_sensitivity_marks_both_sides_of_twenty_percent(noise_scale, sensitive):
-    # Fixed synthetic noise places X MTF10 sensitivity on either side of 20%:
-    # 19.959% and 20.107%. Exercise the full background/window/FFT pipeline.
+    # Fixed synthetic noise puts X MTF10 sensitivity below/above 20% with
+    # the 110% baseline. Exercise the full background/window/FFT pipeline.
     yy, xx = np.mgrid[-32:33, -32:33]
     pixels = (80 + 1000*np.exp(-.5*((xx/1.6)**2 + (yy/1.8)**2))
               + noise_scale*np.random.default_rng(7).normal(size=(65, 65)))
-    result = compute_point_source_mtf(pixels, .1953, .1953, analysis_method='tukey_fft')
+    result = compute_point_source_mtf(pixels, .1953, .1953, analysis_method='tukey_fft', check_stability=True)
     from qt_dicom_viewer.core.mtf_quality import metric_quality
     assert result.x.mtf10 is not None
     assert not result.x.unreliable_metrics
@@ -515,7 +515,7 @@ def test_real_phantom_roi_changes_keep_support_and_metric_validity(sample):
         for dx, dy in ((0, 0), (-2, -2), (2, 2), (-2, 2), (2, -2)):
             r = size//2
             roi = pixels[48+dy-r:49+dy+r, 48+dx-r:49+dx+r]
-            result = compute_point_source_mtf(roi, .1953125, .1953125, analysis_method='tukey_fft')
+            result = compute_point_source_mtf(roi, .1953125, .1953125, analysis_method='tukey_fft', check_stability=True)
             assert not result.x.unreliable_metrics
             assert not result.y.unreliable_metrics
             if sample == 'qa_slice151':

@@ -52,7 +52,9 @@ class AppController(QObject):
         self._panel_controller = PanelController(parent=self, series_catalog=self._series_catalog, image_provider=image_provider,
             import_blocker=lambda: self._series_import_blocker("local"),
             favorite_path=(self._settings_controller._path.with_name("favorite-directories.json")
-                           if self._settings_controller._path else None))
+                           if self._settings_controller._path else None),
+            recent_path=(self._settings_controller._path.with_name("recent-image-paths.json")
+                         if self._settings_controller._path else None))
         from qt_dicom_viewer.ui.controller.window_manager import WindowManager
         self._window_manager = WindowManager(self, self._workspace_controller)
         self._export_controller = self._window_manager.mainWorkspace.exportController

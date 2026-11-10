@@ -34,7 +34,7 @@ def _types():
     from qt_dicom_viewer.core import volume_view, mpr_voi
     from qt_dicom_viewer.ui.controller.viewport.controller import text_annotation_controller, pet_display_controller
     names = {
-        "MtfAxisResult", "MtfSensitivitySample", "BeadMtfResult", "RampFwhmResult", "WaterPhantom", "WaterQaSettings", "WaterQaRoi", "WaterQaResult",
+        "MtfAxisResult", "MtfSensitivitySample", "MtfSampling", "BeadMtfResult", "RampFwhmResult", "WaterPhantom", "WaterQaSettings", "WaterQaRoi", "WaterQaResult",
         "DisplayMappingIntent", "WindowLevel", "PixelUnitOption", "PixelValueMeta", "PixelSpacing",
         "ImagePoint", "Point", "Offset", "ViewportState", "DisplayStyle",
         "ViewportDisplaySettings", "MprProjectionSettings", "MprProjectionMode",
@@ -140,8 +140,11 @@ def decode(value, depth=0, *, budget=None):
         if cls.__name__ in ("MtfAxisResult", "BeadMtfResult") and isinstance(payload, dict):
             # Older results omitted diagnostics; do not reconstruct withheld numbers.
             defaults = ({"sensitivity": {"$tuple": []}} if cls.__name__ == "MtfAxisResult"
-                        else {"notes": {"$tuple": []}, "sensitivity_threshold": None})
+                        else {"notes": {"$tuple": []}, "sensitivity_threshold": None,
+                              "sampling": None, "integration_scale": 1.0})
             payload = {**defaults, **payload}
+        if cls.__name__ == "MtfSampling" and isinstance(payload, dict):
+            payload = {"background_inner_half_size": None, **payload}
         if cls.__name__ == "TextAnnotation" and isinstance(payload, dict) and "follows_default_color" not in payload:
             payload = dict(payload, follows_default_color=False)  # Legacy annotations stored an explicit color.
         if cls.__name__ == "RoiMetrics" and isinstance(payload, dict) and "perimeter_mm" not in payload:
@@ -157,7 +160,7 @@ def decode(value, depth=0, *, budget=None):
         if any(not _matches(v, hints[k]) for k, v in decoded.items()):
             raise ValueError(_msg('text.0118'))
         result = cls(**decoded)
-        if cls.__name__ in ('MtfSensitivitySample', 'MtfAxisResult', 'BeadMtfResult'):
+        if cls.__name__ in ('MtfSensitivitySample', 'MtfAxisResult', 'MtfSampling', 'BeadMtfResult'):
             from qt_dicom_viewer.core.analysis_records import validate_mtf_diagnostics
             validate_mtf_diagnostics(result)
         return result

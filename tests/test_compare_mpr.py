@@ -54,7 +54,7 @@ def test_six_views_eligibility_and_default_independence(comparison):
     assert all(v._state.window == WindowLevel(800, 50) for v in a.viewports_by_id.values())
     assert bv._state.window == before
     app.workspaceController.createMprCompareTab(*(r.series_instance_uid for r in reversed(records[:2])))
-    assert app.workspaceController.activeTab is not tab and len(app.workspaceController.tabs) == 2
+    assert app.workspaceController.activeTab is tab and len(app.workspaceController.tabs) == 1
 
 
 def test_explicit_position_rotation_links_keep_initial_offsets_and_can_disable(comparison):

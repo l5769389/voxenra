@@ -59,7 +59,7 @@ def test_pair_picker_eligibility_selection_and_independent_views(comparison):
     assert registry.activeTabType == 'compare2d'
     panel.selectSeriesWithModifiers(second, True)
     picker.request(second)
-    assert registry.activeTab is not tab and len(registry.tabs) == 2
+    assert registry.activeTab is tab and len(registry.tabs) == 1
     # A different context series is the anchor, even while another pair is checked.
     picker.request(third)
     assert picker.dialogOpen and picker.anchor['seriesUid'] == third

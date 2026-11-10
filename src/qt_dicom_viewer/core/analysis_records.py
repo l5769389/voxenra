@@ -1,7 +1,7 @@
 """Validation of optional analysis records in an untrusted workspace document."""
 import math
 
-from qt_dicom_viewer.model.mtf import BeadMtfResult, RampFwhmResult, MtfAxisResult, MtfSensitivitySample
+from qt_dicom_viewer.model.mtf import BeadMtfResult, RampFwhmResult, MtfAxisResult, MtfSensitivitySample, MtfSampling
 from qt_dicom_viewer.model.water_qa import WaterQaResult, WaterQaSettings
 from qt_dicom_viewer.model.measure import RoiMeasurement
 
@@ -20,13 +20,25 @@ def validate_mtf_diagnostics(value):
             raise ValueError('Invalid MTF comparison identifiers')
         for sample in value.sensitivity:
             validate_mtf_diagnostics(sample)
+    elif isinstance(value, MtfSampling):
+        inner = value.half_size if value.background_inner_half_size is None else value.background_inner_half_size
+        if (any(len(pair) != 2 for pair in (value.center, value.half_size, value.background_half_size, inner))
+                or not all(math.isfinite(v) and 0 <= v <= 1e7 for v in value.center)
+                or not all(math.isfinite(a) and math.isfinite(b) and 0 < a < b <= 1e7
+                           for half in (value.half_size, inner)
+                           for a, b in zip(half, value.background_half_size))):
+            raise ValueError('Invalid MTF sampling geometry')
     elif isinstance(value, BeadMtfResult):
+        if (isinstance(value.integration_scale, bool) or not math.isfinite(value.integration_scale)
+                or not 0 < value.integration_scale <= 10):
+            raise ValueError('Invalid MTF integration scale')
         threshold = value.sensitivity_threshold
         if (threshold is not None and (not math.isfinite(threshold) or not .01 <= threshold <= 1.)
                 or threshold is None and (value.x.sensitivity or value.y.sensitivity)):
             raise ValueError('Invalid MTF sensitivity threshold')
         validate_mtf_diagnostics(value.x)
         validate_mtf_diagnostics(value.y)
+        validate_mtf_diagnostics(value.sampling)
 
 
 def validate_analysis_records(analyses):

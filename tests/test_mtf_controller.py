@@ -91,7 +91,7 @@ def finish(view, job):
     return result
 
 
-def test_mtf_sensitivity_threshold_is_frozen_in_request_result_and_workspace(mtf_viewport, monkeypatch):
+def test_legacy_diagnostics_restore_but_recalculation_only_uses_default(mtf_viewport, monkeypatch):
     from qt_dicom_viewer.core.workspace_state import dumps, loads
     view, frame = mtf_viewport
     c = view.mtfController
@@ -101,29 +101,38 @@ def test_mtf_sensitivity_threshold_is_frozen_in_request_result_and_workspace(mtf
     assert jobs[-1][0].sensitivity_threshold == .35
     c.settingsController.setValue('services', 'mtfSensitivityPercent', 10)
     finish(view, jobs[-1])
+    assert c._current_analysis().result.sensitivity_threshold is None
+    # Restore a record produced when processing comparisons were enabled.
+    token, pixels, spacing, context = jobs[-1]
+    legacy = compute_mtf_with_context(pixels, *spacing, context=context,
+                                      sensitivity_threshold=.35, check_stability=True)
+    c._receive_result(token, legacy, '')
     record = next(iter(c.persistent_state()['records'].values()))
     assert record['result'].sensitivity_threshold == .35
     assert record['preferences']['mtfSensitivityPercent'] == 35
-    assert '35%' in c.calculationDetails
+    assert '35%' not in c.calculationDetails
     restored = loads(dumps(c.persistent_state()))
     c.reset()
     c.restore_state(restored)
-    assert '35%' in c.calculationDetails
+    assert '35%' not in c.calculationDetails
     assert c.currentResult['x']['sensitivity']
     c.recalculate()
     finish(view, jobs[-1])
-    assert '10%' in c.calculationDetails
+    assert c._current_analysis().result.sensitivity_threshold is None
+    assert c.currentResult['x']['sensitivity'] == []
 
 
-def test_mtf_image_label_identifies_modeled_metric_for_export(mtf_viewport, monkeypatch):
+def test_mtf_image_label_keeps_plain_metrics_when_equivalent_is_enabled(mtf_viewport, monkeypatch):
     view, _ = mtf_viewport
     c = view.mtfController
     c.settingsController.setValue('services', 'mtfGaussianEquivalent', True)
     jobs = capture_tasks(view, monkeypatch)
     draw(view)
     finish(view, jobs[-1])
-    assert 'MTF50（模型）' in c.roiMetricLabel
-    assert 'MTF10（实测）' in c.roiMetricLabel
+    assert 'MTF50  X' in c.roiMetricLabel and 'MTF10  X' in c.roiMetricLabel
+    assert all(word not in c.roiMetricLabel for word in ('模型', '实测', '⚠'))
+    assert c.actualAnalysisMethod == 'gaussian_equivalent'
+    assert '高斯等效' in c.calculationDetails and '0.54866' in c.calculationDetails
 
 
 def test_image_label_keeps_metrics_while_incomplete_check_stays_in_panel(mtf_viewport, monkeypatch):
@@ -133,19 +142,21 @@ def test_image_label_keeps_metrics_while_incomplete_check_stays_in_panel(mtf_vie
     jobs = capture_tasks(view, monkeypatch)
     draw(view)
     result = finish(view, jobs[-1])
-    incomplete = replace(result, x=replace(result.x, sensitivity=(
+    incomplete = replace(result, sensitivity_threshold=.2, x=replace(result.x, sensitivity=(
         MtfSensitivitySample('window90', None, None, 'Comparison failed'),)))
     c._receive_result(jobs[-1][0], incomplete, '')
     assert len(c.roiMetricLabel.splitlines()) == 3
     assert '⚠' not in c.roiMetricLabel
     assert any('检查未完成' in warning for warning in c.warnings)
-    assert '20%' in c.calculationDetails
+    assert all(word not in c.calculationDetails for word in ('敏感', '20%', '对照', '检查未完成'))
+    assert '积分范围' in c.calculationDetails and '110%' in c.calculationDetails
     c.setAnalysisMethod('gaussian')
     finish(view, jobs[-1])
-    assert 'MTF50（拟合）' in c.roiMetricLabel
+    assert 'MTF50  X' in c.roiMetricLabel
+    assert '高斯拟合' in c.calculationDetails
 
 
-def test_numeric_roi_commit_is_atomic_square_and_rejects_stale_results(mtf_viewport, monkeypatch):
+def test_numeric_rectangular_roi_is_atomic_and_rejects_stale_results(mtf_viewport, monkeypatch):
     view, frame = mtf_viewport
     controller = view.mtfController
     jobs = capture_tasks(view, monkeypatch)
@@ -153,7 +164,8 @@ def test_numeric_roi_commit_is_atomic_square_and_rejects_stale_results(mtf_viewp
     assert len(jobs) == 1
     geometry = controller.roiGeometry
     assert geometry['width'] == pytest.approx(8)
-    assert geometry['height'] == pytest.approx(8)  # Anisotropic pixels, physical square.
+    assert geometry['height'] == pytest.approx(3)  # Independent physical dimensions.
+    assert jobs[-1][1].shape == (21, 81)
     assert controller.stateSnapshot['status'] == 'calculating'
     assert controller.stateSnapshot['result'] == {}
     first = jobs[0]
@@ -174,6 +186,38 @@ def test_numeric_roi_commit_is_atomic_square_and_rejects_stale_results(mtf_viewp
     assert controller.stateSnapshot['result'] == {}
     assert controller.frameToken == ''
     assert not controller.applyRoi(63, 63, 8, 8)
+
+
+def test_sampling_bounds_and_algorithm_provenance_follow_the_committed_result(mtf_viewport):
+    view, _ = mtf_viewport
+    c = view.mtfController
+    assert c.applyRoi(63, 63, 3, 3)
+    wait_result(c)
+    geometry = getattr(c, 'samplingGeometry', {})
+    assert geometry
+    assert abs(geometry['centerX']-63.5) <= 1
+    assert abs(geometry['centerY']-63.5) <= 1
+    assert geometry['backgroundHalfWidth'] > geometry['halfWidth'] > 0
+    assert '积分范围' in c.calculationDetails
+    saved = c.persistent_state()
+    record = next(iter(saved['records'].values()))
+    assert record['algorithm'] == '4'
+    assert record['result'].integration_scale == 1.1
+    assert geometry['halfWidth'] == pytest.approx(geometry['backgroundInnerHalfWidth']*1.1)
+    record['algorithm'] = '2'  # Historical provenance must survive restoration.
+    old_result = record['result']
+    c.reset()
+    c.restore_state(saved)
+    assert next(iter(c.persistent_state()['records'].values()))['algorithm'] == '2'
+    assert c.samplingGeometry == geometry
+    assert c._current_analysis().result == old_result
+    c.recalculate()
+    wait_result(c)
+    assert next(iter(c.persistent_state()['records'].values()))['algorithm'] == '4'
+    view.beginInteraction(0, 0, 1, True, 5, 5, .1, .1)
+    assert c.samplingGeometry == {}
+    view.cancelMeasurement()
+    assert c.samplingGeometry == geometry
 
 
 def test_numeric_fwhm_roi_keeps_rectangle_and_separate_cache(mtf_viewport, monkeypatch):
@@ -242,10 +286,10 @@ def test_method_defaults_switching_and_analysis_recalculation(mtf_viewport, monk
     assert controller.currentResult["x"]["mtf50"] != direct_value
     assert controller.statusText == ""
     assert controller.roiMetricLabel == (
-        "ROI  11.00 × 11.00 mm · 121.00 mm²\n"
-        f"MTF50（拟合）  X {controller.currentResult['x']['mtf50']:.2f} · "
+        "ROI  11.00 × 16.50 mm · 181.50 mm²\n"
+        f"MTF50  X {controller.currentResult['x']['mtf50']:.2f} · "
         f"Y {controller.currentResult['y']['mtf50']:.2f} lp/mm\n"
-        f"MTF10（拟合）  X {controller.currentResult['x']['mtf10']:.2f} · "
+        f"MTF10  X {controller.currentResult['x']['mtf10']:.2f} · "
         f"Y {controller.currentResult['y']['mtf10']:.2f} lp/mm"
     )
 
@@ -320,23 +364,22 @@ def test_only_commit_submits_and_display_operations_do_not_recompute(mtf_viewpor
     assert len(view.mtfController.roiController.measurementItems) == 1
 
 
-def test_mtf_roi_draw_and_corner_resize_stay_physically_square(mtf_viewport, monkeypatch):
+def test_mtf_roi_draw_and_corner_resize_preserve_independent_dimensions(mtf_viewport, monkeypatch):
     view, _ = mtf_viewport
     capture_tasks(view, monkeypatch)
 
     draw(view, (20, 30), (70, 50))
     roi = view.mtfController.roiController.measurementItems[0]
-    assert roi["metrics"]["width_mm"] == pytest.approx(3)
+    assert roi["metrics"]["width_mm"] == pytest.approx(5)
     assert roi["metrics"]["height_mm"] == pytest.approx(3)
-    assert roi["points"][1]["column"] == pytest.approx(20 + 3 / .1)
+    assert roi["points"][1]["column"] == pytest.approx(70)
 
-    # 右下角向非正方形方向拖动，编辑后仍保持物理宽高相等。
+    # Dragging a corner keeps the requested width and height independently.
     corner = roi["points"][1]
     draw(view, (corner["column"], corner["row"]), (90, 55))
     resized = view.mtfController.roiController.measurementItems[0]
-    assert resized["metrics"]["width_mm"] == pytest.approx(
-        resized["metrics"]["height_mm"]
-    )
+    assert resized["metrics"]["width_mm"] == pytest.approx(7)
+    assert resized["metrics"]["height_mm"] == pytest.approx(3.75)
 
     # 普通矩形仍按自由宽高绘制。
     view._tool_controller.selectInteraction("measure:rect")
@@ -362,7 +405,7 @@ def test_move_resize_cancel_replace_and_stale_versions(mtf_viewport, monkeypatch
     moved = roi.measurementItems[0]
     assert moved["points"] == [
         {"column": 15, "row": 26},
-        {"column": 115, "row": pytest.approx(92.6666667)},
+        {"column": 115, "row": 116},
     ]
     corner = moved["points"][1]
     draw(view, (corner["column"], corner["row"]), (116, 118))  # 调整角点。
@@ -547,9 +590,9 @@ def test_mtf_precision_refreshes_labels_without_new_analysis(mtf_viewport, monke
     raw = controller.currentResult
     job_count = len(jobs)
     view.settingsController.setValue("measurement", "decimalPlaces", 0)
-    assert controller.roiMetricLabel.startswith("ROI  11 × 11 mm")
+    assert controller.roiMetricLabel.startswith("ROI  11 × 16 mm")
     view.settingsController.setValue("measurement", "decimalPlaces", 3)
-    assert controller.roiMetricLabel.startswith("ROI  11.000 × 11.000 mm")
+    assert controller.roiMetricLabel.startswith("ROI  11.000 × 16.500 mm")
     assert controller.currentResult == raw and len(jobs) == job_count
 
 
@@ -620,7 +663,8 @@ def test_ramp_roi_is_rectangular_and_angle_changes_do_not_recompute(mtf_viewport
     assert view.mtfController.currentResult == {} and not view.mtfController.roiController.measurementItems
     draw(view, (25, 61), (102, 66))
     roi = view.mtfController.roiController.measurementItems[0]
-    assert roi['metrics']['width_mm'] == pytest.approx(roi['metrics']['height_mm'])
+    assert roi['metrics']['width_mm'] == pytest.approx(7.7)
+    assert roi['metrics']['height_mm'] == pytest.approx(.75)
 
 
 def test_ramp_direction_change_keeps_roi_and_rejects_stale_results(mtf_viewport, monkeypatch):
@@ -709,9 +753,30 @@ def test_small_selection_automatically_samples_background_in_worker(mtf_viewport
     draw(view, (10, 10), (95, 95))
     wait_result(view.mtfController)
     assert view.mtfController.status == "ready"
-    assert "自动取样" in view.mtfController.calculationDetails
+    assert "积分范围" in view.mtfController.calculationDetails
     assert not any("自动取样" in w for w in view.mtfController.warnings)
     assert view.mtfController.currentResult["x"]["mtf10"] > 0
+
+
+def test_gaussian_rectangular_selection_retains_context_for_fft_fallback(mtf_viewport):
+    view, frame = mtf_viewport
+    axis = np.arange(129)-64
+    profile = (2-(axis/2)**2)*np.exp(-.5*(axis/2)**2)
+    image = 80+1000*np.outer(profile, profile)
+    meta = replace(frame.frame_meta,
+        geometry=replace(frame.frame_meta.geometry, rows=129, columns=129, pixel_spacing=PixelSpacing(.1, .1)),
+        instance_meta=replace(frame.frame_meta.instance_meta, rows=129, columns=129, pixel_spacing=(.1, .1)))
+    deliver_frame(view, replace(frame, modality_pixel=image, frame_meta=meta))
+    c = view.mtfController
+    c.setAnalysisMethod('gaussian')
+    assert c.applyRoi(64, 64, 2.4, 1.6)
+    wait_result(c)
+    assert c.status == 'ready', c.error
+    assert c.actualAnalysisMethod == 'tukey_fft'
+    assert c.roiGeometry['width'] == pytest.approx(2.4)
+    assert c.roiGeometry['height'] == pytest.approx(1.6)
+    assert c.samplingGeometry['centerX'] == c.samplingGeometry['centerY'] == 64
+    assert c.currentResult['x']['sensitivity'] == []
 
 
 def test_equivalent_settings_require_explicit_recalculation(qt_app, monkeypatch):

@@ -174,12 +174,12 @@ Unselected ROIs use compact labels and expand their statistics when selected. Me
 ### CT quality analysis
 
 - **QA:** water phantom CT number, noise, and uniformity. When no usable water phantom is detected, five editable circular ROIs provide sampling statistics. Move, copy, delete, regenerate, undo, or redo initial ROIs and copies; water-phantom summaries appear only when their prerequisites are met.
-- **MTF / FWHM:** point-source MTF curves and spatial resolution, plus ramp-line FWHM and slice-thickness analysis. Workspaces retain completed results, ROIs, and parameters.
+- **MTF / FWHM:** rectangular point-source selections, automatically determined sampling regions with visible bounds, and 110% adaptive integration for routine MTF calculations; independent ramp-line FWHM and slice-thickness analysis. Workspaces retain results, ROIs, and parameters; historical results change only when explicitly recalculated.
 
 <table>
 <tr>
 <td width="50%"><b>CT water phantom QA</b><br><a href="docs/screenshots/en/19-water-qa-2.1.3.png"><img src="docs/screenshots/en/19-water-qa-2.1.3.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
-<td width="50%"><b>Point-source MTF</b><br><a href="docs/screenshots/28-mtf-analysis.png"><img src="docs/screenshots/28-mtf-analysis.png" alt="Independent MTF curve and spatial resolution analysis" width="100%"></a></td>
+<td width="50%"><b>Point-source MTF</b><br><a href="docs/screenshots/en/67-mtf-analysis-2.5.0.png"><img src="docs/screenshots/en/67-mtf-analysis-2.5.0.png" alt="Independent MTF curve and spatial resolution analysis" width="100%"></a></td>
 </tr>
 </table>
 
@@ -187,7 +187,7 @@ Unselected ROIs use compact labels and expand their statistics when selected. Me
 
 Import source DICOM images on the left and associated SEG / NRRD masks through **Import segmentation** on the right (named “Import” in v2.1.3). Export source series as PNG or DICOM, or save the current view as a PNG screenshot. Series export and viewport screenshots have different content scopes; see [export details](docs/export.md).
 
-Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Opening a series from the list creates an independent tab. Click an existing tab to continue reading there. If you close a tab accidentally, choose **Reopen closed tab** from a tab’s context menu, the home screen or Workspace, or press Ctrl+Shift+T / ⇧⌘T. The session remembers the last 20 closed, fully loaded reading tabs without edits. Workspace files retain completed editing results from closed tabs. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
+Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Opening a series activates an existing tab of the same view type and preserves its reading state, or creates a tab if none matches. If you close a tab accidentally, choose **Reopen closed tab** from the tab-bar context menu, or press Ctrl+Shift+T / ⇧⌘T. The session remembers the last 20 closed, fully loaded reading tabs without edits. Workspace files retain completed editing results from closed tabs. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
 
 ![Offline manual and workflow demos](docs/screenshots/en/50-offline-manual-2.1.2.png)
 
@@ -198,13 +198,13 @@ Drag tabs into detached windows or move them between windows. Workspaces preserv
 </tr>
 <tr>
 <td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="Detach a tab into another window" width="100%"></a></td>
-<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/17-workspace-2.4.0.png"><img src="docs/screenshots/en/17-workspace-2.4.0.png" alt="Create, open, and save a workspace" width="100%"></a></td>
+<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/17-workspace-2.5.0.png"><img src="docs/screenshots/en/17-workspace-2.5.0.png" alt="Create, open, and save a workspace" width="100%"></a></td>
 </tr>
 </table>
 
-Favorite frequently used folders in the image picker and click a card at the top to browse it. Use **×** on the active card to remove the favorite. **Manage favorites** supports drag ordering, renaming, and replacing paths; changes persist after restart.
+The image-source dialog separates **Favorite folders** and **Recent** on the left from file browsing on the right. The star beside the path saves a folder. Click a recent record to open it, clear the selected row, or choose **Clear all**; source files and favorites remain intact. The **⋯** beside Favorites manages names, paths, and ordering, with changes retained after restart.
 
-![Quick access to favorite folders](docs/screenshots/en/57-directory-favorites-2.1.5.png)
+![Quick access to favorite folders](docs/screenshots/en/66-image-sources-2.5.0.png)
 
 ## Appearance and controls
 

@@ -179,15 +179,6 @@ Item {
                     onClicked: emptyState.workspaceController.openPacs()
                 }
             }
-            SecondaryAction {
-                objectName: "homeReopenClosedTab"
-                Layout.alignment: Qt.AlignHCenter
-                visible: (emptyState.documentController?.closedTabCount ?? 0) > 0
-                enabled: emptyState.documentController?.canReopenClosed ?? false
-                text: qsTrId("workspace.reopenClosed")
-                iconName: "undo"
-                onClicked: emptyState.documentController.reopenLastClosed()
-            }
             ColumnLayout {
                 objectName: "homeRecentSection"
                 Layout.fillWidth: true

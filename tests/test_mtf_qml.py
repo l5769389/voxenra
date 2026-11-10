@@ -369,14 +369,59 @@ def test_measured_weighting_and_live_unit_labels(workspace, tmp_path):
     QTest.qWait(60)
     explanation = next(item for item in _visual_children(view.contentItem())
                        if item.objectName() == 'mtfInfoExplanation' and item.isVisible())
-    assert '外环估计背景' in explanation.property('text')
-    assert '独立取首次下降交点' in explanation.property('text')
+    assert '背景环带' in explanation.property('text')
+    assert '边缘加权 FFT' in explanation.property('text')
     QTest.keyClick(view, Qt.Key_Escape)
     assert not warnings, warnings
 
 
+def test_sampling_overlay_tracks_pixels_and_hides_while_editing(workspace, tmp_path):
+    view, controller, pixels, warnings = workspace
+    controller._tool_controller.selectService('service:mtf')
+    c = controller.mtfController
+    assert c.applyRoi(63, 63, 3, 3)
+    wait_result(c)
+    QTest.qWait(80)
+    _click(view, _find(view, 'mtfShowSampling'))
+    overlay = _find(view, 'mtfSamplingOverlay')
+    assert c.showSampling and overlay.isVisible()
+    for rotated in (False, True):
+        if rotated:
+            controller.apply_zoom(1.5)
+            controller.applyTransformAction('rotate:cw90')
+            controller.applyTransformAction('rotate:mirror-h')
+        QTest.qWait(100)
+        geometry = c.samplingGeometry
+        mapped = overlay.property('mappedBounds').toVariant()
+        assert len(mapped) == 3  # Integration, background outer, background inner.
+        inner = mapped[2][0]
+        inner_scene = overlay.mapToScene(QPointF(inner['x'], inner['y']))
+        expected_inner = _scene(pixels, geometry['centerX']-geometry['backgroundInnerHalfWidth'],
+                                geometry['centerY']-geometry['backgroundInnerHalfHeight'])
+        assert inner_scene.x() == pytest.approx(expected_inner.x(), abs=1)
+        assert inner_scene.y() == pytest.approx(expected_inner.y(), abs=1)
+        first = mapped[0][0]
+        actual = overlay.mapToScene(QPointF(first['x'], first['y']))
+        expected = _scene(pixels, geometry['centerX']-geometry['halfWidth'],
+                           geometry['centerY']-geometry['halfHeight'])
+        assert actual.x() == pytest.approx(expected.x(), abs=1)
+        assert actual.y() == pytest.approx(expected.y(), abs=1)
+    assert view.grabWindow().save(str(tmp_path/'mtf-sampling-transformed.png'))
+    controller.beginInteraction(0, 0, 1, True, 5, 5, .1, .1)
+    QTest.qWait(40)
+    assert not overlay.isVisible()
+    assert not _find(view, 'mtfShowSampling').isEnabled()  # Keep the action's place in the panel.
+    controller.cancelMeasurement()
+    QTest.qWait(40)
+    assert overlay.isVisible()
+    controller._tool_controller.selectService('service:fwhm')
+    QTest.qWait(40)
+    assert not overlay.isVisible()
+    assert not warnings, warnings
+
+
 @pytest.mark.parametrize('workspace', [(1200, 820), (760, 560)], indirect=True)
-def test_quality_notes_only_appear_in_dismissible_info_popup(workspace, tmp_path):
+def test_compact_details_remain_dismissible_without_quality_notes(workspace, tmp_path):
     view, controller, pixels, warnings = workspace
     frame = bead_render(controller)
     data = np.zeros((128, 128)); data[64, 64] = 10; data[64, 63] = data[64, 65] = -2
@@ -406,23 +451,23 @@ def test_quality_notes_only_appear_in_dismissible_info_popup(workspace, tmp_path
     assert view.grabWindow().save(str(tmp_path / 'popup-open.png'))
     explanation = next(item for item in _visual_children(view.contentItem())
                        if item.objectName() == 'mtfInfoExplanation' and item.isVisible())
-    assert '傅里叶变换' in explanation.property('text')
-    note = next(item for item in _visual_children(view.contentItem())
-                if item.objectName() == 'mtfInfoWarning-0' and item.isVisible())
-    assert note.isVisible()
-    assert 0 <= note.mapToScene(QPointF()).x()
-    assert note.mapToScene(QPointF(note.width(), 0)).x() <= view.width()
+    assert '直接 FFT' in explanation.property('text')
+    assert '多次穿越' not in explanation.property('text')
+    assert not any(item.objectName().startswith('mtfInfoWarning-') and item.isVisible()
+                   for item in _visual_children(view.contentItem()))
+    assert 0 <= explanation.mapToScene(QPointF()).x()
+    assert explanation.mapToScene(QPointF(explanation.width(), 0)).x() <= view.width()
     path = tmp_path / f'mtf-notes-{view.width()}.png'
     assert view.grabWindow().save(str(path))
     print(f'MTF popup preview: {path}')
     QTest.keyClick(view, Qt.Key_Escape)
     QTest.qWait(50)
-    assert not note.isVisible()
+    assert not explanation.isVisible()
     _click(view, _find(view, 'mtfInfoButton'))
     QTest.qWait(40)
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, QPointF(4, 4).toPoint())
     QTest.qWait(40)
-    assert not note.isVisible()
+    assert not explanation.isVisible()
     assert not warnings, warnings
 
 
@@ -646,19 +691,19 @@ def test_info_button_theme_colors_and_accessible_popup(qt_app):
 
         controller.setWarnings(notes)
         QTest.qWait(60)
-        assert text_color() == QColor(LIGHT['warningColor']).name()
+        assert text_color() == QColor(LIGHT['textSecondary']).name()
         settings.setValue('appearance', 'theme', 'dark')
         QTest.qWait(60)
-        assert text_color() == QColor(DARK['warningColor']).name()
+        assert text_color() == QColor(DARK['textSecondary']).name()
 
         interface = QAccessible.queryAccessibleInterface(info)
         assert interface.text(QAccessible.Name) == builtin()['messages']['mtf.details']
-        assert interface.text(QAccessible.Description) == '\n'.join(notes)
+        assert interface.text(QAccessible.Description) == ''
 
         _click(view, info)
         popup = view.rootObject().findChild(QObject, 'mtfInfoPopup')
         assert popup is not None and popup.property('visible')
-        assert popup.property('warnings') == notes
+        assert popup.property('warnings').toVariant() == []
         explanation = popup.findChild(QQuickItem, 'mtfInfoExplanation')
         assert explanation is not None and explanation.property('text')
         QTest.keyClick(view, Qt.Key_Escape)
@@ -687,8 +732,9 @@ def test_info_button_theme_colors_and_accessible_popup(qt_app):
         delete(view)
 
 
-def test_sensitive_metric_is_visible_with_inline_warning_and_details(workspace, tmp_path):
+def test_mtf_result_shows_plain_values_and_compact_details_for_all_diagnostics(workspace, tmp_path):
     from qt_dicom_viewer.model import PixelSpacing
+    from qt_dicom_viewer.model.mtf import MtfSensitivitySample
     view, controller, pixels, warnings = workspace
     frame = bead_render(controller)
     with np.load(Path(__file__).parent/'fixtures/mtf/point_sources.npz') as fixture:
@@ -704,23 +750,34 @@ def test_sensitive_metric_is_visible_with_inline_warning_and_details(workspace, 
     QTest.qWait(50)
     c = controller.mtfController
     assert c.status == 'ready'
+    assert c.currentResult['y']['sensitivity'] == []
+    # Legacy saved diagnostics may still exist, but cannot decorate the UI.
+    analysis = c._current_analysis()
+    old = analysis.result
+    old = replace(old, sensitivity_threshold=.2, y=replace(old.y,
+        sensitivity=(MtfSensitivitySample('window90', old.y.mtf50*1.5, old.y.mtf10),)))
+    c._receive_result(analysis.request, old, '')
+    QTest.qWait(40)
     assert c.currentResult['y']['unreliable_metrics'] == []
     assert c.currentResult['y']['quality']['mtf50']['status'] == 'sensitive'
-    assert '⚠' in _find(view, 'mtfMetric-4').property('text')
-    assert float(_find(view, 'mtfMetric-4').property('text').replace('⚠', '').strip()) > 0
+    assert '⚠' not in _find(view, 'mtfMetric-4').property('text')
+    assert float(_find(view, 'mtfMetric-4').property('text')) > 0
     assert float(_find(view, 'mtfMetric-1').property('text')) > 0
     assert float(_find(view, 'mtfMetric-5').property('text')) > 0
     assert len(c.roiMetricLabel.splitlines()) == 3
     assert '⚠' not in c.roiMetricLabel
-    assert '实测' in _find(view, 'mtfResultOrigin').property('text')
-    assert any(item.objectName().startswith('mtfQualityWarning-') and item.isVisible()
+    assert not any(item.objectName() == 'mtfResultOrigin' and item.isVisible()
+                   for item in _visual_children(view.contentItem()))
+    assert not any(item.objectName().startswith('mtfQualityWarning-') and item.isVisible()
                for item in _visual_children(view.contentItem()))
     assert not any(item.objectName().startswith('mtfInfoWarning-') and item.isVisible()
                    for item in _visual_children(view.contentItem()))
     _click(view, _find(view, 'mtfInfoButton'))
     QTest.qWait(50)
-    assert any('Y MTF50' in str(item.property('text')) and item.isVisible()
-               for item in _visual_children(view.contentItem()))
+    explanation = next(item for item in _visual_children(view.contentItem())
+                       if item.objectName() == 'mtfInfoExplanation' and item.isVisible())
+    assert all(word not in explanation.property('text') for word in ('模型', '实测', '敏感', '对照', '⚠'))
+    assert '积分范围' in explanation.property('text') and '110%' in explanation.property('text')
     assert view.grabWindow().save(str(tmp_path/'mtf-sensitive-metric.png'))
     QTest.keyClick(view, Qt.Key_Escape)
     c.settingsController.setValue('services', 'mtfGaussianEquivalent', True)
@@ -728,9 +785,19 @@ def test_sensitive_metric_is_visible_with_inline_warning_and_details(workspace, 
     wait_result(c)
     QTest.qWait(40)
     assert c.currentResult['y']['quality']['mtf50']['status'] == 'ok'
-    assert any('Y 实测 MTF50' in warning and '模型估计' in warning for warning in c.warnings)
+    assert c.currentResult['y']['sensitivity'] == []
     assert len(c.roiMetricLabel.splitlines()) == 3
-    assert 'MTF50（模型）' in c.roiMetricLabel
+    assert 'MTF50  X' in c.roiMetricLabel
+    assert all(word not in c.roiMetricLabel for word in ('模型', '实测', '⚠'))
+    # Even incomplete comparison data cannot decorate the visible numbers.
+    analysis = c._current_analysis()
+    analysis.presented = replace(analysis.presented, sensitivity_threshold=.2, x=replace(analysis.presented.x,
+        sensitivity=(MtfSensitivitySample('window90', None, None, 'comparison failed'),)))
+    c.stateChanged.emit()
+    QTest.qWait(40)
+    assert c.currentResult['x']['quality']['mtf50']['incomplete']
+    for i in (1, 2, 4, 5):
+        assert float(_find(view, 'mtfMetric-'+str(i)).property('text')) > 0
     assert not warnings
 
 
@@ -744,6 +811,12 @@ def test_equivalent_toggle_requires_explicit_recalculation(workspace, tmp_path):
     measured, revision = c.currentResult, c._revision
     c.settingsController.setValue('services', 'mtfGaussianEquivalent', True)
     assert c.currentResult == measured and c._revision == revision
+    # Numerical readiness precedes the scene-graph frame that enables the
+    # button for native pointer hit testing. Verify presentation before click.
+    from PySide6.QtTest import QSignalSpy
+    frame_ready = QSignalSpy(view.frameSwapped)
+    view.update()
+    assert frame_ready.wait(1000)
     _click(view, _find(view, 'recalculateAnalysis'))
     wait_result(c)
     QTest.qWait(60)
@@ -757,7 +830,8 @@ def test_equivalent_toggle_requires_explicit_recalculation(workspace, tmp_path):
     QTest.qWait(60)
     explanation = next(item for item in _visual_children(view.contentItem())
                        if item.objectName() == 'mtfInfoExplanation' and item.isVisible())
-    assert '模型估计' in explanation.property('text') and '0.54866' in explanation.property('text')
+    assert all(word not in explanation.property('text') for word in ('模型', '实测', '敏感', '⚠'))
+    assert '高斯等效' in explanation.property('text') and '0.54866' in explanation.property('text')
     assert view.grabWindow().save(str(tmp_path/'mtf-equivalent-result.png'))
     QTest.keyClick(view, Qt.Key_Escape)
     c.settingsController.setValue('services', 'mtfGaussianEquivalent', False)
@@ -800,7 +874,7 @@ def test_small_roi_area_visible_before_and_after_analysis_without_method_in_view
     assert label.startswith(basic+'\n') and 'MTF50' in label
     assert '高斯' not in label and '取样' not in label
     assert '高斯等效' in _find(view, 'mtfActualMethod').property('text')
-    assert '自动取样' in c.calculationDetails
+    assert '积分范围' in c.calculationDetails
     assert not any('自动取样' in w for w in c.warnings)
     assert view.grabWindow().save(str(tmp_path/'mtf-small-roi-ready.png'))
     assert not warnings, warnings
@@ -819,7 +893,8 @@ def test_accessible_numeric_roi_and_result_summary(workspace, monkeypatch):
     button = _find(view, 'editAnalysisRoi')
     QAccessible.queryAccessibleInterface(button).actionInterface().doAction(QAccessibleActionInterface.pressAction())
     QTest.qWait(50)
-    for name, value in [('analysisRoiCenterX', '63'), ('analysisRoiCenterY', '63'), ('analysisRoiWidth', '8')]:
+    for name, value in [('analysisRoiCenterX', '63'), ('analysisRoiCenterY', '63'),
+                        ('analysisRoiWidth', '8'), ('analysisRoiHeight', '3')]:
         field = find(view, name)
         assert QAccessible.queryAccessibleInterface(field).text(QAccessible.Name)
         type_text(view, field, value)
@@ -828,6 +903,8 @@ def test_accessible_numeric_roi_and_result_summary(workspace, monkeypatch):
     QTest.qWait(60)
     assert controller.mtfController.status == 'ready'
     assert controller.mtfController.roiGeometry['centerX'] == 63
+    assert controller.mtfController.roiGeometry['width'] == pytest.approx(8)
+    assert controller.mtfController.roiGeometry['height'] == pytest.approx(3)
     metrics = QAccessible.queryAccessibleInterface(_find(view, 'mtfMetrics'))
     assert 'MTF10' in metrics.text(QAccessible.Name)
     assert controller.mtfController.frequencyUnit in metrics.text(QAccessible.Name)

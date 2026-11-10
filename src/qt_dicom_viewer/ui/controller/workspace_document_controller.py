@@ -784,11 +784,11 @@ class WorkspaceDocumentController(QObject):
             previous = self.workspace.activeTab
             fusion_volume = kind == "3d" and len(uids) == 2
             if kind == "comparempr":
-                self.workspace.createMprCompareTab(*uids)
+                self.workspace.createMprCompareTab(*uids, new_session=True)
             elif kind == "compare2d":
-                self.workspace.createMultiCompareTab(uids)
+                self.workspace.createMultiCompareTab(uids, new_session=True)
             elif kind == "petctfusion" or fusion_volume:
-                self.workspace.createFusionTab(*uids, isolated=fusion_volume)
+                self.workspace.createFusionTab(*uids, isolated=fusion_volume, new_session=True)
             else:
                 self.workspace.createTab(uids[0], record["label"], kind,
                                          phase_identifiers=record.get("phaseIdentifiers"), new_session=True)

@@ -215,7 +215,7 @@ Basic.TabBar {
             objectName: "tabMenu-all"
             iconName: "tab-close-all"
             text: qsTrId("tabs.closeAll")
-            enabled: workspaceTabs.tabCount > 0 && !!workspaceTabs.windowManager
+            enabled: tabMenu.tabIndex >= 0 && workspaceTabs.tabCount > 0 && !!workspaceTabs.windowManager
             onTriggered: workspaceTabs.workspaceController.closeTabs(tabMenu.tabId, "all")
         }
         TabMenuItem {
@@ -225,6 +225,18 @@ Basic.TabBar {
             enabled: workspaceTabs.documentController?.canReopenClosed ?? false
             onTriggered: workspaceTabs.documentController.reopenLastClosed()
         }
+    }
+
+    // Cover only the unused strip so tab clicks and drag gestures keep their own handlers.
+    MouseArea {
+        parent: workspaceTabs
+        x: Math.max(workspaceTabs.leftPadding,
+            workspaceTabs.leftPadding + workspaceTabs.insertionOffset(workspaceTabs.tabCount)
+                - (workspaceTabs.contentItem.contentX ?? 0))
+        width: Math.max(0, workspaceTabs.width - x)
+        height: workspaceTabs.height
+        acceptedButtons: Qt.RightButton
+        onClicked: mouse => tabMenu.openFor("", mapToItem(tabMenu.parent, mouse.x, mouse.y))
     }
 
     background: Rectangle {

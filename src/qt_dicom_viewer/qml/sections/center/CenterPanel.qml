@@ -35,6 +35,9 @@ Rectangle {
     readonly property bool hasTabs:
         workspaceController.tabs.length > 0
 
+    readonly property bool showTabStrip: hasTabs || (documentController?.closedTabCount ?? 0) > 0
+        || (windowManager?.dragging ?? false)
+
     color: Theme.workspaceBackground
     radius: 8
     clip: true
@@ -42,7 +45,7 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
-        visible: centerPanel.hasTabs || (centerPanel.windowManager?.dragging ?? false)
+        visible: centerPanel.showTabStrip
 
         RowLayout {
             Layout.fillWidth: true
@@ -263,7 +266,7 @@ Rectangle {
 
     WorkspaceEmptyState {
         anchors.fill: parent
-        anchors.topMargin: centerPanel.windowManager?.dragging ? 46 : 0
+        anchors.topMargin: centerPanel.showTabStrip ? centerPanel.tabStripHeight : 0
         visible: !centerPanel.hasTabs
         documentController: centerPanel.documentController
         panelController: centerPanel.panelController

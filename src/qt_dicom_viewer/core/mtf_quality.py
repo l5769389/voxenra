@@ -62,7 +62,8 @@ def sensitivity_details(result, unit):
         if not axis.sensitivity:
             continue
         lines.append(f'{name} · MTF50 / MTF10 · {unit}')
-        lines.append(f"{_msg('mtf.baseline')}: {number(axis.mtf50)} / {number(axis.mtf10)}")
+        label = _msg('mtf.baselineWithScale', percent=f'{result.integration_scale*100:.0f}')
+        lines.append(f"{label}: {number(axis.mtf50)} / {number(axis.mtf10)}")
         for sample in axis.sensitivity:
             key = 'mtf.variant.' + sample.variant
             label = _msg(key) if key in builtin()['messages'] else sample.variant

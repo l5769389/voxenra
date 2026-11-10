@@ -25,6 +25,16 @@ class MtfAxisResult:
 
 
 @dataclass(frozen=True)
+class MtfSampling:
+    """Pixel coordinates relative to the original selected ROI's first pixel."""
+    center: tuple[float, float]  # X, Y
+    half_size: tuple[float, float]  # Nonzero weighted integration support.
+    background_half_size: tuple[float, float]  # Outer edge of the background ring.
+    # Legacy results used the integration boundary as the background inner edge.
+    background_inner_half_size: tuple[float, float] | None = None
+
+
+@dataclass(frozen=True)
 class BeadMtfResult:
     x: MtfAxisResult
     y: MtfAxisResult
@@ -34,6 +44,8 @@ class BeadMtfResult:
     analysis_method: str = "direct_fft"
     notes: tuple[str, ...] = ()
     sensitivity_threshold: float | None = None
+    sampling: MtfSampling | None = None
+    integration_scale: float = 1.0  # Relative to the adaptive support, not the drawn ROI.
 
 
 @dataclass(frozen=True)
