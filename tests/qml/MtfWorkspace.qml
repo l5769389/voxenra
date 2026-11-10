@@ -14,6 +14,7 @@ Rectangle {
         anchors.margins: 8
         spacing: 10
         Viewports.Viewport {
+            id: viewport
             objectName: "testViewport"
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -21,6 +22,7 @@ Rectangle {
             hasTabs: true
         }
         Sections.RightPanel {
+            exportItem: viewport
             Layout.preferredWidth: root.width < 900 ? 264 : 320
             Layout.fillHeight: true
             viewportController: root.viewportController

@@ -63,17 +63,17 @@ def _assert_service_panel_has_only_top_aligned_buttons(view):
     visible_texts = {item.property("text") for item in _visual_children(panel)
                      if item.isVisible() and item.property("text")}
     assert {"MTF", "FWHM"} <= visible_texts
-    assert "QA" not in visible_texts
-    assert _find(view, "serviceEntry-mtf").property("label") == "MTF"
-    assert _find(view, "serviceEntry-qa").property("label") == "QA"
+    assert "QA" in visible_texts
+    assert _find(view, "serviceEntry-mtf").property("text") == "MTF"
+    assert _find(view, "serviceEntry-qa").property("text") == "QA"
     assert not any("预留" in text or "待实现" in text or text == "服务" for text in visible_texts)
     assert not any(item.objectName() == "serviceEntryStatus"
                    for item in _visual_children(panel))
     first, second = _find(view, "serviceEntry-mtf"), _find(view, "serviceEntry-fwhm")
-    assert first.mapToItem(panel, QPointF(0, 0)).y() == pytest.approx(0)
-    assert second.mapToItem(panel, QPointF(0, 0)).y() == pytest.approx(0)
+    assert first.mapToItem(panel, QPointF(0, 0)).y() == pytest.approx(3)
+    assert second.mapToItem(panel, QPointF(0, 0)).y() == pytest.approx(3)
     assert first.width() == pytest.approx(second.width(), abs=1)
-    assert second.mapToItem(panel, QPointF(0, 0)).x() == pytest.approx(first.width() + 8)
+    assert second.mapToItem(panel, QPointF(0, 0)).x() == pytest.approx(first.width() + 6)
 
 
 @pytest.mark.parametrize("service_panel", [None], indirect=True)
@@ -127,8 +127,7 @@ def test_service_menu_has_no_title_or_explanation_and_only_selects_entries(servi
     assert controller.activeInteraction == "service:qa"
     assert qa.property("checked")
 
-    for button_name, icon_name in [("primaryTool-service", "service"),
-                                    ("serviceEntry-qa", "qa")]:
+    for button_name, icon_name in [("primaryTool-service", "service")]:
         button = _find(view, button_name)
         images = [item for item in _visual_children(button)
                   if item.objectName() == "navigationSvgIcon" and item.isVisible()]

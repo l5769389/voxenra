@@ -130,6 +130,8 @@ def _make_pointer_position(
 
 
 class Image2DViewportController(ViewportController):
+    scalarDisplayUpdateRequested = Signal(str, object)
+    scalarDisplayChanged = Signal()
     _i18n_colorMapOptions = Signal()
     _i18n_errorMessage = Signal()
     _i18n_overlayInfo = Signal()
@@ -147,6 +149,7 @@ class Image2DViewportController(ViewportController):
     transformChanged = Signal()
     displayStyleChanged = Signal()
     viewportSettingsChanged = Signal()
+    squareViewportRequested = Signal()
     preferencesChanged = Signal()
     crosshairImagePositionChanged = Signal()
     crosshairHoverTargetChanged = Signal()
@@ -160,7 +163,14 @@ class Image2DViewportController(ViewportController):
 
     def __init__(self, viewport_config: ViewportConfig, tool_controller: ToolController, parent=None):
         super().__init__(viewport_config=viewport_config, parent=parent)
+        self._square_viewport = False
+        self._square_viewport_message = ""
         self._modality_pixel: np.ndarray | None = None
+        self._scalar_frame = None
+        self._scalar_display_enabled = False
+        self._scalar_revision = 0
+        self._scalar_data_revision = 0
+        self._scalar_signature = None
         self._state = ViewportState(
             slice_index=self._initial_slice_index(),
             slice_count=None,
@@ -467,6 +477,7 @@ class Image2DViewportController(ViewportController):
             self.sliceChanged.emit()
         self._modality_pixel = result.modality_pixel
         self.accept_mapping_frame(result.frame_meta)
+        self._refresh_scalar_display()
         source_context = ()
         projection = getattr(result, "projection_mode", None)
         if projection is not None or self.viewportRole == "mip":
@@ -761,8 +772,8 @@ class Image2DViewportController(ViewportController):
         else:
             if interaction == InteractionType.SERVICE_QA:
                 if self._qa_controller is not None and buttons & Qt.MouseButton.LeftButton.value:
-                    self._qa_controller.begin_drag(column, row)
-                    if self._qa_controller.dragging:
+                    claimed = self._qa_controller.begin_drag(column, row, endpoint_tolerance)
+                    if claimed or self._qa_controller.dragging:
                         return
                 # QA only claims its existing ROI handles, not empty canvas.
                 interaction = InteractionType.WINDOW
@@ -1017,7 +1028,7 @@ class Image2DViewportController(ViewportController):
         if self._active_drag_operation is not None:
             return
         if self._tool_controller.active_interaction == InteractionType.SERVICE_QA and self._qa_controller is not None:
-            self._qa_controller.update_hover(column, row)
+            self._qa_controller.update_hover(column, row, point_tolerance)
             return
         context = self._measurement_context(point_tolerance, line_tolerance)
         if context is None:
@@ -1134,8 +1145,63 @@ class Image2DViewportController(ViewportController):
         if self.supportsGrayscaleWindow and self._state.window is not None:
             self.apply_window_level(WindowLevelChange(self._state.window, not self.inverted))
 
+    @Property('QVariantMap', notify=scalarDisplayChanged)
+    def scalarDisplay(self):
+        frame = self._scalar_frame
+        if frame is None:
+            return {}
+        base = "image://dicom/"+self.viewportId
+        return dict(source=f"{base}:scalar/{self._scalar_data_revision}",
+                    cpu=f"{base}:scalar-cpu/{self._scalar_revision}",
+                    lut=f"{base}:lut/{frame.color_map}", minimum=frame.minimum, span=frame.span,
+                    lower=frame.window.center-frame.window.width/2, width=frame.window.width,
+                    inverted=frame.inverted)
+
+    def enable_scalar_display(self):
+        self._scalar_display_enabled = True
+        self._refresh_scalar_display()
+
+    def _refresh_scalar_display(self):
+        if not self._scalar_display_enabled:
+            return
+        from qt_dicom_viewer.core.scalar_display import ScalarDisplayFrame, pack_scalar
+        frame, pixels = self._frame_meta, self._modality_pixel
+        if frame is not None and frame.window_pixels is not None:
+            pixels = frame.window_pixels
+        if (frame is None or pixels is None or pixels.ndim != 2
+                or self.viewportRole == "fusion"
+                or frame.supplemental_overlay is not None or frame.pixel_value_meta.quantification == "color"
+                or self.current_window is None):
+            if self._scalar_frame is not None:
+                self._scalar_frame = self._scalar_signature = None
+                self.scalarDisplayUpdateRequested.emit(self.viewportId,None)
+                self.scalarDisplayChanged.emit()
+            return
+        window = DicomLoader.normalize_window(self.current_window,minimum_width=self.minimumWindowWidth)
+        inverted = self.inverted ^ (self.isMrViewport and frame.instance_meta.photometric_interpretation == "MONOCHROME1")
+        intent = self._state.display_mapping
+        if intent.applies_to(frame.pixel_value_meta.unit):
+            pixels = self._modality_pixel
+            window = WindowLevel((intent.lower+intent.upper)/2,intent.upper-intent.lower)
+            inverted = False
+        signature = (id(pixels),window,inverted,self.activeColorMap)
+        if signature == self._scalar_signature:
+            return
+        old = self._scalar_frame
+        if old is not None and old.pixels is pixels:
+            encoded, lower, span = old.encoded,old.minimum,old.span
+        else:
+            encoded, lower, span = pack_scalar(pixels)
+            self._scalar_data_revision += 1
+        scalar = ScalarDisplayFrame(pixels,window,inverted,self.activeColorMap,encoded,lower,span)
+        self._scalar_frame, self._scalar_signature = scalar,signature
+        self._scalar_revision += 1
+        self.scalarDisplayUpdateRequested.emit(self.viewportId,scalar)
+        self.scalarDisplayChanged.emit()
+
     def present_display_image(self, pixels) -> None:
         """Repaint cached samples without changing slice geometry or measurements."""
+        self._refresh_scalar_display()
         self.imageUpdateRequested.emit(self.viewportId, pixels)
         # A later render with the previous key must not leave a preview on screen.
         self._content_key = None
@@ -1574,7 +1640,36 @@ class Image2DViewportController(ViewportController):
 
     @Property(bool, notify=viewportSettingsChanged)
     def showWindowAnnotations(self) -> bool:
-        return self._state.display_settings.show_window_annotations and self._settings_controller.section("corners")["enabled"]
+        value = self._state.display_settings.show_window_annotations
+        return self._settings_controller.section("corners")["enabled"] if value is None else value
+
+    @Slot()
+    def followCornerVisibility(self):
+        self._state = replace(self._state, display_settings=replace(
+            self._state.display_settings, show_window_annotations=None))
+        self.viewportSettingsChanged.emit()
+
+    @Property(bool, notify=viewportSettingsChanged)
+    def squareViewport(self):
+        return self._square_viewport
+
+    @Property(str, notify=viewportSettingsChanged)
+    def squareViewportMessage(self):
+        return self._square_viewport_message
+
+    @Slot(bool)
+    def setSquareViewport(self, enabled):
+        self._square_viewport = bool(enabled)
+        self._square_viewport_message = ""
+        self.viewportSettingsChanged.emit()
+        if enabled:
+            self.squareViewportRequested.emit()
+
+    @Slot(str)
+    def squareViewportFailed(self, message):
+        self._square_viewport = False
+        self._square_viewport_message = message
+        self.viewportSettingsChanged.emit()
 
     @Property(bool, notify=viewportSettingsChanged)
     def hideSensitiveInfo(self) -> bool:
@@ -1724,6 +1819,12 @@ class Image2DViewportController(ViewportController):
             viewport_x: float | None = None,
             viewport_y: float | None = None,
     ) -> None:
+        if self._tool_controller.active_interaction == InteractionType.SERVICE_QA:
+            if image_valid and self._qa_controller is not None and self._qa_controller.placingAir:
+                self._qa_controller.begin_drag(column, row)
+            elif self._qa_controller is not None:
+                self._qa_controller.select_at(column if image_valid else float("nan"), row, endpoint_tolerance)
+            return
         if self._tool_controller.active_interaction == InteractionType.ANNOTATE_TEXT:
             if image_valid:
                 self._text_annotation_controller.selectAnnotationAt(

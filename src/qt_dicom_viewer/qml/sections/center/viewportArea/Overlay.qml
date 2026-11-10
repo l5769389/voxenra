@@ -71,7 +71,7 @@ Item {
     readonly property color backgroundColor: viewportController?.canvasBackgroundColor ?? Theme.imageBlack
     readonly property bool lightBackground: backgroundColor.r * 0.299 + backgroundColor.g * 0.587 + backgroundColor.b * 0.114 > 0.6
     readonly property color textColor: options.colorMode === "custom" ? options.color : lightBackground ? Theme.overlayDarkText : Theme.overlayText
-    visible: technicalContext.length > 0 || (!technicalOnly && options.enabled !== false)
+    visible: technicalContext.length > 0 || !technicalOnly
 
     readonly property var occupiedRegions: {
         if (!visible) return []

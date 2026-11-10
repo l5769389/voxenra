@@ -1,5 +1,11 @@
 <RCC>
     <qresource>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/corners-2.6.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/workspace-2.6.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/en/water-qa-2.6.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/corners-2.6.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/workspace-2.6.0.png</file>
+        <file>src/qt_dicom_viewer/qml/assets/help/water-qa-2.6.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/measurement-2.5.0.png</file>
         <file>src/qt_dicom_viewer/qml/assets/help/en/measurement-2.5.0.png</file>
         <file>src/qt_dicom_viewer/qml/components/SeriesViewShortcuts.qml</file>
@@ -97,6 +103,8 @@
         <file>src/qt_dicom_viewer/qml/sections/center/WorkspaceEmptyState.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/center/WorkspaceLoadingState.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/ImageCanvas.qml</file>
+        <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/ScalarImage.qml</file>
+        <file>src/qt_dicom_viewer/qml/shaders/scalar_display.frag.qsb</file>
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/MprSlabGuideLayer.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/InteractionLayer.qml</file>
         <file>src/qt_dicom_viewer/qml/sections/center/viewportArea/CursorPolicy.js</file>

@@ -12,8 +12,10 @@ class WaterPhantom:
 
 @dataclass(frozen=True, slots=True)
 class WaterQaSettings:
-    roi_diameter_mm: float = 20.0
-    edge_clearance_mm: float = 20.0
+    roi_diameter_mm: float | None = None
+    edge_clearance_mm: float = 10.0
+    noise_diameter_mm: float | None = None
+    air_diameter_mm: float = 20.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +32,7 @@ class WaterQaRoi:
     minimum_hu: float
     maximum_hu: float
     delta_center_hu: float | None
+    group: str = "uniformity"
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,3 +48,5 @@ class WaterQaResult:
     vertical_difference_hu: float | None
     noise_range_hu: float | None
     detection_issue: str = ""
+    noise_percent: float | None = None
+    protocol_version: int = 1

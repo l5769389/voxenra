@@ -55,7 +55,8 @@ def test_small_desktop_analysis_tools_remain_reachable(sidebar_scene, monkeypatc
     reveal(window, rail, find(window, 'compactTool-service'))
     popup = window.findChild(QObject, 'compactVolumePanel')
     wait_until(lambda: popup.property('visible'))
-    for name, action in [('serviceEntry-mtf', 'service:mtf'), ('serviceEntry-fwhm', 'service:fwhm')]:
+    for name, action in [('serviceEntry-mtf', 'service:mtf'), ('serviceEntry-fwhm', 'service:fwhm'),
+                         ('serviceEntry-qa', 'service:qa')]:
         button = find(popup.findChild(QObject, 'servicePanel').window(), name)
         assert button is not None and button.isVisible()
         click(button.window(), button)
@@ -64,6 +65,13 @@ def test_small_desktop_analysis_tools_remain_reachable(sidebar_scene, monkeypatc
         position = button.mapToScene(QPointF())
         assert position.x() >= 0 and position.y() >= 0
         assert position.y() + button.height() <= button.window().height()
+        if action == 'service:qa':
+            footer = popup.findChild(QObject, 'compactPanelFooter')
+            actions = [find(button.window(), key) for key in ('qaUndo', 'qaRedo', 'exportQaReport', 'activeToolReset')]
+            assert footer.property('qaActions')
+            assert all(item.mapToScene(QPointF()).y() >= footer.mapToScene(QPointF()).y()
+                       and item.mapToScene(QPointF()).y()+item.height() <= item.window().height()
+                       for item in actions)
         assert button.window().grabWindow().save(str(tmp_path / (action.replace(':', '-') + '.png')))
     assert window.grabWindow().save(str(tmp_path / 'small-desktop.png'))
     assert not warnings, warnings

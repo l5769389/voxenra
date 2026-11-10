@@ -132,6 +132,7 @@ Item {
 
     // 显示影像
     ImageCanvas {
+        capturingPng: viewportRoot.capturingPng
         reservedRegions: viewportRoot.labelReservedRegions
         instructionBottomMargin: viewportRoot.drawingInstructionInset
         id: imageCanvas

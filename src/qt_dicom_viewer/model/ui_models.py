@@ -20,7 +20,7 @@ class DisplayStyle:
 
 @dataclass(frozen=True, slots=True)
 class ViewportDisplaySettings:
-    show_window_annotations: bool = True
+    show_window_annotations: bool | None = None  # None follows global corner visibility.
     hide_sensitive_info: bool = False
     show_scale_bar: bool = True
     show_color_bar: bool = False

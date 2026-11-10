@@ -197,7 +197,7 @@ def test_every_preference_survives_process_restart(tmp_path):
         'layout': {'rightPanelCollapsed': True, 'rightPanelWidth': 310,
                    'settingsNavigationWidth': 210, 'manualNavigationWidth': 320, 'rememberedMprLayout': 'quad',
                    'rememberedFourDLayout': 'rows', 'settingsCollapsedGroups': ['measurement-cards', 'appearance-theme']},
-        'export': {'directory': str(tmp_path)},
+        'export': {'directory': str(tmp_path), 'reportSoftwareName': 'QA Workstation'},
         'paletteList': {'favorites': ['hotIron', 'blackBody']},
         'colormap': {'gray': 'bwInverse', 'pet': 'hotIron'},
         'window': {'hidden': ['ct-lung'], 'custom': [dict(presetId='custom-restart', label='Restart',

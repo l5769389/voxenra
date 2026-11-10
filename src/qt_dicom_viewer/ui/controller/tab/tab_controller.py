@@ -54,6 +54,7 @@ class TabController(QObject):
 
 
     imageUpdateRequested = Signal(str, object)
+    scalarDisplayUpdateRequested = Signal(str, object)
     closeRequested = Signal()
     renderRequested = Signal(object)
     activeToolChanged = Signal(object)
@@ -732,9 +733,16 @@ class TabController(QObject):
                             self._viewport_dict[viewport_id] = viewport
 
 
+    def _connect_scalar_display(self, viewport):
+        if hasattr(viewport, "scalarDisplayUpdateRequested"):
+            viewport.scalarDisplayUpdateRequested.connect(self.scalarDisplayUpdateRequested.emit)
+            if getattr(self, "_scalar_display_enabled", False):
+                viewport.enable_scalar_display()
+
     def connect_signal(self, viewport: ViewportController):
         self._connect_playback_viewport(viewport)
         viewport.imageUpdateRequested.connect(self.imageUpdateRequested.emit)
+        self._connect_scalar_display(viewport)
         if isinstance(viewport, MontageViewportController):
             viewport.renderRequested.connect(
                 self._handle_render_requested

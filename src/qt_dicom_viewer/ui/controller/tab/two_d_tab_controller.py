@@ -82,8 +82,13 @@ class TwoDLayoutController(QObject):
     def viewportSettingStates(self):
         cells = self._cells if self._settings_scope == "tab" else [self._cells[self._active_cell]]
         states = [self._cell_display(cell) for cell in cells]
-        return {key: 2 if all(getattr(s, field) for s in states) else
-                1 if any(getattr(s, field) for s in states) else 0
+        def enabled(state, field):
+            value = getattr(state, field)
+            if field == "show_window_annotations" and value is None:
+                return self.tab.toolController.settingsController.section("corners")["enabled"]
+            return value
+        return {key: 2 if all(enabled(s, field) for s in states) else
+                1 if any(enabled(s, field) for s in states) else 0
                 for key, field in VIEWPORT_SETTING_FIELDS.items()}
 
     @Slot(str, bool)
@@ -98,6 +103,18 @@ class TwoDLayoutController(QObject):
             cell["display"] = replace(self._cell_display(cell), **{field: bool(enabled)})
             for view in cell["views"].values():
                 view.setViewportSetting(code, enabled)
+        self.settingsChanged.emit()
+        self.settingsEdited.emit()
+
+    @Slot()
+    def followCornerVisibility(self):
+        cells = self._cells if self._settings_scope == "tab" else [self._cells[self._active_cell]]
+        if self._settings_scope == "tab":
+            self._display_defaults = replace(self._display_defaults, show_window_annotations=None)
+        for cell in cells:
+            cell["display"] = replace(self._cell_display(cell), show_window_annotations=None)
+            for view in cell["views"].values():
+                view.followCornerVisibility()
         self.settingsChanged.emit()
         self.settingsEdited.emit()
 
@@ -298,6 +315,7 @@ class TwoDTabController(TabController):
     def connect_signal(self, view):
         self._connect_playback_viewport(view)
         view.imageUpdateRequested.connect(self.imageUpdateRequested.emit)
+        self._connect_scalar_display(view)
         # Each orthogonal cell owns its frame and render identity. Never route
         # its requests through the three linked MPR planes' batch scheduler.
         view.renderRequested.connect(self._handle_render_requested)

@@ -495,6 +495,11 @@ class WorkspaceController(QObject):
             layout.cellsChanged.connect(self._refresh_identity)
         tab.closeRequested.connect(self._close_requested_tab)
         tab.imageUpdateRequested.connect(self._image_provider.set_array)
+        tab.scalarDisplayUpdateRequested.connect(self._image_provider.set_scalar)
+        tab._scalar_display_enabled = True
+        for view in tab.viewports_by_id.values():
+            if hasattr(view, "enable_scalar_display"):
+                view.enable_scalar_display()
         from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
         tab._edit_history = EditHistoryController(tab)
         state = TabLoadingController(tab)

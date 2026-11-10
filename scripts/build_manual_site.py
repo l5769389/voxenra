@@ -35,12 +35,14 @@ PRODUCT_SCREENSHOTS = {
     "feature-pacs.png": "16-pacs-browser.png",
     "feature-zip-drop.png": "35-zip-drop.png",
     "feature-zip-drag.gif": "06-zip-drag.gif",
-    "feature-workspace-overview.png": "45-workspace-home-2.1.3.png",
+    "feature-workspace-overview.png": "69-workspace-home-2.6.0.png",
     "feature-4d.gif": "03-4d-playback.gif",
-    "feature-water-qa.png": "19-water-qa-2.1.3.png",
+    "feature-water-qa.png": "68-water-qa-2.6.0.png",
     "feature-mtf.png": "67-mtf-analysis-2.5.0.png",
 }
 for media, source in {
+    'feature-water-qa.png': '68-water-qa-2.6.0.png',
+    'feature-workspace-overview.png': '69-workspace-home-2.6.0.png',
     'feature-cpr-reference.png': '61-cpr-reference-2.4.0.png',
     'feature-dimse-settings.png': '51-dimse-settings.png',
     'feature-dimse-import.gif': '52-dimse-import.gif',
@@ -410,11 +412,11 @@ PRODUCT_COPY = {
         "ai_title": "本地 AI 自动分割 · TotalSegmentator",
         "ai_body": "连接独立安装的 TotalSegmentator，在 CT 的 MPR / 4D 中选择器官，快速分割当前时相。结果可继续精修、撤销并随工作区保存；环境与模型在设置中的 AI 页面配置。",
         "ai_link": "配置与使用教程",
-        "analysis_body": "在列表中管理和定位长度、角度、曲线与 ROI 测量，导出附对应参考图的 PDF；支持阈值分割、画笔／橡皮精修、连通区域处理、轮廓与不透明度调节及 VOI 分析，通过 DICOM SEG 或 NRRD 与 Slicer 交换分割，并可导出 DICOM SR。",
+        "analysis_body": "复制粘贴选中的测量与标注，在列表中管理和定位长度、角度、曲线与 ROI 测量，导出附对应参考图的 PDF；支持阈值分割、画笔／橡皮精修、连通区域处理、轮廓与不透明度调节及 VOI 分析，通过 DICOM SEG 或 NRRD 与 Slicer 交换分割，并可导出 DICOM SR。",
         "viewing_caption": "MR 原始切片阅片", "viewing_4d_caption": "CT 多时相 4D 播放",
         "fusion_caption": "PET/CT 联动融合", "analysis_caption": "画笔、橡皮与撤销重做",
         "quality_title": "CT 图像质量分析",
-        "quality_body": "水模 QA、点源 MTF 和斜坡线 FWHM 独立分析。QA 未识别水模时自动创建普通圆形 ROI，支持移动、复制、删除和撤销重做；曲线、层厚与统计结果随工作区保存。",
+        "quality_body": "水模 QA 分组查看 CT 值、均匀性、水中噪声与模体外空气。圆形区域可移动、缩放及撤销重做，编辑后自动计算，失败可重试；PDF 报告含影像与统计表，可自定义署名。点源 MTF、斜坡线 FWHM 与分析记录随工作区保存。",
         "quality_captions": ("水模 QA · CT 值与均匀性", "点源 MTF · 曲线与指标"),
         "closing_title": "开始使用 Voxenra", "closing_body": "适用于 macOS Apple Silicon 与 Windows。",
         "mac_download": "下载 DMG", "win_setup": "下载安装版", "win_portable": "下载便携版",
@@ -426,7 +428,7 @@ PRODUCT_COPY = {
         "alt_analysis": "Voxenra 中的 MPR 分割与统计面板",
         "measurement_caption": "ROI 统计与测量结果列表",
         "appearance_title": "适合你的外观与操作习惯",
-        "appearance_body": "界面可跟随系统切换深浅色，也可固定为深色、中性深灰或浅色。可调整界面大小、鼠标操作和工具快捷键。",
+        "appearance_body": "界面可跟随系统切换深浅色，也可固定为深色、中性深灰或浅色。可调整界面大小、鼠标操作和工具快捷键。四角信息支持全局默认与视口覆盖；正方形视口可自动调整应用窗口。",
         "appearance_captions": ("深色", "中性深灰", "浅色"),
     },
     "en": {
@@ -469,11 +471,11 @@ PRODUCT_COPY = {
         "ai_title": "Local AI segmentation · TotalSegmentator",
         "ai_body": "Connect a separately installed TotalSegmentator environment, select organs in CT MPR / 4D, and segment the current phase in fast mode. Refine, undo, and save results in a workspace. Configure the environment and models under Settings → AI.",
         "ai_link": "Setup and workflow guide",
-        "analysis_body": "Manage and locate length, angle, curve, and ROI measurements in a list, then export PDF reports with matching reference images. Refine segments with paint, erase, and connected-region tools; adjust outlines and fill opacity. Use thresholding and VOI analysis, exchange segments with Slicer through NRRD or DICOM SEG, and export DICOM SR.",
+        "analysis_body": "Copy and paste selected measurements or annotations; manage and locate length, angle, curve, and ROI measurements in a list, then export PDF reports with matching reference images. Refine segments with paint, erase, and connected-region tools; adjust outlines and fill opacity. Use thresholding and VOI analysis, exchange segments with Slicer through NRRD or DICOM SEG, and export DICOM SR.",
         "viewing_caption": "MR original-slice viewing", "viewing_4d_caption": "Multi-phase CT 4D playback",
         "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "Paint, erase, undo and redo",
         "quality_title": "CT image-quality analysis",
-        "quality_body": "Analyze water-phantom QA, point-source MTF and ramp FWHM separately. When no phantom is detected, QA creates ordinary circular ROIs that you can move, duplicate, delete, undo and redo. Save curves, slice thickness and statistics in the workspace.",
+        "quality_body": "Separate water CT number, uniformity, noise, and external-air groups. Move or resize circles, undo edits, calculate automatically, and retry failures. Export images and tables as PDF with optional branding. Save point-source MTF, ramp FWHM, and analysis records in workspaces.",
         "quality_captions": ("Water-phantom QA · CT values and uniformity", "Point-source MTF · curve and metrics"),
         "closing_title": "Get started with Voxenra", "closing_body": "Available for macOS Apple Silicon and Windows.",
         "mac_download": "Download DMG", "win_setup": "Download installer", "win_portable": "Download portable",
@@ -485,7 +487,7 @@ PRODUCT_COPY = {
         "alt_analysis": "MPR segmentation and statistics panel in Voxenra",
         "measurement_caption": "ROI statistics and measurement list",
         "appearance_title": "Appearance and controls",
-        "appearance_body": "Follow the system appearance or choose a fixed dark, neutral gray, or light theme. Customize interface size, mouse bindings, and tool shortcuts. Preferences persist after restart.",
+        "appearance_body": "Follow the system appearance or choose a fixed dark, neutral gray, or light theme. Customize interface size, mouse bindings, and tool shortcuts. Corner overlays use a global default with viewport overrides; a square viewport can resize the application window. Preferences persist after restart.",
         "appearance_captions": ("Dark", "Neutral gray", "Light"),
     },
 }
@@ -561,6 +563,8 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
     workflow_cards = []
     for (title, body), (caption, image) in zip(copy["workflow_cards"], copy["workflow_images"], strict=True):
+        if code == "en" and "en-" + image in PRODUCT_SCREENSHOTS:
+            image = "en-" + image
         image_url = product_image_asset(prefix, image)
         full_image_url = product_image_asset(prefix, "feature-zip-drop.png") if image == "feature-zip-drag.gif" else image_url
         full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
@@ -573,6 +577,8 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
         )
     quality_images = []
     for caption, image in zip(copy["quality_captions"], ("feature-water-qa.png", "feature-mtf.png"), strict=True):
+        if code == "en" and "en-" + image in PRODUCT_SCREENSHOTS:
+            image = "en-" + image
         image_url = product_image_asset(prefix, image)
         full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
         quality_images.append(

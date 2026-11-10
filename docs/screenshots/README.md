@@ -5,7 +5,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 ## 2.5.0 更新（2026-11-10）
 
 - [影像来源与最近记录](66-image-sources-2.5.0.png) · [English](en/66-image-sources-2.5.0.png)
-- [工作区操作](17-workspace-2.5.0.png) · [English](en/17-workspace-2.5.0.png)
+- [工作区操作](72-workspace-2.6.0.png) · [English](en/72-workspace-2.6.0.png)
 - [MTF 结果](67-mtf-analysis-2.5.0.png) · [English](en/67-mtf-analysis-2.5.0.png)
 - [紧凑测量标签与结果列表](63-measurement-2.5.0.png) · [English](en/63-measurement-2.5.0.png)
 - [序列右键菜单与视图快捷键](65-view-shortcuts-2.5.0.png) · [English](en/65-view-shortcuts-2.5.0.png)
@@ -107,7 +107,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>VOI 分析</b><br><a href="20-voi.png"><img src="20-voi.png" alt="VOI 分析" width="100%"></a></td>
-<td width="50%"><b>CT 水模 QA</b><br><a href="19-water-qa-2.1.3.png"><img src="19-water-qa-2.1.3.png" alt="CT 水模 QA" width="100%"></a></td>
+<td width="50%"><b>CT 水模 QA</b><br><a href="68-water-qa-2.6.0.png"><img src="68-water-qa-2.6.0.png" alt="CT 水模 QA" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>点源 MTF</b><br><a href="67-mtf-analysis-2.5.0.png"><img src="67-mtf-analysis-2.5.0.png" alt="点源 MTF" width="100%"></a></td>
@@ -132,7 +132,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>本地导入</b><br><a href="15-mixed-import.png"><img src="15-mixed-import.png" alt="本地导入" width="100%"></a></td>
-<td width="50%"><b>工作区全景</b><br><a href="45-workspace-home-2.1.3.png"><img src="45-workspace-home-2.1.3.png" alt="工作区全景" width="100%"></a></td>
+<td width="50%"><b>工作区全景</b><br><a href="69-workspace-home-2.6.0.png"><img src="69-workspace-home-2.6.0.png" alt="工作区全景" width="100%"></a></td>
 </tr>
 <tr>
 <td width="50%"><b>PACS 导入</b><br><a href="23-pacs-import.png"><img src="23-pacs-import.png" alt="PACS 导入" width="100%"></a></td>
@@ -152,7 +152,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>显示设置</b><br><a href="22-display-settings.png"><img src="22-display-settings.png" alt="显示设置" width="100%"></a></td>
-<td width="50%"><b>离线手册</b><br><a href="50-offline-manual-2.1.2.png"><img src="50-offline-manual-2.1.2.png" alt="离线手册" width="100%"></a></td>
+<td width="50%"><b>离线手册</b><br><a href="74-offline-manual-2.6.0.png"><img src="74-offline-manual-2.6.0.png" alt="离线手册" width="100%"></a></td>
 </tr>
 </table>
 
@@ -169,7 +169,7 @@ Voxenra 的实际应用界面：当前界面截图与操作动画。[中文首�
 
 - [鼠标与工具快捷键](40-input-settings.png)
 - [隐私设置](41-privacy-settings.png)
-- [导入后工作区入口](45-workspace-home-2.1.3.png) · [English](en/45-workspace-home-2.1.3.png)
+- [导入后工作区入口](69-workspace-home-2.6.0.png) · [English](en/69-workspace-home-2.6.0.png)
 - [导出完成与再次导出](46-export-complete-2.1.1.png) · [English](en/46-export-complete-2.1.1.png)
 - [自动分割失败与重试](47-ai-error-2.1.1.png) · [English](en/47-ai-error-2.1.1.png)
 - [自动分割成功导入](48-ai-complete-2.1.1.png) · [English](en/48-ai-complete-2.1.1.png)

@@ -63,6 +63,75 @@ ApplicationWindow {
             && !window.documentController?.busy && !(window.windowManager?.dragging ?? false)
     }
     readonly property bool hasTabs: workspaceController.tabs.length > 0
+    // Fit once; later manual layout changes must remain unconstrained.
+    property var squareFitTarget: null
+    property int squareFitAttempts: 0
+    property int squareFitWidth: 0
+    property int squareFitHeight: 0
+    function squareGeometryChanged() {
+        const image = centerView.exportItem
+        if (squareFitAttempts > 0 && width === squareFitWidth && height === squareFitHeight
+                && image && Math.abs(image.width - image.height) <= 2)
+            squareFitAttempts = 0
+        squareFitTimer.restart()
+    }
+    function requestSquareCanvas() {
+        if (workspaceController.activeTabType !== "2d" || !centerView.exportItem) {
+            viewportController?.setSquareViewport(false)
+            return
+        }
+        squareFitTarget = viewportController
+        squareFitAttempts = 4
+        if (visibility === Window.FullScreen || visibility === Window.Maximized) showNormal()
+        squareFitTimer.restart()
+    }
+    function fitSquareCanvas() {
+        const image = centerView.exportItem
+        const target = squareFitTarget
+        if (!target || target !== viewportController || !image || !target.squareViewport) return
+        if (Math.abs(image.width - image.height) <= 2) { squareFitAttempts = 0; return }
+        if (squareFitAttempts <= 0) { target.setSquareViewport(false); return }
+        squareFitAttempts--
+        const tab = workspaceController.activeTab
+        const scene = tab.twoDLayout
+        const cell = scene.cells[scene.activeCell]
+        const fx = tab.focusedViewportId ? 1 : cell.columnSpan / scene.columns
+        const fy = tab.focusedViewportId ? 1 : cell.rowSpan / scene.rows
+        const low = Math.max(1, image.width + (minimumWidth - width)*fx,
+                             image.height + (minimumHeight - height)*fy)
+        const high = Math.min(image.width + (availableWindowWidth - width)*fx,
+                              image.height + (availableWindowHeight - height)*fy)
+        if (high < low) {
+            squareFitAttempts = 0
+            target.squareViewportFailed(qsTrId("viewport.squareUnavailable"))
+            return
+        }
+        const side = Math.max(low, Math.min(high, image.width, image.height))
+        squareFitWidth = Math.round(width + (side - image.width)/fx)
+        squareFitHeight = Math.round(height + (side - image.height)/fy)
+        width = squareFitWidth
+        height = squareFitHeight
+        squareFitTimer.restart()
+    }
+    Timer { id: squareFitTimer; interval: 80; onTriggered: window.fitSquareCanvas() }
+    Connections {
+        target: window.viewportController
+        ignoreUnknownSignals: true
+        function onSquareViewportRequested() { window.requestSquareCanvas() }
+    }
+    Connections {
+        target: centerView.exportItem
+        ignoreUnknownSignals: true
+        function onWidthChanged() { window.squareGeometryChanged() }
+        function onHeightChanged() { window.squareGeometryChanged() }
+    }
+    onViewportControllerChanged: {
+        if (squareFitTarget && squareFitTarget !== viewportController)
+            squareFitTarget.setSquareViewport(false)
+        squareFitTarget = null
+        squareFitAttempts = 0
+    }
+
     // Temporary presentation state belongs to this window, not the document/preferences.
     property bool viewportMaximized: false
     readonly property bool canMaximizeViewport: ["2d", "compare2d", "comparempr", "mpr", "cpr", "3d", "montage", "4d", "petctfusion"].includes(workspaceController.activeTabType)
@@ -205,6 +274,22 @@ ApplicationWindow {
         context: Qt.WindowShortcut
         enabled: window.standardShortcutsAllowed && !workspaceDocumentDialog.visible && !window.editingText && !!window.editHistory?.canRedo && !window.documentController?.busy
         onActivated: window.editHistory.redo()
+    }
+    // Selection survives focus moving into the operation panel. Text editors
+    // and popups retain their own standard clipboard actions.
+    Shortcut {
+        sequences: [StandardKey.Copy]
+        context: Qt.WindowShortcut
+        enabled: window.standardShortcutsAllowed && !window.editingText
+            && !!window.viewportController?.copySelectedAnnotation && !window.documentController?.busy
+        onActivated: window.viewportController.copySelectedAnnotation()
+    }
+    Shortcut {
+        sequences: [StandardKey.Paste]
+        context: Qt.WindowShortcut
+        enabled: window.standardShortcutsAllowed && !window.editingText
+            && !!window.viewportController?.pasteAnnotation && !window.documentController?.busy
+        onActivated: window.viewportController.pasteAnnotation()
     }
     Sections.WorkspaceDialog {
         id: workspaceDocumentDialog

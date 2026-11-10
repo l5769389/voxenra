@@ -19,6 +19,7 @@ from test_measurement_qml import (
 )
 from test_viewport_transform import _controller, _render_result
 from test_pacs_qml import scene as scene
+from test_series_sidebar import sidebar_scene
 
 
 def draw(view, controller, pixels, kind):
@@ -231,3 +232,48 @@ def test_focused_text_editor_keeps_standard_text_copy_paste(scene, tmp_path):
     assert editor.property("text") == "New label"
     assert len(controller.textAnnotationController.annotationItems) == 1
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize('kind', ['length', 'rect', 'text', 'arrow'])
+def test_copy_paste_from_panel_focus_with_history_and_modal_isolation(sidebar_scene, kind):
+    from test_input_settings_qml import reading_scene, visible_viewport
+    from test_tag_qml import find
+    window, app, tab = reading_scene(sidebar_scene)
+    controller = tab.activeViewport
+    pixels = find(window, 'dicomPixelLayer')
+    # The full-app fixture uses a small image. Fit to points inside that frame.
+    controller._tool_controller.selectInteraction(('annotate:' if kind in ('text', 'arrow') else 'measure:')+kind)
+    if kind == 'text':
+        controller.textAnnotationController.setAnnotationText('copied note')
+    _click_points(window, _scene(pixels, 12, 12), _scene(pixels, 32, 32))
+    assert len(items(controller, kind)) == 1
+    history = tab.historyController
+    history.reset()
+    # Focus a sidebar control after selecting the shape; viewport Keys won't receive it.
+    button = find(window, 'primaryTool-measure')
+    button.forceActiveFocus()
+    QGuiApplication.clipboard().setText('ordinary text')
+    QTest.keySequence(window, QKeySequence(QKeySequence.Copy))
+    assert read_annotation() and read_annotation()['kind'] == kind
+    QTest.keySequence(window, QKeySequence(QKeySequence.Paste)); QTest.qWait(30)
+    assert len(items(controller, kind)) == 2
+    QTest.keySequence(window, QKeySequence(QKeySequence.Undo)); QTest.qWait(30)
+    assert len(items(controller, kind)) == 1
+    QTest.keySequence(window, QKeySequence(QKeySequence.Redo)); QTest.qWait(30)
+    assert len(items(controller, kind)) == 2
+    search = find(window, 'sidebarPatientSearch'); search.forceActiveFocus()
+    QTest.keySequence(window, QKeySequence(QKeySequence.Paste))
+    assert len(items(controller, kind)) == 2
+    visible_viewport(window).forceActiveFocus()
+    app.feedbackController.show(); QTest.qWait(40)
+    assert window.property('shortcutPopupOpen')
+    QTest.keySequence(window, QKeySequence(QKeySequence.Paste))
+    assert len(items(controller, kind)) == 2
+    QTest.keyClick(window, Qt.Key_Escape); QTest.qWait(30)
+    visible_viewport(window).forceActiveFocus()
+    QTest.keySequence(window, QKeySequence(QKeySequence.Paste)); QTest.qWait(30)
+    assert len(items(controller, kind)) == 3  # One paste, not two handlers.
+    assert not sidebar_scene[3], sidebar_scene[3]
+    # The offscreen platform owns its QMimeData until static destruction, after
+    # Python has exited. Release the Python wrapper while the interpreter lives.
+    QGuiApplication.clipboard().clear()

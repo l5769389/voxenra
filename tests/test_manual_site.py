@@ -44,6 +44,8 @@ def test_new_workflow_media_are_localized_and_have_reduced_motion_stills(tmp_pat
         for name in ('feature-dimse-import', 'feature-toolbar', 'feature-focus'):
             assert f'{media_prefix}{name}-animated-' in source
             assert f'{media_prefix}{name}-640.webp' in source
+        for name in ('feature-water-qa', 'feature-workspace-overview'):
+            assert f'{media_prefix}{name}-' in source
         assert source.count('media="(prefers-reduced-motion: reduce)"') >= 4
         links = Links()
         links.feed(source)

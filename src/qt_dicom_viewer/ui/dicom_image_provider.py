@@ -10,6 +10,7 @@ class DicomImageProvider(QQuickImageProvider):
         super().__init__(QQuickImageProvider.Image)
         self._images: dict[str, QImage] = {}
         self._content_keys: dict[str, tuple] = {}
+        self._scalar_frames = {}
 
     def set_array(
         self,
@@ -57,8 +58,27 @@ class DicomImageProvider(QQuickImageProvider):
         self._images[image_id] = image.copy()
         self._content_keys.pop(image_id, None)
 
+    def set_scalar(self, viewport_id, frame):
+        from qt_dicom_viewer.core.scalar_display import pack_scalar
+        from qt_dicom_viewer.core.color_maps import apply_color_map
+        if frame is None:
+            self._scalar_frames.pop(viewport_id, None)
+            self.remove_image(viewport_id+":scalar")
+            self.remove_image(viewport_id+":lut")
+            return
+        previous = self._scalar_frames.get(viewport_id)
+        self._scalar_frames[viewport_id] = frame
+        if previous is None or previous.pixels is not frame.pixels:
+            encoded = frame.encoded if frame.encoded is not None else pack_scalar(frame.pixels)[0]
+            self.set_array(viewport_id+":scalar", encoded)
+        if previous is None or previous.color_map != frame.color_map:
+            lut = apply_color_map(np.arange(256,dtype=np.uint8)[None,:],frame.color_map)
+            self.set_array(viewport_id+":lut",lut)
+
     def remove_image(self, viewport_id: str) -> None:
         self._images.pop(viewport_id, None)
+        if viewport_id in self._scalar_frames:
+            self.set_scalar(viewport_id, None)
         self._content_keys.pop(viewport_id, None)
 
     def requestImage(
@@ -70,6 +90,21 @@ class DicomImageProvider(QQuickImageProvider):
         # image_id 形式：viewport-id/version
         viewport_id = image_id.split("/", 1)[0]
 
+        if viewport_id.endswith(":scalar-cpu"):
+            from qt_dicom_viewer.core.scalar_display import resample_display
+            frame = self._scalar_frames.get(viewport_id[:-11])
+            if frame is None:
+                return QImage()
+            h, w = frame.pixels.shape
+            if requested_size.width() > 0 and requested_size.height() > 0:
+                w, h = max(1,requested_size.width()), max(1,requested_size.height())
+            pixels = resample_display(frame,w,h)
+            fmt = QImage.Format_Grayscale8 if pixels.ndim == 2 else QImage.Format_RGB888
+            image = QImage(pixels.data,w,h,pixels.strides[0],fmt).copy()
+            if size is not None:
+                size.setWidth(w); size.setHeight(h)
+            return image
+
         image = self._images.get(
             viewport_id,
             QImage(),
@@ -79,7 +114,7 @@ class DicomImageProvider(QQuickImageProvider):
             size.setWidth(image.width())
             size.setHeight(image.height())
 
-        if requested_size.isValid():
+        if requested_size.width() > 0 and requested_size.height() > 0:
             return image.scaled(
                 requested_size,
                 Qt.KeepAspectRatio,

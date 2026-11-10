@@ -147,6 +147,9 @@ var labels = {
         "text.0893"
     ],
     "export": [
+        "qa.reportSettings",
+        "qa.reportSoftwareName",
+        "qa.reportNameHint",
         "export.defaultLocation",
         "text.0653",
         "text.0846",

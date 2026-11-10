@@ -67,7 +67,7 @@ Item {
                         x: imageLoader.x + 10
                         y: imageLoader.y + 10
                         z: 40
-                        visible: !!cell.view
+                        visible: !!cell.view && cell.view.showWindowAnnotations
                         width: Math.min(overlay?.selectorWidth ?? 70, Math.max(0, surface.width - x - 4))
                         height: overlay?.selectorHeight ?? 24
                         font.pixelSize: overlay?.textPixelSize ?? 12

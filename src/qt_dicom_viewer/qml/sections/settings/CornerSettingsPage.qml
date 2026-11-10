@@ -21,6 +21,7 @@ ColumnLayout {
         Layout.fillWidth: true
         title: qsTrId("text.0793")
         Components.AppCheckBox { objectName: "setting-corners-enabled"; text: qsTrId("text.0794"); checked: root.values.enabled; onClicked: root.settingsController.setValue("corners", "enabled", checked) }
+        Text { Layout.fillWidth: true; text: qsTrId("viewport.cornerDefaultsHint"); color: Theme.textMuted; wrapMode: Text.Wrap; font.pixelSize: 12 }
         SettingSlider { Layout.fillWidth: true; title: qsTrId("text.0795"); settingName: "corners-fontSize"; from: 10; to: 20; stepSize: 1; value: root.values.fontSize; onEdited: value => root.settingsController.setValue("corners", "fontSize", value) }
         SettingSlider { Layout.fillWidth: true; title: qsTrId("text.0796"); settingName: "corners-lineHeight"; from: 1; to: 1.8; stepSize: 0.1; suffix: qsTrId("text.0797"); value: root.values.lineHeight; onEdited: value => root.settingsController.setValue("corners", "lineHeight", value) }
         RowLayout {

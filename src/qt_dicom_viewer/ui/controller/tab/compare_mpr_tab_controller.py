@@ -188,6 +188,7 @@ class CompareMprTabController(TabController):
                 view.transformChanged.connect(lambda source=view: self._sync_display_transform(source))
             group.windowEdited.connect(lambda change, source=group: self._sync_window(source, change))
             group.imageUpdateRequested.connect(self.imageUpdateRequested.emit)
+            group.scalarDisplayUpdateRequested.connect(self.scalarDisplayUpdateRequested.emit)
             group.renderRequested.connect(self._forward_request)
             group.imageRemovalRequested.connect(self.imageRemovalRequested.emit)
             group.geometryEdited.connect(lambda before, after, source=group: self._sync_geometry(source, before, after))

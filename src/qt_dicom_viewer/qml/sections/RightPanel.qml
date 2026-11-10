@@ -198,6 +198,9 @@ Rectangle {
             toolController: rightPanel.toolController
             voiController: rightPanel.tabController?.voiController ?? rightPanel.viewportController?.voiController ?? null
             cprController: rightPanel.tabController?.cprController ?? null
+            qaController: rightPanel.viewportController?.qaController ?? null
+            historyController: rightPanel.tabController?.historyController ?? null
+            exportItem: rightPanel.exportItem
             collapsed: rightPanel.collapsed
             volumeContext: !!rightPanel.volumeController
             playbackActive: rightPanel.tabController?.playing ?? false
@@ -305,6 +308,9 @@ Rectangle {
             toolController: rightPanel.toolController
             voiController: rightPanel.tabController?.voiController ?? rightPanel.viewportController?.voiController ?? null
             cprController: rightPanel.tabController?.cprController ?? null
+            qaController: rightPanel.viewportController?.qaController ?? null
+            historyController: rightPanel.tabController?.historyController ?? null
+            exportItem: rightPanel.exportItem
             playbackActive: rightPanel.tabController?.playing ?? false
             resetEnabled: rightPanel.resetEnabled
         }

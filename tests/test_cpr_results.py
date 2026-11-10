@@ -188,3 +188,12 @@ def test_range_marks_preserve_historical_section_and_undo(cpr_app):
         assert tab._generation == generation and cross.historicalPlane and cross.imageSource == image
     assert not cross.cprGuides
     assert tab.viewForRole('curved').cprGuides['startColumn'] == pytest.approx(10 / tab._result.curve.centerline.spacing_mm)
+
+
+def test_clear_cpr_clears_scalar_display(cpr):
+    cross = cpr.viewForRole('cross')
+    cross.enable_scalar_display()
+    draw(cpr)
+    assert cross.scalarDisplay
+    cross.clear_cpr()
+    assert not cross.scalarDisplay and not cross.imageSource

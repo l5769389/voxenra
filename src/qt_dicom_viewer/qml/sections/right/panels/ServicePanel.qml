@@ -1,10 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import "../../../components" as Components
-import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
-import "../components" as Controls
+import "../../../components" as Components
+import "../../../theme"
 
 Item {
     id: servicePanel
@@ -12,7 +11,7 @@ Item {
 
     required property var toolController
     property var viewportController: null
-    property var historyController: null
+    property Item exportItem: null
     readonly property string selectedService: servicePanel.toolController
         ? servicePanel.toolController.activeService : ""
 
@@ -28,41 +27,45 @@ Item {
         width: parent.width
         spacing: 10
 
-        RowLayout {
+        Rectangle {
+            objectName: "analysisServiceTabs"
             Layout.fillWidth: true
-            spacing: 8
+            implicitHeight: 40
+            radius: 7
+            color: Theme.panelBackgroundStrong
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 3
+                spacing: 3
+                Repeater {
+                    model: servicePanel.toolController
+                        ? servicePanel.toolController.serviceActions : []
 
-            Repeater {
-                model: servicePanel.toolController
-                    ? servicePanel.toolController.serviceActions : []
-
-                delegate: Item {
-                    id: serviceEntry
-                    required property var modelData
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    implicitHeight: 44
-                    Controls.ToolActionButton {
-                        id: serviceButton
-                        anchors.fill: parent
-                        objectName: "serviceEntry-" + serviceEntry.modelData.iconName
-                        iconSize: 24
-                        iconName: serviceEntry.modelData.iconName
-                        label: serviceEntry.modelData.label
-                        shortLabel: serviceEntry.modelData.action === "service:qa" ? "QA" : label
-                        textOnly: serviceEntry.modelData.action === "service:mtf"
-                            || serviceEntry.modelData.action === "service:fwhm"
-                        enabled: serviceEntry.modelData.action !== "service:qa"
+                    delegate: Components.AppButton {
+                        id: serviceEntry
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.fillHeight: true
+                        objectName: "serviceEntry-" + modelData.iconName
+                        text: modelData.label
+                        normalColor: "transparent"
+                        disabledColor: "transparent"
+                        textColor: checked ? Theme.iconActive : Theme.textSecondary
+                        cornerRadius: 5
+                        fontPixelSize: 13
+                        fontWeight: Font.DemiBold
+                        momentary: true
+                        compact: true
+                        Accessible.role: Accessible.RadioButton
+                        Accessible.checkable: true
+                        Accessible.checked: checked
+                        hintText: qsTrId("analysis.hint." + modelData.iconName)
+                        enabled: modelData.action !== "service:qa"
                             || !servicePanel.viewportController
                             || !!servicePanel.viewportController.qaController?.available
-                        checked: servicePanel.selectedService === serviceEntry.modelData.action
-                        onClicked: servicePanel.actionTriggered(serviceEntry.modelData.action)
-                    }
-                    HoverHandler { id: serviceHover }
-                    Components.AppToolTip {
-                        requested: serviceHover.hovered && !serviceButton.enabled
-                        delay: 400
-                        text: serviceEntry.modelData.label
+                        checked: servicePanel.selectedService === modelData.action
+                        onClicked: servicePanel.actionTriggered(modelData.action)
                     }
                 }
             }
@@ -83,7 +86,7 @@ Item {
         }
 
         WaterQaResults {
-            historyController: servicePanel.historyController
+            exportItem: servicePanel.exportItem
             onManualRequested: servicePanel.manualRequested("water-qa")
             Layout.fillWidth: true
             Layout.minimumWidth: 0

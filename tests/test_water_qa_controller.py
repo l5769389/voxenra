@@ -139,7 +139,7 @@ def test_delete_baseline_remeasure_and_workspace_roundtrip(qa_view, qt_app, fall
         assert qa.deleteRoi(roi['key'])
     qa.analyze()
     wait_qa(qt_app, qa)
-    assert qa.roiItems == [] and qa.currentResult['noise_hu'] is None
+    assert qa.roiItems == [] and (qa.currentResult['noise_hu'] is None if fallback else qa.currentResult['noise_hu'] is not None)
     qa.regenerateRois()
     wait_qa(qt_app, qa)
     assert len(qa.roiItems) == 5
@@ -166,7 +166,7 @@ def test_display_changes_reuse_result_and_resets_are_scoped(qa_view, qt_app):
     tools.activateTool("service")
     tools.resetActiveTool()
     assert not qa.enabled and qa.currentResult == {} and not qa.roiItems
-    assert qa.roiDiameterMm == qa.edgeClearanceMm == 20
+    assert qa.roiDiameterMm == 20 and qa.edgeClearanceMm == 10
     tools.selectService("service:qa")  # Reselecting the same service restarts after reset.
     wait_qa(qt_app, qa)
     view.reset_all_view_state()
@@ -199,16 +199,16 @@ def test_parameter_edits_discard_old_results_and_update_geometry(qa_view, qt_app
     wait_qa(qt_app, qa)
     previous = qa.currentResult
     qa.setRoiDiameterMm(30)
-    assert qa.currentResult == {} and not qa.roiItems
+    assert qa.currentResult == {} and qa.displayResult == previous
+    assert len(qa.roiItems) == 5 and all(r['editing'] for r in qa.roiItems)
     wait_qa(qt_app, qa)
     assert qa.currentResult["rois"][0]["area_mm2"] > previous["rois"][0]["area_mm2"]
     qa.setEdgeClearanceMm(10)
     wait_qa(qt_app, qa)
     assert qa.currentResult["settings"]["edge_clearance_mm"] == 10
+    before_invalid = qa.currentResult
     qa.setRoiDiameterMm(100)
-    pump_until(qt_app, lambda: qa.status != "calculating")
-    assert qa.status == "error" and qa.roiItems == []
-    assert "互不重叠" in qa.error
+    assert qa.status == "ready" and qa.currentResult == before_invalid
     qa.setRoiDiameterMm(20)
     wait_qa(qt_app, qa)
 
@@ -388,14 +388,14 @@ def test_copies_are_independent_and_slice_cached(qa_view, qt_app):
     assert qa.copyRoi('extra-1')
     assert len(qa.roiItems) == 7
     assert all(r['removable'] for r in qa.currentResult['rois'][5:])
-    assert qa.currentResult['rois'][:5] == baseline['rois']
+    assert qa.currentResult['rois'][:6] == baseline['rois']
     assert {k:v for k,v in qa.currentResult.items() if k != 'rois'} == summary
-    before = qa.currentResult['rois'][5]
-    drag_qa(view, index=5, dx=3, dy=-2)
-    moved = qa.currentResult['rois'][5]
+    before = qa.currentResult['rois'][6]
+    drag_qa(view, index=6, dx=3, dy=-2)
+    moved = qa.currentResult['rois'][6]
     assert moved['column'] == pytest.approx(before['column']+3)
     assert moved['row'] == pytest.approx(before['row']-2)
-    assert qa.currentResult['rois'][:5] == baseline['rois']
+    assert qa.currentResult['rois'][:6] == baseline['rois']
     assert {k:v for k,v in qa.currentResult.items() if k != 'rois'} == summary
     saved = qa.currentResult
     view.setSliceIndex(1)
@@ -449,3 +449,128 @@ def test_near_edge_round_phantom_falls_back_without_relaxing_detection(qa_view, 
     assert qa.currentResult['phantom'] is None
     assert len(qa.roiItems) == 5
     assert all(abs(roi['mean_hu']+1) < .3 for roi in qa.currentResult['rois'])
+
+
+def test_center_only_diameter_keeps_deleted_rois_and_measures_large_region(qa_view, qt_app):
+    view, _ = qa_view
+    qa = view.qaController
+    qa.activate()
+    wait_qa(qt_app, qa)
+    center = qa.currentResult['rois'][0]
+    for key in ('left', 'right', 'top', 'bottom'):
+        assert qa.deleteRoi(key)
+    assert qa.currentResult['water_ct_hu'] == pytest.approx(center['mean_hu'])
+    assert qa.currentResult['noise_hu'] == next(r['std_hu'] for r in qa.currentResult['rois'] if r['key'] == 'noise')
+    assert qa.currentResult['uniformity_hu'] is None
+    assert qa.maximumRoiDiameterMm > 180
+    qa.setRoiDiameterMm(160)
+    wait_qa(qt_app, qa)
+    assert len(qa.roiItems) == 1
+    roi = qa.currentResult['rois'][0]
+    assert roi['key'] == 'center' and roi['radius_mm'] == 80
+    assert (roi['column'], roi['row']) == (center['column'], center['row'])
+    assert roi['pixel_count'] > center['pixel_count'] * 50
+    assert qa.currentResult['water_ct_hu'] == pytest.approx(2, abs=.3)
+    assert qa.currentResult['noise_hu'] == pytest.approx(5, abs=.3)
+    saved = qa.currentResult
+    qa.setRoiDiameterMm(qa.maximumRoiDiameterMm + 10)
+    assert qa.currentResult == saved
+    qa.analyze()
+    wait_qa(qt_app, qa)
+    assert qa.currentResult == saved
+
+
+def test_qa_exports_current_valid_result_as_pdf(qa_view, qt_app, tmp_path):
+    from test_water_qa_report import picture
+    from PySide6.QtPdf import QPdfDocument
+    view, _ = qa_view
+    qa = view.qaController
+    qa.activate()
+    wait_qa(qt_app, qa)
+    for key in ('left', 'right', 'top', 'bottom'):
+        qa.deleteRoi(key)
+    target = tmp_path / 'qa.pdf'
+    assert hasattr(qa, 'export_to')
+    assert qa.export_to(target, screenshot=picture())
+    doc = QPdfDocument()
+    assert doc.load(str(target)) == QPdfDocument.Error.None_
+    text = '\n'.join(doc.getAllText(i).text() for i in range(doc.pageCount()))
+    assert 'Voxenra' not in text and 'HU' in text
+    assert qa.currentResult['uniformity_hu'] is None
+    doc.close()
+    qa.set_current_slice(1)
+    assert not qa.export_to(tmp_path / 'stale.pdf')
+    assert not (tmp_path / 'stale.pdf').exists()
+
+
+def test_qa_pdf_save_cancel_and_slice_change_keep_frozen_source(qa_view, qt_app, tmp_path, monkeypatch):
+    import unicodedata
+    from test_water_qa_report import picture
+    from PySide6.QtPdf import QPdfDocument
+    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    view, _ = qa_view
+    qa = view.qaController
+    qa.activate()
+    wait_qa(qt_app, qa)
+    monkeypatch.setattr(QFileDialog, 'getSaveFileName', lambda *a: ('', ''))
+    frozen = qa._report_snapshot(picture())
+    qa._save_report_snapshot(frozen)
+    assert qa.reportMessage == ''
+    target = tmp_path / 'frozen.pdf'
+    def choose(*args):
+        assert args[2] == 'Water-QA-slice-001.pdf'
+        qa.set_current_slice(2)
+        return str(target), 'PDF (*.pdf)'
+    monkeypatch.setattr(QFileDialog, 'getSaveFileName', choose)
+    qa._save_report_snapshot(frozen)
+    assert target.is_file() and not qa.reportError
+    doc = QPdfDocument()
+    assert doc.load(str(target)) == QPdfDocument.Error.None_
+    text = '\n'.join(doc.getAllText(i).text() for i in range(doc.pageCount()))
+    text = unicodedata.normalize('NFKC', text)
+    assert '切片 1' in text and '水 CT 值' in text
+    doc.close()
+
+
+def test_air_report_filename_and_frozen_category(qa_view, qt_app, monkeypatch):
+    from dataclasses import replace
+    from test_water_qa_report import picture
+    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    view, _ = qa_view
+    qa = view.qaController
+    qa.activate(); wait_qa(qt_app, qa)
+    qa._active_group = 'air'
+    assert qa._report_snapshot(picture()) is None
+    qa._result = replace(qa._result, rois=qa._result.rois + (
+        replace(qa._result.rois[0], key='air-1', group='air'),))
+    frozen = qa._report_snapshot(picture())
+    assert frozen['report_kind'] == 'air'
+    qa._active_group = 'uniformity'
+    def choose(*args):
+        assert args[2] == 'Air-QA-slice-001.pdf'
+        return '', ''
+    monkeypatch.setattr(QFileDialog, 'getSaveFileName', choose)
+    qa._save_report_snapshot(frozen)
+
+
+def test_large_qa_region_survives_workspace_codec(qa_view, qt_app):
+    from qt_dicom_viewer.core.workspace_state import encode, decode
+    view, _ = qa_view
+    qa = view.qaController
+    qa.activate()
+    wait_qa(qt_app, qa)
+    for key in ('left', 'right', 'top', 'bottom'):
+        qa.deleteRoi(key)
+    qa.setRoiDiameterMm(160)
+    wait_qa(qt_app, qa)
+    saved = qa.currentResult
+    qa.restore_state(decode(encode(qa.persistent_state())))
+    assert qa.currentResult == saved
+
+
+@pytest.mark.parametrize('spacing', [None, (0, 1), (float('nan'), 1)])
+def test_qa_diameter_limit_handles_missing_or_invalid_spacing(qa_view, spacing):
+    view, frame = qa_view
+    meta = replace(frame.frame_meta, instance_meta=replace(frame.frame_meta.instance_meta, pixel_spacing=spacing))
+    view.qaController.set_frame(view.viewport_config.series_uid, meta, frame.modality_pixel)
+    assert view.qaController.maximumRoiDiameterMm == 2

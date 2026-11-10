@@ -85,7 +85,7 @@ footer { max-width: 1110px; margin: 70px auto 0; border-top: 1px solid var(--lin
 .home-search::after { left: 33px; top: 31px; }
 .home-search input { height: 52px; padding-left: 53px; font-size: 15px; }
 .home-visual { margin: 0; border: 1px solid #c9d6e1; border-radius: 7px; overflow: hidden; box-shadow: 0 8px 25px #18395218; background: #0d151f; }
-.home-visual img { display: block; width: 100%; }
+.home-visual img { display: block; width: 100%; height: auto; }
 .home-directory { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 29px; }
 .home-group { display: grid; grid-template-columns: 25px minmax(0, 1fr); gap: 12px; min-width: 0; padding: 22px 24px 22px 5px; border-bottom: 1px solid var(--line); }
 .home-group:not(:nth-child(4n+1)) { border-left: 1px solid var(--line); padding-left: 24px; }

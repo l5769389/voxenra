@@ -45,7 +45,7 @@ def test_qa_restores_edited_and_copied_rois_without_recalculation(qa_view, qt_ap
     wait_qa(qt_app, controller)
     assert controller.copyRoi('center')
     extra = controller.currentResult['rois'][-1]
-    assert len(controller.currentResult['rois']) == 6
+    assert len(controller.currentResult['rois']) == 7
     saved_result = controller.currentResult
     saved = loads(dumps(controller.persistent_state()))
     controller.reset()

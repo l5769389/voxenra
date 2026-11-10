@@ -24,8 +24,11 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
     view = QQuickView()
     provider = DicomImageProvider()
     cpr.imageUpdateRequested.connect(provider.set_array)
+    cpr.scalarDisplayUpdateRequested.connect(provider.set_scalar)
     for viewport in cpr.viewports_by_id.values():
         viewport.refresh_window_image()
+        if viewport._scalar_frame is not None:
+            provider.set_scalar(viewport.viewportId, viewport._scalar_frame)
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
     view.engine().addImageProvider("dicom", provider)
@@ -113,8 +116,11 @@ def displayed_cpr_page(cpr):
     window = QQuickView()
     provider = DicomImageProvider()
     cpr.imageUpdateRequested.connect(provider.set_array)
+    cpr.scalarDisplayUpdateRequested.connect(provider.set_scalar)
     for viewport in cpr.viewports_by_id.values():
         viewport.refresh_window_image()
+        if viewport._scalar_frame is not None:
+            provider.set_scalar(viewport.viewportId, viewport._scalar_frame)
     warnings = []
     window.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
     window.engine().addImageProvider("dicom", provider)
@@ -505,8 +511,11 @@ def test_empty_cpr_results_do_not_show_unavailable_corner_values(cpr):
     view = QQuickView()
     provider = DicomImageProvider()
     cpr.imageUpdateRequested.connect(provider.set_array)
+    cpr.scalarDisplayUpdateRequested.connect(provider.set_scalar)
     for viewport in cpr.viewports_by_id.values():
         viewport.refresh_window_image()
+        if viewport._scalar_frame is not None:
+            provider.set_scalar(viewport.viewportId, viewport._scalar_frame)
     view.engine().addImageProvider('dicom', provider)
     view.engine().addImageProvider('navigation', SvgIconProvider())
     view.setInitialProperties(dict(controller=cpr))

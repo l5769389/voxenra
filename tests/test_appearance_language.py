@@ -452,6 +452,9 @@ def test_app_confirmation_and_buttons_switch_while_open(qt_app, tmp_path):
     checks = []
     def inspect_dialog():
         dialog = qt_app.activeModalWidget()
+        # First native presentation can outlast the timer; allow the child
+        # button box's queued language change and caption restoration to settle.
+        wait_until(lambda: dialog.button(QMessageBox.StandardButton.Cancel).text() == 'Cancel (Esc)')
         checks.append(dialog.text() == localize(message('text.0418')))
         checks.append(dialog.button(QMessageBox.StandardButton.Cancel).text() == 'Cancel (Esc)')
         checks.append(dialog.defaultButton().text() == 'Save (Enter)')
@@ -554,3 +557,21 @@ def test_import_dialog_after_previous_theme_owner_is_destroyed(qt_app, tmp_path)
     finally:
         dialog.close()
         delete(dialog)
+
+
+def test_child_button_box_language_event_restores_shortcut_captions(qt_app, tmp_path):
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QDialogButtonBox
+    from qt_dicom_viewer.i18n.widgets import QMessageBox
+    language = LanguageController(SettingsController(path=False), root=tmp_path)
+    language.selectLanguage('en-US')
+    dialog = QMessageBox(QMessageBox.Question, message('text.0417'), message('text.0418'),
+                         QMessageBox.Save | QMessageBox.Cancel)
+    dialog.setDefaultButton(QMessageBox.Save)
+    try:
+        QCoreApplication.sendEvent(dialog.findChild(QDialogButtonBox), QEvent(QEvent.LanguageChange))
+        wait_until(lambda: dialog.button(QMessageBox.Cancel).text() == 'Cancel (Esc)')
+        assert dialog.button(QMessageBox.Save).text() == 'Save (Enter)'
+    finally:
+        dialog.deleteLater()
+        language.shutdown()

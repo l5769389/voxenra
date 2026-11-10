@@ -7,6 +7,7 @@ Item {
     id: overlay
     objectName: "waterQaOverlay"
     required property var controller
+    property bool showHandles: true
     readonly property var settingsController: controller?.settingsController ?? null
     readonly property int decimalPlaces: settingsController?.values.measurement.decimalPlaces ?? 2
     function metric(value) {
@@ -35,6 +36,7 @@ Item {
             required property var modelData
             objectName: "waterQaVoi-" + modelData.key
             anchors.fill: parent
+            opacity: modelData.reference ? 0.35 : 1
             readonly property point center: overlay.mapPoint(modelData.column, modelData.row)
             readonly property point u: overlay.mapPoint(modelData.column + modelData.radiusColumn, modelData.row)
             readonly property point v: overlay.mapPoint(modelData.column, modelData.row + modelData.radiusRow)
@@ -52,6 +54,8 @@ Item {
             Shape {
                 anchors.fill: parent
                 ShapePath {
+                    strokeStyle: roi.modelData.reference ? ShapePath.DashLine : ShapePath.SolidLine
+                    dashPattern: [4, 4]
                     strokeColor: roi.modelData.color
                     strokeWidth: roi.modelData.editing || roi.modelData.hovered || roi.modelData.selected ? 2.5 : 1.5
                     fillColor: roi.modelData.editing || roi.modelData.hovered
@@ -59,7 +63,25 @@ Item {
                     PathSvg { path: roi.outlinePath }
                 }
             }
+            Repeater {
+                model: overlay.showHandles && roi.modelData.selected && !roi.modelData.reference ? 4 : 0
+                Rectangle {
+                    required property int index
+                    objectName: "waterQaHandle-" + roi.modelData.key + "-" + index
+                    readonly property point location: index === 0 ? roi.u : index === 1 ? roi.v
+                        : index === 2 ? Qt.point(2*roi.center.x-roi.u.x, 2*roi.center.y-roi.u.y)
+                        : Qt.point(2*roi.center.x-roi.v.x, 2*roi.center.y-roi.v.y)
+                    x: location.x-width/2
+                    y: location.y-height/2
+                    width: 8; height: 8
+                    radius: 1
+                    color: Theme.canvasBackground
+                    border.color: roi.modelData.color
+                    border.width: 2
+                }
+            }
             Rectangle {
+                visible: !roi.modelData.reference
                 width: label.implicitWidth + 12
                 height: label.implicitHeight + 8
                 x: Math.max(4, Math.min(overlay.width-width-4, roi.center.x-width/2))
@@ -72,7 +94,8 @@ Item {
                     id: label
                     objectName: "waterQaVoiLabel-" + roi.modelData.key
                     anchors.centerIn: parent
-                    text: roi.modelData.editing ? I18n.format(qsTrId("qa.editing"), {label: roi.modelData.label})
+                    text: roi.modelData.editing ? (overlay.controller.status !== "ready" ? roi.modelData.label
+                        : I18n.format(qsTrId("qa.editing"), {label: roi.modelData.label}))
                         : roi.modelData.label + "  " + overlay.metric(roi.modelData.meanHu) + " HU\n"
                             + "SD  " + overlay.metric(roi.modelData.stdHu) + " HU"
                     color: Theme.overlayText

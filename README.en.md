@@ -78,6 +78,8 @@ Recorded in the current application using a synthetic phantom and simulated infe
 
 Switch each viewport between original slices and axial/coronal/sagittal reconstructions, retaining its position and display state. CT/MR support windowing and inversion; PET uses quantitative display ranges. Drag series into layouts, create grids up to 6 × 6, or double-click to enlarge a viewport.
 
+**Overlays and canvas:** corner information follows the global visibility setting until a viewport overrides it; restore inheritance in Viewport settings. This also controls the 2D plane selector. **Square viewport** resizes the application window for the current 2D canvas and turns off when manual window or sidebar resizing changes its shape.
+
 **Pinch zoom** works across image views without changing tools, anchored at the finger midpoint on touchscreens or the pointer on trackpads. With a series selected, **D / X / T / Y** open 2D / MPR / 3D / CPR; context menus show available shortcuts. **A** opens annotations and **E** export. Active tool menus, text fields, and dialogs take priority. **Q** resets the current view and clears its corresponding measurements and annotations; save results first.
 
 [![Series context menu and view shortcuts](docs/screenshots/en/65-view-shortcuts-2.5.0.png)](https://l5769389.github.io/voxenra/en/workspace.html#step-6)
@@ -152,6 +154,8 @@ View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, c
 
 **Free-shape measurement.** Click to place at least three control points, then press Enter or double-click to close the contour and view its statistics. Double-clicking finishes at the last point placed.
 
+Copy and paste completed measurements or annotations with **⌘C / ⌘V (Windows: Ctrl+C / Ctrl+V)**, including when a toolbar button has focus. Text fields and dialogs take priority; pasted statistics use the current viewport. QA circles do not use these clipboard shortcuts.
+
 Unselected ROIs use compact labels and expand their statistics when selected. Metrics wait for enough valid points. Partly out-of-image ROIs use valid pixels for intensity statistics while retaining their full drawn area and dimensions.
 
 ![Measurement tools and grouped results](docs/screenshots/en/63-measurement-2.5.0.png)
@@ -173,12 +177,12 @@ Unselected ROIs use compact labels and expand their statistics when selected. Me
 
 ### CT quality analysis
 
-- **QA:** water phantom CT number, noise, and uniformity. When no usable water phantom is detected, five editable circular ROIs provide sampling statistics. Move, copy, delete, regenerate, undo, or redo initial ROIs and copies; water-phantom summaries appear only when their prerequisites are met.
+- **QA:** separate CT number/uniformity, water-noise, and external-air groups. Move circles, resize with four handles, delete, undo, and redo; diameter limits follow the remaining geometry. Calculate automatically on release, or retry with **Calculate**. Only applicable metrics appear, and historical records are not recalculated automatically. Export PDFs include images and tables, distinct water/air titles, and an optional software name configured in Export settings.
 - **MTF / FWHM:** rectangular point-source selections, automatically determined sampling regions with visible bounds, and 110% adaptive integration for routine MTF calculations; independent ramp-line FWHM and slice-thickness analysis. Workspaces retain results, ROIs, and parameters; historical results change only when explicitly recalculated.
 
 <table>
 <tr>
-<td width="50%"><b>CT water phantom QA</b><br><a href="docs/screenshots/en/19-water-qa-2.1.3.png"><img src="docs/screenshots/en/19-water-qa-2.1.3.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
+<td width="50%"><b>CT water phantom QA</b><br><a href="docs/screenshots/en/68-water-qa-2.6.0.png"><img src="docs/screenshots/en/68-water-qa-2.6.0.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
 <td width="50%"><b>Point-source MTF</b><br><a href="docs/screenshots/en/67-mtf-analysis-2.5.0.png"><img src="docs/screenshots/en/67-mtf-analysis-2.5.0.png" alt="Independent MTF curve and spatial resolution analysis" width="100%"></a></td>
 </tr>
 </table>
@@ -189,16 +193,16 @@ Import source DICOM images on the left and associated SEG / NRRD masks through *
 
 Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Opening a series activates an existing tab of the same view type and preserves its reading state, or creates a tab if none matches. If you close a tab accidentally, choose **Reopen closed tab** from the tab-bar context menu, or press Ctrl+Shift+T / ⇧⌘T. The session remembers the last 20 closed, fully loaded reading tabs without edits. Workspace files retain completed editing results from closed tabs. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
 
-![Offline manual and workflow demos](docs/screenshots/en/50-offline-manual-2.1.2.png)
+![Offline manual and workflow demos](docs/screenshots/en/74-offline-manual-2.6.0.png)
 
 <table>
 <tr>
-<td width="50%"><b>Imported workspace</b><br><a href="docs/screenshots/en/45-workspace-home-2.1.3.png"><img src="docs/screenshots/en/45-workspace-home-2.1.3.png" alt="Open selected series or import more images" width="100%"></a></td>
+<td width="50%"><b>Imported workspace</b><br><a href="docs/screenshots/en/69-workspace-home-2.6.0.png"><img src="docs/screenshots/en/69-workspace-home-2.6.0.png" alt="Open selected series or import more images" width="100%"></a></td>
 <td width="50%"><b>PACS browser</b><br><a href="docs/screenshots/16-pacs-browser.png"><img src="docs/screenshots/16-pacs-browser.png" alt="PACS study query and series download" width="100%"></a></td>
 </tr>
 <tr>
 <td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="Detach a tab into another window" width="100%"></a></td>
-<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/17-workspace-2.5.0.png"><img src="docs/screenshots/en/17-workspace-2.5.0.png" alt="Create, open, and save a workspace" width="100%"></a></td>
+<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/72-workspace-2.6.0.png"><img src="docs/screenshots/en/72-workspace-2.6.0.png" alt="Create, open, and save a workspace" width="100%"></a></td>
 </tr>
 </table>
 

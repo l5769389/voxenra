@@ -35,7 +35,7 @@ DEFAULTS = {
     "workspace": {"automaticRecovery": True, "exitBehavior": "ask"},
     "layout": {"rightPanelCollapsed": False, "rightPanelWidth": 300, "settingsNavigationWidth": 180, "manualNavigationWidth": 260,
                "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []},
-    "export": {"directory": ""},
+    "export": {"directory": "", "reportSoftwareName": ""},
     "paletteList": {"favorites": []},
     "colormap": {"gray": "grayscale", "pet": "grayscale"},
     "window": {"hidden": [], "custom": [], "favorites": []},
@@ -88,6 +88,11 @@ def validate_value(section, key, value):
             raise ValueError(_msg('text.1166'))
         if key == "language" and (not isinstance(value, str) or not re.fullmatch(r"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*", value)):
             raise ValueError(_msg('text.1167'))
+    elif section == "export" and key == "reportSoftwareName":
+        if (not isinstance(value, str) or len(value.strip()) > 80
+                or any(ord(c) < 32 or ord(c) == 127 for c in value)):
+            raise ValueError(_msg('qa.invalidReportName'))
+        value = value.strip()
     elif section == "export" and key == "directory":
         if not isinstance(value, str) or "\x00" in value:
             raise ValueError(_msg('text.0047'))

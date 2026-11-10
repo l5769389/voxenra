@@ -242,6 +242,7 @@ class CprViewportController(Image2DViewportController):
         self.cancelMeasurement()
         self._historical = False
         self._frame_meta = self._modality_pixel = self.plane_geometry = None
+        self._refresh_scalar_display()
         self._has_image = False
         self._measure_controller.hide_frame()
         self._text_annotation_controller.set_current_slice(None)

@@ -254,6 +254,29 @@ ColumnLayout {
         }
     }
 
+    Components.AppButton {
+        objectName: "followCornerVisibility"
+        Layout.fillWidth: true
+        visible: !settingsPanel.isVolume
+        text: qsTrId("viewport.followCorners")
+        onClicked: (settingsPanel.scene ?? settingsPanel.viewportController)?.followCornerVisibility()
+    }
+    Components.AppCheckBox {
+        objectName: "squareViewportSwitch"
+        Layout.fillWidth: true
+        visible: !!settingsPanel.scene
+        text: qsTrId("viewport.square")
+        checked: settingsPanel.viewportController?.squareViewport ?? false
+        onClicked: settingsPanel.viewportController?.setSquareViewport(checked)
+        Components.AppToolTip { requested: parent.hovered; text: qsTrId("viewport.squareHint") }
+    }
+    Text {
+        Layout.fillWidth: true
+        visible: !!settingsPanel.scene && text.length > 0
+        text: settingsPanel.viewportController?.squareViewportMessage ?? ""
+        color: Theme.warningColor
+        wrapMode: Text.Wrap
+    }
     Item { Layout.fillHeight: true }
 
 }

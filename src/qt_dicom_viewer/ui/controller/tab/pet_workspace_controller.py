@@ -115,6 +115,7 @@ class PetWorkspaceController(TabController):
                 viewport.mpr3DRotationRequested.connect(self._rotate_3d)
             self._connect_playback_viewport(viewport)
             viewport.imageUpdateRequested.connect(self.imageUpdateRequested.emit)
+            self._connect_scalar_display(viewport)
             viewport.cursorController.cursorInfoChanged.connect(viewport.overlayChanged.emit)
             self._viewport_dict[config.viewport_id] = viewport
             if not self._active_viewport_id or role == "fusion":

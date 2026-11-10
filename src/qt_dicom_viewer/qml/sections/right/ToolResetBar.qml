@@ -11,6 +11,9 @@ Rectangle {
     required property var toolController
     property var voiController: null
     property var cprController: null
+    property var qaController: null
+    property var historyController: null
+    property Item exportItem: null
     property bool collapsed: false
     property bool volumeContext: false
     property bool resetEnabled: true
@@ -18,11 +21,16 @@ Rectangle {
     property string panel: toolController?.activePanel ?? ""
     readonly property bool voiActions: !collapsed && !!voiController && ["segmentation", "voi"].includes(panel)
     readonly property bool cprActions: !collapsed && panel === "cpr-path" && !!(cprController?.drawing || cprController?.pathEditing || cprController?.selectedPathId)
+    readonly property bool qaActions: !collapsed && panel === "service"
+        && toolController?.activeService === "service:qa" && !!qaController
+    readonly property bool qaEditing: !!qaController?.dragging || !!qaController?.placingAir
+    readonly property bool qaReady: qaController?.status === "ready"
+        && (qaController?.currentResult.rois ?? []).some(roi => (roi.group === "air") === (qaController.activeGroup === "air"))
     readonly property var globalReset: collapsed
         ? (toolController?.orderedToolbarTools ?? []).find(t => t.toolType === "reset" && t.available !== false) : null
-    readonly property bool showReset: !collapsed && !voiActions && !!toolController?.canResetActiveTool
+    readonly property bool showReset: !collapsed && !voiActions && !qaActions && !!toolController?.canResetActiveTool
         && !["measure", "cpr-path"].includes(panel)
-    readonly property bool hasActions: collapsed ? !!globalReset : cprActions || voiActions || showReset
+    readonly property bool hasActions: collapsed ? !!globalReset : cprActions || voiActions || qaActions || showReset
     visible: hasActions
     implicitHeight: root.voiActions && voiRow.columns === 1 ? 80 : 44
     color: Theme.panelBackgroundStrong
@@ -53,6 +61,57 @@ Rectangle {
         controller: root.cprController
         anchors.fill: parent
         anchors.margins: 6
+    }
+    RowLayout {
+        objectName: "qaBottomActions"
+        visible: root.qaActions
+        enabled: root.qaActions && !root.playbackActive
+        anchors.fill: parent
+        anchors.margins: 6
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        spacing: 8
+        component QaAction: Components.ToolbarAction {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            Layout.fillHeight: true
+            iconSize: 20
+            showLabel: false
+            tooltipPlacement: "above"
+        }
+        QaAction {
+            buttonObjectName: "qaUndo"
+            label: qsTrId("seg.undo")
+            tooltipText: label + (root.historyController?.undoShortcutText ? " (" + root.historyController.undoShortcutText + ")" : "")
+            iconName: "undo"
+            actionEnabled: (root.historyController?.canUndo ?? false) && !root.qaEditing && !root.qaController?.reportBusy
+            onTriggered: root.historyController.undo()
+        }
+        QaAction {
+            buttonObjectName: "qaRedo"
+            label: qsTrId("seg.redo")
+            tooltipText: label + (root.historyController?.redoShortcutText ? " (" + root.historyController.redoShortcutText + ")" : "")
+            iconName: "redo"
+            actionEnabled: (root.historyController?.canRedo ?? false) && !root.qaEditing && !root.qaController?.reportBusy
+            onTriggered: root.historyController.redo()
+        }
+        QaAction {
+            buttonObjectName: "exportQaReport"
+            label: qsTrId("qa.exportReport")
+            iconName: "export"
+            actionEnabled: root.qaReady && !root.qaEditing && !!root.exportItem && !root.qaController?.reportBusy
+            onTriggered: root.qaController.exportReport(root.exportItem)
+        }
+        QaAction {
+            buttonObjectName: visible && root.qaActions ? root.resetObjectName : ""
+            label: qsTrId("qa.clearShort")
+            explanation: qsTrId("qa.clearHint")
+            iconName: "clear"
+            actionEnabled: root.resetEnabled && !root.qaEditing && !root.qaController?.reportBusy
+                && !!root.toolController?.canResetActiveTool
+            resetAction: true
+            onTriggered: root.toolController.resetActiveTool()
+        }
     }
     component FooterAction: Controls.ToolActionButton {
         implicitWidth: labeledWidth

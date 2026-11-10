@@ -200,7 +200,7 @@
         "mac": "⇧⌘T"
       }
     ],
-    "example": "workspace-2.5.0.png",
+    "example": "workspace-2.6.0.png",
     "caption": "临时工作区的保存入口与自动恢复开关。",
     "icon": "workspace"
   },

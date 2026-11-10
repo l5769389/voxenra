@@ -42,6 +42,32 @@ ColumnLayout {
         }
     }
     SettingsSection {
+        sectionKey: "export-qa-report"
+        settingsController: page.settingsController
+        Layout.fillWidth: true
+        title: qsTrId("qa.reportSettings")
+        description: qsTrId("qa.reportNameHint")
+        Text {
+            Layout.fillWidth: true
+            text: qsTrId("qa.reportSoftwareName")
+            color: Theme.textSecondary
+            font.pixelSize: 12
+        }
+        Components.AppTextField {
+            objectName: "reportSoftwareName"
+            Layout.fillWidth: true
+            maximumLength: 80
+            placeholderText: qsTrId("qa.reportNameEmpty")
+            Accessible.name: qsTrId("qa.reportSoftwareName")
+            text: page.settingsController.values.export.reportSoftwareName
+            selectByMouse: true
+            onEditingFinished: {
+                page.settingsController.setValue("export", "reportSoftwareName", text)
+                text = Qt.binding(function() { return page.settingsController.values.export.reportSoftwareName })
+            }
+        }
+    }
+    SettingsSection {
         sectionKey: "export-formats"
         settingsController: page.settingsController
         Layout.fillWidth: true

@@ -72,7 +72,7 @@ def test_corner_menu_switches_real_planes_without_losing_stack_edits(sidebar_sce
     assert not warnings, warnings
 
 
-def test_hidden_or_reordered_information_keeps_selector_and_all_configured_fields(sidebar_scene):
+def test_hidden_information_hides_selector_and_reordered_fields_are_preserved(sidebar_scene):
     window, app, records, warnings = sidebar_scene
     tab, layout = open_scene(app, records)
     view = tab.activeViewport
@@ -84,10 +84,11 @@ def test_hidden_or_reordered_information_keeps_selector_and_all_configured_field
     layout.setViewportSetting('window-annotations', False)
     overlay = next(i for i in descendants(find(window, 'imageViewport-' + view.viewportId)) if i.objectName() == 'viewportMetadataOverlay')
     assert not overlay.isVisible()
-    choose(window, 0, 'coronal')
+    assert not next(i for i in descendants(window.contentItem()) if i.objectName() == 'twoDPlane-0').isVisible()
+    layout.setMode(0, 'coronal')
     wait_until(lambda: tab.activeViewport.loadState == 'ready')
     assert not tab.activeViewport.showWindowAnnotations
-    assert find(window, 'twoDPlane-0').property('displayText') == '冠状位重建'
+    assert next(i for i in descendants(window.contentItem()) if i.objectName() == 'twoDPlane-0').property('displayText') == '冠状位重建'
     layout.setViewportSetting('window-annotations', True)
     assert tab.activeViewport.overlayInfo['viewPosition'] in find(window, 'overlay-topLeft').property('text')
     assert app.settingsController.values['corners']['topLeft'] == fields
@@ -175,7 +176,10 @@ def test_each_cell_menu_targets_its_own_view_and_focus_does_not_change_layout(si
     window.resize(1000, 600)
     QTest.qWait(80)
     position = find(window, 'twoDModePosition')
-    assert position.width() > 0 and position.y() >= 24
+    assert position.width() > 0
+    # Cocoa enforces the product minimum window width: the label can fit
+    # beside the selector. Verify non-overlap in either responsive placement.
+    assert position.y() >= 24 or position.x() >= find(window, 'twoDPlane-0').width()
     selector = find(window, 'twoDPlane-0')
     assert not selector.property('contentItem').property('truncated')
     assert 'mm' in position.property('text')
@@ -207,4 +211,37 @@ def test_oblique_mr_keeps_source_orientation_and_can_return_after_reconstruction
     choose(window, 0, 'stack')
     assert tab.activeViewport is stack and stack.loadState == 'ready'
     assert '斜位' in find(window, 'twoDModePosition').property('text')
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('layout_name', ['1x1', '2x2', 'left-2'])
+def test_square_canvas_resizes_window_and_disengages_after_manual_resize(sidebar_scene, layout_name):
+    window, app, records, warnings = sidebar_scene
+    tab, layout = open_scene(app, records)
+    layout.setLayout(layout_name)
+    if layout_name == 'left-2':
+        click(window, find(window, 'sidebarToggle'))
+    click(window, find(window, 'primaryTool-viewport-settings'))
+    switch = find(window, 'squareViewportSwitch')
+    image = find(window, 'imageViewport-' + tab.activeViewport.viewportId)
+    click(window, switch)
+    wait_until(lambda: window.property('squareFitAttempts') == 0)
+    if not switch.property('checked') and layout_name == 'left-2':
+        # Some screens cannot fit the tall main cell within the minimum
+        # application height. The visible failure must leave it unconstrained.
+        assert tab.activeViewport.squareViewportMessage
+        assert abs(image.width()-image.height()) > 2
+        layout.activateCell(1)
+        layout.loadSeries(1, records[0].series_instance_uid)
+        wait_until(lambda: tab.activeViewport.loadState == 'ready')
+        image = find(window, 'imageViewport-' + tab.activeViewport.viewportId)
+        click(window, switch)
+        wait_until(lambda: window.property('squareFitAttempts') == 0)
+    assert abs(image.width()-image.height()) <= 2, (image.size(), window.size(),
+        window.property('availableWindowWidth'), window.property('availableWindowHeight'),
+        tab.activeViewport.squareViewportMessage)
+    assert switch.property('checked')
+    window.resize(window.width(), window.height()+45)
+    wait_until(lambda: not switch.property('checked'))
+    assert abs(image.width()-image.height()) > 2
     assert not warnings, warnings

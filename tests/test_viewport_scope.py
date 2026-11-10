@@ -23,7 +23,10 @@ def test_current_cell_and_tab_defaults_are_isolated_and_inherited(comparison, co
     wait_until(lambda: second.loadState == 'ready')
     first = layout.cells[0]['viewport']
     field = VIEWPORT_SETTING_FIELDS[code]
-    original = getattr(first._state.display_settings, field)
+    # Resolve inherited corner visibility when checking effective checkbox state.
+    original = first.showWindowAnnotations if code == "window-annotations" else getattr(first._state.display_settings, field)
+    if code == "window-annotations":
+        first.setViewportSetting(code, original)
     layout.setViewportSetting(code, not original)
     assert getattr(first._state.display_settings, field) == original
     assert getattr(second._state.display_settings, field) != original
@@ -43,7 +46,8 @@ def test_current_cell_and_tab_defaults_are_isolated_and_inherited(comparison, co
     assert getattr(tab.activeViewport._state.display_settings, field) != original
     app.workspaceController.createTab(records[2].series_instance_uid, 'Separate', '2d')
     wait_until(lambda: app.workspaceController.activeLoadState.status == 'ready')
-    assert getattr(app.workspaceController.activeViewport._state.display_settings, field) == original
+    new_view = app.workspaceController.activeViewport
+    assert (new_view.showWindowAnnotations if code == "window-annotations" else getattr(new_view._state.display_settings, field)) == original
 
 
 def test_scope_settings_survive_workspace_recovery(comparison, tmp_path):
@@ -200,3 +204,35 @@ def test_recovery_actions_close_workspace_before_action(sidebar_scene, monkeypat
     click(window, find(window, "sidebarWorkspace"))
     wait_until(lambda: dialog.property("visible"))
     assert not warnings, warnings
+
+
+def test_corner_visibility_inherits_global_until_overridden_and_restores(comparison, tmp_path):
+    app, records = comparison
+    tab, layout = open_scene(app, records)
+    settings = app.settingsController
+    first = tab.activeViewport
+    settings.setValue('corners', 'enabled', False)
+    assert not first.showWindowAnnotations
+    layout.setViewportSetting('window-annotations', True)
+    assert first.showWindowAnnotations
+    layout.setLayout('1x2')
+    layout.loadSeries(1, records[1].series_instance_uid)
+    second = tab.activeViewport
+    wait_until(lambda: second.loadState == 'ready')
+    assert not second.showWindowAnnotations
+    assert layout.viewportSettingStates['window-annotations'] == 0
+    settings.setValue('corners', 'enabled', True)
+    assert first.showWindowAnnotations and second.showWindowAnnotations
+    layout.setViewportSetting('window-annotations', False)
+    settings.setValue('corners', 'enabled', False)
+    settings.setValue('corners', 'enabled', True)
+    assert first.showWindowAnnotations and not second.showWindowAnnotations
+    manager = app.workspaceDocumentController
+    target = tmp_path / 'corners.voxworkspace'
+    assert manager.save_to(target)
+    wait_until(lambda: not manager.busy)
+    assert manager.restore_from(target)
+    wait_until(lambda: not manager.busy)
+    restored = app.workspaceController.activeTab.twoDLayout
+    assert restored.cells[0]['viewport'].showWindowAnnotations
+    assert not restored.cells[1]['viewport'].showWindowAnnotations

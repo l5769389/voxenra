@@ -55,8 +55,11 @@ def test_three_scopes_write_real_anonymous_pngs_and_reject_changed_scope(cpr_app
     window = QQuickView()
     provider = DicomImageProvider()
     tab.imageUpdateRequested.connect(provider.set_array)
+    tab.scalarDisplayUpdateRequested.connect(provider.set_scalar)
     for viewport in tab.viewports_by_id.values():
         viewport.refresh_window_image()
+        if viewport._scalar_frame is not None:
+            provider.set_scalar(viewport.viewportId, viewport._scalar_frame)
     warnings = []
     window.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
     window.engine().addImageProvider('dicom', provider)

@@ -1,6 +1,6 @@
 """App-owned widget text bindings; native file pickers translate on their next opening."""
 from PySide6 import QtWidgets
-from PySide6.QtCore import QEvent, QTimer
+from PySide6.QtCore import QEvent, QTimer, QObject
 from .messages import Message, JoinedMessage, localize, message
 
 
@@ -57,6 +57,13 @@ class QDialog(TextBindings, QtWidgets.QDialog):
     pass
 
 
+class _ButtonCaptionFilter(QObject):
+    def eventFilter(self, watched, event):
+        if event.type() in (QEvent.LanguageChange, QEvent.StyleChange):
+            self.parent()._button_text_timer.start(0)
+        return False
+
+
 class QMessageBox(TextBindings, QtWidgets.QMessageBox):
     def __init__(self, *args, **kwargs):
         super().__init__(*(localize(arg) for arg in args), **kwargs)
@@ -66,6 +73,10 @@ class QMessageBox(TextBindings, QtWidgets.QMessageBox):
         self._button_text_timer = QTimer(self)
         self._button_text_timer.setSingleShot(True)
         self._button_text_timer.timeout.connect(self._translate_buttons)
+        self._button_box = self.findChild(QtWidgets.QDialogButtonBox)
+        self._caption_filter = _ButtonCaptionFilter(self)
+        if self._button_box is not None:
+            self._button_box.installEventFilter(self._caption_filter)
         self._translate_buttons()
 
     def changeEvent(self, event):

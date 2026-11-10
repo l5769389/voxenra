@@ -17,6 +17,93 @@ from test_water_qa import water_image
 from test_water_qa_controller import qa_view, water_render, wait_qa
 
 
+def qa_control(window, name):
+    panel = _find(window, "waterQaResults")
+    panel.setProperty("parametersExpanded", True)
+    QTest.qWait(20)
+    item = _find(window, name)
+    flick = _find(window, "toolDetailFlickable")
+    y = item.mapToItem(flick, QPointF()).y()
+    flick.setProperty("contentY", max(0, flick.property("contentY")+y-40))
+    QTest.qWait(20)
+    return item
+
+
+def test_diameter_recalculation_keeps_panel_geometry_and_scroll_position(qa_workspace, qt_app, monkeypatch):
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    number = qa_control(window, 'waterQaSetting-roiDiameterMm')
+    flick = _find(window, 'toolDetailFlickable')
+    before = (number.mapToScene(QPointF()).y(), flick.property('contentY'), flick.property('contentHeight'))
+    jobs = []
+    monkeypatch.setattr(qa, '_submit', lambda *args: jobs.append(args))
+    qa.setActiveDiameterMm(qa.activeDiameterMm+1)
+    QTest.qWait(40)
+    after = (number.mapToScene(QPointF()).y(), flick.property('contentY'), flick.property('contentHeight'))
+    assert after == pytest.approx(before, abs=1)
+    assert _find(window, 'waterQaMetric-water_ct_hu').property('text') == '—'
+    assert _find(window, 'waterQaVoiLabel-center').property('text') == '中心'
+    assert not _find(window, 'exportQaReport').isEnabled()
+    from qt_dicom_viewer.core.water_qa import measure_qa_rois, resize_qa_rois
+    previous = qa._display_result
+    token, key, pixels, spacing, settings = jobs[-1]
+    result = measure_qa_rois(pixels, spacing, previous.phantom, settings,
+                            resize_qa_rois(previous, settings, spacing))
+    qa._receive_result(token, key, result, '')
+    QTest.qWait(40)
+    completed = (number.mapToScene(QPointF()).y(), flick.property('contentY'), flick.property('contentHeight'))
+    assert completed == pytest.approx(before, abs=1)
+    assert _find(window, 'waterQaMetric-water_ct_hu').property('text') == f'{result.water_ct_hu:.2f} HU'
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('transformed', [False, True])
+def test_selected_circle_four_handles_resize_in_actual_view(qa_workspace, qt_app, transformed, tmp_path):
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa'); wait_qa(qt_app, qa)
+    if transformed:
+        view.apply_pan(12, -9); view.apply_zoom(1.3)
+        view.applyTransformAction('rotate:cw90'); view.applyTransformAction('rotate:mirror-h')
+    QTest.qWait(40)
+    pixels = _find(window, 'dicomPixelLayer')
+    for index, axis, sign in [(0,0,1), (1,1,1), (2,0,-1), (3,1,-1)]:
+        before = qa.currentResult
+        roi = before['rois'][0]
+        QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, _scene(pixels, roi['column'], roi['row']))
+        QTest.qWait(30)
+        handles = [i for i in _visual_children(window.rootObject()) if i.objectName().startswith('waterQaHandle-') and i.isVisible()]
+        assert len(handles) == 4
+        handle = _find(window, f'waterQaHandle-center-{index}')
+        start = handle.mapToScene(QPointF(4,4)).toPoint()
+        p = [roi['column'], roi['row']]
+        p[axis] += sign*(roi['radius_mm']+2)/(.5 if axis == 0 else .7)
+        end = _scene(pixels, *p)
+        QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
+        QTest.mouseMove(window, (start+end)/2, 25)
+        assert qa.dragging and qa._resize_handle
+        assert qa.currentResult == before
+        QTest.mouseMove(window, end, 25)
+        QTest.mouseRelease(window, Qt.LeftButton, Qt.NoModifier, end)
+        QTest.qWait(30)
+        after = qa.currentResult
+        assert not qa.error
+        assert after['rois'][0]['radius_mm'] == pytest.approx(roi['radius_mm']+2, abs=.8)
+        assert after['rois'][0]['column'] == roi['column']
+        assert after['rois'][0]['row'] == roi['row']
+        for actual, previous in zip(after['rois'][1:], before['rois'][1:]):
+            assert {k:v for k,v in actual.items() if k != 'delta_center_hu'} == {k:v for k,v in previous.items() if k != 'delta_center_hu'}
+    viewport = _find(window, 'testViewport')
+    viewport.setProperty('capturingPng', True); QTest.qWait(20)
+    assert not any(i.objectName().startswith('waterQaHandle-') and i.isVisible() for i in _visual_children(window.rootObject()))
+    viewport.setProperty('capturingPng', False); QTest.qWait(20)
+    assert len([i for i in _visual_children(window.rootObject()) if i.objectName().startswith('waterQaHandle-') and i.isVisible()]) == 4
+    assert window.grabWindow().save(str(tmp_path / f'qa-handles-{transformed}.png'))
+    assert not warnings, warnings
+
+
 @pytest.fixture
 def qa_workspace(qt_app, qa_view, request):
     controller, _ = qa_view
@@ -58,10 +145,18 @@ def test_actual_qa_button_draws_five_rois_and_measures_current_slice(qa_workspac
     assert len(rois) == 5
     assert all(roi.isVisible() for roi in rois)
     result = view.qaController.currentResult
-    for key in ("water_ct_hu", "noise_hu", "uniformity_hu", "consistency_range_hu",
+    for key in ("water_ct_hu", "uniformity_hu", "consistency_range_hu",
                 "horizontal_difference_hu", "vertical_difference_hu"):
         item = _find(window, "waterQaMetric-"+key)
         assert item.property("text") == f"{result[key]:.2f} HU"
+        label = _find(window, "waterQaMetricLabel-"+key)
+        from PySide6.QtQml import QQmlExpression
+        for text_item in (item, label):
+            alignment, _ = QQmlExpression(window.engine().rootContext(), text_item,
+                                          'Number(horizontalAlignment)').evaluate()
+            assert alignment == Qt.AlignHCenter
+        assert label.mapToScene(QPointF(label.width()/2, 0)).x() == pytest.approx(
+            item.mapToScene(QPointF(item.width()/2, 0)).x(), abs=1)
     assert len([item for item in _visual_children(window.rootObject())
                 if item.objectName().startswith("waterQaRow-") and item.isVisible()]) == 5
     assert "中心" in _find(window, "waterQaVoiLabel-center").property("text")
@@ -191,17 +286,17 @@ def test_overlay_tracks_physical_transform_and_parameter_reset(qa_workspace, qt_
             rx, ry = np.hypot(u.x()-point.x(), u.y()-point.y()), np.hypot(v.x()-point.x(), v.y()-point.y())
             assert rx == pytest.approx(ry, abs=.01)
         assert view.qaController.currentResult == result
-    number = _find(window, "waterQaSetting-roiDiameterMm")
+    number = qa_control(window, "waterQaSetting-roiDiameterMm")
     _click(window, number)
     QTest.keyClick(window, Qt.Key_Up)
     wait_qa(qt_app, view.qaController)
-    assert view.qaController.roiDiameterMm == 21
+    assert view.qaController.roiDiameterMm == pytest.approx(result["settings"]["roi_diameter_mm"]+1, abs=.06)
     reset = _find(window, "activeToolReset")
     reset.forceActiveFocus(Qt.TabFocusReason)
     wait_until(lambda: reset.mapToScene(QPointF(0, reset.height())).y() <= window.height())
     _click(window, reset)
     assert view.qaController.roiItems == [] and not view.qaController.enabled
-    _click(window, _find(window, "waterQa-analyze"))
+    _click(window, qa_control(window, "waterQa-analyze"))
     wait_qa(qt_app, view.qaController)
     assert len(view.qaController.roiItems) == 5
     assert not warnings, warnings
@@ -228,7 +323,7 @@ def test_qa_row_actions_copy_and_delete_all_rois(qa_workspace, qt_app, tmp_path)
     assert len(view.qaController.roiItems) == 6
     assert _find(window, 'waterQaVoi-extra-1').isVisible()
     assert _find(window, 'waterQaDelete-extra-1').isEnabled()
-    assert view.qaController.currentResult['rois'][:5] == baseline['rois']
+    assert view.qaController.currentResult['rois'][:6] == baseline['rois']
     table = _find(window, 'waterQaRoiTable')
     for item in _visual_children(table):
         if item.isVisible() and item.width() > 0:
@@ -266,7 +361,7 @@ def test_fallback_without_warning_drag_delete_and_regenerate_in_qml(qa_workspace
     for name in ('waterQaNotice', 'waterQaError', 'waterQaMetrics', 'waterQaPhantomSize'):
         assert not any(i.objectName() == name and i.isVisible()
                        for i in _visual_children(window.rootObject()))
-    assert not _find(window, 'waterQaSetting-edgeClearanceMm').isEnabled()
+    assert not qa_control(window, 'waterQaSetting-edgeClearanceMm').isEnabled()
     pixels = _find(window, 'dicomPixelLayer')
     roi = qa.currentResult['rois'][0]
     _mouse_drag(window, _scene(pixels, roi['column'], roi['row']),
@@ -285,7 +380,7 @@ def test_fallback_without_warning_drag_delete_and_regenerate_in_qml(qa_workspace
     assert window.grabWindow().save(str(tmp_path/f'qa-fallback-delete-{window.width()}.png'))
     flick.setProperty('contentY', 0)
     QTest.qWait(40)
-    _click(window, _find(window, 'waterQa-analyze'))
+    _click(window, qa_control(window, 'waterQa-analyze'))
     wait_qa(qt_app, qa)
     QTest.qWait(40)
     assert len(qa.roiItems) == 5
@@ -304,15 +399,15 @@ def test_qa_numeric_text_commits_once_and_escape_restores(qa_workspace, qt_app):
     _click(window, _find(window, "primaryTool-service"))
     _click(window, _find(window, "serviceEntry-qa"))
     wait_qa(qt_app, view.qaController)
-    number = _find(window, "waterQaSetting-roiDiameterMm")
+    number = qa_control(window, "waterQaSetting-roiDiameterMm")
     field = number.property("contentItem")
     field.forceActiveFocus()
     QMetaObject.invokeMethod(field, "selectAll")
     QTest.keyClick(window, "3")
     QTest.keyClick(window, "0")
-    assert view.qaController.roiDiameterMm == 20
+    assert view.qaController.roiDiameterMm == pytest.approx(20, abs=.1)
     QTest.keyClick(window, Qt.Key_Escape)
-    assert field.property("text") == "20"
+    assert float(field.property("text")) == round(view.qaController.roiDiameterMm, 1)
     field.forceActiveFocus()
     QMetaObject.invokeMethod(field, "selectAll")
     QTest.keyClick(window, "3")
@@ -333,7 +428,7 @@ def test_qa_draft_is_discarded_on_slice_change_or_disable(qa_workspace, qt_app, 
     wait_qa(qt_app, qa)
     qa.setRoiDiameterMm(25)
     wait_qa(qt_app, qa)
-    number = _find(window, 'waterQaSetting-roiDiameterMm')
+    number = qa_control(window, 'waterQaSetting-roiDiameterMm')
     field = number.property('contentItem')
     field.forceActiveFocus()
     QMetaObject.invokeMethod(field, 'selectAll')
@@ -347,8 +442,8 @@ def test_qa_draft_is_discarded_on_slice_change_or_disable(qa_workspace, qt_app, 
         number.setEnabled(False)
     assert qa.roiDiameterMm == 25
     assert not number.isEnabled()
-    assert number.property("value") == 25
-    assert field.property('text') == '25'
+    assert number.property("value") == 250
+    assert float(field.property('text')) == 25
     QTest.keyClick(window, Qt.Key_Return)
     assert qa.roiDiameterMm == 25
     if change == 'slice':
@@ -356,5 +451,167 @@ def test_qa_draft_is_discarded_on_slice_change_or_disable(qa_workspace, qt_app, 
         wait_qa(qt_app, qa)
         assert number.isEnabled()
         assert qa.roiDiameterMm == 25
-        assert field.property('text') == '25'
+        assert float(field.property('text')) == 25
+    assert not warnings, warnings
+
+
+def test_center_only_qa_hides_missing_metrics_and_allows_large_diameter(qa_workspace, qt_app):
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    for key in ('left', 'right', 'top', 'bottom'):
+        qa.deleteRoi(key)
+    QTest.qWait(30)
+    assert qa_control(window, 'waterQaSetting-roiDiameterMm').property('to') > 150
+    assert _find(window, 'waterQaMetric-water_ct_hu').isVisible()
+    qa.setActiveGroup('noise')
+    QTest.qWait(20)
+    assert _find(window, 'waterQaMetric-noise_hu').isVisible()
+    assert not any(i.objectName() == 'waterQaMetric-uniformity_hu' and i.isVisible()
+                   for i in _visual_children(window.rootObject()))
+    assert _find(window, 'exportQaReport').isEnabled()
+    assert not warnings, warnings
+
+
+def test_qa_report_button_captures_current_view_and_restores_flags(qa_workspace, qt_app, tmp_path, monkeypatch):
+    from PySide6.QtPdf import QPdfDocument
+    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    import unicodedata
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    viewport = _find(window, 'testViewport')
+    target = tmp_path / 'qa-screenshot.pdf'
+    snapshots = []
+    original = qa.export_to
+    def save(path, **kwargs):
+        snapshots.append(kwargs['frozen'])
+        return original(path, **kwargs)
+    monkeypatch.setattr(qa, 'export_to', save)
+    def choose(*args):
+        # The screenshot already exists when the modal file dialog opens.
+        assert not viewport.property('anonymousExport')
+        assert not viewport.property('capturingPng')
+        qa.set_current_slice(1)
+        return str(target), 'PDF (*.pdf)'
+    monkeypatch.setattr(QFileDialog, 'getSaveFileName', choose)
+    flick = _find(window, 'toolDetailFlickable')
+    flick.setProperty('contentY', max(0, flick.property('contentHeight')-flick.height()))
+    QTest.qWait(30)
+    button = _find(window, 'exportQaReport')
+    _click(window, button)
+    wait_until(lambda: target.exists() or qa.reportError)
+    assert target.exists(), qa.reportMessage
+    assert not qa.reportBusy and not qa.reportError
+    image = snapshots[0]['screenshot']
+    assert image.width() >= viewport.width() and not image.isNull()
+    # The rendered capture contains the gold center ROI, not only a gray image.
+    assert any(image.pixelColor(x,y).red() > 180 and image.pixelColor(x,y).blue() < 150
+               for y in range(0,image.height(),2) for x in range(0,image.width(),2))
+    doc = QPdfDocument()
+    assert doc.load(str(target)) == QPdfDocument.Error.None_
+    text = unicodedata.normalize('NFKC',doc.getAllText(0).text())
+    assert '切片 1' in text and 'Voxenra' not in text
+    assert not warnings, warnings
+    doc.close()
+
+
+@pytest.mark.parametrize('change', ['roi', 'slice', 'display', 'group', 'shutdown'])
+def test_qa_capture_rejects_changed_roi_and_restores_view(qa_workspace, qt_app, monkeypatch, change):
+    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    viewport = _find(window, 'testViewport')
+    choices = []
+    monkeypatch.setattr(QFileDialog,'getSaveFileName',lambda *a: choices.append(a) or ('',''))
+    qa.exportReport(viewport)
+    assert qa.reportBusy
+    if change == 'roi':
+        qa.deleteRoi('left')
+    elif change == 'slice':
+        qa.set_current_slice(1)
+    elif change == 'display':
+        view.apply_pan(15, -10)
+    elif change == 'group':
+        qa.setActiveGroup('noise')
+    else:
+        qa.shutdown()
+    wait_until(lambda: not qa.reportBusy)
+    assert qa.reportError and not choices
+    assert not viewport.property('anonymousExport') and not viewport.property('capturingPng')
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('qa_workspace', [(1200,820), (760,560)], indirect=True)
+def test_group_switch_air_placement_and_cancellation_in_actual_view(qa_workspace, qt_app):
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    original = qa.currentResult
+    _click(window, _find(window,'qaGroup-noise'))
+    assert qa.activeGroup == 'noise' and len(qa.roiItems) == 1
+    assert not any(item.objectName() == 'qaShowOtherGroups' for item in _visual_children(window.rootObject()))
+    _click(window, _find(window,'qaAirTab'))
+    wait_qa(qt_app, qa)
+    _find(window, 'waterQaResults').setProperty('parametersExpanded', True)
+    QTest.qWait(20)
+    assert len([item for item in _visual_children(window.rootObject())
+                if item.isVisible() and callable(getattr(item, 'clicked', None))
+                and item.property('text') == '添加空气 ROI']) == 1
+    assert not any(item.objectName() == 'waterQa-analyze' and item.isVisible()
+                   for item in _visual_children(window.rootObject()))
+    _click(window, _find(window,'qaAddAir'))
+    assert qa.placingAir
+    layer = _find(window, 'dicomPixelLayer')
+    # Invalid overlap leaves the placement active and existing data intact.
+    QTest.mouseClick(window,Qt.LeftButton,Qt.NoModifier,_scene(layer,265,196))
+    assert qa.placingAir and qa.error
+    assert qa.currentResult == original
+    QTest.mouseClick(window,Qt.LeftButton,Qt.NoModifier,_scene(layer,40,40))
+    assert not qa.placingAir
+    assert qa.currentResult['rois'][-1]['mean_hu'] == -1000
+    assert qa.currentResult['rois'][:6] == original['rois']
+    QTest.qWait(30)
+    mean = _find(window, 'waterQaCell-air-1-1')
+    assert mean.property('text') == '-1000.00' and not mean.property('truncated')
+    _click(window, _find(window,'qaAddAir'))
+    QTest.keyClick(window,Qt.Key_Escape)
+    assert not qa.placingAir
+    _click(window, _find(window,'qaWaterTab'))
+    assert qa.activeGroup == 'uniformity'
+    assert qa.currentResult['noise_hu'] == original['noise_hu']
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('qa_workspace', [(1200, 820), (760, 560)], indirect=True)
+def test_qa_footer_stays_visible_when_scrolling_and_changes_with_service(qa_workspace, qt_app):
+    window, view, warnings = qa_workspace
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, view.qaController)
+    _find(window, 'waterQaResults').setProperty('parametersExpanded', True)
+    QTest.qWait(30)
+    flick = _find(window, 'toolDetailFlickable')
+    buttons = [_find(window, key) for key in ('qaUndo', 'qaRedo', 'exportQaReport', 'activeToolReset')]
+    positions = [button.mapToScene(QPointF()) for button in buttons]
+    assert len({point.y() for point in positions}) == 1
+    assert all(positions[i].x()+buttons[i].width() <= positions[i+1].x() for i in range(3))
+    for position, button in zip(positions, buttons):
+        assert position.y() >= flick.mapToScene(QPointF(0, flick.height())).y()
+        assert position.y()+button.height() <= window.height()
+        assert position.x()+button.width() <= window.width()
+    flick.setProperty('contentY', flick.property('contentHeight')-flick.height())
+    QTest.qWait(20)
+    assert [button.mapToScene(QPointF()) for button in buttons] == positions
+    for service in ('mtf', 'fwhm', 'qa'):
+        flick.setProperty('contentY', 0)
+        _click(window, _find(window, 'serviceEntry-'+service))
+        assert view._tool_controller.activeService == 'service:'+service
+        assert _find(window, 'serviceEntry-'+service).property('checked')
+        assert any(item.objectName() == 'qaBottomActions' and item.isVisible()
+                   for item in _visual_children(window.rootObject())) == (service == 'qa')
     assert not warnings, warnings

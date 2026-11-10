@@ -7,6 +7,7 @@ Rectangle {
     required property var viewportController
     property var reservedRegions: []
     property real instructionBottomMargin: 32
+    property bool capturingPng: false
     readonly property var measurementLabelRegions: measurementOverlay.labelHitRegions(imageCanvasRoot).concat(mtfOverlay.labelHitRegions(imageCanvasRoot))
     readonly property var instructionRegions: measurementOverlay.instructionRegions.concat(mtfOverlay.instructionRegions)
     anchors.fill: parent
@@ -306,15 +307,11 @@ Rectangle {
                         ? -1 : 1
                 }
 
-                Image {
+                ScalarImage {
                     anchors.fill: parent
-
-                    source: imageScene.controller ? imageScene.controller.imageSource : ""
-
-                    // pixelLayer 的宽高已经保持图像比例
-                    fillMode: Image.Stretch
-                    cache: false
-                    smooth: true
+                    controller: imageScene.controller
+                    screenScaleX: Math.abs(imageScene.scale*imageScene.columnSpacing)
+                    screenScaleY: Math.abs(imageScene.scale*imageScene.rowSpacing)
                 }
 
                 Repeater {
@@ -346,6 +343,7 @@ Rectangle {
 
     WaterQaOverlay {
         anchors.fill: parent
+        showHandles: !imageCanvasRoot.capturingPng
         controller: imageCanvasRoot.viewportController?.qaController ?? null
         coordinateMapper: imageCanvasRoot
         transformState: imageCanvasRoot.measurementTransformState

@@ -9,41 +9,79 @@ ColumnLayout {
     id: panel
     objectName: "waterQaResults"
     property var controller: null
-    property var historyController: null
+    property Item exportItem: null
     readonly property var settingsController: controller?.settingsController ?? null
     readonly property int decimalPlaces: settingsController?.values.measurement.decimalPlaces ?? 2
-    readonly property var result: controller ? controller.currentResult : ({})
+    readonly property var result: controller ? controller.displayResult : ({})
     readonly property bool ready: result.rois !== undefined
-    readonly property bool editing: controller ? controller.dragging : false
+    readonly property bool editing: !!controller && (controller.dragging || controller.status !== "ready")
     readonly property string inputContext: (controller?.frameToken ?? "") + "|" + (controller?.status ?? "")
     readonly property bool inputReady: !!controller && controller.available
         && controller.frameToken.length > 0 && !["waiting", "calculating"].includes(controller.status)
+    readonly property string group: controller?.activeGroup ?? "uniformity"
+    property bool parametersExpanded: false
     spacing: 10
 
-    Components.AppButton {
-        objectName: "recalculateQa"
-        Layout.fillWidth: true
-        text: qsTrId("analysis.recalculate")
-        enabled: !!panel.controller && panel.controller.status !== "calculating" && !panel.editing
-        onClicked: panel.controller.analyze()
-    }
     RowLayout {
         Layout.fillWidth: true
         Components.AppButton {
-            objectName: "qaUndo"
+            objectName: "qaWaterTab"
             Layout.fillWidth: true
-            text: qsTrId("seg.undo")
-            iconName: "undo"
-            enabled: (panel.historyController?.canUndo ?? false) && !panel.editing
-            onClicked: panel.historyController.undo()
+            text: qsTrId("qa.waterTab")
+            Accessible.role: Accessible.RadioButton
+            Accessible.checkable: true
+            Accessible.checked: checked
+            checked: panel.group !== "air"
+            onClicked: panel.controller.setActiveGroup("uniformity")
         }
         Components.AppButton {
-            objectName: "qaRedo"
+            objectName: "qaAirTab"
             Layout.fillWidth: true
-            text: qsTrId("seg.redo")
-            iconName: "redo"
-            enabled: (panel.historyController?.canRedo ?? false) && !panel.editing
-            onClicked: panel.historyController.redo()
+            text: qsTrId("qa.airTab")
+            Accessible.role: Accessible.RadioButton
+            Accessible.checkable: true
+            Accessible.checked: checked
+            checked: panel.group === "air"
+            onClicked: panel.controller.setActiveGroup("air")
+        }
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        visible: panel.group !== "air"
+        Repeater {
+            model: [{key:"uniformity", label:qsTrId("qa.uniformityGroup")},
+                    {key:"noise", label:qsTrId("qa.noiseGroup")}]
+            Components.AppButton {
+                required property var modelData
+                objectName: "qaGroup-" + modelData.key
+                Layout.fillWidth: true
+                Accessible.role: Accessible.RadioButton
+                Accessible.checkable: true
+                Accessible.checked: checked
+                checked: panel.group === modelData.key
+                text: modelData.label
+                onClicked: panel.controller.setActiveGroup(modelData.key)
+            }
+        }
+    }
+    Text {
+        Layout.fillWidth: true
+        visible: panel.group === "air"
+        text: panel.controller?.placingAir ? qsTrId("qa.placeAir") : qsTrId("qa.airHint")
+        color: Theme.textSecondary
+        wrapMode: Text.Wrap
+        font.pixelSize: 12
+    }
+    Components.AppButton {
+        objectName: "qaAddAir"
+        Layout.fillWidth: true
+        visible: panel.group === "air"
+        text: qsTrId("qa.addAir")
+        checked: panel.controller?.placingAir ?? false
+        enabled: panel.ready && !panel.editing
+        onClicked: {
+            panel.controller.placeAirRoi()
+            if (panel.controller.placingAir && panel.exportItem) panel.exportItem.forceActiveFocus()
         }
     }
     function metric(value) {
@@ -91,21 +129,90 @@ ColumnLayout {
         objectName: "waterQaStatus"
         Layout.fillWidth: true
         text: panel.controller ? panel.controller.statusText : qsTrId("text.1074")
-        visible: text.length > 0
+        visible: text.length > 0 && !panel.ready
         color: Theme.textSecondary
         wrapMode: Text.Wrap
         font.pixelSize: 12
     }
 
+
+    Text {
+        objectName: "waterQaError"
+        Layout.fillWidth: true
+        visible: text.length > 0
+        text: panel.controller ? panel.controller.error : ""
+        color: Theme.warningColor
+        wrapMode: Text.Wrap
+        font.pixelSize: 12
+    }
+    GridLayout {
+        objectName: "waterQaMetrics"
+        Layout.fillWidth: true
+        visible: panel.ready && panel.group !== "air" && !!panel.result.phantom
+        columns: 2
+        uniformCellWidths: true
+        columnSpacing: 8
+        rowSpacing: 10
+        Repeater {
+            model: panel.ready ? [
+                {key: "water_ct_hu", label: qsTrId("text.1079")},
+                {key: "noise_hu", label: qsTrId("qa.noiseSd")},
+                {key: "noise_percent", label: qsTrId("qa.noisePercent")},
+                {key: "uniformity_hu", label: qsTrId("text.1081")},
+                {key: "consistency_range_hu", label: qsTrId("text.1082")},
+                {key: "horizontal_difference_hu", label: qsTrId("text.1083")},
+                {key: "vertical_difference_hu", label: qsTrId("text.1084")}
+            ].filter(item => (panel.group === "noise" ? ["noise_hu", "noise_percent"].includes(item.key) : !["noise_hu", "noise_percent"].includes(item.key))
+                && panel.result[item.key] !== null && panel.result[item.key] !== undefined) : []
+            delegate: ColumnLayout {
+                id: metric
+                required property var modelData
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                spacing: 4
+                Text {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    objectName: "waterQaMetricLabel-" + metric.modelData.key
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    text: metric.modelData.label
+                    color: Theme.textSecondary
+                    font.pixelSize: 12
+                }
+                Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    objectName: "waterQaMetric-" + metric.modelData.key
+                    text: panel.editing ? "—" : panel.metric(panel.result[metric.modelData.key]) + (metric.modelData.key === "noise_percent" ? " %" : " HU")
+                    color: Theme.textPrimary
+                    font.pixelSize: 16
+                    font.weight: Font.DemiBold
+                }
+            }
+        }
+    }
+
+    Components.AppButton {
+        objectName: "qaParameters"
+        Layout.fillWidth: true
+        text: qsTrId("qa.parameters")
+        iconName: panel.parametersExpanded ? "chevron-up" : "chevron-down"
+        onClicked: panel.parametersExpanded = !panel.parametersExpanded
+    }
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: panel.parametersExpanded
     Repeater {
         model: [
-            { field: "roiDiameterMm", label: qsTrId("text.1075"), minimum: 2},
+            { field: "activeDiameterMm", label: qsTrId("qa.activeDiameter"), minimum: 2},
             { field: "edgeClearanceMm", label: qsTrId("text.1076"), minimum: 0}
         ]
         delegate: RowLayout {
             id: setting
             required property var modelData
             Layout.fillWidth: true
+            visible: setting.modelData.field !== "edgeClearanceMm" || panel.group === "uniformity"
             spacing: 8
             Text {
                 Layout.fillWidth: true
@@ -117,18 +224,23 @@ ColumnLayout {
             }
             Basic.SpinBox {
                 id: number
-                objectName: "waterQaSetting-" + setting.modelData.field
+                objectName: "waterQaSetting-" + (setting.modelData.field === "activeDiameterMm" ? "roiDiameterMm" : setting.modelData.field)
                 Layout.preferredWidth: 92
                 implicitHeight: 30
-                from: setting.modelData.minimum
-                to: 100
-                value: panel.controller ? panel.controller[setting.modelData.field] : 20
+                from: setting.modelData.minimum * 10
+                to: setting.modelData.field === "activeDiameterMm"
+                    ? Math.max(20, Math.floor((panel.controller?.maximumRoiDiameterMm ?? 100)*10)) : 1000
+                value: Math.round((panel.controller ? panel.controller[setting.modelData.field] : 20)*10)
                 enabled: panel.inputReady && (setting.modelData.field !== "edgeClearanceMm"
-                    || !panel.ready || !!panel.result.phantom)
+                    || !panel.ready || (!!panel.result.phantom && panel.result.rois.some(r => ["left", "right", "top", "bottom"].includes(r.key))))
                 editable: true
                 live: false
-                readonly property var editContext: [panel.controller, panel.inputContext]
-                function modelValue() { return panel.controller ? panel.controller[setting.modelData.field] : 20 }
+                readonly property var editContext: [panel.controller, panel.inputContext, panel.group]
+                stepSize: 10
+                function modelValue() { return Math.round((panel.controller ? panel.controller[setting.modelData.field] : 20)*10) }
+                textFromValue: function(value, locale) { return Number(value/10).toLocaleString(locale, "f", 1) }
+                valueFromText: function(text, locale) { return Math.round(Number.fromLocaleString(locale, text)*10) }
+                validator: DoubleValidator { bottom: number.from/10; top: number.to/10; decimals: 1; locale: number.locale.name }
                 function discardDraft() {
                     value = Qt.binding(function() { return number.modelValue() })
                     contentItem.text = textFromValue(modelValue(), locale)
@@ -143,10 +255,10 @@ ColumnLayout {
                 onValueModified: {
                     // Disabling can finish the TextInput before enabledChanged arrives.
                     if (!enabled || !visible || !panel.inputReady) { discardDraft(); return }
-                    if (setting.modelData.field === "roiDiameterMm")
-                        panel.controller.setRoiDiameterMm(value)
+                    if (setting.modelData.field === "activeDiameterMm")
+                        panel.controller.setActiveDiameterMm(value/10)
                     else
-                        panel.controller.setEdgeClearanceMm(value)
+                        panel.controller.setEdgeClearanceMm(value/10)
                 }
                 contentItem: TextInput {
                     text: number.textFromValue(number.value, number.locale)
@@ -184,67 +296,30 @@ ColumnLayout {
     ActionButton {
         objectName: "waterQa-analyze"
         Layout.fillWidth: true
-        text: panel.ready ? qsTrId("qa.regenerate") : qsTrId("text.1078")
-        enabled: !!panel.controller && panel.controller.available && panel.controller.status !== "calculating" && !panel.editing
+        visible: panel.group !== "air"
+        text: qsTrId("qa.regenerateGroup")
+        enabled: !!panel.controller && panel.controller.available
+            && !["calculating", "waiting"].includes(panel.controller.status) && !panel.controller.dragging
         onClicked: panel.controller.regenerateRois()
     }
-    Text {
-        objectName: "waterQaError"
-        Layout.fillWidth: true
-        visible: text.length > 0
-        text: panel.controller ? panel.controller.error : ""
-        color: Theme.warningColor
-        wrapMode: Text.Wrap
-        font.pixelSize: 12
-    }
-    GridLayout {
-        objectName: "waterQaMetrics"
-        Layout.fillWidth: true
-        visible: panel.ready && panel.result.water_ct_hu !== null && panel.result.water_ct_hu !== undefined
-        columns: 2
-        uniformCellWidths: true
-        columnSpacing: 8
-        rowSpacing: 10
-        Repeater {
-            model: panel.ready ? [
-                {key: "water_ct_hu", label: qsTrId("text.1079")},
-                {key: "noise_hu", label: qsTrId("text.1080")},
-                {key: "uniformity_hu", label: qsTrId("text.1081")},
-                {key: "consistency_range_hu", label: qsTrId("text.1082")},
-                {key: "horizontal_difference_hu", label: qsTrId("text.1083")},
-                {key: "vertical_difference_hu", label: qsTrId("text.1084")}
-            ] : []
-            delegate: ColumnLayout {
-                id: metric
-                required property var modelData
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                spacing: 4
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-                    Text {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        wrapMode: Text.Wrap
-                        text: metric.modelData.label
-                        color: Theme.textSecondary
-                        font.pixelSize: 12
-                    }
-                    Item { Layout.fillWidth: true }
-                }
-                Text {
-                    Layout.fillWidth: true
-                    objectName: "waterQaMetric-" + metric.modelData.key
-                    text: panel.editing ? "—" : panel.metric(panel.result[metric.modelData.key]) + " HU"
-                    color: Theme.textPrimary
-                    font.pixelSize: 16
-                    font.weight: Font.DemiBold
-                }
-            }
+        Text {
+            Layout.fillWidth: true
+            visible: panel.group !== "air"
+            text: qsTrId("qa.samplingBasis")
+            color: Theme.textMuted
+            font.pixelSize: 11
+            wrapMode: Text.Wrap
         }
     }
-
+    Text {
+        Layout.fillWidth: true
+        visible: text.length > 0
+        text: panel.group === "air" && panel.ready && panel.result.rois.some(r => r.group === "air" && r.maximum_hu > -300)
+            ? qsTrId("qa.airContents") : panel.controller?.notice ?? ""
+        color: Theme.textMuted
+        font.pixelSize: 11
+        wrapMode: Text.Wrap
+    }
     ColumnLayout {
         objectName: "waterQaRoiTable"
         Layout.fillWidth: true
@@ -265,21 +340,23 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: 4
             Repeater {
-                model: ["ROI", qsTrId("text.0173"), "SD", qsTrId("text.1086")]
+                model: panel.group === "uniformity" ? ["ROI", qsTrId("text.0173"), "SD", qsTrId("text.1086")]
+                    : ["ROI", qsTrId("text.0173"), "SD"]
                 Text {
                     required property string modelData
+                    required property int index
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 1
+                    Layout.preferredWidth: panel.group !== "uniformity" && index === 1 ? 1.3 : 1
                     text: modelData
                     color: Theme.textMuted
                     font.pixelSize: 10
                     horizontalAlignment: Text.AlignHCenter
                 }
             }
-            Item { Layout.preferredWidth: 60 }
+            Item { Layout.preferredWidth: panel.group === "noise" ? 28 : 60 }
         }
         Repeater {
-            model: panel.ready ? panel.result.rois : []
+            model: panel.ready ? panel.result.rois.filter(r => (r.group ?? "uniformity") === panel.group) : []
             delegate: RowLayout {
                 id: row
                 required property var modelData
@@ -287,14 +364,17 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
                 Repeater {
-                    model: panel.editing ? [row.modelData.label, "—", "—", "—"]
+                    model: (panel.editing ? [row.modelData.label, "—", "—", "—"]
                         : [row.modelData.label, panel.metric(row.modelData.mean_hu),
-                        panel.metric(row.modelData.std_hu), panel.metric(row.modelData.delta_center_hu)]
+                        panel.metric(row.modelData.std_hu), panel.metric(row.modelData.delta_center_hu)])
+                            .slice(0, panel.group === "uniformity" ? 4 : 3)
                     Text {
                         id: cell
                         required property string modelData
+                        required property int index
+                        objectName: "waterQaCell-" + row.modelData.key + "-" + index
                         Layout.fillWidth: true
-                        Layout.preferredWidth: 1
+                        Layout.preferredWidth: panel.group !== "uniformity" && index === 1 ? 1.3 : 1
                         Layout.minimumWidth: 0
                         elide: Text.ElideRight
                         text: modelData
@@ -315,6 +395,7 @@ ColumnLayout {
                     iconName: "copy"
                     iconSize: 15
                     enabled: !panel.editing
+                    visible: panel.group !== "noise"
                     Accessible.name: qsTrId("qa.copyRoi") + " " + row.modelData.label
                     onClicked: panel.controller.copyRoi(row.modelData.key)
                     Components.AppToolTip { text: qsTrId("qa.copyRoi"); requested: copyButton.hovered }
@@ -338,4 +419,27 @@ ColumnLayout {
 
     }
 
+    Components.AppButton {
+        id: calculateButton
+        objectName: "recalculateQa"
+        Layout.fillWidth: true
+        text: panel.controller?.status === "calculating" ? qsTrId("qa.calculating") : qsTrId("qa.calculate")
+        enabled: panel.inputReady && !panel.controller.dragging
+        onClicked: panel.controller.analyze()
+        Components.AppToolTip { text: qsTrId("qa.calculateHint"); requested: calculateButton.hovered }
+    }
+    Text {
+        objectName: "qaReportMessage"
+        Layout.fillWidth: true
+        text: panel.controller?.reportMessage ?? ""
+        visible: text.length > 0
+        wrapMode: Text.Wrap
+        color: panel.controller?.reportError ? Theme.warningColor : Theme.textSecondary
+    }
+    Components.AppButton {
+        Layout.fillWidth: true
+        visible: !!panel.controller?.reportMessage && !panel.controller?.reportError
+        text: qsTrId("qa.reportLocation")
+        onClicked: panel.controller.openReportLocation()
+    }
 }
