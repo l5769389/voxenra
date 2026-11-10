@@ -30,6 +30,26 @@ def test_codec_data_only_roundtrip_and_rejects_bad_masks(tmp_path):
     assert dest.read_bytes() == dumps(source)
 
 
+def test_workspace_reads_25_qa_settings_even_without_completed_qa():
+    # Every 2.5 viewport persisted these settings, including QA never activated.
+    saved = b'{"$type":"WaterQaSettings","fields":{"roi_diameter_mm":26.0,"edge_clearance_mm":17.0}}'
+    settings = loads(saved)
+    assert settings.roi_diameter_mm == 26.0
+    assert settings.edge_clearance_mm == 17.0
+    assert settings.noise_diameter_mm is None
+    assert settings.air_diameter_mm == 20.0
+
+
+@pytest.mark.parametrize("payload", [
+    {"roi_diameter_mm": 20.0},
+    {"roi_diameter_mm": 20.0, "edge_clearance_mm": 20.0, "unexpected": 1},
+    {"roi_diameter_mm": 20.0, "edge_clearance_mm": 20.0, "air_diameter_mm": "bad"},
+])
+def test_legacy_qa_defaults_do_not_relax_workspace_validation(payload):
+    with pytest.raises(ValueError):
+        loads(json.dumps({"$type": "WaterQaSettings", "fields": payload}).encode())
+
+
 def populated_app(tmp_path, *, settings_path=False):
     record = phantom_series(tmp_path, 1, "PRIVATE-ID", "1.2.3.1", "20260903")
     app = AppController(DicomImageProvider(), settings_path=settings_path)

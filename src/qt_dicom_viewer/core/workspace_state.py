@@ -151,8 +151,16 @@ def decode(value, depth=0, *, budget=None):
             payload = dict(payload, perimeter_mm=None)  # Read workspaces saved before freehand ROI.
         if cls.__name__ == "RoiMeasurement" and isinstance(payload, dict) and "smooth" not in payload:
             payload = dict(payload, smooth=False)  # Old polygons keep their original metrics and contour.
-        if cls.__name__ == "WaterQaResult" and isinstance(payload, dict) and "detection_issue" not in payload:
-            payload = dict(payload, detection_issue="")  # Earlier QA records always describe detected water.
+        if isinstance(payload, dict):
+            # 2.5 saved QA settings even for viewports where QA was never used.
+            # Preserve old measurements/protocol; only supply newly added fields.
+            qa_defaults = {
+                "WaterQaSettings": {"noise_diameter_mm": None, "air_diameter_mm": 20.0},
+                "WaterQaRoi": {"group": "uniformity"},
+                "WaterQaResult": {"detection_issue": "", "noise_percent": None,
+                                  "protocol_version": 1},
+            }
+            payload = {**qa_defaults.get(cls.__name__, {}), **payload}
         if not isinstance(payload, dict) or set(payload) != {f.name for f in fields(cls)}:
             raise ValueError(_msg('text.0117'))
         decoded = {k: descend(v) for k, v in payload.items()}

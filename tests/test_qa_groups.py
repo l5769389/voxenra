@@ -79,6 +79,7 @@ def test_groups_preserve_results_and_only_active_group_is_editable(qa_view, qt_a
 
 
 def test_legacy_noise_is_not_relabelled_as_large_roi_before_recalculation(qa_view, qt_app):
+    from qt_dicom_viewer.core.workspace_state import encode, decode
     qa = qa_view[0].qaController
     qa.activate(); wait_qa(qt_app,qa)
     old = qa._result
@@ -88,6 +89,26 @@ def test_legacy_noise_is_not_relabelled_as_large_roi_before_recalculation(qa_vie
                          settings=replace(old.settings,noise_diameter_mm=None))
     qa._settings = qa._result.settings
     qa._remember_result()
+    # Exercise the on-disk 2.5 schema, not a legacy-shaped current dataclass.
+    saved = encode(qa.persistent_state())
+    def legacy_fields(value):
+        if isinstance(value, dict):
+            removed = {"WaterQaSettings": ("noise_diameter_mm", "air_diameter_mm"),
+                       "WaterQaRoi": ("group",),
+                       "WaterQaResult": ("noise_percent", "protocol_version")}
+            for field in removed.get(value.get("$type"), ()):
+                value["fields"].pop(field)
+            for child in value.values():
+                legacy_fields(child)
+        elif isinstance(value, list):
+            for child in value:
+                legacy_fields(child)
+    legacy_fields(saved)
+    qa.reset()
+    qa.restore_state(decode(saved))
+    assert qa._result.protocol_version == 1
+    assert qa._result.noise_hu == center.std_hu
+    assert all(roi.group == 'uniformity' for roi in qa._result.rois)
     qa.setActiveGroup('noise')
     assert '旧版' in qa.notice and not qa.roiItems
     qa.setActiveGroup('uniformity')
