@@ -80,7 +80,7 @@ Switch each viewport between original slices and axial/coronal/sagittal reconstr
 
 **Pinch zoom** works across image views without changing tools, anchored at the finger midpoint on touchscreens or the pointer on trackpads. With a series selected, **D / X / T / Y** open 2D / MPR / 3D / CPR; context menus show available shortcuts. **A** opens annotations and **E** export. Active tool menus, text fields, and dialogs take priority. **Q** resets the current view and clears its corresponding measurements and annotations; save results first.
 
-[![Series context menu and view shortcuts](docs/screenshots/en/65-view-shortcuts-2.5.0.png)](https://l5769389.github.io/voxenra/en/tabs.html)
+[![Series context menu and view shortcuts](docs/screenshots/en/65-view-shortcuts-2.5.0.png)](https://l5769389.github.io/voxenra/en/workspace.html#step-6)
 
 **Compare 2–4 series** with separate switches for scrolling, windowing, zoom, and other display operations. Re-enabling a sync option uses the selected viewport as its source. Compatible patient spaces support position linking, reference lines, and Alt-click location; relative-progress mode compares series with different slice counts. MR defaults to independent windowing and inversion. Neither linking mode performs automatic registration.
 
