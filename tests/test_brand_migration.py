@@ -59,6 +59,21 @@ def test_current_preferences_win_and_deleted_recovery_is_not_reimported(identiti
     assert not recovery.exists(), 'A dismissed recovery must not return every launch'
 
 
+@pytest.mark.parametrize('name', ['window-presets.json', 'dialog-locations.json',
+                                 'favorite-directories.json', 'recent-image-paths.json'])
+def test_rename_preserves_companion_preferences_once(identities, name):
+    root = identities
+    original = b'{"userChoice":"retained"}'
+    put(root, 'Voxenra', 0, name, original)
+    brand_settings.configure_storage_identity()
+    destination = root / 'VoxPlane' / '0' / name
+    assert destination.read_bytes() == original
+    assert (root / 'Voxenra' / '0' / name).read_bytes() == original
+    destination.write_bytes(b'{"userChoice":"changed"}')
+    brand_settings.configure_storage_identity()
+    assert destination.read_bytes() == b'{"userChoice":"changed"}'
+
+
 def test_recent_brand_wins_over_original_qt_identity(identities):
     root = identities
     put(root, brand_settings.LEGACY_APPLICATION, 0, 'display-settings.json', b'ancient')

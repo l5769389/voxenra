@@ -11,6 +11,8 @@ PREVIOUS_APP_NAME = "Voxenra"
 LEGACY_ORGANIZATION = "QtDicomViewer"
 LEGACY_APPLICATION = "Qt DICOM Viewer"
 MIGRATION_MARKER = "brand-migration-v1.json"
+PREFERENCE_FILES = ("display-settings.json", "pacs.json", "window-presets.json",
+                    "dialog-locations.json", "favorite-directories.json", "recent-image-paths.json")
 
 
 def _copy_file(old: Path, new: Path) -> bool:
@@ -42,7 +44,7 @@ def _write_file(path: Path, contents: bytes) -> bool:
 
 def migrate_preferences(source: Path, destination: Path) -> bool:
     results = [_copy_file(source / name, destination / name)
-               for name in ("display-settings.json", "pacs.json")]
+               for name in PREFERENCE_FILES]
     return all(results)
 
 
@@ -85,7 +87,7 @@ def configure_storage_identity() -> None:
     candidates = {}
     for old_config, old_data in sources:
         files = [("config/" + name, old_config / name, config / name)
-                 for name in ("display-settings.json", "pacs.json")]
+                 for name in PREFERENCE_FILES]
         files.extend(("data/" + name, old_data / name, data / name)
                      for name in ("workspace-recovery.voxworkspace", "recent-workspaces.json"))
         files.extend(("data/languages/" + old.name, old, data / "languages" / old.name)
