@@ -79,32 +79,44 @@ def require_clean_runner():
 
 
 @contextmanager
+def isolated_preference_roots(paths):
+    """Preserve earlier hosted-runner fixtures while each upgrade starts clean."""
+    staged = []
+    try:
+        for path in paths:
+            backup = None
+            if path.exists():
+                backup = path.with_name(path.name + '.upgrade-backup-' + uuid.uuid4().hex)
+                path.rename(backup)
+            staged.append((path, backup))
+        yield
+    finally:
+        for path, backup in reversed(staged):
+            if path.exists():
+                shutil.rmtree(path)
+            if backup is not None:
+                # Do not delete the backup if restoration fails.
+                backup.rename(path)
+
+
+@contextmanager
 def settings_sentinel():
     from PySide6.QtCore import QCoreApplication, QStandardPaths
-    app = QCoreApplication([])
+    app = QCoreApplication.instance() or QCoreApplication([])
     paths = []
     for identity in ('Voxenra', 'VoxPlane'):
         app.setOrganizationName(identity)
         app.setApplicationName(identity)
         paths.append(Path(QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)))
-    # Dedicated hosted runner only: refuse to hide any pre-existing new preferences.
+    # main() restricts this to a disposable GitHub-hosted Windows runner.
+    # Earlier package checks may have created settings; preserve them exactly.
     old, new = paths
-    if new.exists():
-        raise RuntimeError('Refusing to overwrite existing VoxPlane preferences')
     path = old / 'display-settings.json'
-    original = path.read_bytes() if path.exists() else None
-    old.mkdir(parents=True, exist_ok=True)
-    try:
+    with isolated_preference_roots(paths):
+        old.mkdir(parents=True, exist_ok=True)
         data = {'schemaVersion': 3, 'appearance': {'theme': 'graphite'}, 'updates': {'enabled': False}}
         path.write_text(json.dumps(data), encoding='utf-8')
         yield path, new / 'display-settings.json'
-    finally:
-        if original is None:
-            path.unlink(missing_ok=True)
-        else:
-            path.write_bytes(original)
-        if new.exists():
-            shutil.rmtree(new)
 
 
 def stop_tree(process):
@@ -262,8 +274,8 @@ def main():
         runtime_temp = root / 'runtime-temp'
         runtime_temp.mkdir()
         os.environ.update(TEMP=str(runtime_temp), TMP=str(runtime_temp))
-        with settings_sentinel() as settings:
-            for kind, new in packages.items():
+        for kind, new in packages.items():
+            with settings_sentinel() as settings:
                 verify_upgrade(root, kind, releases[kind], new, settings, reports)
 
 

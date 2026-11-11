@@ -26,6 +26,38 @@ finally:
     sys.path.pop(0)
 
 
+@pytest.mark.parametrize('fail', [False, True])
+def test_upgrade_smoke_isolates_and_restores_prior_test_preferences(tmp_path, fail):
+    from manual import verify_windows_package_updates as smoke
+    old, new = tmp_path / 'old', tmp_path / 'new'
+    old.mkdir(); new.mkdir()
+    (old / 'settings.json').write_bytes(b'old original')
+    (new / 'settings.json').write_bytes(b'prior test original')
+    for _ in range(2):
+        try:
+            with smoke.isolated_preference_roots((old, new)):
+                assert not old.exists() and not new.exists()
+                old.mkdir(); new.mkdir()
+                (old / 'settings.json').write_bytes(b'sentinel')
+                (new / 'settings.json').write_bytes(b'migrated')
+                if fail:
+                    raise RuntimeError('simulated upgrade failure')
+        except RuntimeError as error:
+            assert fail and str(error) == 'simulated upgrade failure'
+        assert (old / 'settings.json').read_bytes() == b'old original'
+        assert (new / 'settings.json').read_bytes() == b'prior test original'
+        assert sorted(p.name for p in tmp_path.iterdir()) == ['new', 'old']
+
+
+def test_upgrade_smoke_removes_only_its_new_preferences(tmp_path):
+    from manual import verify_windows_package_updates as smoke
+    root = tmp_path / 'new'
+    with smoke.isolated_preference_roots((root,)):
+        root.mkdir()
+        (root / 'settings.json').write_bytes(b'sentinel')
+    assert not root.exists()
+
+
 @pytest.mark.parametrize('locked_attempts', [0, 2])
 def test_upgrade_smoke_waits_for_temporary_file_locks(tmp_path, monkeypatch, locked_attempts):
     from manual import verify_windows_package_updates as smoke
