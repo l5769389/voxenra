@@ -9,6 +9,14 @@ from test_tag_qml import find, click, descendants
 from test_two_d_layout import open_scene
 from test_anonymous_view_export import capture, pixels
 from test_workspace_persistence import draw_length
+from qt_pointer import activate_window, move_pointer
+
+
+@pytest.fixture(autouse=True)
+def active_selector_window(sidebar_scene):
+    # A new QML scene can be visible before Cocoa makes it the key window.
+    # Otherwise delayed activation closes an already-open popup during a click.
+    activate_window(sidebar_scene[0])
 
 
 def choose(window, index, mode):
@@ -108,7 +116,7 @@ def test_controls_are_excluded_from_export_and_plain_mode_position_remain(sideba
     assert label.isVisible() and label.property('text') == '原始切片'
     assert position.isVisible() and 'mm' in position.property('text')
     point = help_area.mapToScene(QPointF(12, help_area.height() / 2)).toPoint()
-    QTest.mouseMove(window, point)
+    move_pointer(window, point)
     tooltip = help_area.findChild(QObject, 'twoDPositionToolTip-0')
     wait_until(lambda: tooltip.property('visible'))
     assert tooltip.property('text') == 'S/I：上/下；L/R：左/右；P/A：后/前。'

@@ -18,6 +18,7 @@ from test_pacs_qml import scene
 from test_pet_fusion import paired_series
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import click, find, type_text
+from qt_pointer import activate_window
 
 
 def test_export_enter_starts_then_acknowledges_and_escape_discards_reopened_form(scene, tmp_path):
@@ -231,6 +232,7 @@ def test_workspace_recovery_enter_dismisses_without_consuming_snapshot(sidebar_s
 
 def test_compare_default_requires_selection_and_opens_only_once(sidebar_scene):
     window, app, records, warnings = sidebar_scene
+    activate_window(window)
     first, partner = (s.series_instance_uid for s in records[:2])
     compare = app.panelController.compareController
     opened = QSignalSpy(compare.openRequested)
@@ -247,6 +249,7 @@ def test_compare_default_requires_selection_and_opens_only_once(sidebar_scene):
 
 def test_fusion_enter_respects_identity_confirmation(scene, paired_series, tmp_path):
     window, app, warnings = scene
+    activate_window(window)
     _, ct, pet = paired_series
     pet = replace(pet, study_instance_uid="1.2.3.99")
     snapshot = DicomFolderScanSnapshot(tmp_path, 2, 2, 0, [ct, pet])

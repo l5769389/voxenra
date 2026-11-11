@@ -15,6 +15,7 @@ from test_measurement_qml import qt_app, _visual_children, _mouse_drag, _scene
 from test_service_panel_qml import _find, _click
 from test_water_qa import water_image
 from test_water_qa_controller import qa_view, water_render, wait_qa
+from qt_pointer import activate_window, move_pointer
 
 
 def qa_control(window, name):
@@ -125,8 +126,9 @@ def qa_workspace(qt_app, qa_view, request):
     window.setSource(QUrl.fromLocalFile(str(Path(__file__).parent/"qml/MtfWorkspace.qml")))
     assert window.status() == QQuickView.Ready, [e.toString() for e in window.errors()]
     window.show()
-    QTest.qWait(70)
     try:
+        activate_window(window)
+        QTest.qWait(70)
         yield window, controller, warnings
     finally:
         window.hide()
@@ -194,7 +196,8 @@ def test_all_five_rois_drag_in_image_coordinates_and_cancel_with_escape(qa_works
         roi = before[index]
         start = _scene(pixels, roi["column"]+2, roi["row"]+1)
         end = _scene(pixels, roi["column"]+10, roi["row"]+7)
-        QTest.mouseMove(window, start, 20)
+        move_pointer(window, start)
+        QTest.qWait(20)
         assert _find(window, "viewportInteractionLayer").property("hoverCursorKind") == "pan"
         QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, start)
         QTest.mouseMove(window, (start+end)/2, 20)

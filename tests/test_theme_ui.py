@@ -29,7 +29,9 @@ def capture(window, name, tmp_path):
 def test_follow_system_theme_updates_open_windows_and_preserves_selection(sidebar_scene, qt_app, tmp_path, monkeypatch):
     window, app, records, warnings = sidebar_scene
     ws = app.workspaceController
-    click(window, find(window, 'series-' + records[0].series_instance_uid))
+    # Native small desktops collapse the series list. Select the fixture's
+    # series without requiring a delegate that the compact sidebar omits.
+    app.panelController.selectSeries(records[0].series_instance_uid)
     click(window, find(window, 'openView-2d'))
     wait_until(lambda: ws.activeLoadState.status == 'ready')
     view = ws.activeViewport
@@ -95,7 +97,7 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     assert not window.grabWindow().isNull()
     wait_until(lambda: view._state.width > 100 and view._state.height > 100)
     draw_length(view)
-    click(window, find(window, 'series-' + records[0].series_instance_uid))
+    app.panelController.selectSeries(records[0].series_instance_uid)
     initial_state = deepcopy(view._state)
     initial_size = window.size()
     initial_language = app.settingsController.values['appearance']['language']
@@ -174,6 +176,9 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     border = find(window, 'viewportSelectionBorder')
     assert QQmlProperty(border, 'border.color').read().name() == palette_for('graphite')['viewportActiveBorder']
     assert QQmlProperty(border, 'border.width').read() == 2
+    # After the unchanged-image assertions, make room for the real sidebar
+    # label whose theme colour is being checked on a compact desktop.
+    app.settingsController.setValue('layout', 'rightPanelCollapsed', True)
     count = find(window, 'seriesCount-' + records[0].series_instance_uid)
     assert count.property('color').name() == palette_for('graphite')['textSecondary']
     capture(window, 'graphite-viewer', tmp_path)

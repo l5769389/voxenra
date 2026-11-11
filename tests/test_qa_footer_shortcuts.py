@@ -5,12 +5,14 @@ from PySide6.QtTest import QTest
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_input_settings_qml import reading_scene, visible_viewport
-from test_tag_qml import find, click, type_text, descendants
+from test_tag_qml import find, click, type_text, descendants, settled_point
 from test_water_qa_controller import water_render, deliver_frame, wait_qa
+from qt_pointer import activate_window, move_pointer
 
 
 def test_icon_footer_history_shortcuts_text_and_dialog_isolation(sidebar_scene, qt_app):
     window, app, tab = reading_scene(sidebar_scene)
+    activate_window(window)
     view = tab.activeViewport
     deliver_frame(view, water_render(view))
     qa, history = view.qaController, tab.historyController
@@ -26,9 +28,11 @@ def test_icon_footer_history_shortcuts_text_and_dialog_isolation(sidebar_scene, 
     for button, shortcut in zip(buttons[:2], (history.undoShortcutText, history.redoShortcutText)):
         assert shortcut in button.parentItem().property('tooltipText')
         assert not button.parentItem().property('showLabel')
-        QTest.mouseMove(window, button.mapToScene(QPointF(button.width()/2, button.height()/2)).toPoint())
-        QTest.qWait(500)
-        assert button.parentItem().property('tooltipVisible')
+        move_pointer(window, settled_point(button))
+        wait_until(lambda: button.property('hovered'))
+        # The tooltip itself has a 500 ms delay; waiting exactly 500 ms races
+        # the native timer. Observe its visible state before checking history.
+        wait_until(lambda: button.parentItem().property('tooltipVisible'))
     click(window, buttons[0]); assert qa.currentResult == before
     click(window, find(window, 'qaRedo')); assert qa.currentResult == edited
     viewport = visible_viewport(window)
