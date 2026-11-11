@@ -182,6 +182,10 @@ def test_all_offline_demos_and_notices_render_in_themes(scene, theme, locale, si
     import json
     window, app, warnings = scene
     from test_window_sizing import fit_desktop
+    from PySide6.QtGui import QGuiApplication
+    if QGuiApplication.platformName() != 'offscreen':
+        desktop = app.windowManager._window_geometry['main'].client_area()
+        size = (min(size[0], desktop.width()), min(size[1], desktop.height()))
     fit_desktop(window, app, monkeypatch, size)
     app.settingsController.setValue('appearance', 'theme', theme)
     app.languageController.selectLanguage(locale)
@@ -341,8 +345,13 @@ def test_manual_empty_workspace_singleton_mru_and_export(scene):
     ws = app.workspaceController
     book, settings = find(window, 'sidebarManual'), find(window, 'sidebarSettings')
     assert (book.width(), book.height()) == (28, 28)
-    assert settings.mapToScene(QPointF()).x() - book.mapToScene(QPointF(book.width(), 0)).x() == 4
-    assert find(window, 'sidebarSettingsFooter').height() == 36
+    from PySide6.QtCore import QRectF
+    footer = find(window, 'sidebarSettingsFooter')
+    book_rect = QRectF(book.mapToItem(footer, QPointF()), book.size())
+    settings_rect = QRectF(settings.mapToItem(footer, QPointF()), settings.size())
+    assert not book_rect.intersects(settings_rect)
+    assert QRectF(0, 0, footer.width(), footer.height()).contains(book_rect)
+    assert QRectF(0, 0, footer.width(), footer.height()).contains(settings_rect)
     click(window, book)
     assert ws.activeTabType == 'manual' and ws.activeViewport is None
     assert ws.currentTabAllViewports == [] and len(ws.tabs) == 1

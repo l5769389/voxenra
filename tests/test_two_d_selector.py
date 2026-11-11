@@ -237,6 +237,15 @@ def test_square_canvas_resizes_window_and_disengages_after_manual_resize(sidebar
         image = find(window, 'imageViewport-' + tab.activeViewport.viewportId)
         click(window, switch)
         wait_until(lambda: window.property('squareFitAttempts') == 0)
+    if not switch.property('checked'):
+        # Native desktops can be as small as the application's minimum size;
+        # there is then no legal window resize that can square this canvas.
+        assert window.property('availableWindowWidth') <= window.minimumWidth() + 1
+        assert window.property('availableWindowHeight') <= window.minimumHeight() + 1
+        assert tab.activeViewport.squareViewportMessage
+        assert abs(image.width()-image.height()) > 2
+        assert not warnings, warnings
+        return
     assert abs(image.width()-image.height()) <= 2, (image.size(), window.size(),
         window.property('availableWindowWidth'), window.property('availableWindowHeight'),
         tab.activeViewport.squareViewportMessage)

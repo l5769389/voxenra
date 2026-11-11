@@ -45,8 +45,10 @@ Item {
         source: root.useShader ? "" : root.available ? root.scalar.cpu : root.controller?.imageSource ?? ""
         cache: false
         // Software fallback also interpolates scalar values before windowing.
-        sourceSize: root.available ? Qt.size(Math.max(1,Math.min(4096,Math.ceil(root.width*root.screenScaleX*Screen.devicePixelRatio))),
-                                             Math.max(1,Math.min(4096,Math.ceil(root.height*root.screenScaleY*Screen.devicePixelRatio)))) : Qt.size(-1,-1)
+        // Image applies the window DPR to sourceSize before calling the provider.
+        // Specify logical pixels here, while keeping the physical allocation cap.
+        sourceSize: root.available ? Qt.size(Math.max(1,Math.min(4096/Screen.devicePixelRatio,Math.ceil(root.width*root.screenScaleX))),
+                                             Math.max(1,Math.min(4096/Screen.devicePixelRatio,Math.ceil(root.height*root.screenScaleY)))) : Qt.size(-1,-1)
         fillMode: Image.Stretch
         smooth: !root.available
     }

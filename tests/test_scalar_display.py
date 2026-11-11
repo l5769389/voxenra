@@ -49,7 +49,7 @@ def test_provider_uses_scalar_sampling_and_cleans_up():
 def test_rendered_scalar_image_matches_reference(qt_app, tmp_path):
     """Exercise the real QML component on either RHI or software, including padding/LUT."""
     from pathlib import Path
-    from PySide6.QtCore import QUrl, QObject
+    from PySide6.QtCore import QUrl, QObject, Qt
     from PySide6.QtQuick import QQuickView
     from PySide6.QtTest import QTest
     from PySide6.QtGui import QImage
@@ -66,8 +66,17 @@ Item {
     ScalarImage { id: image; objectName: "scalarImage"; width: 3; height: 2; scale: 32;
         transformOrigin: Item.TopLeft; controller: data; screenScaleX: 32; screenScaleY: 32 }
 }''')
-    provider = DicomImageProvider()
+    requested_sizes = []
+    class RecordingProvider(DicomImageProvider):
+        def requestImage(self, image_id, size, requested_size):
+            if ':scalar-cpu/' in image_id:
+                requested_sizes.append((requested_size.width(), requested_size.height()))
+            return super().requestImage(image_id, size, requested_size)
+    provider = RecordingProvider()
     view = QQuickView()
+    # A decorated Windows window has a minimum title-bar width (>96 px).
+    # Keep this pixel comparison at the component's exact 96x64 canvas size.
+    view.setFlags(Qt.Window | Qt.FramelessWindowHint)
     view.engine().addImageProvider('dicom', provider)
     view.setSource(QUrl.fromLocalFile(str(qml)))
     assert view.status() == QQuickView.Ready, view.errors()
@@ -84,6 +93,7 @@ Item {
             QTest.qWait(100)
             image=view.grabWindow().convertToFormat(QImage.Format_RGB888)
             assert not image.isNull()
+            assert (image.width(), image.height()) == (round(96*view.devicePixelRatio()), round(64*view.devicePixelRatio()))
             array=np.frombuffer(image.constBits(),np.uint8).reshape(image.height(),image.bytesPerLine())[:,:image.width()*3].reshape(image.height(),image.width(),3)
             expected=resample_display(frame,image.width(),image.height())
             if expected.ndim == 2: expected=np.repeat(expected[:,:,None],3,axis=2)
@@ -95,6 +105,8 @@ Item {
                 assert root.property('useShader'), 'Native RHI verification must exercise the shader'
             if root.property('useShader'):
                 assert not fallback.property('source').toString()
+            else:
+                assert requested_sizes[-1] == (image.width(), image.height())
     finally:
         view.close(); delete(view); qt_app.processEvents()
 

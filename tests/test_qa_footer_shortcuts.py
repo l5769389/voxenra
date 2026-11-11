@@ -38,8 +38,13 @@ def test_icon_footer_history_shortcuts_text_and_dialog_isolation(sidebar_scene, 
     QTest.keySequence(window, QKeySequence(QKeySequence.Redo))
     assert qa.currentResult == edited
     # Input editing has its own undo; no changes to the circles/history.
+    # Narrow native desktops automatically collapse the series panel. Hiding
+    # the tools panel gives the real search field enough room to be displayed.
+    app.settingsController.setValue('layout', 'rightPanelCollapsed', True)
     search = find(window,'sidebarPatientSearch')
+    wait_until(search.isVisible)
     type_text(window, search, 'abc')
+    assert search.hasActiveFocus() and search.property('text') == 'abc'
     QTest.keySequence(window, QKeySequence(QKeySequence.Undo))
     assert qa.currentResult == edited and history.canUndo
     search.setProperty('text','')

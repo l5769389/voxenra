@@ -251,7 +251,7 @@ Item {
         pixelsPerMm: imageCanvas.pixelsPerMillimeter
         visible: viewportRoot.viewportController?.showScaleBar === true && lengthMm > 0
         calibrated: viewportRoot.viewportController?.hasPhysicalSpacing ?? false
-        options: viewportRoot.viewportController?.settingsController.values.scale ?? ({})
+        options: viewportRoot.viewportController?.settingsController?.values?.scale ?? ({})
     }
 
     DirectionOverlay {

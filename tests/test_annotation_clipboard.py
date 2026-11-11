@@ -261,7 +261,12 @@ def test_copy_paste_from_panel_focus_with_history_and_modal_isolation(sidebar_sc
     assert len(items(controller, kind)) == 1
     QTest.keySequence(window, QKeySequence(QKeySequence.Redo)); QTest.qWait(30)
     assert len(items(controller, kind)) == 2
-    search = find(window, 'sidebarPatientSearch'); search.forceActiveFocus()
+    app.settingsController.setValue('layout', 'rightPanelCollapsed', True)
+    search = find(window, 'sidebarPatientSearch')
+    from test_dicom_tags import wait_until
+    wait_until(search.isVisible)
+    search.forceActiveFocus()
+    wait_until(search.hasActiveFocus)
     QTest.keySequence(window, QKeySequence(QKeySequence.Paste))
     assert len(items(controller, kind)) == 2
     visible_viewport(window).forceActiveFocus()
