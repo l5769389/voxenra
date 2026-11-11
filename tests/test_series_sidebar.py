@@ -110,6 +110,7 @@ def test_thumbnail_queue_coalesces_and_handles_decode_failure(qt_app, tmp_path):
     finally:
         release.set()
         service.shutdown()
+        delete(service)
 
 
 def test_thumbnail_cancel_discards_in_flight_result(qt_app, tmp_path):
@@ -135,6 +136,7 @@ def test_thumbnail_cancel_discards_in_flight_result(qt_app, tmp_path):
     finally:
         release.set()
         service.shutdown()
+        delete(service)
 
 
 def phantom_series(tmp_path, series_index, patient_id, study_uid, date):
@@ -199,6 +201,9 @@ def sidebar_scene(qt_app, tmp_path):
         window.hide()
         app.shutdown()
         delete(engine)
+        # Dispose Qt-owned children on the GUI thread, before a later background
+        # worker can trigger Python GC for this completed test's controller cycle.
+        delete(app)
 
 
 def drag_width(window, target_width):
@@ -225,7 +230,7 @@ def right_click(window, item):
 def test_open_series_directory_and_remove_keeps_existing_tab(qt_app, tmp_path, monkeypatch):
     series = make_series(tmp_path, 3)
     provider = DicomImageProvider()
-    app = AppController(provider)
+    app = AppController(provider, settings_path=False)
     panel = app.panelController
     snapshot = DicomFolderScanSnapshot(tmp_path, 3, 3, 0, [series])
     panel.update_series_session(snapshot)
@@ -265,6 +270,7 @@ def test_open_series_directory_and_remove_keeps_existing_tab(qt_app, tmp_path, m
         assert not panel.openSeriesDirectory(series.series_instance_uid)
     finally:
         app.shutdown()
+        delete(app)
 
 
 def test_sidebar_group_search_selection_and_thumbnails(sidebar_scene, tmp_path):
