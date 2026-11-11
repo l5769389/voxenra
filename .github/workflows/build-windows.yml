@@ -179,7 +179,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_water_qa_qml.py tests/test_qa_groups.py tests/test_qa_resize_air.py tests/test_qa_recalculate.py tests/test_qa_footer_shortcuts.py tests/test_water_qa_report.py tests/test_scalar_display.py tests/test_annotation_clipboard.py tests/test_viewport_scope.py tests/test_two_d_selector.py tests/test_manual.py --timeout 300 --output build/test-results/windows-native-2.6
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_water_qa_qml.py tests/test_water_qa_controller.py tests/test_qa_groups.py tests/test_qa_resize_air.py tests/test_qa_recalculate.py tests/test_qa_footer_shortcuts.py tests/test_water_qa_report.py tests/test_scalar_display.py tests/test_annotation_clipboard.py tests/test_viewport_scope.py tests/test_two_d_selector.py tests/test_manual.py tests/test_theme_ui.py --timeout 300 --output build/test-results/windows-native-2.6
 
       - name: Verify Direct3D scalar shader
         env:

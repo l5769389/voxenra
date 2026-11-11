@@ -84,7 +84,8 @@ def test_follow_system_theme_updates_open_windows_and_preserves_selection(sideba
 
 def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tmp_path, monkeypatch):
     window, app, records, warnings = sidebar_scene
-    window.resize(1280, 800)
+    desktop = app.windowManager._window_geometry['main'].client_area()
+    window.resize(min(1280, desktop.width()), min(800, desktop.height()))
     ws = app.workspaceController
     ws.createTab(records[0].series_instance_uid, 'Theme review CT', '2d')
     wait_until(lambda: ws.activeLoadState.status == 'ready')
@@ -96,6 +97,8 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     draw_length(view)
     click(window, find(window, 'series-' + records[0].series_instance_uid))
     initial_state = deepcopy(view._state)
+    initial_size = window.size()
+    initial_language = app.settingsController.values['appearance']['language']
     initial_measurements = deepcopy(view._measure_controller._measurements)
     click(window, find(window, 'sidebarSettings'))
     click(window, find(window, 'settingsCategory-appearance'))
@@ -156,7 +159,12 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
         app.languageController.selectLanguage('en-US')
         QTest.qWait(80)
         capture(window, 'graphite-compact-english', tmp_path)
-    window.resize(1280, 800)
+    # The compact-desktop exercise changes the window's available-size state,
+    # not only the monkeypatched provider. Restore that state and the language
+    # before comparing the original viewport geometry after theme changes.
+    app.languageController.selectLanguage(initial_language)
+    app.windowManager._window_geometry['main'].fit()
+    window.resize(initial_size)
     click(window, find(window, 'workspaceTab-' + image_tab.tab_config.tab_id))
     click(window, find(window, 'primaryTool-measure'))
     QTest.qWait(100)

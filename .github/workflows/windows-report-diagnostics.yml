@@ -69,6 +69,8 @@ jobs:
             if ($code -ne 0) { $failed = $true }
           }
           if ($failed) { exit 1 }
+      - name: Check QA reports and theme restoration
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_theme_ui.py tests/test_water_qa_controller.py tests/test_water_qa_report.py --timeout 300 --output build/report-diagnostics/qa
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

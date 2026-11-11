@@ -12,6 +12,7 @@ from qt_dicom_viewer.ui.controller.viewport.controller.water_qa_controller impor
 from test_measurement_qml import qt_app
 from test_viewport_transform import _controller, _render_result
 from test_water_qa import water_image
+from pdf_test_support import report_language  # register fixture without preloading PDF
 
 
 def deliver_frame(view, frame):
@@ -503,7 +504,8 @@ def test_qa_exports_current_valid_result_as_pdf(qa_view, qt_app, tmp_path):
     assert not (tmp_path / 'stale.pdf').exists()
 
 
-def test_qa_pdf_save_cancel_and_slice_change_keep_frozen_source(qa_view, qt_app, tmp_path, monkeypatch):
+def test_qa_pdf_save_cancel_and_slice_change_keep_frozen_source(qa_view, qt_app, tmp_path, monkeypatch,
+                                                              report_language):
     import unicodedata
     from test_water_qa_report import picture
     from PySide6.QtPdf import QPdfDocument
@@ -514,6 +516,8 @@ def test_qa_pdf_save_cancel_and_slice_change_keep_frozen_source(qa_view, qt_app,
     wait_qa(qt_app, qa)
     monkeypatch.setattr(QFileDialog, 'getSaveFileName', lambda *a: ('', ''))
     frozen = qa._report_snapshot(picture())
+    language, translations = report_language
+    frozen['translations'] = translations
     qa._save_report_snapshot(frozen)
     assert qa.reportMessage == ''
     target = tmp_path / 'frozen.pdf'
@@ -528,7 +532,8 @@ def test_qa_pdf_save_cancel_and_slice_change_keep_frozen_source(qa_view, qt_app,
     assert doc.load(str(target)) == QPdfDocument.Error.None_
     text = '\n'.join(doc.getAllText(i).text() for i in range(doc.pageCount()))
     text = unicodedata.normalize('NFKC', text)
-    assert '切片 1' in text and '水 CT 值' in text
+    assert ('切片 1' if language == 'zh-CN' else 'Slice 1') in text
+    assert ('水 CT 值' if language == 'zh-CN' else 'Water CT number') in text
     doc.close()
 
 
