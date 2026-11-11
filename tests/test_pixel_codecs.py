@@ -8,13 +8,13 @@ import pydicom
 import pytest
 from pydicom.uid import CTImageStorage, RLELossless, JPEGLSLossless, JPEG2000Lossless
 
-from qt_dicom_viewer.core import pixel_codecs as codecs
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.series_thumbnail import read_series_thumbnail
-from qt_dicom_viewer.core.series_export import export_series, ExportRequest, ExportError
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.i18n.messages import error_message, localize, builtin
+from voxplane.core import pixel_codecs as codecs
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.series_thumbnail import read_series_thumbnail
+from voxplane.core.series_export import export_series, ExportRequest, ExportError
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.i18n.messages import error_message, localize, builtin
 from test_mr import mr_dataset
 from test_enhanced_mr import enhanced_dataset
 from test_dicom_tags import qt_app
@@ -130,7 +130,7 @@ def test_lossy_decoders_keep_shape_and_approximate_values(syntax, tolerance):
 def test_frozen_verifier_checks_pixels_and_rejects_wrong_reference(tmp_path):
     import importlib.util
     import json
-    from qt_dicom_viewer.core.codec_check import verify
+    from voxplane.core.codec_check import verify
     spec = importlib.util.spec_from_file_location('verify_pixel_codecs', Path(__file__).resolve().parents[1] / 'scripts/verify_pixel_codecs.py')
     script = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(script)
@@ -152,7 +152,7 @@ def test_compressed_mr_opens_and_plays_in_real_qml(scene, tmp_path, syntax):
     from test_mr import write_mr_series
     from test_dicom_tags import wait_until
     from test_slice_playback import settle
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     _, app, warnings = scene
     series = write_mr_series(tmp_path / 'compressed-mr', change=lambda ds, _: ds.compress(syntax))
     app.panelController.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 4, 4, 0, [series]))

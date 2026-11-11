@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
+from voxplane.ui.controller.panel_controller import PanelController
 
 
 def panel(path=None):
@@ -107,14 +107,14 @@ def test_favorite_import_uses_existing_import_pipeline(tmp_path, monkeypatch):
 
 def test_app_rejects_local_import_when_local_source_is_disabled():
     from types import SimpleNamespace
-    from qt_dicom_viewer.ui.app_controller import AppController
+    from voxplane.ui.app_controller import AppController
     app = SimpleNamespace(_pacs_controller=SimpleNamespace(localEnabled=False, busy=False))
     assert AppController._series_import_blocker(app, 'local')
 
 
 def test_corrupt_or_mixed_settings_preserve_valid_entries_without_directory_checks(tmp_path):
     import json
-    from qt_dicom_viewer.settings.favorite_directories import FavoriteDirectoriesStore
+    from voxplane.settings.favorite_directories import FavoriteDirectoriesStore
     store = tmp_path / 'favorites.json'
     store.write_text('{broken')
     assert FavoriteDirectoriesStore(store).items == []
@@ -124,7 +124,7 @@ def test_corrupt_or_mixed_settings_preserve_valid_entries_without_directory_chec
 
 
 def test_failed_write_preserves_existing_disk_and_memory(tmp_path, monkeypatch):
-    from qt_dicom_viewer.settings import favorite_directories as module
+    from voxplane.settings import favorite_directories as module
     p = panel(tmp_path / 'favorites.json')
     favorites = p.favoriteDirectories
     assert favorites.add(str(tmp_path))

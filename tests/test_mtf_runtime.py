@@ -4,7 +4,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core import bead_mtf as mtf
+from voxplane.core import bead_mtf as mtf
 
 
 def source():

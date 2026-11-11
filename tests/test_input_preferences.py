@@ -1,6 +1,6 @@
 import pytest
 from PySide6.QtGui import QKeySequence
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app
 
 
@@ -18,7 +18,7 @@ def test_input_privacy_scale_persist_and_validate(qt_app, tmp_path):
 
 
 def test_shortcut_conflicts_and_reserved(qt_app):
-    from qt_dicom_viewer.settings.shortcuts import DEFAULT_BINDINGS, validate_bindings
+    from voxplane.settings.shortcuts import DEFAULT_BINDINGS, validate_bindings
     values = dict(DEFAULT_BINDINGS)
     values['pan'] = 'W'
     with pytest.raises(ValueError): validate_bindings(values)
@@ -31,7 +31,7 @@ def test_shortcut_conflicts_and_reserved(qt_app):
 
 def test_scale_startup_is_bounded_and_preserves_os_factor(tmp_path):
     import json
-    from qt_dicom_viewer.settings.interface_scale import apply_interface_scale
+    from voxplane.settings.interface_scale import apply_interface_scale
     path=tmp_path/'settings.json'
     path.write_text(json.dumps({'appearance':{'interfaceScale':130}}))
     env={'QT_SCALE_FACTOR':'1.25'}
@@ -131,7 +131,7 @@ def test_montage_identity_notifies_on_restored_display(qt_app):
 
 def test_scale_does_not_compound_in_child_restart(tmp_path):
     import json
-    from qt_dicom_viewer.settings.interface_scale import apply_interface_scale
+    from voxplane.settings.interface_scale import apply_interface_scale
     path = tmp_path/'settings.json'
     path.write_text(json.dumps({'appearance': {'interfaceScale': 130}}))
     env = {'QT_SCALE_FACTOR': '1.25'}
@@ -144,8 +144,8 @@ def test_scale_does_not_compound_in_child_restart(tmp_path):
 
 
 def test_panel_bindings_share_keys_across_menus_and_migrate_retired_actions(qt_app):
-    from qt_dicom_viewer.settings.preferences import normalize_settings
-    from qt_dicom_viewer.settings.shortcuts import validate_bindings
+    from voxplane.settings.preferences import normalize_settings
+    from voxplane.settings.shortcuts import validate_bindings
     raw = {'pan': 'F9', 'paint': 'F9', 'cpr-new': 'F9', 'cpr-edit': ''}
     bindings = normalize_settings({'shortcuts': {'bindings': dict(raw, **{'cpr-details': 'D'})}})['shortcuts']['bindings']
     assert set(raw.items()) <= set(bindings.items())

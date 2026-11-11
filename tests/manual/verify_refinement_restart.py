@@ -11,8 +11,8 @@ import numpy as np
 from PySide6.QtWidgets import QApplication
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 
 
 def wait(predicate):

@@ -36,12 +36,12 @@ RCBF 样本共有 2 帧，RGB 三通道各 100 项、首个映射存储值为 10
 - [pydicom-data 固定版本](https://github.com/pydicom/pydicom-data/tree/abc42b90985fb6cf385aa4af766d2c9c94a257a4)提供灌注样本；[pydicom 来源说明](https://github.com/pydicom/pydicom/blob/d80e8b1791f7a3dfd753f36400abc9f9941423f2/src/pydicom/data/test_files/README.txt)确认原文件为同一 NEMA 包的 CT0012。上游项目 LICENSE 随数据保留；不将代码仓库的许可证扩张解释为所有影像的独立授权。
 - 实现参考 [DICOM CT 像素变换宏](https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.8.15.3.10.html)和[多帧功能组](https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.html)。显示值逐帧使用 `stored × slope + intercept`，不以顶层经典属性替代缺失的 Enhanced CT 几何或缩放。
 
-从本 worktree 启动 `uv run voxenra`，打开 `NEMA-2006` 文件夹即可验证。原文件没有 `.dcm` 后缀，应用按内容识别。导入根目录还会出现 2 帧灌注图；已有导入需重新扫描以更新浏览组。
+从本 worktree 启动 `uv run voxplane`，打开 `NEMA-2006` 文件夹即可验证。原文件没有 `.dcm` 后缀，应用按内容识别。导入根目录还会出现 2 帧灌注图；已有导入需重新扫描以更新浏览组。
 
 复跑公开样本验收（需要本地样本和开发依赖；原生 3D 使用 `cocoa`）：
 
 ```sh
-VOXENRA_ENHANCED_CT_SAMPLE_DIR="$HOME/Documents/test_dicom/Voxenra-EnhancedCT-TestData" \
+VOXPLANE_ENHANCED_CT_SAMPLE_DIR="$HOME/Documents/test_dicom/Voxenra-EnhancedCT-TestData" \
   PYTHONPATH=src:tests:tests/manual QT_QPA_PLATFORM=cocoa \
   uv run --group dev python -m pytest tests/manual/test_enhanced_ct_samples.py -q
 ```

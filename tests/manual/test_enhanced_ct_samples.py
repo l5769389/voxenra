@@ -8,11 +8,11 @@ import numpy as np
 import pydicom
 import pytest
 
-from qt_dicom_viewer.core.ct import ct_view_error
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.series_thumbnail import read_series_thumbnail
-from qt_dicom_viewer.core.volume_manager import VolumeManager
+from voxplane.core.ct import ct_view_error
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.series_thumbnail import read_series_thumbnail
+from voxplane.core.volume_manager import VolumeManager
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from manual.test_mr_samples import import_local, ready
@@ -20,9 +20,9 @@ from manual.test_mr_samples import import_local, ready
 
 @pytest.fixture
 def sample_root():
-    path = os.environ.get('VOXENRA_ENHANCED_CT_SAMPLE_DIR')
+    path = os.environ.get('VOXPLANE_ENHANCED_CT_SAMPLE_DIR')
     if not path:
-        pytest.skip('Set VOXENRA_ENHANCED_CT_SAMPLE_DIR to the public sample directory')
+        pytest.skip('Set VOXPLANE_ENHANCED_CT_SAMPLE_DIR to the public sample directory')
     root = Path(path)
     assert root.is_dir(), root
     return root
@@ -123,9 +123,9 @@ def test_public_perfusion_units_are_not_mislabeled_hu(sample_root):
 def test_public_ct_native_views_and_source_export(scene, sample_root, tmp_path):
     from dataclasses import replace
     from PySide6.QtTest import QTest
-    from qt_dicom_viewer.core.series_export import ExportRequest, export_series
-    from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-    from qt_dicom_viewer.model import MprPlane
+    from voxplane.core.series_export import ExportRequest, export_series
+    from voxplane.core.mpr_reslicer import MprReslicer
+    from voxplane.model import MprPlane
     window, app, warnings = scene
     root = sample_root/'NEMA-2006'
     source = json.loads((root/'manifest.json').read_text())['files'][0]
@@ -184,7 +184,7 @@ def test_public_ct_native_views_and_source_export(scene, sample_root, tmp_path):
 def test_public_perfusion_native_browsing_and_png(scene, sample_root, tmp_path):
     from PySide6.QtTest import QTest
     from PySide6.QtGui import QImage
-    from qt_dicom_viewer.core.series_export import ExportRequest, export_series
+    from voxplane.core.series_export import ExportRequest, export_series
     window, app, warnings = scene
     path = sample_root/'pydicom/eCT_Supplemental.dcm'
     import_local(app,[sample_root/'NEMA-2006/01-CT0001',path])

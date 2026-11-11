@@ -17,12 +17,12 @@ def pyinstaller_command(root: Path, *, console: bool = False, installer: bool = 
                         portable_dir: bool = False, icon: Path | None = None) -> list[str]:
     """集中声明打包参数，资源位置不依赖调用者的工作目录。"""
     root = root.resolve()
-    qml_directory = root / "src" / "qt_dicom_viewer" / "qml"
+    qml_directory = root / "src" / "voxplane" / "qml"
     entry = root / "scripts" / "windows_entry.py"
     if not (qml_directory / "Main.qml").is_file() or not entry.is_file():
         raise FileNotFoundError("找不到应用入口或 QML 资源，请使用完整项目目录打包。")
 
-    name = "Voxenra-debug" if console else "Voxenra"
+    name = "VoxPlane-debug" if console else "VoxPlane"
     dist = root / "dist"
     if installer:
         dist /= "windows"
@@ -48,7 +48,7 @@ def pyinstaller_command(root: Path, *, console: bool = False, installer: bool = 
         "--specpath", str(root / "build" / "windows"),
         "--paths", str(root / "src"),
         "--additional-hooks-dir", str(root / "packaging" / "hooks"),
-        # hook-qt_dicom_viewer.py preserves package-relative QML/SVG/brand assets
+        # hook-voxplane.py preserves package-relative QML/SVG/brand assets
         # and omits superseded PNG icon originals (still kept in the repository).
         "--add-data", f"{root / 'licenses'}:licenses",
         # 这些模块也会由 QML 间接使用，显式触发 Qt 的插件收集钩子。
@@ -75,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--console", action="store_true",
-        help="生成带控制台的 Voxenra-debug.exe，便于排查启动和 QML 错误。",
+        help="生成带控制台的 VoxPlane-debug.exe，便于排查启动和 QML 错误。",
     )
     parser.add_argument(
         "--portable-dir", action="store_true",
@@ -101,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"打包失败：{error}", file=sys.stderr)
         return error.returncode if isinstance(error, subprocess.CalledProcessError) else 1
 
-    name = "Voxenra-debug" if args.console else "Voxenra"
+    name = "VoxPlane-debug" if args.console else "VoxPlane"
     directory = PROJECT_ROOT / "dist"
     if args.portable_dir:
         directory = directory / "portable" / name

@@ -3,9 +3,9 @@ import pytest
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian, generate_uid
 
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import (
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import (
     DicomFolderScanSnapshot,
     DicomInstanceMeta,
     DicomLoadResult,
@@ -22,15 +22,15 @@ from qt_dicom_viewer.model import (
     ViewportConfig,
     WindowLevel,
 )
-from qt_dicom_viewer.ui.controller.viewport.image_2d.stack_viewport_controller import (
+from voxplane.ui.controller.viewport.image_2d.stack_viewport_controller import (
     StackViewportController,
 )
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.ui.workers.dicom_render_worker import (
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.ui.workers.dicom_render_worker import (
     DicomRenderWorker,
 )
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.viewport.controller.overlay_presenter import (
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.viewport.controller.overlay_presenter import (
     _format_view_position,
 )
 

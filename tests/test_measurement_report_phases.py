@@ -5,10 +5,10 @@ from dataclasses import replace
 import pytest
 from PySide6.QtPdf import QPdfDocument
 
-from qt_dicom_viewer.core.measurement_report import COLUMNS
-from qt_dicom_viewer.ui.controller.language_controller import LanguageController
-from qt_dicom_viewer.ui.controller.measurement_report_controller import MeasurementReportController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.core.measurement_report import COLUMNS
+from voxplane.ui.controller.language_controller import LanguageController
+from voxplane.ui.controller.measurement_report_controller import MeasurementReportController
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, wait_until
 from test_four_d_tools import temporal, draw
 
@@ -102,7 +102,7 @@ def test_report_resolves_tab_phase_identifier_after_catalog_reordering(temporal,
 def test_pending_report_owns_masks_settings_and_catalog(temporal, tmp_path):
     import numpy as np
     from threading import Event
-    from qt_dicom_viewer.core.segmentation_masks import mask_record
+    from voxplane.core.segmentation_masks import mask_record
 
     tab, _, (_, workspace) = temporal
     controller = tab.voiController
@@ -146,7 +146,7 @@ def test_pending_report_owns_masks_settings_and_catalog(temporal, tmp_path):
 
 def test_cancelled_phase_evaluation_preserves_existing_report(temporal, tmp_path, monkeypatch):
     from threading import Event, get_ident
-    from qt_dicom_viewer.core.volume_manager import VolumeManager
+    from voxplane.core.volume_manager import VolumeManager
 
     tab, _, (_, workspace) = temporal
     draw(tab, 'voi')

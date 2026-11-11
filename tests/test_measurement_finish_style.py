@@ -10,7 +10,7 @@ from PySide6.QtQuick import QQuickView, QSGRendererInterface
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer import __version__
+from voxplane import __version__
 from test_measurement_qml import qt_app, viewport, _scene, _mouse_drag, _click_points, _visual_children, _move_pointer
 from test_pacs_qml import scene
 from test_tag_qml import find
@@ -34,7 +34,7 @@ def test_measurement_delegate_survives_invalidated_model(qt_app, name):
         geometry = "corners" if name == "RoiMeasurementItem" else "mappedPoints"
         properties[geometry] = [QPointF(10, 20), QPointF(30, 40)]
     view.setInitialProperties(properties)
-    view.setSource(QUrl.fromLocalFile(str(ROOT / "src/qt_dicom_viewer/qml/sections/center/viewportArea/measurementLayer" / (name + ".qml"))))
+    view.setSource(QUrl.fromLocalFile(str(ROOT / "src/voxplane/qml/sections/center/viewportArea/measurementLayer" / (name + ".qml"))))
     try:
         assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
         root = view.rootObject()
@@ -171,7 +171,7 @@ def test_thin_diagonal_and_curved_geometry_has_antialiased_pixels(qt_app, tmp_pa
     view.setColor(QColor("#000000"))
     view.resize(400, 300)
     view.setInitialProperties(properties)
-    view.setSource(QUrl.fromLocalFile(str(ROOT / "src/qt_dicom_viewer/qml/sections/center/viewportArea/measurementLayer" / (name + ".qml"))))
+    view.setSource(QUrl.fromLocalFile(str(ROOT / "src/voxplane/qml/sections/center/viewportArea/measurementLayer" / (name + ".qml"))))
     try:
         assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
         view.show()

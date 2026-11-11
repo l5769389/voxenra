@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from qt_dicom_viewer.core.release_notes import summarize_release_notes, validate_release_notes
+from voxplane.core.release_notes import summarize_release_notes, validate_release_notes
 
 
-NOTES = '''# Voxenra 2.1.0
+NOTES = '''# VoxPlane 2.1.0
 
 ## 更新摘要
 - 新增鼠标设置。
@@ -36,6 +36,7 @@ def test_legacy_release_is_clean_and_bounded():
     assert '**' not in summary and '##' not in summary
     assert '验证' not in summary and 'English' not in summary
     assert 1 <= summary.count('• ') <= 6
+    # Historical release text remains an immutable record of its original brand.
     assert 'Voxenra 2.0.0 adds' in summarize_release_notes(notes, 'en-US')
 
 

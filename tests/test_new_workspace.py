@@ -3,9 +3,9 @@ from threading import Event
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
-from qt_dicom_viewer.core.workspace_document import read_document
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.workspace_document import read_document
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_workspace_persistence import populated_app, draw_length
 
@@ -57,13 +57,13 @@ def test_cancel_new_preserves_all_current_content(work, monkeypatch):
 
 
 def test_save_then_new_waits_for_success_and_preserves_measurements(work, tmp_path, monkeypatch):
-    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
+    from voxplane.ui.controller import workspace_document_controller as module
     app, doc, _ = work
     draw_length(app.workspaceController.activeViewport)
     app.workspaceController.activeTab.historyController.capture()
     path = tmp_path/'saved-before-new.voxworkspace'
     monkeypatch.setattr(doc, '_ask_new_workspace', lambda: QMessageBox.Save)
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(path), ''))
     release = Event()
     original_write = module.atomic_write
@@ -86,7 +86,7 @@ def test_save_then_new_waits_for_success_and_preserves_measurements(work, tmp_pa
 
 @pytest.mark.parametrize('failure', ['cancel', 'write', 'new-edits'])
 def test_failed_or_stale_save_does_not_create_new(work, tmp_path, monkeypatch, failure):
-    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
+    from voxplane.ui.controller import workspace_document_controller as module
     app, doc, _ = work
     tab = app.workspaceController.activeTab
     entered, release = Event(), Event()
@@ -172,7 +172,7 @@ def test_recovery_cleanup_failure_preserves_current_session(work, monkeypatch):
 
 
 def test_new_saved_workspace_needs_no_prompt_and_clears_pending_restore(work, tmp_path, monkeypatch):
-    from qt_dicom_viewer.core.local_import import LocalImportStore
+    from voxplane.core.local_import import LocalImportStore
     app, doc, _ = work
     assert doc.save_to(tmp_path/'saved.voxworkspace')
     wait_until(lambda: not doc.busy)

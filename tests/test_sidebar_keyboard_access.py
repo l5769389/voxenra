@@ -10,7 +10,7 @@ from test_series_sidebar import sidebar_scene
 from test_sidebar_style_polish import open_image
 from test_tag_qml import find, click, descendants
 from qt_pointer import move_pointer
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.model import DicomFolderScanSnapshot
 
 
 @pytest.fixture(autouse=True)

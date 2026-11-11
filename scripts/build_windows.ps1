@@ -7,7 +7,7 @@ $result = 1
 Push-Location $projectDir
 try {
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-        throw 'Install uv before building Voxenra.'
+        throw 'Install uv before building VoxPlane.'
     }
     $env:UV_PROJECT_ENVIRONMENT = Join-Path $projectDir '.venv-build-windows'
     $env:PYTHONUTF8 = '1'

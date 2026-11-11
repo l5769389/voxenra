@@ -1,7 +1,7 @@
 import numpy as np
 from PySide6.QtCore import QSize
-from qt_dicom_viewer.model import WindowLevel
-from qt_dicom_viewer.core.scalar_display import ScalarDisplayFrame, pack_scalar, unpack_scalar, resample_display
+from voxplane.model import WindowLevel
+from voxplane.core.scalar_display import ScalarDisplayFrame, pack_scalar, unpack_scalar, resample_display
 
 
 def test_scalar_interpolation_precedes_window_clipping():
@@ -27,7 +27,7 @@ def test_packed_texture_precision_padding_and_byte_boundaries():
 
 
 def test_provider_uses_scalar_sampling_and_cleans_up():
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     from dataclasses import replace
     p = DicomImageProvider()
     values = np.array([[-50.,-302.],[-50.,-302.]],dtype=np.float32)
@@ -54,8 +54,8 @@ def test_rendered_scalar_image_matches_reference(qt_app, tmp_path):
     from PySide6.QtTest import QTest
     from PySide6.QtGui import QImage
     from shiboken6 import delete
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    component = Path('src/qt_dicom_viewer/qml/sections/center/viewportArea').resolve().as_uri()
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    component = Path('src/voxplane/qml/sections/center/viewportArea').resolve().as_uri()
     qml = tmp_path/'ScalarRender.qml'
     qml.write_text('''import QtQuick
 import "'''+component+'''"

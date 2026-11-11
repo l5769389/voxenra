@@ -5,9 +5,9 @@ import pytest
 from PySide6.QtTest import QTest
 from PySide6.QtCore import Qt
 
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.model import TabType
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.model import TabType
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_toolbar_visual_editor import visual_editor, item, click
@@ -151,7 +151,7 @@ def test_settings_initializes_from_recent_image_and_does_not_reset_live_draft(si
 
 
 def test_language_switch_keeps_specific_profile_and_pending_order(visual_editor):
-    from qt_dicom_viewer.ui.controller.language_controller import LanguageController
+    from voxplane.ui.controller.language_controller import LanguageController
     window, settings, editor, warnings = visual_editor
     language = LanguageController(settings, root=False)
     language.attach_engine(window.engine())

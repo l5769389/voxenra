@@ -99,7 +99,7 @@ def test_new_closes_detached_tabs_and_returns_to_main(sidebar_scene, monkeypatch
 
 
 def test_save_and_create_from_real_confirmation(sidebar_scene, tmp_path, monkeypatch):
-    from qt_dicom_viewer.core.workspace_document import read_document
+    from voxplane.core.workspace_document import read_document
     from test_workspace_persistence import draw_length
     window, app, records, warnings = sidebar_scene
     ws, doc = app.workspaceController, app.workspaceDocumentController
@@ -109,7 +109,7 @@ def test_save_and_create_from_real_confirmation(sidebar_scene, tmp_path, monkeyp
     draw_length(ws.activeViewport)
     ws.activeTab.historyController.capture()
     path = tmp_path / 'before-new.voxworkspace'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(path), ''))
     dialog, native = workspace_dialog(window)
     def save():

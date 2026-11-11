@@ -41,9 +41,9 @@ PYTHONPATH=src QT_QPA_PLATFORM=offscreen uv run --group dev python -m pytest tes
 使用文稿中现有的影像库运行原生验收：
 
 ```sh
-VOXENRA_TEST_DICOM_DIR="$HOME/Documents/test_dicom" \
-VOXENRA_MR_SAMPLE_DIR="$HOME/Documents/test_dicom/Voxenra-MR-TestData" \
-VOXENRA_ENHANCED_CT_SAMPLE_DIR="$HOME/Documents/test_dicom/Voxenra-EnhancedCT-TestData" \
+VOXPLANE_TEST_DICOM_DIR="$HOME/Documents/test_dicom" \
+VOXPLANE_MR_SAMPLE_DIR="$HOME/Documents/test_dicom/VoxPlane-MR-TestData" \
+VOXPLANE_ENHANCED_CT_SAMPLE_DIR="$HOME/Documents/test_dicom/VoxPlane-EnhancedCT-TestData" \
 PYTHONPATH=src QT_QPA_PLATFORM=cocoa uv run --group dev python -m pytest \
   tests/manual/test_display_mapping_samples.py tests/manual/test_mr_samples.py \
   tests/manual/test_enhanced_mr_samples.py tests/manual/test_enhanced_ct_samples.py -q

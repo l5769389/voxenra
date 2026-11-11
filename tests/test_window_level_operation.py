@@ -1,12 +1,12 @@
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     DragUpdateEvent,
     Offset,
     Point,
     PointerPosition,
     WindowLevel,
 )
-from qt_dicom_viewer.model.interaction import WindowLevelContext
-from qt_dicom_viewer.ui.controller.viewport.operation.window_level_operation import (
+from voxplane.model.interaction import WindowLevelContext
+from voxplane.ui.controller.viewport.operation.window_level_operation import (
     WindowLevelInteractionConfig,
     WindowLevelOperation,
 )

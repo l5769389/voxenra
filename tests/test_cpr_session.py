@@ -3,16 +3,16 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.model.cpr import CprPath, CprSettings, CprError
+from voxplane.model.cpr import CprPath, CprSettings, CprError
 
 
 def api():
-    from qt_dicom_viewer.core.cpr_session import default_cpr_session, path_record, unpack_path, validate_cpr_session
+    from voxplane.core.cpr_session import default_cpr_session, path_record, unpack_path, validate_cpr_session
     return default_cpr_session, path_record, unpack_path, validate_cpr_session
 
 
 def test_session_roundtrip_retains_paths_settings_source_and_incomplete_draft():
-    from qt_dicom_viewer.core.workspace_state import dumps, loads
+    from voxplane.core.workspace_state import dumps, loads
     default, pack, unpack, validate = api()
     state = default("series", "frame")
     state["source"]["fingerprint"] = "hash"

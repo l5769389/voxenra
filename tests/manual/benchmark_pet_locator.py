@@ -28,14 +28,14 @@ if __package__:
     from .smoke_pet_3d import make_pair
 else:
     from smoke_pet_3d import make_pair
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.volume_manager import VolumeManager, series_fingerprint
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, PixelSpacing
-from qt_dicom_viewer.service.render_serivce import RenderService
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.volume_manager import VolumeManager, series_fingerprint
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.model import DicomFolderScanSnapshot, PixelSpacing
+from voxplane.service.render_serivce import RenderService
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
 
 def representative_pair(folder, manager):
@@ -92,7 +92,7 @@ def main():
         view.engine().addImageProvider("navigation", SvgIconProvider())
         view.resize(1280, 900)
         view.setResizeMode(QQuickView.SizeRootObjectToView)
-        qml_dir = files("qt_dicom_viewer").joinpath("qml/sections/center/viewportArea")
+        qml_dir = files("voxplane").joinpath("qml/sections/center/viewportArea")
         scene = folder / "Benchmark.qml"
         scene.write_text('''import QtQuick
 import "'''+QUrl.fromLocalFile(str(qml_dir)).toString()+'''" as Views
@@ -179,7 +179,7 @@ Rectangle {
                         "p95": round(float(np.percentile(values, 95)), 3),
                         "max": round(float(max(values)), 3)} if values else None
             report = {"platform": platform.platform(), "python": platform.python_version(),
-                "source": str(files("qt_dicom_viewer")), "ct_shape": [457, 512, 512],
+                "source": str(files("voxplane")), "ct_shape": [457, 512, 512],
                 "pet_shape": [104, 128, 128], "measurement": "QTest mouse event to actual QML locator position; excludes compositor/vsync", "scenarios": {}}
             for name, artificial_delay, continuous in [("in_plane", 0., False),
                     ("slow_backend", .120, False), ("continuous_slow_backend", .120, True)]:

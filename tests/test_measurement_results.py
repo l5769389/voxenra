@@ -5,11 +5,11 @@ from threading import Event
 from test_dicom_tags import qt_app, wait_until
 from test_workspace_persistence import populated_app, draw_length
 from test_measurement_controller import _position, _drag
-from qt_dicom_viewer.core.workspace_state import dumps, loads
-from qt_dicom_viewer.model import MeasurementKind
-from qt_dicom_viewer.ui.controller.measurement_report_controller import capture_results
-from qt_dicom_viewer.ui.report_reference_images import render_references
-from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
+from voxplane.core.workspace_state import dumps, loads
+from voxplane.model import MeasurementKind
+from voxplane.ui.controller.measurement_report_controller import capture_results
+from voxplane.ui.report_reference_images import render_references
+from voxplane.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
 
 
 def test_list_cross_slice_navigation_visibility_lock_and_history(qt_app, tmp_path):
@@ -111,7 +111,7 @@ def test_mpr_location_and_reference_leave_other_views_unchanged(qt_app, tmp_path
 
 
 def test_report_cancel_preserves_existing_file_and_frozen_view(qt_app, tmp_path, monkeypatch):
-    import qt_dicom_viewer.ui.report_reference_images as references
+    import voxplane.ui.report_reference_images as references
     entered, release = Event(), Event()
     original = references.render_references
     captured = []
@@ -145,7 +145,7 @@ def test_report_cancel_preserves_existing_file_and_frozen_view(qt_app, tmp_path,
 
 
 def test_mpr_oblique_slab_references_roundtrip(qt_app, tmp_path):
-    from qt_dicom_viewer.model import MprProjectionMode
+    from voxplane.model import MprProjectionMode
     app, series = populated_app(tmp_path)
     try:
         app.workspaceController.createTab(series.series_instance_uid, 'CT', 'mpr')
@@ -172,9 +172,9 @@ def test_mpr_oblique_slab_references_roundtrip(qt_app, tmp_path):
 
 def test_four_d_measurement_navigation_and_phase_reference(qt_app, tmp_path):
     from test_four_d import _cross_series_four_d
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     records = _cross_series_four_d(tmp_path)
     app = AppController(DicomImageProvider(), settings_path=False)
     try:
@@ -212,8 +212,8 @@ def test_four_d_measurement_navigation_and_phase_reference(qt_app, tmp_path):
 
 def test_enhanced_multiframe_reports_use_distinct_frame_pixels(qt_app, tmp_path):
     from test_enhanced_ct import save_and_scan
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     _, snapshot = save_and_scan(tmp_path)
     app = AppController(DicomImageProvider(), settings_path=False)
     try:
@@ -223,7 +223,7 @@ def test_enhanced_multiframe_reports_use_distinct_frame_pixels(qt_app, tmp_path)
         ws.createTab(snapshot.series[0].series_instance_uid, 'Enhanced CT', '2d')
         wait_until(lambda: ws.activeViewport.loadState == 'ready')
         view = ws.activeViewport
-        from qt_dicom_viewer.model import WindowLevel, WindowLevelChange
+        from voxplane.model import WindowLevel, WindowLevelChange
         view.apply_window_level(WindowLevelChange(WindowLevel(-700, 1000), False))
         wait_until(lambda: not view.render_pending)
         first = draw_length(view)
@@ -282,8 +282,8 @@ def test_independent_2d_plane_location_restores_hidden_mode(qt_app, tmp_path):
 
 def test_reference_image_preserves_anisotropic_physical_aspect(qt_app):
     from PySide6.QtGui import QImage
-    from qt_dicom_viewer.model import PixelSpacing
-    from qt_dicom_viewer.ui.controller.measurement_report_controller import report_images
+    from voxplane.model import PixelSpacing
+    from voxplane.ui.controller.measurement_report_controller import report_images
     image = QImage(100, 100, QImage.Format_RGB32)
     image.fill(0)
     result = report_images([('Reference', image, [], PixelSpacing(2, 1))])[0][1]
@@ -291,7 +291,7 @@ def test_reference_image_preserves_anisotropic_physical_aspect(qt_app):
 
 
 def test_locked_copy_has_independent_metadata_and_redo(qt_app, tmp_path):
-    from qt_dicom_viewer.model import ImagePoint
+    from voxplane.model import ImagePoint
     app, _ = populated_app(tmp_path)
     try:
         tab = app.workspaceController.activeTab

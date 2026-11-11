@@ -17,12 +17,12 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.vtkIOImage import vtkPNGWriter
 from vtkmodules.vtkRenderingCore import vtkWindowToImageFilter
 
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.volume_view import VolumeViewState
-from qt_dicom_viewer.model.volume_models import VolumeDisplayState
-from qt_dicom_viewer.ui.volume_render_backend import VolumeRenderBackend
-from qt_dicom_viewer.volume_presets import VOLUME_PRESETS
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.volume_view import VolumeViewState
+from voxplane.model.volume_models import VolumeDisplayState
+from voxplane.ui.volume_render_backend import VolumeRenderBackend
+from voxplane.volume_presets import VOLUME_PRESETS
 
 
 class CaptureWidget(QVTKRenderWindowInteractor):

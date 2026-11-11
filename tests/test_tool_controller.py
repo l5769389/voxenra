@@ -1,7 +1,7 @@
 import pytest
 
-from qt_dicom_viewer.model import InteractionType, TabType
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.model import InteractionType, TabType
+from voxplane.ui.controller.tab.tool_controller import ToolController
 
 
 def test_initial_tool_state_opens_window_panel() -> None:

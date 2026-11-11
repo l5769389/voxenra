@@ -107,34 +107,34 @@ jobs:
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
-          VOXENRA_NATIVE_QA: "1"
+          VOXPLANE_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_window_chrome.py -k windows_native_caption --junitxml=build/test-results/windows-native-caption.xml --basetemp=build/test-results/windows-native-caption
 
       - name: Verify native import dialog controls
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
-          VOXENRA_NATIVE_QA: "1"
+          VOXPLANE_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_import_dialog_chrome.py tests/test_import_ui.py --junitxml=build/test-results/windows-native-import.xml --basetemp=build/test-results/windows-native-import
 
       - name: Verify native popup keyboard isolation
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
-          VOXENRA_NATIVE_QA: "1"
+          VOXPLANE_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_dialog_default_actions.py tests/test_popup_shortcut_isolation.py --output build/test-results/windows-native-popup-keys
 
       - name: Verify native Chinese PDF report
         env:
           QT_QPA_PLATFORM: windows
-          VOXENRA_NATIVE_QA: "1"
+          VOXPLANE_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_measurement_report_pdf.py --junitxml=build/test-results/windows-native-pdf.xml
 
       - name: Verify native workspace and background report exports
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
-          VOXENRA_NATIVE_QA: "1"
+          VOXPLANE_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_workspace_persistence.py --junitxml=build/test-results/windows-native-workspace.xml
 
       - name: Verify report and close-dialog regressions
@@ -200,7 +200,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: Voxenra-windows-test-results
+          name: VoxPlane-windows-test-results
           path: build/test-results/
           if-no-files-found: warn
           retention-days: 14
@@ -222,7 +222,7 @@ jobs:
         env:
           BUILD_CONSOLE: ${{ inputs.console }}
         run: |
-          $exe = if ($env:BUILD_CONSOLE -eq "true") { "dist/Voxenra-debug.exe" } else { "dist/Voxenra.exe" }
+          $exe = if ($env:BUILD_CONSOLE -eq "true") { "dist/VoxPlane-debug.exe" } else { "dist/VoxPlane.exe" }
           uv run --locked --python 3.13 --group build python scripts/verify_pixel_codecs.py --executable $exe
           exit $LASTEXITCODE
 
@@ -240,7 +240,7 @@ jobs:
 
       - name: Verify installer pixel decoders
         if: inputs.console != true
-        run: uv run --locked --python 3.13 --group build python scripts/verify_pixel_codecs.py --executable dist/windows/Voxenra/Voxenra.exe
+        run: uv run --locked --python 3.13 --group build python scripts/verify_pixel_codecs.py --executable dist/windows/VoxPlane/VoxPlane.exe
 
       - name: Verify default install directory and in-place upgrade
         if: inputs.console != true
@@ -254,7 +254,7 @@ jobs:
         if: inputs.console != true
         env:
           GH_TOKEN: ${{ github.token }}
-          VOXENRA_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+          VOXPLANE_RUNNER_ENVIRONMENT: ${{ runner.environment }}
           QT_QUICK_BACKEND: software
         run: uv run --locked --python 3.13 --no-dev --group build python tests/manual/verify_windows_package_updates.py
 
@@ -262,7 +262,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: Voxenra-windows-installer-results
+          name: VoxPlane-windows-installer-results
           path: build/test-results/installer/
           if-no-files-found: ignore
           retention-days: 14

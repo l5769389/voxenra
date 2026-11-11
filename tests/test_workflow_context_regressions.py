@@ -5,7 +5,7 @@ import pytest
 from PySide6.QtCore import QObject, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.pacs.client import PacsError
+from voxplane.pacs.client import PacsError
 from test_pacs_qml import scene
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
@@ -21,13 +21,13 @@ def test_saved_corrected_pacs_replaces_rendered_failure(scene, monkeypatch, tmp_
     profile_id = pacs.profiles[0]['id']
     def fail(self):
         raise PacsError('Old endpoint failure')
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.pacs_controller.DicomWebClient.test_connection', fail)
+    monkeypatch.setattr('voxplane.ui.controller.pacs_controller.DicomWebClient.test_connection', fail)
     pacs.testProfile(profile_id)
     wait_until(lambda: not pacs.busy)
     assert pacs.profiles[0]['testResult']['state'] == 'error'
     click(window, find(window, 'pacsEdit-' + profile_id))
     type_text(window, find(window, 'pacsProfileUrl'), 'http://127.0.0.1:8042/corrected')
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.pacs_controller.DicomWebClient.test_connection', lambda self: 'New endpoint success')
+    monkeypatch.setattr('voxplane.ui.controller.pacs_controller.DicomWebClient.test_connection', lambda self: 'New endpoint success')
     click(window, find(window, 'pacsTestDraft'))
     wait_until(lambda: not pacs.busy)
     click(window, find(window, 'pacsSaveProfile'))
@@ -87,7 +87,7 @@ def test_draft_test_can_close_and_late_result_cannot_overwrite_retry(scene, monk
             assert release.wait(10)
             return 'Old success'
         return 'New success'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.pacs_controller.DicomWebClient.test_connection', delayed)
+    monkeypatch.setattr('voxplane.ui.controller.pacs_controller.DicomWebClient.test_connection', delayed)
     app.workspaceController.openDataSources()
     click(window, find(window, 'pacsAddProfile'))
     type_text(window, find(window, 'pacsProfileName'), 'Old')

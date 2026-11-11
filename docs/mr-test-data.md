@@ -60,10 +60,10 @@
 在 MR worktree 中复跑（需开发依赖与本地样本）：
 
 ```sh
-VOXENRA_MR_SAMPLE_DIR="$HOME/Documents/Voxenra-MR-TestData" \
+VOXPLANE_MR_SAMPLE_DIR="$HOME/Documents/Voxenra-MR-TestData" \
   PYTHONPATH=src:tests:tests/manual QT_QPA_PLATFORM=cocoa \
   uv run --group dev python -m pytest \
   tests/manual/test_mr_samples.py tests/manual/test_enhanced_mr_samples.py -q
 ```
 
-macOS 原生验证使用 `cocoa` 与默认硬件渲染，不设置 QT_QUICK_BACKEND；无显示环境可改为 `offscreen`，原生 3D 案例会跳过。未配置 VOXENRA_MR_SAMPLE_DIR 时外部样本测试跳过。
+macOS 原生验证使用 `cocoa` 与默认硬件渲染，不设置 QT_QUICK_BACKEND；无显示环境可改为 `offscreen`，原生 3D 案例会跳过。未配置 VOXPLANE_MR_SAMPLE_DIR 时外部样本测试跳过。

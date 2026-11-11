@@ -5,21 +5,21 @@ import json
 import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT/'src'), str(ROOT/'tests')]
-from qt_dicom_viewer.settings.interface_scale import apply_interface_scale
+from voxplane.settings.interface_scale import apply_interface_scale
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QUrl, QPointF
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from shiboken6 import delete
-from qt_dicom_viewer.app import configure_application_identity
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.app import configure_application_identity
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 from test_tag_qml import find, descendants
 scale = int(sys.argv[1])
 out = ROOT/'build/input-settings/scale'
 out.mkdir(parents=True, exist_ok=True)
-with TemporaryDirectory(prefix='voxenra-scale-qa-') as directory:
+with TemporaryDirectory(prefix='voxplane-scale-qa-') as directory:
     directory = Path(directory)
     path = directory/'display-settings.json'
     path.write_text(json.dumps({'appearance': {'interfaceScale': scale}}))
@@ -34,7 +34,7 @@ with TemporaryDirectory(prefix='voxenra-scale-qa-') as directory:
     engine.rootContext().setContextProperty('appController', controller)
     warnings = []
     engine.warnings.connect(lambda rows: warnings.extend(r.toString() for r in rows))
-    engine.load(QUrl.fromLocalFile(str(ROOT/'src/qt_dicom_viewer/qml/Main.qml')))
+    engine.load(QUrl.fromLocalFile(str(ROOT/'src/voxplane/qml/Main.qml')))
     window = engine.rootObjects()[0]
     controller.workspaceController.openSettings()
     results = []

@@ -12,10 +12,10 @@ import sys
 
 import numpy as np
 
-from qt_dicom_viewer.core.dicom_results import SegmentResult, write_results
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.segmentation_import import read_segmentation
-from qt_dicom_viewer.core.volume_manager import VolumeManager
+from voxplane.core.dicom_results import SegmentResult, write_results
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.segmentation_import import read_segmentation
+from voxplane.core.volume_manager import VolumeManager
 
 root, binaries = map(Path, sys.argv[1:3])
 manifest = json.loads((root / "manifest.json").read_text())

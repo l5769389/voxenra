@@ -93,7 +93,7 @@ PACS 必须支持 Study Root 的 STUDY、SERIES、IMAGE 层级及 SERIES 级 C-M
 - HTTPS 使用系统证书校验，没有关闭 TLS 校验的开关。仅允许同源 HTTP 重定向，
   避免认证信息随重定向转发至其他服务。系统代理设置仍由 Python 标准 HTTP 客户端使用。
 - 影像保存在 Qt `AppLocalDataLocation/pacs-imports/import-*` 中，保证 Tab 使用的文件持续存在。
-  在 macOS 上通常位于 `~/Library/Application Support/Voxenra/Voxenra/pacs-imports`；
+  在 macOS 上通常位于 `~/Library/Application Support/VoxPlane/VoxPlane/pacs-imports`；
   以实际 Qt 返回目录为准。导入后可从 series 右键菜单“在资源管理器中打开”定位文件。
   完成的下载不会自动删除；关闭应用后可手动清理不再需要的导入目录。
 - 取消、数量不符、UID 不符、下载中断或扫描失败会删除本次导入目录，不把部分结果加入列表。

@@ -1,8 +1,8 @@
 from copy import deepcopy
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.settings.preferences import CORNER_FIELDS
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.settings.preferences import CORNER_FIELDS
 from test_pacs_qml import scene
 from test_dicom_tags import qt_app, wait_until
 from test_settings_redesign import open_page, reveal_setting

@@ -13,11 +13,11 @@ import numpy as np
 from PySide6.QtWidgets import QApplication
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from test_mpr_reslicer import _volume
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.segmentation_masks import mask_record
-from qt_dicom_viewer.model import MprFrame, MprPlane, TabType
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.tab.mpr_voi_controller import MprVoiController
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.segmentation_masks import mask_record
+from voxplane.model import MprFrame, MprPlane, TabType
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.tab.mpr_voi_controller import MprVoiController
 
 
 def run(flush_each):

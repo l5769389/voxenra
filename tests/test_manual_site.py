@@ -213,6 +213,8 @@ def test_home_loads_responsive_compressed_images_and_preserves_full_size_links(t
         for img in screenshots:
             assert urlsplit(img['src']).path.endswith('.webp')
             assert img['decoding'] == 'async'
+            if page.parent.name == 'en-us':
+                assert Path(urlsplit(img['src']).path).name.startswith('en-')
             assert int(img['width']) > 0 and int(img['height']) > 0
             candidates = [part.strip().split() for part in img['srcset'].split(',')]
             assert len(candidates) >= 2
@@ -222,7 +224,7 @@ def test_home_loads_responsive_compressed_images_and_preserves_full_size_links(t
                     assert decoded.width == int(width.removesuffix('w'))
                     assert decoded.width <= 1600
                     if 'feature-ai-segmentation' in img['src']:
-                        assert decoded.n_frames == 3, 'Animation and its still poster must not overwrite each other'
+                        assert decoded.n_frames == 4, 'Animation and its still poster must not overwrite each other'
             if 'hero-mpr' in img['src']:
                 assert img['fetchpriority'] == 'high' and img.get('loading') != 'lazy'
                 assert (page.parent / urlsplit(img['src']).path).stat().st_size < 400_000

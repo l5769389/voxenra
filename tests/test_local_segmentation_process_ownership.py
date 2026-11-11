@@ -71,7 +71,7 @@ def test_sigkill_owner_stops_real_descendant_tree(tmp_path):
     owner_script.write_text(
         'import sys, threading\n'
         f'sys.path.insert(0, {str(ROOT / "src")!r})\n'
-        'from qt_dicom_viewer.infrastructure.local_inference_process import run_process\n'
+        'from voxplane.infrastructure.local_inference_process import run_process\n'
         f'run_process({command!r}, {str(tmp_path / "run.log")!r}, threading.Event())\n')
     owner = subprocess.Popen([sys.executable, str(owner_script)])
     try:
@@ -88,7 +88,7 @@ def test_sigkill_owner_stops_real_descendant_tree(tmp_path):
 
 @pytest.mark.parametrize('mode', ['cancel', 'timeout', 'success', 'nonzero'])
 def test_normal_completion_stops_real_descendant_tree(tmp_path, mode):
-    from qt_dicom_viewer.infrastructure.local_inference_process import run_process
+    from voxplane.infrastructure.local_inference_process import run_process
     command = synthetic_tree(tmp_path, mode)
     cancel = threading.Event()
     timer = None
@@ -114,10 +114,10 @@ def test_normal_completion_stops_real_descendant_tree(tmp_path, mode):
 
 
 def test_packaged_ownership_helper_executes_with_external_python(tmp_path):
-    hook = runpy.run_path(str(ROOT / 'packaging/hooks/hook-qt_dicom_viewer.py'))
+    hook = runpy.run_path(str(ROOT / 'packaging/hooks/hook-voxplane.py'))
     resources = [Path(source) for source, target in hook['datas']
                  if Path(source).name == 'posix_inference_supervisor.py'
-                 and target == 'qt_dicom_viewer/infrastructure']
+                 and target == 'voxplane/infrastructure']
     assert len(resources) == 1, 'Ownership helper must be an external-Python bundle resource'
     # No application imports: execute the bundled script after moving it away from src.
     helper = tmp_path / resources[0].name
@@ -136,14 +136,14 @@ def test_packaged_ownership_helper_executes_with_external_python(tmp_path):
 
 
 def test_configured_interpreter_works_with_frozen_gui_environment(tmp_path, monkeypatch):
-    from qt_dicom_viewer.infrastructure.local_inference_process import run_process
+    from voxplane.infrastructure.local_inference_process import run_process
     external_python = sys.executable
     polluted = ('PYTHONHOME', 'PYTHONPATH', 'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH')
     for key in polluted:
         monkeypatch.setenv(key, str(tmp_path / 'bundled GUI runtime'))
     monkeypatch.setattr(sys, 'executable', str(tmp_path / 'frozen GUI executable'))
     events = []
-    script = ('import json, os; print("VOXENRA_EVENT " + json.dumps('
+    script = ('import json, os; print("VOXPLANE_EVENT " + json.dumps('
               '{"event": "environment", "pollution": {key: os.environ[key] '
               f'for key in {polluted!r} if key in os.environ}}}}))')
     run_process([external_python, '-c', script], tmp_path / 'run.log', threading.Event(), events.append)

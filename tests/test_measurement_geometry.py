@@ -3,8 +3,8 @@ import math
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.measurement_geometry import angle_degrees, roi_metrics
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
+from voxplane.core.measurement_geometry import angle_degrees, roi_metrics
+from voxplane.model import ImagePoint, MeasurementKind
 
 
 def test_angle_uses_physical_spacing_not_screen_or_pixel_angle():

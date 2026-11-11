@@ -11,8 +11,8 @@ from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
-from qt_dicom_viewer.core.bead_mtf import compute_point_source_mtf, _windowed_point_source_mtf
-from qt_dicom_viewer.core.mtf_quality import metric_quality
+from voxplane.core.bead_mtf import compute_point_source_mtf, _windowed_point_source_mtf
+from voxplane.core.mtf_quality import metric_quality
 
 
 def main():

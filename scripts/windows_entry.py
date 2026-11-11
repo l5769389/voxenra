@@ -8,9 +8,9 @@ if __name__ == "__main__":
 
     import sys
     if len(sys.argv) == 4 and sys.argv[1] == "--verify-pixel-codecs":
-        from qt_dicom_viewer.core.codec_check import verify
+        from voxplane.core.codec_check import verify
         raise SystemExit(verify(sys.argv[2], sys.argv[3]))
 
-    from qt_dicom_viewer.app import main
+    from voxplane.app import main
 
     raise SystemExit(main())

@@ -10,11 +10,11 @@ from test_pet_fusion import paired_series
 from test_pet_volume import fusion_scene
 from test_measurement_qml import qt_app
 from test_dicom_tags import wait_until
-from qt_dicom_viewer.model import RenderFailure
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.service.render_serivce import RenderService
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import RenderFailure
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.service.render_serivce import RenderService
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 
 
 @pytest.mark.parametrize("role", ["ct", "pet", "fusion", "mip"])
@@ -224,7 +224,7 @@ def test_locator_context_end_and_failure_rollback(fusion_scene, change):
 
 def test_locator_submissions_are_throttled_and_release_flushes(fusion_scene, monkeypatch):
     _, tab, _, requests = fusion_scene
-    import qt_dicom_viewer.ui.controller.tab.pet_workspace_controller as module
+    import voxplane.ui.controller.tab.pet_workspace_controller as module
     clock = [100.]
     monkeypatch.setattr(module, "monotonic", lambda: clock[0])
     submitted = []

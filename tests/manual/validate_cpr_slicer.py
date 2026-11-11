@@ -4,7 +4,7 @@ CPR_VALIDATION_ROOT=/absolute/output .venv/bin/python tests/manual/validate_cpr_
 CPR_VALIDATION_STAGE=slicer CPR_VALIDATION_ROOT=... Slicer --no-main-window \
   --ignore-slicerrc --python-script tests/manual/validate_cpr_slicer.py
 
-Preparation uses Voxenra; the Slicer stage never imports Voxenra. GUI acceptance
+Preparation uses VoxPlane; the Slicer stage never imports VoxPlane. GUI acceptance
 is deliberately separate. Generated DICOMs/scenes/pixels stay in ignored build/.
 """
 from dataclasses import asdict, replace
@@ -77,14 +77,14 @@ def download_public():
 
 
 def prepare():
-    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-    from qt_dicom_viewer.core.volume_manager import VolumeManager
-    from qt_dicom_viewer.core.cpr_reslicer import CprReslicer
-    from qt_dicom_viewer.core.cpr_session import unpack_path
-    from qt_dicom_viewer.core.workspace_document import read_document
-    from qt_dicom_viewer.core.workspace_state import loads
-    from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-    from qt_dicom_viewer.model.cpr import CprPath, CprSettings
+    from voxplane.core.dicom_scanner import DicomFolderScanner
+    from voxplane.core.volume_manager import VolumeManager
+    from voxplane.core.cpr_reslicer import CprReslicer
+    from voxplane.core.cpr_session import unpack_path
+    from voxplane.core.workspace_document import read_document
+    from voxplane.core.workspace_state import loads
+    from voxplane.core.mpr_reslicer import MprReslicer
+    from voxplane.model.cpr import CprPath, CprSettings
 
     repo = Path(__file__).resolve().parents[2]
     workspace_path = ROOT/'native-ui.voxworkspace'
@@ -294,7 +294,7 @@ def slicer_oracle():
             base = data['points'][None,:,:]+data['offsets'][:,None,None]*data['laterals'][None,:,:]
             settings = run['settings']
             # Independently construct the declared segment-frame transport with
-            # VTK rotation matrices, rather than Voxenra's Rodrigues formula.
+            # VTK rotation matrices, rather than VoxPlane's Rodrigues formula.
             # Slicer's default Markups frames average tangents at vertices and
             # therefore do not implement the same polyline convention.
             controls = np.array(run['path']['control_points'])*ras_sign

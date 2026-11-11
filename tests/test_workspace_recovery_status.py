@@ -8,11 +8,11 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.core.workspace_document import read_document
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.core.workspace_document import read_document
+from voxplane.model import DicomFolderScanSnapshot
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click
@@ -21,7 +21,7 @@ from test_workspace_persistence import populated_app, draw_length
 
 @pytest.mark.parametrize('current_work', ['empty', 'utility-tabs', 'image'])
 def test_restart_recovery_only_prompts_when_replacing_image_work(qt_app, tmp_path, monkeypatch, current_work):
-    from qt_dicom_viewer.ui.controller.workspace_document_controller import QMessageBox
+    from voxplane.ui.controller.workspace_document_controller import QMessageBox
     config = tmp_path / 'display.json'
     original, record = populated_app(tmp_path, settings_path=config)
     manager = original.workspaceDocumentController
@@ -59,14 +59,14 @@ def test_restart_recovery_only_prompts_when_replacing_image_work(qt_app, tmp_pat
         assert manager.recoveryAvailable and manager.dirty
         if current_work == 'empty':
             # Exercise the actual startup dialog and its Recover button.
-            from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+            from voxplane.ui.svg_icon_provider import SvgIconProvider
             app.settingsController.setValue('appearance', 'theme', 'light')
             engine = QQmlApplicationEngine()
             engine.addImageProvider('dicom', provider)
             engine.addImageProvider('navigation', SvgIconProvider())
             engine.rootContext().setContextProperty('appController', app)
             engine.warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
-            engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/Main.qml')))
+            engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / 'src/voxplane/qml/Main.qml')))
             assert engine.rootObjects(), warnings
             window = engine.rootObjects()[0]
             dialog = window.findChild(QObject, 'workspaceDocumentDialog')
@@ -96,7 +96,7 @@ def test_restart_recovery_only_prompts_when_replacing_image_work(qt_app, tmp_pat
 
 
 def test_recovery_snapshot_status_and_edits_during_save(qt_app, tmp_path, monkeypatch):
-    import qt_dicom_viewer.ui.controller.workspace_document_controller as module
+    import voxplane.ui.controller.workspace_document_controller as module
     app, _ = populated_app(tmp_path, settings_path=tmp_path / 'display.json')
     manager = app.workspaceDocumentController
     manager._autosave.stop()
@@ -176,7 +176,7 @@ def test_auto_recovery_switch_persists_without_disabling_manual_workspaces(qt_ap
         assert manager._autosave.isActive() and manager.recoveryState == 'pending'
         assert manager.setAutomaticRecovery(False)
         calls = []
-        monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.reveal_path', lambda path: calls.append(path) or True)
+        monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.reveal_path', lambda path: calls.append(path) or True)
         assert manager.openRecoveryDirectory() and calls == [str(tmp_path)]
     finally: app.shutdown()
     assert not (tmp_path / 'workspace-recovery.voxworkspace').exists()  # Normal exit cleans the owned copy.
@@ -243,7 +243,7 @@ def test_dialog_and_compact_sidebar_share_recovery_icons(sidebar_scene, tmp_path
         manager._autosave_enabled = True
         manager.changed.emit()
         calls = []
-        monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.reveal_path', lambda path: calls.append(path) or True)
+        monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.reveal_path', lambda path: calls.append(path) or True)
         link = dialog.findChild(QObject, 'workspaceRecoveryLocation')
         click(native, link)
         card = dialog.findChild(QObject, 'workspaceRecoveryLocationPopup')

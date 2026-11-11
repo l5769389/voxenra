@@ -5,7 +5,7 @@ from PySide6.QtCore import QPointF
 from PySide6.QtGui import QColor
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.model import DicomFolderScanSnapshot
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_pet_fusion import paired_series
@@ -132,7 +132,7 @@ def test_cpr_reference_and_result_frames_survive_transforms(cpr_page, tmp_path):
     assert window.grabWindow().save(str(tmp_path / 'cpr-frames.png'))
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1', reason='requires native desktop window')
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1', reason='requires native desktop window')
 @pytest.mark.parametrize('kind', ['3d', 'mpr'])
 def test_native_volume_frame_stays_outside_zoomed_native_surface(sidebar_scene, trackpad, kind, tmp_path):
     window, app, records, warnings = sidebar_scene

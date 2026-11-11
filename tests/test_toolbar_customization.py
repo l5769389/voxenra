@@ -4,9 +4,9 @@ from copy import deepcopy
 import pytest
 from PySide6.QtCore import QObject
 
-from qt_dicom_viewer.model import TabType, SeriesDisplayMeta
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.model import TabType, SeriesDisplayMeta
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.tab.tool_controller import ToolController
 from test_dicom_tags import qt_app
 from test_series_sidebar import sidebar_scene
 
@@ -105,7 +105,7 @@ def test_qml_toolbar_draft_arrows_drag_save_cancel(qt_app, tmp_path):
     from PySide6.QtQuick import QQuickView
     from PySide6.QtTest import QTest
     from shiboken6 import delete
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     from test_measurement_qml import _visual_children
 
     settings = SettingsController(path=tmp_path / 'settings.json')
@@ -116,7 +116,7 @@ def test_qml_toolbar_draft_arrows_drag_save_cancel(qt_app, tmp_path):
     window.setResizeMode(QQuickView.SizeRootObjectToView)
     window.setInitialProperties({'settingsController': settings})
     window.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/settings/ToolbarSettingsPage.qml')))
+        'src/voxplane/qml/sections/settings/ToolbarSettingsPage.qml')))
     assert window.status() == QQuickView.Ready
     window.resize(940, 720)
     window.show()
@@ -191,7 +191,7 @@ def test_live_toolbar_order_and_collapsed_custom_panel_reachability(sidebar_scen
     import_panel = find(popup_window, 'associatedImportPanel')
     assert import_panel.property('controller') == app.exportController.dicomResults
     requests = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.dicom_results_controller.QFileDialog.getOpenFileName',
+    monkeypatch.setattr('voxplane.ui.controller.dicom_results_controller.QFileDialog.getOpenFileName',
                         lambda *args: (requests.append(args) or ('', '')))
     import_button = find(popup_window, 'importSegmentation')
     assert import_button.isEnabled()
@@ -205,7 +205,7 @@ def test_live_toolbar_order_and_collapsed_custom_panel_reachability(sidebar_scen
     assert export_panel.property('exportItem') is not None
     export_folder = tmp_path / 'exported'
     export_folder.mkdir()
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getExistingDirectory',
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getExistingDirectory',
                         lambda *args: str(export_folder))
     click(popup_window, find(popup_window, 'exportDicom'))
     wait_until(lambda: not app.exportController.busy)

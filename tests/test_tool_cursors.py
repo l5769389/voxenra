@@ -1,7 +1,7 @@
 """Native tool cursors keep their logical size on standard desktop DPI scales."""
 import pytest
 from PySide6.QtCore import QPoint, QSizeF, Qt
-from qt_dicom_viewer.ui.cursors import tool_cursor, CURSOR_KINDS
+from voxplane.ui.cursors import tool_cursor, CURSOR_KINDS
 from test_dicom_tags import qt_app
 
 
@@ -24,7 +24,7 @@ def test_native_tool_cursor_density_and_hotspot(qt_app, kind, ratio):
 def test_cursor_badge_uses_same_geometry_as_toolbar_icon(kind):
     from pathlib import Path
     import xml.etree.ElementTree as ET
-    assets = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/assets"
+    assets = Path(__file__).resolve().parents[1] / "src/voxplane/qml/assets"
     icon = ET.parse(assets / "icons" / (kind + ".svg")).getroot()
     cursor = ET.parse(assets / "cursors" / (kind + ".svg")).getroot()
     namespace = {"s": "http://www.w3.org/2000/svg"}

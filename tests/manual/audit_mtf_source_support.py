@@ -10,10 +10,10 @@ from pathlib import Path
 
 import numpy as np
 
-from qt_dicom_viewer.core.bead_mtf import (
+from voxplane.core.bead_mtf import (
     _source_support, _source_window, compute_point_source_mtf, MTF_INTEGRATION_SCALE,
 )
-from qt_dicom_viewer.core.mtf_quality import metric_quality
+from voxplane.core.mtf_quality import metric_quality
 
 
 def crossings(spectrum, nyquist):

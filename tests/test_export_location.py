@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from qt_dicom_viewer.ui import file_location
-from qt_dicom_viewer.ui.controller.export_controller import ExportController
-from qt_dicom_viewer.ui.controller.measurement_report_controller import MeasurementReportController
+from voxplane.ui import file_location
+from voxplane.ui.controller.export_controller import ExportController
+from voxplane.ui.controller.measurement_report_controller import MeasurementReportController
 from test_dicom_tags import qt_app
 
 

@@ -8,12 +8,12 @@ from PySide6.QtCore import QSize
 from PySide6.QtGui import QColor, QGuiApplication, QImage, QPainter
 from PySide6.QtPdf import QPdfDocument
 
-from qt_dicom_viewer.core.measurement_report import pdf_bytes
-from qt_dicom_viewer.i18n.messages import builtin
+from voxplane.core.measurement_report import pdf_bytes
+from voxplane.i18n.messages import builtin
 from test_dicom_tags import qt_app
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1'
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1'
                     or sys.platform not in ('darwin', 'win32'),
                     reason='Chinese PDF glyph coverage requires the native macOS or Windows font database')
 def test_native_chinese_pdf_preserves_glyphs_and_phase_data(qt_app):

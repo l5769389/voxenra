@@ -6,10 +6,10 @@ from threading import Event
 from PySide6.QtCore import QObject, Qt, QUrl
 from PySide6.QtTest import QSignalSpy, QTest
 
-from qt_dicom_viewer.core.app_updates import parse_release
-from qt_dicom_viewer.core.local_import import ImportLimits
-from qt_dicom_viewer.core.series_export import export_series
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.core.app_updates import parse_release
+from voxplane.core.local_import import ImportLimits
+from voxplane.core.series_export import export_series
+from voxplane.model import DicomFolderScanSnapshot
 from test_app_updates import Network, release_payload
 from test_bulk_import import task_dialog
 from test_dicom_tags import make_series, qt_app, wait_until
@@ -67,7 +67,7 @@ def test_export_escape_cancels_running_export_before_dismissing(scene, tmp_path,
         assert release.wait(10)
         return export_series(request, cancel=cancel, progress=progress)
 
-    monkeypatch.setattr("qt_dicom_viewer.ui.controller.series_export_controller.export_series", wait_for_cancel)
+    monkeypatch.setattr("voxplane.ui.controller.series_export_controller.export_series", wait_for_cancel)
     export.openSeries(series.series_instance_uid, False)
     try:
         QTest.keyClick(window, Qt.Key_Return)
@@ -87,7 +87,7 @@ def test_export_escape_cancels_running_export_before_dismissing(scene, tmp_path,
 def test_feedback_multiline_enter_edits_and_subject_enter_opens_one_draft(scene, monkeypatch):
     window, app, warnings = scene
     urls = []
-    monkeypatch.setattr("qt_dicom_viewer.ui.controller.feedback_controller.QDesktopServices.openUrl",
+    monkeypatch.setattr("voxplane.ui.controller.feedback_controller.QDesktopServices.openUrl",
                         lambda url: urls.append(url) or True)
     app.workspaceController.openSettings()
     click(window, find(window, "settingsFeedback"))

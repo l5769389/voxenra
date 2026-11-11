@@ -9,12 +9,12 @@ from test_mpr_voi_controller import setup_voi
 from test_segmentation_edit_history import history
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click
-from qt_dicom_viewer.i18n.messages import builtin, localize
+from voxplane.i18n.messages import builtin, localize
 
 
 @pytest.mark.parametrize('operation', ['signature', 'snapshot'])
 def test_memory_failure_preserves_edit_and_history_until_retry(setup_voi, history, monkeypatch, operation):
-    import qt_dicom_viewer.ui.controller.edit_history_controller as module
+    import voxplane.ui.controller.edit_history_controller as module
     c, _, _ = setup_voi
     c.newSegment(); QTest.qWait(25)
     history.undo()
@@ -45,7 +45,7 @@ def test_memory_failure_preserves_edit_and_history_until_retry(setup_voi, histor
 
 @pytest.mark.parametrize('theme,size', [('dark', (1440, 900)), ('graphite', (1000, 600)), ('light', (1000, 600))])
 def test_history_error_visible_in_window_and_retry_restores_undo(sidebar_scene, monkeypatch, theme, size):
-    import qt_dicom_viewer.ui.controller.edit_history_controller as module
+    import voxplane.ui.controller.edit_history_controller as module
     window, app, records, warnings = sidebar_scene
     app.settingsController.setValue('appearance', 'theme', theme)
     window.resize(*size)

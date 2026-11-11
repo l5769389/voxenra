@@ -1,15 +1,15 @@
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.mpr_rotation import (
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.mpr_rotation import (
     move_mpr_state_center,
     rotate_crosshair_state,
     rotate_mpr_state_3d,
 )
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import (
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import (
     InstanceDisplayMeta,
     MprPlane,
     MprProjectionMode,
@@ -17,7 +17,7 @@ from qt_dicom_viewer.model import (
     RenderResult,
     WindowLevel,
 )
-from qt_dicom_viewer.model.dicom_core import (
+from voxplane.model.dicom_core import (
     DicomVolume,
     MprFrame,
     MprImageGeometry,
@@ -25,7 +25,7 @@ from qt_dicom_viewer.model.dicom_core import (
     MprViewAnchors,
     VolumeGeometry,
 )
-from qt_dicom_viewer.ui.workers.dicom_render_worker import (
+from voxplane.ui.workers.dicom_render_worker import (
     DicomRenderWorker,
 )
 

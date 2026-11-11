@@ -7,10 +7,10 @@ on:
       - ".github/workflows/manual-pages.yml"
       - "scripts/build_manual_site.py"
       - "docs/manual-site/**"
-      - "src/qt_dicom_viewer/qml/assets/help/**"
-      - "src/qt_dicom_viewer/qml/assets/languages/**"
-      - "src/qt_dicom_viewer/qml/assets/icons/**"
-      - "src/qt_dicom_viewer/qml/assets/brand/voxenra-mark.svg"
+      - "src/voxplane/qml/assets/help/**"
+      - "src/voxplane/qml/assets/languages/**"
+      - "src/voxplane/qml/assets/icons/**"
+      - "src/voxplane/qml/assets/brand/voxplane-mark.svg"
       - "docs/screenshots/**"
   workflow_dispatch:
 
@@ -39,11 +39,11 @@ jobs:
       - name: Build bilingual website and manual
         run: |
           python3 -m pip install "pillow==12.3.0"
-          python3 scripts/build_manual_site.py /tmp/voxenra-manual-site
+          python3 scripts/build_manual_site.py /tmp/voxplane-manual-site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
-          path: /tmp/voxenra-manual-site
+          path: /tmp/voxplane-manual-site
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

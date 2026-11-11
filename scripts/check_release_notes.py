@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from qt_dicom_viewer.core.release_notes import validate_release_notes
+from voxplane.core.release_notes import validate_release_notes
 
 
 def main():

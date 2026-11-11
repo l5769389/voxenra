@@ -3,7 +3,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.water_qa import analyze_water_phantom, find_external_air_roi
+from voxplane.core.water_qa import analyze_water_phantom, find_external_air_roi
 from test_water_qa import water_image
 from test_water_qa_controller import qa_view, wait_qa, water_render, deliver_frame
 from test_measurement_qml import qt_app

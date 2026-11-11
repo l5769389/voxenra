@@ -2,7 +2,7 @@
 
 INTEGRATION_ROOT=/absolute/ignored/output .venv/bin/python this_script.py
 INTEGRATION_STAGE=slicer INTEGRATION_ROOT=... Slicer --python-script this_script.py
-Use VOXENRA_TEST_DICOM_DIR to override the local sample library. No downloads.
+Use VOXPLANE_TEST_DICOM_DIR to override the local sample library. No downloads.
 """
 
 import hashlib
@@ -25,12 +25,12 @@ def digest(array):
 
 def prepare():
     import pydicom
-    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-    from qt_dicom_viewer.core.dicom_loader import DicomLoader
-    from qt_dicom_viewer.core.volume_manager import VolumeManager
+    from voxplane.core.dicom_scanner import DicomFolderScanner
+    from voxplane.core.dicom_loader import DicomLoader
+    from voxplane.core.volume_manager import VolumeManager
 
     library = Path(
-        os.environ.get("VOXENRA_TEST_DICOM_DIR", "/Users/jun/Documents/test_dicom")
+        os.environ.get("VOXPLANE_TEST_DICOM_DIR", "/Users/jun/Documents/test_dicom")
     )
     compressed = library / "Compressed_DICOM_Public_20260916"
     cases = []
@@ -43,7 +43,7 @@ def prepare():
             continue
         cases.append((Path(item["file"]).stem, [compressed / item["file"]]))
     cases.append(
-        ("enhanced-ct", [library / "Voxenra-EnhancedCT-TestData/NEMA-2006/01-CT0001"])
+        ("enhanced-ct", [library / "VoxPlane-EnhancedCT-TestData/NEMA-2006/01-CT0001"])
     )
     # Existing local manifests identify exactly the same source series used before.
     for name, previous in [("p113", "p113-final"), ("mr", "mr-thin")]:

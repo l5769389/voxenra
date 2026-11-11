@@ -6,9 +6,9 @@ from pathlib import Path
 import numpy as np
 import pydicom
 import pytest
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.pixel_codecs import decode_pixels
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.pixel_codecs import decode_pixels
 
 PAIRS=[
  ('01_RLE/MR_single/MR_small_RLE.dcm','_references/MR_single/MR_small.dcm'),
@@ -20,8 +20,8 @@ PAIRS=[
 
 @pytest.mark.parametrize('encoded,reference',PAIRS,ids=[Path(a).stem for a,b in PAIRS])
 def test_lossless_original_scan_decode_matches_reference(tmp_path,encoded,reference):
-    path=os.environ.get('VOXENRA_COMPRESSED_SAMPLE_DIR')
-    if not path:pytest.skip('Set VOXENRA_COMPRESSED_SAMPLE_DIR to fixed public fixture directory')
+    path=os.environ.get('VOXPLANE_COMPRESSED_SAMPLE_DIR')
+    if not path:pytest.skip('Set VOXPLANE_COMPRESSED_SAMPLE_DIR to fixed public fixture directory')
     root=Path(path);manifest={x['file']:x for x in json.loads((root/'manifest.json').read_text())}
     for name in (encoded,reference):
         assert hashlib.sha256((root/name).read_bytes()).hexdigest()==manifest[name]['sha256']
@@ -34,7 +34,7 @@ def test_lossless_original_scan_decode_matches_reference(tmp_path,encoded,refere
     expected=original.pixel_array.astype(float)*float(getattr(original,'RescaleSlope',1))+float(getattr(original,'RescaleIntercept',0))
     if 'PixelPaddingValue' in original:expected[original.pixel_array==original.PixelPaddingValue]=np.nan
     np.testing.assert_allclose(values,expected,rtol=1e-6,atol=1e-4,equal_nan=True)
-    output=os.environ.get('VOXENRA_SPATIAL_COMPRESSED_OUTPUT')
+    output=os.environ.get('VOXPLANE_SPATIAL_COMPRESSED_OUTPUT')
     if output:
         dest=Path(output);dest.mkdir(parents=True,exist_ok=True)
         (dest/(Path(encoded).stem+'.json')).write_text(json.dumps(dict(status='pass',source=manifest[encoded],

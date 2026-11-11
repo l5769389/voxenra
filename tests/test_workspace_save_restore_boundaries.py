@@ -1,12 +1,12 @@
 import pytest
 
-from qt_dicom_viewer.core.dicom_scanner import _build_series_record, _read_instance
-from qt_dicom_viewer.core.workspace_document import read_document
-from qt_dicom_viewer.core.workspace_state import dumps
-from qt_dicom_viewer.i18n.messages import builtin, localize
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.dicom_scanner import _build_series_record, _read_instance
+from voxplane.core.workspace_document import read_document
+from voxplane.core.workspace_state import dumps
+from voxplane.i18n.messages import builtin, localize
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import make_dicom, qt_app, wait_until
 from test_workspace_persistence import populated_app
 
@@ -63,7 +63,7 @@ def test_tab_limit_rejects_save_without_replacing_readable_document(qt_app, tmp_
 
 @pytest.mark.parametrize('utility_tabs', [False, True])
 def test_skip_all_missing_sources_finishes_restore_and_preserves_original(qt_app, tmp_path, monkeypatch, utility_tabs):
-    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
+    from voxplane.ui.controller import workspace_document_controller as module
 
     app, record = populated_app(tmp_path)
     try:
@@ -165,7 +165,7 @@ def test_invalid_active_tab_preserves_current_workspace(qt_app, tmp_path):
 
 @pytest.mark.parametrize('missing', [False, True])
 def test_cancel_after_worker_completion_keeps_current_workspace(qt_app, tmp_path, monkeypatch, missing):
-    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
+    from voxplane.ui.controller import workspace_document_controller as module
 
     app, record = populated_app(tmp_path)
     try:
@@ -233,7 +233,7 @@ def test_finish_restore_failure_unlocks_saving_and_reports_reason(qt_app, tmp_pa
 
 def test_skip_missing_after_cancelled_location_retry_restores_available_tabs(qt_app, tmp_path, monkeypatch):
     from test_series_sidebar import phantom_series
-    from qt_dicom_viewer.ui.dialogs import local_import_dialog
+    from voxplane.ui.dialogs import local_import_dialog
     app, available = populated_app(tmp_path)
     try:
         manager, workspace, panel = app.workspaceDocumentController, app.workspaceController, app.panelController

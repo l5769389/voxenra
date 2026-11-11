@@ -6,10 +6,10 @@ from PySide6.QtCore import QCoreApplication, QEvent, QTimer, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from qt_dicom_viewer.settings.preferences import normalize_settings
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.settings.preferences import normalize_settings
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_tag_qml import find, click
@@ -119,7 +119,7 @@ def test_remembered_discard_skips_prompt_until_settings_restore_it(exit_app, mon
 
 @pytest.mark.parametrize('remembered', [False, True])
 def test_save_choice_waits_for_file_before_exit(exit_app, tmp_path, monkeypatch, remembered):
-    import qt_dicom_viewer.ui.controller.workspace_document_controller as module
+    import voxplane.ui.controller.workspace_document_controller as module
     app, manager, quits = exit_app
     target = tmp_path / 'work.voxworkspace'
     manager._path = str(target)
@@ -155,7 +155,7 @@ def test_save_choice_waits_for_file_before_exit(exit_app, tmp_path, monkeypatch,
 
 @pytest.mark.parametrize('failure', ['cancel', 'write', 'new-edits'])
 def test_incomplete_save_does_not_quit_or_remember(exit_app, tmp_path, monkeypatch, failure):
-    import qt_dicom_viewer.ui.controller.workspace_document_controller as module
+    import voxplane.ui.controller.workspace_document_controller as module
     app, manager, quits = exit_app
     monkeypatch.setattr(manager, '_ask_exit_behavior', lambda: ('save', True))
     release, entered = Event(), Event()
@@ -226,7 +226,7 @@ def test_exit_dialog_has_remember_checkbox_and_cancel_does_not_remember(exit_app
 
 @pytest.mark.parametrize('named', [False, True])
 def test_exit_confirmation_theme_and_document_specific_actions(exit_app, tmp_path, named):
-    from qt_dicom_viewer.ui.dialogs.workspace_exit_dialog import WorkspaceExitDialog
+    from voxplane.ui.dialogs.workspace_exit_dialog import WorkspaceExitDialog
     from PySide6.QtGui import QColor, QGuiApplication, QPalette
     app, manager, _ = exit_app
     box = WorkspaceExitDialog(app.appearanceController, workspace_name='复查 <1>' if named else '')
@@ -289,7 +289,7 @@ def test_opened_workspace_only_prompts_after_edits(exit_app, tmp_path, monkeypat
     monkeypatch.setattr(manager, 'saveAs', lambda: pytest.fail('Existing workspace asked for a new path'))
     assert not manager.requestClose() and prompts == [True]
     wait_until(lambda: not manager.busy)
-    from qt_dicom_viewer.core.workspace_document import read_document
+    from voxplane.core.workspace_document import read_document
     edits = read_document(target)['tabs'][0]['edits']['views']
     assert any(record.get('measurements') for record in edits.values())
     assert quits == [True] and not manager.dirty

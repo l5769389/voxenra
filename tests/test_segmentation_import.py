@@ -7,13 +7,13 @@ import pytest
 from pydicom.sr.codedict import codes
 from pydicom.uid import generate_uid
 
-from qt_dicom_viewer.core.dicom_results import SegmentResult, write_results
-from qt_dicom_viewer.core.segmentation_import import read_segmentation
-from qt_dicom_viewer.core.segmentation_masks import evaluate_mask, roi_to_mask
-from qt_dicom_viewer.core.workspace_state import dumps, loads
+from voxplane.core.dicom_results import SegmentResult, write_results
+from voxplane.core.segmentation_import import read_segmentation
+from voxplane.core.segmentation_masks import evaluate_mask, roi_to_mask
+from voxplane.core.workspace_state import dumps, loads
 from test_dicom_results import source as source, freehand
 from test_enhanced_mr import enhanced_dataset, save_and_scan
-from qt_dicom_viewer.core.volume_manager import VolumeManager
+from voxplane.core.volume_manager import VolumeManager
 
 
 @pytest.fixture
@@ -191,7 +191,7 @@ def test_reject_non_native_grid_duplicate_and_cancel(source, external_seg):
 def test_freehand_to_native_slice_is_manual_and_preserves_measurement(source, tmp_path, smooth):
     series, volume = source
     roi = freehand(series, volume)
-    from qt_dicom_viewer.core.measurement_geometry import roi_metrics
+    from voxplane.core.measurement_geometry import roi_metrics
     metrics = roi_metrics(roi.measurement.points, roi.measurement.kind, volume.modality_pixels[1],
                           row_spacing=2, column_spacing=.7, unit="HU", smooth=smooth)
     roi = replace(roi, measurement=replace(roi.measurement, smooth=smooth, metrics=metrics))
@@ -225,7 +225,7 @@ def test_freehand_to_native_slice_is_manual_and_preserves_measurement(source, tm
 
 
 def test_enhanced_temporal_frames_do_not_import_into_another_phase(tmp_path):
-    from qt_dicom_viewer.core.mpr_voi import VoiRegion, evaluate_voi
+    from voxplane.core.mpr_voi import VoiRegion, evaluate_voi
 
     _, snapshot = save_and_scan(tmp_path, enhanced_dataset())
     series = snapshot.series[0]
@@ -274,7 +274,7 @@ def test_enhanced_temporal_frames_do_not_import_into_another_phase(tmp_path):
 @pytest.mark.parametrize("xaxis,yaxis", [(2, 1), (2, 0), (1, 0)])
 @pytest.mark.parametrize("flip", [False, True])
 def test_roi_native_axes_flip_and_display_sampling(source, xaxis, yaxis, flip):
-    from qt_dicom_viewer.model import ImagePoint
+    from voxplane.model import ImagePoint
 
     series, volume = source
     g = volume.geometry

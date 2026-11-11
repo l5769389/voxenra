@@ -8,8 +8,8 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import ToolType
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import ToolType
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import wait_until
 from test_measurement_qml import qt_app, _visual_children, _mouse_drag, _scene
 from test_service_panel_qml import _find, _click
@@ -47,7 +47,7 @@ def test_diameter_recalculation_keeps_panel_geometry_and_scroll_position(qa_work
     assert _find(window, 'waterQaMetric-water_ct_hu').property('text') == '—'
     assert _find(window, 'waterQaVoiLabel-center').property('text') == '中心'
     assert not _find(window, 'exportQaReport').isEnabled()
-    from qt_dicom_viewer.core.water_qa import measure_qa_rois, resize_qa_rois
+    from voxplane.core.water_qa import measure_qa_rois, resize_qa_rois
     previous = qa._display_result
     token, key, pixels, spacing, settings = jobs[-1]
     result = measure_qa_rois(pixels, spacing, previous.phantom, settings,
@@ -113,7 +113,7 @@ def qa_workspace(qt_app, qa_view, request):
     controller.handleRenderResult(frame)
     controller._tool_controller.resetRequested.connect(lambda tool: controller.reset_tool_state(ToolType(tool)))
     window = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     window.engine().addImageProvider("navigation", SvgIconProvider())
     window.setResizeMode(QQuickView.SizeRootObjectToView)
     window.resize(*getattr(request, "param", (1200, 820)))
@@ -479,7 +479,7 @@ def test_center_only_qa_hides_missing_metrics_and_allows_large_diameter(qa_works
 
 def test_qa_report_button_captures_current_view_and_restores_flags(qa_workspace, qt_app, tmp_path, monkeypatch):
     from PySide6.QtPdf import QPdfDocument
-    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    from voxplane.i18n.widgets import QFileDialog
     import unicodedata
     window, view, warnings = qa_workspace
     qa = view.qaController
@@ -516,14 +516,14 @@ def test_qa_report_button_captures_current_view_and_restores_flags(qa_workspace,
     doc = QPdfDocument()
     assert doc.load(str(target)) == QPdfDocument.Error.None_
     text = unicodedata.normalize('NFKC',doc.getAllText(0).text())
-    assert '切片 1' in text and 'Voxenra' not in text
+    assert '切片 1' in text and 'VoxPlane' not in text
     assert not warnings, warnings
     doc.close()
 
 
 @pytest.mark.parametrize('change', ['roi', 'slice', 'display', 'group', 'shutdown'])
 def test_qa_capture_rejects_changed_roi_and_restores_view(qa_workspace, qt_app, monkeypatch, change):
-    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    from voxplane.i18n.widgets import QFileDialog
     window, view, warnings = qa_workspace
     qa = view.qaController
     view._tool_controller.selectService('service:qa')

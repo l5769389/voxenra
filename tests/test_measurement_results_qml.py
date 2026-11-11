@@ -81,7 +81,7 @@ def test_mpr_result_highlight_follows_active_viewport(sidebar_scene):
 
 
 def test_more_clears_only_measurements_in_current_viewport_and_restores_focus(sidebar_scene, tmp_path):
-    from qt_dicom_viewer.model import ImagePoint, MeasurementKind
+    from voxplane.model import ImagePoint, MeasurementKind
 
     window, app, records, warnings = sidebar_scene
     window.resize(1000, 760)
@@ -134,7 +134,7 @@ def test_more_clears_only_measurements_in_current_viewport_and_restores_focus(si
 
 
 def test_conversion_is_on_the_selected_freehand_result(sidebar_scene, tmp_path):
-    from qt_dicom_viewer.model import ImagePoint, MeasurementKind
+    from voxplane.model import ImagePoint, MeasurementKind
     from test_tag_qml import descendants
 
     window, app, records, warnings = sidebar_scene
@@ -175,7 +175,7 @@ def test_conversion_is_on_the_selected_freehand_result(sidebar_scene, tmp_path):
 
 
 def test_oblique_freehand_result_has_no_conversion_action(sidebar_scene):
-    from qt_dicom_viewer.model import ImagePoint, MeasurementKind
+    from voxplane.model import ImagePoint, MeasurementKind
     from test_tag_qml import descendants
 
     window, app, records, warnings = sidebar_scene

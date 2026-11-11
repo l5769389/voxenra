@@ -8,10 +8,10 @@ from pydicom.dataset import Dataset
 from pydicom.uid import CTImageStorage, RLELossless
 from PySide6.QtGui import QImage
 
-from qt_dicom_viewer.core.series_export import ExportCancelled, ExportError, ExportRequest, export_series
-from qt_dicom_viewer.core.export_images import frame_image
-from qt_dicom_viewer.ui.controller.series_export_controller import SeriesExportController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.core.series_export import ExportCancelled, ExportError, ExportRequest, export_series
+from voxplane.core.export_images import frame_image
+from voxplane.ui.controller.series_export_controller import SeriesExportController
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, make_dicom, make_series, catalog_for, wait_until
 
 
@@ -180,7 +180,7 @@ def test_cancel_and_decode_failure_remove_partial_outputs(tmp_path, monkeypatch)
     with pytest.raises(ExportCancelled):
         export_series(request, cancel=cancel, progress=lambda done, _: cancel.set() if done == 1 else None)
     assert not list(request.directory.iterdir())
-    from qt_dicom_viewer.core import series_export
+    from voxplane.core import series_export
     real_image = series_export.frame_image
     calls = []
     def failing_image(*args):

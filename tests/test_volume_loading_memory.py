@@ -9,9 +9,9 @@ import numpy as np
 import pydicom
 import pytest
 
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.render_cancellation import render_cancellation
-from qt_dicom_viewer.core.volume_manager import VolumeManager, series_fingerprint
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.render_cancellation import render_cancellation
+from voxplane.core.volume_manager import VolumeManager, series_fingerprint
 from test_enhanced_ct import save_and_scan
 from test_mr import write_mr_series
 from test_pet_fusion import paired_series

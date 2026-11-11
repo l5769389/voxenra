@@ -19,13 +19,13 @@ from PySide6.QtWidgets import QApplication
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from test_mpr_reslicer import _volume
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.mpr_voi import VoiEvaluation, plane_mask
-from qt_dicom_viewer.model import MprFrame, MprPlane, TabType
-from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
-from qt_dicom_viewer.ui.controller.tab.mpr_voi_controller import MprVoiController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.workspace_snapshot import edit_signature
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.mpr_voi import VoiEvaluation, plane_mask
+from voxplane.model import MprFrame, MprPlane, TabType
+from voxplane.ui.controller.edit_history_controller import EditHistoryController
+from voxplane.ui.controller.tab.mpr_voi_controller import MprVoiController
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.workspace_snapshot import edit_signature
 
 
 def timing(action, repeats=9):

@@ -59,7 +59,7 @@ def test_montage_details_tooltip_handles_detached_anchor(sidebar_scene) -> None:
 
 def test_montage_qml_exposes_grid_controls_and_navigation() -> None:
     qml = _read(
-        "src/qt_dicom_viewer/qml/sections/center/viewportArea/MontageViewport.qml"
+        "src/voxplane/qml/sections/center/viewportArea/MontageViewport.qml"
     )
 
     assert "model: [2, 3, 4, 5, 6]" in qml
@@ -77,14 +77,14 @@ def test_montage_qml_exposes_grid_controls_and_navigation() -> None:
         "采集日期 / 时间",
         "层厚",
     ):
-        from qt_dicom_viewer.i18n.messages import builtin
+        from voxplane.i18n.messages import builtin
         catalog = builtin()['messages']
         assert any(value == tag_label and f'qsTrId("{key}")' in qml for key, value in catalog.items())
 
 
 def test_montage_tab_badge_is_responsive() -> None:
     tab_bar = _read(
-        "src/qt_dicom_viewer/qml/sections/center/TabBarSection.qml"
+        "src/voxplane/qml/sections/center/TabBarSection.qml"
     )
 
     assert "tabTypeLabel.implicitWidth + 12" in tab_bar
@@ -92,8 +92,8 @@ def test_montage_tab_badge_is_responsive() -> None:
 
 
 def test_montage_qml_is_in_the_compiled_resource_manifest() -> None:
-    qrc = _read("Voxenra.qrc")
+    qrc = _read("VoxPlane.qrc")
     assert (
-        "src/qt_dicom_viewer/qml/sections/center/viewportArea/"
+        "src/voxplane/qml/sections/center/viewportArea/"
         "MontageViewport.qml"
     ) in qrc

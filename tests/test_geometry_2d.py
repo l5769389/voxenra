@@ -1,11 +1,11 @@
 import math
 
-from qt_dicom_viewer.core.geometry_2d import (
+from voxplane.core.geometry_2d import (
     image_point_distance_mm,
     point_distance,
     point_to_segment_distance,
 )
-from qt_dicom_viewer.model import ImagePoint
+from voxplane.model import ImagePoint
 
 
 def test_point_distance_uses_image_coordinates() -> None:

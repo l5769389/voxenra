@@ -29,10 +29,10 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 from test_dimse import DimsePeer, SERIES, STUDY
 from test_dimse_qml import reveal
 from test_tag_qml import click, descendants, find, type_text
@@ -66,7 +66,7 @@ def capture_locale(output, locale):
     assert qt.platformName() == 'cocoa', 'Use a real native Cocoa desktop for documentation.'
     qt.setQuitOnLastWindowClosed(False)
     output.mkdir(parents=True, exist_ok=True)
-    with TemporaryDirectory(prefix='voxenra-docs-') as temporary:
+    with TemporaryDirectory(prefix='voxplane-docs-') as temporary:
         folder = Path(temporary)
         peer = DimsePeer()
         phantom(peer)
@@ -81,7 +81,7 @@ def capture_locale(output, locale):
         engine.rootContext().setContextProperty('appController', app)
         warnings = []
         engine.warnings.connect(lambda items: warnings.extend(item.toString() for item in items))
-        engine.load(QUrl.fromLocalFile(str(ROOT / 'src/qt_dicom_viewer/qml/Main.qml')))
+        engine.load(QUrl.fromLocalFile(str(ROOT / 'src/voxplane/qml/Main.qml')))
         assert engine.rootObjects(), warnings
         window = engine.rootObjects()[0]
         window.resize(1280, 820)
@@ -155,7 +155,7 @@ def capture_locale(output, locale):
             QTest.keyClick(window, Qt.Key_Return)
             pump()
             for suffix, value in [('Host', '127.0.0.1'), ('Port', str(peer.port)), ('CalledAe', 'LABPACS'),
-                                  ('CallingAe', 'VOXENRA'), ('ListenHost', '127.0.0.1'),
+                                  ('CallingAe', 'VOXPLANE'), ('ListenHost', '127.0.0.1'),
                                   ('ListenPort', str(peer.destination))]:
                 control = find(window, 'pacsProfile' + suffix)
                 reveal(window, control)

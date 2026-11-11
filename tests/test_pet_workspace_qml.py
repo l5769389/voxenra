@@ -10,12 +10,12 @@ from shiboken6 import delete
 
 from test_pet_fusion import paired_series
 from test_measurement_qml import qt_app, _visual_children, _scene, _mouse_drag
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.service.render_serivce import RenderService
+from voxplane.ui.controller.panel_controller import PanelController
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.pet_reconstruction import PetReconstructor
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.service.render_serivce import RenderService
 from test_dicom_tags import wait_until
 
 
@@ -25,7 +25,7 @@ def test_real_pet_workspace(qt_app, paired_series, tmp_path, fusion):
     provider = DicomImageProvider()
     workspace = WorkspaceController(catalog, provider)
     panel = PanelController(series_catalog=catalog)
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     panel._update_series_record(DicomFolderScanSnapshot(tmp_path, 2, 2, 0, [ct, pet]))
     service = RenderService(catalog, VolumeManager())
     workspace.renderRequested.connect(service.submit)
@@ -39,7 +39,7 @@ def test_real_pet_workspace(qt_app, paired_series, tmp_path, fusion):
     wait_until(lambda: tab.ready)
     tab.toolController.selectInteraction("window")
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(1540, 1000)
@@ -343,20 +343,20 @@ def test_main_qml_two_selection_entry_points(qt_app, paired_series, tmp_path):
     provider = DicomImageProvider()
     workspace = WorkspaceController(catalog, provider)
     panel = PanelController(series_catalog=catalog)
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     panel._update_series_record(DicomFolderScanSnapshot(tmp_path, 2, 2, 0, [ct, pet]))
     panel.fusionCreateRequested.connect(workspace.createFusionTab)
     renderer = PetReconstructor(catalog, VolumeManager())
     workspace.renderRequested.connect(lambda r: workspace.handleRenderResult(renderer.render(r)))
     app = _App(workspace, panel)
     engine = QQmlApplicationEngine()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     engine.addImageProvider("navigation", SvgIconProvider())
     engine.addImageProvider("dicom", provider)
     engine.rootContext().setContextProperty("appController", app)
     warnings = []
     engine.warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
-    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/Main.qml")))
+    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/voxplane/qml/Main.qml")))
     window = engine.rootObjects()[0]
     QTest.qWait(40)
     try:
@@ -399,9 +399,9 @@ def test_main_qml_two_selection_entry_points(qt_app, paired_series, tmp_path):
 def test_fusion_dialog_previews_and_confirmation(qt_app, paired_series, tmp_path, size):
     from dataclasses import replace
     from PySide6.QtQml import QQmlApplicationEngine
-    from qt_dicom_viewer.core.series_thumbnail import read_series_thumbnail
-    from qt_dicom_viewer.service.thumbnail_service import ThumbnailRequest
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.core.series_thumbnail import read_series_thumbnail
+    from voxplane.service.thumbnail_service import ThumbnailRequest
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     from test_tag_qml import _App, find, click
 
     catalog, ct, pet = paired_series
@@ -409,7 +409,7 @@ def test_fusion_dialog_previews_and_confirmation(qt_app, paired_series, tmp_path
     pet = replace(pet, patient_id="OTHER-PATIENT")
     provider = DicomImageProvider()
     panel = PanelController(series_catalog=catalog, image_provider=provider)
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     panel._update_series_record(DicomFolderScanSnapshot(tmp_path, 2, 2, 0, [ct, pet]))
     workspace = WorkspaceController(catalog, provider)
     app = _App(workspace, panel)
@@ -419,7 +419,7 @@ def test_fusion_dialog_previews_and_confirmation(qt_app, paired_series, tmp_path
     engine.rootContext().setContextProperty("appController", app)
     warnings = []
     engine.warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
-    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/Main.qml")))
+    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/voxplane/qml/Main.qml")))
     window = engine.rootObjects()[0]
     window.resize(*size)
     opened = []

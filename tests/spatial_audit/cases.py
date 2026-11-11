@@ -1,7 +1,7 @@
 """Small DICOM phantoms whose truth is defined before serialization.
 
 Arrays use (slice,row,column); affines map that ordering to patient LPS.
-Neither generation nor reference sampling imports Voxenra code.
+Neither generation nor reference sampling imports VoxPlane code.
 """
 from dataclasses import asdict, dataclass
 import hashlib

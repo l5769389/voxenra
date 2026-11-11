@@ -7,7 +7,7 @@ import pytest
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_settings_redesign import reveal_setting
@@ -16,7 +16,7 @@ from test_tag_qml import click, find, descendants
 
 
 def capture(window, name, tmp_path):
-    root = Path(os.environ.get('VOXENRA_AUDIT_CAPTURES', tmp_path))
+    root = Path(os.environ.get('VOXPLANE_AUDIT_CAPTURES', tmp_path))
     root.mkdir(parents=True, exist_ok=True)
     assert window.grabWindow().save(str(root / (name + '.png')))
 
@@ -204,7 +204,7 @@ def test_sidebar_and_right_labels_are_independent_and_persist(sidebar_scene, loc
 
 @pytest.mark.parametrize('locale', ['zh-CN', 'en-US'])
 def test_window_button_name_follows_display_editor(sidebar_scene, paired_series, locale, tmp_path):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     from PySide6.QtGui import QAccessible
     from test_ct_perfusion import perfusion, save_and_scan
     window, app, _, warnings = sidebar_scene

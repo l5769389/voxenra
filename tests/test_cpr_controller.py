@@ -6,14 +6,14 @@ import pytest
 from test_dicom_tags import qt_app, wait_until
 from test_mpr_reslicer import _volume
 from test_viewport_controller_hierarchy import _series_meta
-from qt_dicom_viewer.model import TabConfig, TabType, WindowLevel
-from qt_dicom_viewer.model.interaction import WindowLevelChange
-from qt_dicom_viewer.model.render_models import VolumeLoadResult
+from voxplane.model import TabConfig, TabType, WindowLevel
+from voxplane.model.interaction import WindowLevelChange
+from voxplane.model.render_models import VolumeLoadResult
 
 
 @pytest.fixture
 def cpr(qt_app):
-    from qt_dicom_viewer.ui.controller.tab.cpr_tab_controller import CprTabController
+    from voxplane.ui.controller.tab.cpr_tab_controller import CprTabController
     tab = CprTabController(TabConfig("cpr", "CPR", TabType.CPR, (_series_meta(),)))
     requests = []
     tab.renderRequested.connect(requests.append)
@@ -335,7 +335,7 @@ def test_window_updates_all_cached_views_without_reconstruction_and_curve_reject
 
 
 def test_completed_drag_is_one_undo_transaction_and_whole_path_deletion_is_undoable(cpr):
-    from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
+    from voxplane.ui.controller.edit_history_controller import EditHistoryController
     cpr._edit_history = history = EditHistoryController(cpr)
     view = draw(cpr)
     cpr.setPathEditing(True)
@@ -401,7 +401,7 @@ def test_mpr_command_opens_one_cpr_tab_using_shared_volume_owner(qt_app, tmp_pat
 
 
 def test_cpr_toolbar_preferences_target_the_cpr_profile(qt_app, tmp_path):
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     settings = SettingsController(path=tmp_path / "settings.json")
     editor = settings.createToolbarEditor(settings)
     editor.selectProfile("cpr:ct")
@@ -434,9 +434,9 @@ def test_successful_retry_clears_render_failure(cpr):
 
 
 def test_cpr_messages_follow_language_without_mutating_paths(cpr, tmp_path):
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-    from qt_dicom_viewer.ui.controller.language_controller import LanguageController
-    from qt_dicom_viewer.i18n.messages import builtin
+    from voxplane.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.language_controller import LanguageController
+    from voxplane.i18n.messages import builtin
     from PySide6.QtTest import QSignalSpy
     settings = SettingsController(path=tmp_path/'settings.json')
     language = LanguageController(settings, root=tmp_path/'languages')

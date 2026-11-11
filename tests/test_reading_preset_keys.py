@@ -4,8 +4,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtTest import QSignalSpy, QTest
 
 from qt_pointer import move_pointer
-from qt_dicom_viewer.settings.shortcuts import validate_bindings
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.settings.shortcuts import validate_bindings
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, wait_until
 from test_input_settings_qml import reading_scene
 from test_series_sidebar import sidebar_scene
@@ -161,7 +161,7 @@ def test_hover_only_opens_when_it_adds_information(sidebar_scene):
 def test_fusion_preset_and_palette_keys_respect_selected_target(sidebar_scene, paired_series, tmp_path, compact):
     from PySide6.QtCore import QObject
     from test_cpr_footer import item_window
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, _, warnings = sidebar_scene
     _, ct, pet = paired_series
     app.panelController.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 6, 6, 0, [ct, pet]))

@@ -3,7 +3,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     FrameDisplayMeta,
     ImageGeometryMeta,
     InstanceDisplayMeta,
@@ -15,8 +15,8 @@ from qt_dicom_viewer.model import (
     ViewportConfig,
     WindowLevel,
 )
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.stack_viewport_controller import (
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.viewport.image_2d.stack_viewport_controller import (
     StackViewportController,
 )
 

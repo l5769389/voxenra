@@ -9,6 +9,7 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 
 from test_tag_qml import descendants, find
+from qt_pointer import activate_window
 
 
 def capture_feature(app, window, uid, scene, output, folder, pump, wait, ready):
@@ -19,6 +20,8 @@ def capture_feature(app, window, uid, scene, output, folder, pump, wait, ready):
     app.settingsController.setValue('layout', 'rightPanelWidth', 300)
 
     def shot(name=None, native=False, duration=650):
+        if native:
+            activate_window(window)
         QTest.mouseMove(window, QPointF(700, 14).toPoint())
         pump(160)
         screen = QGuiApplication.screenAt(window.position()) or QGuiApplication.primaryScreen()

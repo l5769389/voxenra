@@ -10,8 +10,8 @@ import time
 
 import pytest
 
-from qt_dicom_viewer.core.app_updates import Installation, Release
-from qt_dicom_viewer.infrastructure.update_installer import prepare_installer, launch_installer
+from voxplane.core.app_updates import Installation, Release
+from voxplane.infrastructure.update_installer import prepare_installer, launch_installer
 
 
 def release(name, version='1.7.0'):
@@ -61,7 +61,7 @@ Set-Content -LiteralPath $Marker -Value 'completed' -Encoding ASCII
     shell = Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
     parent_code = """import os, sys
 from pathlib import Path
-from qt_dicom_viewer.infrastructure.update_installer import launch_installer
+from voxplane.infrastructure.update_installer import launch_installer
 shell, script, marker, log = sys.argv[1:]
 launch_installer([shell, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
                   '-File', script, str(os.getpid()), marker], Path(log))
@@ -82,7 +82,7 @@ def test_macos_real_dmg_update_and_failure_preserves_original(tmp_path, failure)
         (path / 'Contents/MacOS').mkdir(parents=True)
         if version == '1.6.0' or failure == 'startup':
             shutil.copyfile('/usr/bin/false' if failure == 'startup' and version == '1.7.0' else '/usr/bin/true',
-                            path / 'Contents/MacOS/Voxenra')
+                            path / 'Contents/MacOS/VoxPlane')
         else:
             source_code = tmp_path / 'probe.c'
             source_code.write_text(r'''#include <stdio.h>
@@ -99,21 +99,21 @@ int main(int argc, char **argv) {
     sleep(5); return 0;
 }'''.replace('ACKNOWLEDGE', 'sleep(30);' if failure == 'timeout' else
                 'f=fopen(path,"w"); if(!f) return 1; fputs(token,f); fclose(f);'))
-            subprocess.run(['/usr/bin/clang', str(source_code), '-o', str(path / 'Contents/MacOS/Voxenra')],
+            subprocess.run(['/usr/bin/clang', str(source_code), '-o', str(path / 'Contents/MacOS/VoxPlane')],
                            check=True, capture_output=True)
-        (path / 'Contents/MacOS/Voxenra').chmod(0o755)
+        (path / 'Contents/MacOS/VoxPlane').chmod(0o755)
         (path / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(
-            CFBundleIdentifier='com.junliu.voxenra', CFBundleExecutable='Voxenra',
-            CFBundleName='Voxenra', CFBundlePackageType='APPL', CFBundleShortVersionString=version)))
+            CFBundleIdentifier='com.junliu.voxplane', CFBundleExecutable='VoxPlane',
+            CFBundleName='VoxPlane', CFBundlePackageType='APPL', CFBundleShortVersionString=version)))
         subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', str(path)], check=True, capture_output=True)
-    target = tmp_path / "Applications with space's" / 'Voxenra.app'
+    target = tmp_path / "Applications with space's" / 'VoxPlane.app'
     app_at(target, '1.6.0')
-    source = tmp_path / 'dmg-source' / 'Voxenra.app'
+    source = tmp_path / 'dmg-source' / 'VoxPlane.app'
     app_at(source, '1.7.0')
     stage = tmp_path / 'update-test'
     stage.mkdir()
-    package = stage / 'Voxenra-1.7.0-macos-arm64.dmg'
-    subprocess.run(['/usr/bin/hdiutil', 'create', '-srcfolder', str(source.parent), '-volname', 'VoxenraUpdateTest',
+    package = stage / 'VoxPlane-1.7.0-macos-arm64.dmg'
+    subprocess.run(['/usr/bin/hdiutil', 'create', '-srcfolder', str(source.parent), '-volname', 'VoxPlaneUpdateTest',
                     '-format', 'UDZO', str(package)], check=True, capture_output=True, timeout=60)
     digest = hashlib.sha256(package.read_bytes()).hexdigest()
     command = prepare_installer(Installation('macos', target), release(package.name), package,
@@ -131,13 +131,13 @@ int main(int argc, char **argv) {
     metadata = plistlib.loads((target / 'Contents/Info.plist').read_bytes())
     assert metadata['CFBundleShortVersionString'] == ('1.6.0' if failure else '1.7.0'), log
     assert not package.exists()
-    assert not list(target.parent.glob('.voxenra-backup-*'))
+    assert not list(target.parent.glob('.voxplane-backup-*'))
 
 
 def windows_ready_app(stage, target):
     source = r'''using System; using System.IO; using System.Text.RegularExpressions;
 class ReadyApp { static int Main(string[] args) {
-    if (args.Length != 2 || args[0] != "--voxenra-update-check") return 1;
+    if (args.Length != 2 || args[0] != "--voxplane-update-check") return 1;
     string json = File.ReadAllText(args[1]);
     string token = Regex.Match(json, "[a-f0-9]{32}").Value;
     File.WriteAllText(Path.Combine(Path.GetDirectoryName(args[1]), "ready"), token);
@@ -154,7 +154,7 @@ class ReadyApp { static int Main(string[] args) {
 @pytest.mark.skipif(sys.platform != 'win32', reason='Native Windows PowerShell replacement')
 @pytest.mark.parametrize('wrong_digest', [False, True])
 def test_windows_portable_update_and_recovery(tmp_path, wrong_digest):
-    target = tmp_path / 'Portable with spaces' / 'Voxenra.exe'
+    target = tmp_path / 'Portable with spaces' / 'VoxPlane.exe'
     target.parent.mkdir()
     # where.exe exits harmlessly without arguments and is present on supported Windows.
     executable = Path(os.environ['SystemRoot']) / 'System32/where.exe'
@@ -162,7 +162,7 @@ def test_windows_portable_update_and_recovery(tmp_path, wrong_digest):
     original = target.read_bytes()
     stage = tmp_path / 'update-test'
     stage.mkdir()
-    package = stage / 'Voxenra-1.7.0-windows-x64-portable.exe'
+    package = stage / 'VoxPlane-1.7.0-windows-x64-portable.exe'
     windows_ready_app(stage, package)
     # An overlay differentiates new/old files while preserving a runnable PE.
     with package.open('ab') as stream: stream.write(b'new version')
@@ -183,7 +183,7 @@ def test_windows_installer_exit_code_and_backup_restore(tmp_path, failure):
     target = tmp_path / "Installed app's directory"
     target.mkdir()
     native = Path(os.environ['SystemRoot']) / 'System32/where.exe'
-    shutil.copy2(native, target / 'Voxenra.exe')
+    shutil.copy2(native, target / 'VoxPlane.exe')
     (target / 'version.txt').write_text('old')
     stage = tmp_path / 'update-test'
     stage.mkdir()
@@ -196,7 +196,7 @@ def test_windows_installer_exit_code_and_backup_restore(tmp_path, failure):
         static int Main(string[] args) {
             string dir = Array.Find(args, a => a.StartsWith("/DIR=")).Substring(5).Trim('"');
             File.WriteAllText(Path.Combine(dir, "version.txt"), "new");
-            File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ready-app.exe"), Path.Combine(dir, "Voxenra.exe"), true);
+            File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ready-app.exe"), Path.Combine(dir, "VoxPlane.exe"), true);
             return EXITCODE;
         }
     }'''.replace('EXITCODE', '1' if failure else '0')
@@ -211,5 +211,5 @@ def test_windows_installer_exit_code_and_backup_restore(tmp_path, failure):
     with launch_installer(command, log) as helper:
         assert helper.wait(timeout=60) == (1 if failure else 0), log.read_text(errors='replace')
     assert (target / 'version.txt').read_text() == ('old' if failure else 'new')
-    assert (target / 'Voxenra.exe').read_bytes() == (native.read_bytes() if failure else ready_app.read_bytes())
+    assert (target / 'VoxPlane.exe').read_bytes() == (native.read_bytes() if failure else ready_app.read_bytes())
     assert (stage / 'result').read_text().strip() == ('failed' if failure else 'success')

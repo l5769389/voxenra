@@ -6,9 +6,9 @@ import pytest
 from PySide6.QtCore import QObject, QPointF
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import phantom_series, sidebar_scene
 from test_tab_windows import detached, open_tabs
@@ -122,7 +122,7 @@ def test_retired_window_disconnects_identity_notifications(identity_app, monkeyp
     import sys
     from PySide6.QtCore import QCoreApplication, QEvent
     from shiboken6 import isValid
-    from qt_dicom_viewer.ui.controller.window_workspace_controller import WindowWorkspaceController
+    from voxplane.ui.controller.window_workspace_controller import WindowWorkspaceController
     app, _ = identity_app
     session = WindowWorkspaceController(app.windowManager, 'retired-test')
     notifications, errors = [], []
@@ -212,8 +212,8 @@ def test_visible_tab_dates_full_tooltip_detach_and_privacy(sidebar_scene):
 
 def test_legacy_default_date_migration_preserves_custom_layout_and_explicit_removal(qt_app, tmp_path):
     import json
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-    from qt_dicom_viewer.settings.preferences import normalize_settings
+    from voxplane.ui.controller.settings_controller import SettingsController
+    from voxplane.settings.preferences import normalize_settings
     path = tmp_path / 'legacy.json'
     path.write_text(json.dumps({'schemaVersion': 1, 'corners': {'topRight': ['patientName', 'patientId']}}))
     settings = SettingsController(path=path)
@@ -313,5 +313,5 @@ def test_same_visible_identity_different_patient_ids_remains_distinguishable(ide
 
 
 def test_malformed_partial_study_time_remains_literal():
-    from qt_dicom_viewer.ui.reading_identity import format_study_time
+    from voxplane.ui.reading_identity import format_study_time
     assert format_study_time('0912.5') == '0912.5'

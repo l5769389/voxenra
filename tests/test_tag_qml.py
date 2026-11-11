@@ -10,10 +10,10 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.controller.panel_controller import PanelController
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, make_series, catalog_for, wait_until, rows
 
 
@@ -22,8 +22,8 @@ class _App(QObject):
         super().__init__()
         self.workspace = workspace
         self.panel = panel
-        from qt_dicom_viewer.ui.controller.feedback_controller import FeedbackController
-        from qt_dicom_viewer.ui.controller.update_controller import UpdateController
+        from voxplane.ui.controller.feedback_controller import FeedbackController
+        from voxplane.ui.controller.update_controller import UpdateController
         self.feedback = FeedbackController(None, self)
         self.updates = UpdateController(None, self)
 
@@ -110,13 +110,13 @@ def scene(qt_app, tmp_path):
     panel._update_series_record(DicomFolderScanSnapshot(tmp_path, 20, 20, 0, [series]))
     app = _App(workspace, panel)
     engine = QQmlApplicationEngine()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     engine.addImageProvider("navigation", SvgIconProvider())
     warnings = []
     engine.warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
     engine.addImageProvider("dicom", provider)
     engine.rootContext().setContextProperty("appController", app)
-    source = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/Main.qml"
+    source = Path(__file__).resolve().parents[1] / "src/voxplane/qml/Main.qml"
     engine.load(QUrl.fromLocalFile(str(source)))
     assert engine.rootObjects(), warnings
     window = engine.rootObjects()[0]
@@ -138,7 +138,7 @@ def open_tags(window, workspace, series):
 
 
 def test_page_feedback_skips_fast_reads_but_keeps_waits_and_errors(scene, monkeypatch):
-    from qt_dicom_viewer.model.dicom_tags import TagNode, TagReadResult
+    from voxplane.model.dicom_tags import TagNode, TagReadResult
     window, workspace, series, warnings = scene
     controller = open_tags(window, workspace, series)
     requests = []

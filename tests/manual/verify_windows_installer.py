@@ -17,7 +17,7 @@ def main():
     output = Path("build/test-results/installer")
     output.mkdir(parents=True, exist_ok=True)
     programs = Path(os.environ["LOCALAPPDATA"]) / "Programs"
-    legacy, current = programs / "DICOMVision", programs / "Voxenra"
+    legacy, current = programs / "Voxenra", programs / "VoxPlane"
     key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{EA2DF9C6-5DC1-4CC3-913B-DB87DB5D0B5E}_is1"
     if legacy.exists() or current.exists():
         raise SystemExit("Refusing to alter a pre-existing installation")
@@ -34,11 +34,14 @@ def main():
     try:
         # An actual first install records the former brand path in Inno's registry.
         install("legacy-location", f"/DIR={legacy}")
-        assert (legacy / "Voxenra.exe").is_file()
+        assert (legacy / "VoxPlane.exe").is_file()
         legacy_user = legacy / "user-image.dcm"
         legacy_user.write_bytes(b"synthetic user file")
-        install("current-default")
-        assert (current / "Voxenra.exe").is_file(), "Installer reused the previous directory"
+        install("upgrade-default")
+        assert (legacy / "VoxPlane.exe").is_file(), "Upgrade lost the registered install directory"
+        assert not current.exists(), "Upgrade created a duplicate application"
+        install("explicit-current-location", f"/DIR={current}")
+        assert (current / "VoxPlane.exe").is_file()
         assert legacy_user.read_bytes() == b"synthetic user file"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as registration:
             location = winreg.QueryValueEx(registration, "InstallLocation")[0]
@@ -54,7 +57,7 @@ def main():
         assert not list((current / "_internal").rglob("*WebEngine*"))
         assert not list((current / "_internal").rglob("Qt6Pdf*.dll"))
         env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software")
-        app = subprocess.Popen([str(current / "Voxenra.exe")], env=env)
+        app = subprocess.Popen([str(current / "VoxPlane.exe")], env=env)
         try:
             time.sleep(8)
             assert app.poll() is None, f"Installed app exited during startup: {app.returncode}"

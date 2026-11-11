@@ -2,8 +2,8 @@
 from dataclasses import replace
 import numpy as np
 import pytest
-from qt_dicom_viewer.model.dicom_core import MprFrame, MprImageGeometry
-from qt_dicom_viewer.ui.cpr_sampling_guides import project_sampling_line
+from voxplane.model.dicom_core import MprFrame, MprImageGeometry
+from voxplane.ui.cpr_sampling_guides import project_sampling_line
 
 
 def reference():

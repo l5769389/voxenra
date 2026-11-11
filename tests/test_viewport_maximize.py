@@ -11,7 +11,7 @@ from test_series_sidebar import sidebar_scene
 from test_tag_qml import click, find
 from test_tab_windows import detached, open_tabs
 from test_workspace_persistence import draw_length
-from qt_dicom_viewer.model import MeasurementKind
+from voxplane.model import MeasurementKind
 
 
 @pytest.mark.parametrize('collapsed', [False, True])

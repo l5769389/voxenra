@@ -2,7 +2,7 @@
 
 ## 数据入口
 
-`src/qt_dicom_viewer/qml/theme/palettes.json` 是配色的唯一手工维护入口：
+`src/voxplane/qml/theme/palettes.json` 是配色的唯一手工维护入口：
 
 - `defaults`：按用途命名的界面颜色，也是缺失颜色的回退值。
 - `themes`：内置主题的差异值；目前包含 `dark`（原深色）、`graphite`（中性深灰）和 `light`。

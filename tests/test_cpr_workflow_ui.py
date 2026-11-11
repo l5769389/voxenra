@@ -233,7 +233,7 @@ def test_delete_and_backspace_from_panel_button_remove_only_draft_points(sidebar
 
 
 def test_result_split_legacy_defaults_validation_and_export_revision(cpr):
-    from qt_dicom_viewer.core.cpr_session import validate_cpr_session
+    from voxplane.core.cpr_session import validate_cpr_session
     draw(cpr)
     legacy = cpr.session_state()
     del legacy['resultSplitRatio']
@@ -260,8 +260,8 @@ def test_exit_editing_returns_to_results_and_repeated_edit_keeps_active_referenc
 
 
 def test_drag_result_split_clamps_and_survives_layout_changes(cpr_page, tmp_path):
-    from qt_dicom_viewer.model import WindowLevel
-    from qt_dicom_viewer.model.interaction import WindowLevelChange
+    from voxplane.model import WindowLevel
+    from voxplane.model.interaction import WindowLevelChange
     window, tab = cpr_page
     tab.viewForRole('cross').apply_window_level(WindowLevelChange(WindowLevel(2200, 4400), False))
     tab.setReferenceBrowsing(False)

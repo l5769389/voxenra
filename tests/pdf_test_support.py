@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-from qt_dicom_viewer.i18n.messages import builtin
+from voxplane.i18n.messages import builtin
 
 
 @pytest.fixture(params=['en-US', 'zh-CN'])

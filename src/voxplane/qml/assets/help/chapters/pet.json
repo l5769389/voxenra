@@ -1,0 +1,119 @@
+[
+  {
+    "id": "pet-units",
+    "category": "pet",
+    "title": "PET 显示与 CT/PET 定量",
+    "sections": [
+      {
+        "title": "独立 PET",
+        "body": "选择静态 PT 序列，直接打开 **2D、MPR 或 3D**，无需 CT 配对。独立 MPR 是三切面；PET/CT 融合另外提供 MIP。",
+        "messageId": "manual.pet-units.section0"
+      },
+      {
+        "title": "显示范围",
+        "body": "**PET 调窗** 设置显示范围、滑杆上限与单位。只提供数据实际支持的单位；缺少 SUV 转换信息时使用源单位。伪彩和透明度只改变显示。",
+        "messageId": "manual.pet-units.section1"
+      },
+      {
+        "title": "融合中的独立控制",
+        "body": "**CT 调窗** 作用于 CT/FUSION，**PET 调窗** 作用于 PET/FUSION/MIP。改变显示单位不修改已保存范围的定量阈值。",
+        "messageId": "manual.pet-units.section2"
+      },
+      {
+        "title": "CT 与 PET 单位",
+        "body": "CT 使用 **HU**；PET 以实际提供的 SUVbw、原生 SUV 或活度单位为准，不补造缺失的 SUV。定量分割与 VOI 在 CT/PET 的 **MPR** 或 CT 的 **4D** 中进行；4D 使用当前时相的原始体素。",
+        "messageId": "manual.quantification.section0"
+      },
+      {
+        "title": "两种阈值",
+        "body": "**绝对值** 使用当前单位。**PET %** 以范围内最大值为基准；**CT %** 在最小值与最大值之间取值，例如 −100～300 HU 的 50% 是 100 HU。",
+        "messageId": "manual.quantification.section1"
+      },
+      {
+        "title": "切换单位后检查阈值",
+        "body": "显示单位不改变范围的独立定量单位。切换 **范围单位** 时，绝对阈值重置为 SUV 2.5 或源单位 0，需重新设置；百分比数值保留。",
+        "important": true,
+        "messageId": "manual.quantification.section2"
+      },
+      {
+        "title": "读取结果",
+        "body": "**MEAN / SD** 均值与标准差，**MIN / MAX** 极值，**N** 体素数，**VOL** 体积 cm³。分割只统计通过阈值的部分，VOI 统计整个范围；无有效结果时 N/VOL 为 0，其余为 —。窗值、伪彩不改变统计。",
+        "messageId": "manual.quantification.section3"
+      }
+    ],
+    "summary": "浏览 PET，核对 CT/PET 单位、阈值与定量结果。",
+    "related": [
+      "volume",
+      "segmentation",
+      "voi"
+    ],
+    "example": "pet-voxplane-2.6.0.png",
+    "caption": "独立 PET MPR 与强度、单位设置。",
+    "icon": "pet-window"
+  },
+  {
+    "id": "fusion",
+    "category": "pet",
+    "title": "CT/PET 配对与融合",
+    "sections": [
+      {
+        "title": "1. 选择配对",
+        "body": "选中 CT 或 PET 点击 **融合**，在弹窗选择另一模态；也可多选一组 CT 与 PET。默认列出同患者候选，优先同检查。",
+        "messageId": "manual.fusion.section0"
+      },
+      {
+        "title": "2. 核对身份",
+        "body": "核对患者、检查和序列。需要其他患者时勾选 **显示其他患者**；身份不同或无法确认时需人工确认。**配对不保证已配准**，应核对解剖位置。",
+        "important": true,
+        "messageId": "manual.fusion.section1"
+      },
+      {
+        "title": "3. 联动浏览",
+        "body": "CT、PET、FUSION 三格联动，顶部统一选择轴位/冠状位/矢状位；第四格为 **PET MIP**。拖动定位十字同步位置，需要对齐时使用手动配准。",
+        "messageId": "manual.fusion.section2"
+      },
+      {
+        "title": "融合 3D",
+        "body": "点击 **融合 3D** 打开独立三维页签，可查看 CT、PET 或融合。往返保留视角，源页签配准同步到三维；关闭源页签后保留最后场景。",
+        "messageId": "manual.fusion.section3"
+      }
+    ],
+    "summary": "核对 CT 与 PET 来源后查看融合。",
+    "related": [
+      "registration",
+      "pet-units"
+    ],
+    "example": "fusion-voxplane-2.6.0.png",
+    "caption": "CT、PET、FUSION 与 PET MIP。",
+    "icon": "fusion"
+  },
+  {
+    "id": "registration",
+    "category": "pet",
+    "title": "手动配准",
+    "sections": [
+      {
+        "title": "调整与核对",
+        "body": "在融合页选择 **手动配准**。PET / FUSION 视口中 **左键拖动平移、右键拖动旋转**，优先于默认调窗和缩放；定位十字线的左键拖动仍用于定位。松开拖动后按完整采样刷新。请用 **三种正交方向** 核对配准，不只看一个切面。 数值参数整组输入后点击 **应用** 或按 `Enter`，一次提交平移与旋转；失焦不提交，`Esc` 取消整组草稿。切换配准对象或退出面板会丢弃未应用的输入。",
+        "messageId": "manual.registration.section0"
+      },
+      {
+        "title": "恢复与保存",
+        "body": "面板提供 **中心对齐、重置、加载、保存**。重置回到配对初始变换；配准文件保存变换，不改写原始 DICOM。加载会核对两个源序列。",
+        "messageId": "manual.registration.section1"
+      },
+      {
+        "title": "操作范围",
+        "body": "切换其他工具退出配准交互。当前不提供自动形变配准；定量分割与 VOI 使用 CT/PET MPR。",
+        "messageId": "manual.registration.section2"
+      }
+    ],
+    "summary": "固定 CT，调整 PET 的刚性位置与方向。",
+    "related": [
+      "fusion"
+    ],
+    "example": "registration-voxplane-2.6.0.png",
+    "caption": "固定 CT，调整 PET 移动层。",
+    "icon": "registration"
+  }
+]

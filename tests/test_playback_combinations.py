@@ -1,6 +1,6 @@
 """Cine state boundaries across loading, queued phases, layouts and restoration."""
 import pytest
-from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
+from voxplane.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
 from test_dicom_tags import qt_app
 from test_four_d_qml import _controller
 from test_four_d import _ready_four_d_tab, _finish_requests
@@ -111,7 +111,7 @@ def test_2d_empty_cell_and_hidden_cell_stop_playback(comparison, mode):
 
 @pytest.mark.parametrize('tab_type', ['2d', 'mpr'])
 def test_mr_playback_preserves_window_and_stops_on_restore(comparison, tmp_path, tab_type):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     from test_mr import write_mr_series
     from test_dicom_tags import wait_until
     app, _ = comparison
@@ -178,8 +178,8 @@ def test_window_transfer_stops_playback_and_releases_tools(sidebar_scene):
 
 @pytest.mark.parametrize('mode', ['slice', 'phase'])
 def test_play_shortcut_toggles_current_four_d_mode(temporal, mode):
-    from qt_dicom_viewer.ui.controller.shortcut_controller import ShortcutController
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.shortcut_controller import ShortcutController
+    from voxplane.ui.controller.settings_controller import SettingsController
     tab, _, _ = temporal
     shortcuts = ShortcutController(SettingsController(path=False))
     tab.togglePlaybackMode(mode)
@@ -192,8 +192,8 @@ def test_play_shortcut_toggles_current_four_d_mode(temporal, mode):
 
 
 def test_four_d_play_shortcut_uses_phase_on_reference_viewport(temporal):
-    from qt_dicom_viewer.ui.controller.shortcut_controller import ShortcutController
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.shortcut_controller import ShortcutController
+    from voxplane.ui.controller.settings_controller import SettingsController
     tab, _, _ = temporal
     shortcuts = ShortcutController(SettingsController(path=False))
     tab.mprLayout.setLayout('quad')

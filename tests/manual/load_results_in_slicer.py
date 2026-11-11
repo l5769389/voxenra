@@ -23,7 +23,7 @@ try:
         loadable.uid = str(
             pydicom.dcmread(seg_path, stop_before_pixels=True).SOPInstanceUID
         )
-        loadable.name = "Voxenra validation segment"
+        loadable.name = "VoxPlane validation segment"
         plugin = DICOMSegmentationPluginClass()
         assert plugin.load(loadable)
         nodes = slicer.util.getNodesByClass("vtkMRMLSegmentationNode")

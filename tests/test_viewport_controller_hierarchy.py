@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from PySide6.QtCore import QPointF
 
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     CrosshairCenterChange,
     CrosshairMoveContext,
     CrosshairRotationContext,
@@ -37,15 +37,15 @@ from qt_dicom_viewer.model import (
     ViewportConfig,
     WindowLevel,
 )
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.mpr_viewport_controller import (
+from voxplane.ui.controller.tab.tab_controller import TabController
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.viewport.image_2d.mpr_viewport_controller import (
     MprViewportController,
 )
-from qt_dicom_viewer.ui.controller.viewport.image_2d.stack_viewport_controller import (
+from voxplane.ui.controller.viewport.image_2d.stack_viewport_controller import (
     StackViewportController,
 )
-from qt_dicom_viewer.ui.controller.viewport.viewport_controller import (
+from voxplane.ui.controller.viewport.viewport_controller import (
     ViewportController,
 )
 

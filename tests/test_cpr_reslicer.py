@@ -5,13 +5,13 @@ from threading import Event
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.model.cpr import CprError, CprPath, CprSettings
-from qt_dicom_viewer.core.cpr_geometry import sample_centerline
+from voxplane.model.cpr import CprError, CprPath, CprSettings
+from voxplane.core.cpr_geometry import sample_centerline
 from test_mpr_reslicer import _volume
 
 
 def reslicer(**kwargs):
-    from qt_dicom_viewer.core.cpr_reslicer import CprReslicer
+    from voxplane.core.cpr_reslicer import CprReslicer
     return CprReslicer(**kwargs)
 
 
@@ -25,8 +25,8 @@ def ramp_volume():
 
 
 def test_straight_cpr_matches_existing_axial_mpr_and_keeps_provenance():
-    from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-    from qt_dicom_viewer.model import MprPlane
+    from voxplane.core.mpr_reslicer import MprReslicer
+    from voxplane.model import MprPlane
     volume = ramp_volume()
     volume.fingerprint = "source-v1"
     result = reslicer().reslice(volume, path(), CprSettings(step_mm=1, width_mm=6, up_patient=(0, 1, 0)))
@@ -138,7 +138,7 @@ def test_requested_spacing_is_not_used_as_scale_when_grid_extent_needs_rounding(
 
 
 def test_blocks_are_bounded_share_the_volume_and_match_one_large_block(monkeypatch):
-    from qt_dicom_viewer.core import cpr_reslicer
+    from voxplane.core import cpr_reslicer
     sample = cpr_reslicer.sample_volume
     volume = ramp_volume()
     # Negative strides must not cause a hidden contiguous copy of the source.
@@ -170,7 +170,7 @@ def test_blocks_are_bounded_share_the_volume_and_match_one_large_block(monkeypat
     CprSettings(step_mm=.05, width_mm=2, projection="mip", thickness_mm=100),
     CprSettings(step_mm=.05, width_mm=40, projection="mean", thickness_mm=20)])
 def test_requests_exceeding_grid_slab_or_work_limits_are_rejected_before_sampling(settings, monkeypatch):
-    from qt_dicom_viewer.core import cpr_reslicer
+    from voxplane.core import cpr_reslicer
     def forbidden(*args):
         pytest.fail("Oversized request reached voxel sampling")
     monkeypatch.setattr(cpr_reslicer, "sample_volume", forbidden)
@@ -196,8 +196,8 @@ def test_invalid_cross_section_index_is_rejected(index):
 
 @pytest.mark.parametrize("section", [False, True])
 def test_cancellation_during_sampling_discards_partial_result(section, monkeypatch):
-    from qt_dicom_viewer.core import cpr_reslicer
-    from qt_dicom_viewer.core.render_cancellation import render_cancellation
+    from voxplane.core import cpr_reslicer
+    from voxplane.core.render_cancellation import render_cancellation
     event = Event()
     sample = cpr_reslicer.sample_volume
     calls = []

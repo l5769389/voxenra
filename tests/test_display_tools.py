@@ -6,16 +6,16 @@ import numpy as np
 import pytest
 from PySide6.QtCore import QPointF, QSize
 
-from qt_dicom_viewer.core.pseudocolor import (
+from voxplane.core.pseudocolor import (
     COLOR_MAP_SPECS,
     apply_color_map,
     color_map_options,
 )
-from qt_dicom_viewer.model import ToolType, ViewportDisplaySettings
-from qt_dicom_viewer.ui.controller.viewport.controller.text_annotation_controller import (
+from voxplane.model import ToolType, ViewportDisplaySettings
+from voxplane.ui.controller.viewport.controller.text_annotation_controller import (
     TextAnnotationController,
 )
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_viewport_transform import _controller, _render_result
 
 
@@ -189,8 +189,8 @@ def test_viewport_applies_color_map_settings_and_annotation_reset() -> None:
 
 def test_palette_display_changes_preserve_every_persisted_id_and_lut():
     import hashlib
-    from qt_dicom_viewer.core.pseudocolor import color_lut
-    from qt_dicom_viewer.core.color_maps import COLOR_MAPS
+    from voxplane.core.pseudocolor import color_lut
+    from voxplane.core.color_maps import COLOR_MAPS
     expected = {'grayscale': '72432263dbfe17abc40ed269f24c7a344e077e3671007dfc8a2f3851f8193dc2',
      'grayscale-inverted': '346f6a25ad11ec5b45a83392366f269058ba209d2877491634a2405f86beb3db',
      'blackbody': 'ee5b6f9b99b522130653f800bb60c51f774172fd8efbf14a7f1853f635cc39ff',

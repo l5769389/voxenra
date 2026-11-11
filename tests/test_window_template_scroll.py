@@ -7,7 +7,7 @@ from PySide6.QtCore import QCoreApplication, QMetaObject, QObject, QPoint, QPoin
 from PySide6.QtGui import QWheelEvent
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, type_text, descendants

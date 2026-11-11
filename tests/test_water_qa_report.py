@@ -8,9 +8,9 @@ from PySide6.QtPdf import QPdfDocument
 
 from test_dicom_tags import qt_app
 from test_water_qa import water_image
-from qt_dicom_viewer.core.water_qa import analyze_water_phantom
-from qt_dicom_viewer.core.water_qa_report import pdf_bytes
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.core.water_qa import analyze_water_phantom
+from voxplane.core.water_qa_report import pdf_bytes
+from voxplane.ui.controller.settings_controller import SettingsController
 from pdf_test_support import report_language  # register bilingual PDF fixture
 
 
@@ -34,7 +34,7 @@ def test_report_contains_image_tables_and_no_default_brand(qt_app, tmp_path, rep
     result = analyze_water_phantom(water_image(), (1, 1))
     data = pdf_bytes(result, slice_number=26, spacing=(1, 1), screenshot=picture(), translations=translations)
     doc, text = read_pdf(tmp_path, data)
-    assert 'Voxenra' not in text
+    assert 'VoxPlane' not in text
     assert not doc.metaData(QPdfDocument.MetaDataField.Creator)
     assert '/Subtype /Image' in data.decode('latin1')
     for label in ('ROI', '均值' if language == 'zh-CN' else 'Mean', 'SD', '26', 'HU', 'mm'):
@@ -54,7 +54,7 @@ def test_custom_report_name_and_paginated_roi_tables(qt_app, tmp_path, report_la
     data = pdf_bytes(replace(result, rois=rois), slice_number=1, spacing=(1, 1),
                      screenshot=picture(), software_name=software_name, translations=translations)
     doc, text = read_pdf(tmp_path, data)
-    assert software_name in text and 'Voxenra' not in text
+    assert software_name in text and 'VoxPlane' not in text
     assert doc.metaData(QPdfDocument.MetaDataField.Creator) == software_name
     assert doc.pageCount() > 2 and 'ROI 59' in text
     for i in range(1, doc.pageCount()):

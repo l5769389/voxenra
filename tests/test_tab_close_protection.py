@@ -4,7 +4,7 @@ from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QMessageBox
-from qt_dicom_viewer.core.workspace_state import loads
+from voxplane.core.workspace_state import loads
 from test_dicom_tags import qt_app, wait_until
 from test_workspace_persistence import populated_app, draw_length
 from test_series_sidebar import sidebar_scene

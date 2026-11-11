@@ -5,9 +5,9 @@ import pytest
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.app_updates import Installation, parse_release
-from qt_dicom_viewer.i18n import message
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.core.app_updates import Installation, parse_release
+from voxplane.i18n import message
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_app_updates import release_payload, Network, PAYLOAD, DIGEST
 from test_pacs_qml import scene
 from test_tag_qml import find, click, descendants
@@ -28,7 +28,7 @@ def test_update_settings_badge_dialog_and_cancellation(scene, tmp_path, theme, l
     assert control.property('checked')
     click(window, control)
     assert not SettingsController(path=app.settingsController._path).section('updates')['enabled']
-    target = tmp_path / 'Voxenra.app'
+    target = tmp_path / 'VoxPlane.app'
     target.mkdir()
     updater._installation = Installation('macos', target)
     updater._release = parse_release(release_payload(), '1.6.0', 'macos')
@@ -62,7 +62,7 @@ def test_workspace_cancel_prevents_installer_handoff(scene, tmp_path, monkeypatc
     from PySide6.QtCore import QCoreApplication, QEvent
     window, app, warnings = scene
     updater = app.updateController
-    target = tmp_path / 'Voxenra.app'
+    target = tmp_path / 'VoxPlane.app'
     target.mkdir()
     updater._installation = Installation('macos', target)
     updater._cache = tmp_path / 'updates'
@@ -70,7 +70,7 @@ def test_workspace_cancel_prevents_installer_handoff(scene, tmp_path, monkeypatc
     updater._network = Network()
     calls = []
     monkeypatch.setattr(app.workspaceDocumentController, 'requestClose', lambda: calls.append('cancel') or False)
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.update_controller.launch_installer', lambda *args: calls.append('installed'))
+    monkeypatch.setattr('voxplane.ui.controller.update_controller.launch_installer', lambda *args: calls.append('installed'))
     # Deliver a real Quit event to QApplication; the fixture's test event loop
     # does not run QApplication.exec(), so explicitly dispatch the same event.
     updater.exitRequested.disconnect()

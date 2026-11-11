@@ -18,43 +18,47 @@ from PIL import Image, ImageSequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / "src/qt_dicom_viewer/qml/assets"
+ASSETS = ROOT / "src/voxplane/qml/assets"
 HELP = ASSETS / "help"
 SITE = ROOT / "docs/manual-site"
 PRODUCT_SCREENSHOTS = {
-    "hero-mpr.png": "11-mpr-3d-layout.png",
-    "feature-mr-reading.png": "07-mr-reading.png",
-    "feature-fusion.png": "05-pet-ct-fusion.png",
-    "feature-analysis.gif": "38-segmentation-refinement.gif",
-    "feature-ai-segmentation.gif": "49-ai-workflow-2.1.1.gif",
-    "feature-ai-segmentation.png": "48-ai-complete-2.1.1.png",
-    "feature-measurements.png": "63-measurement-2.5.0.png",
-    "feature-theme-graphite.png": "37-theme-graphite.png",
-    "feature-theme-dark.png": "25-theme-dark.png",
-    "feature-theme-light.png": "26-theme-light.png",
-    "feature-pacs.png": "16-pacs-browser.png",
-    "feature-zip-drop.png": "35-zip-drop.png",
-    "feature-zip-drag.gif": "06-zip-drag.gif",
-    "feature-workspace-overview.png": "69-workspace-home-2.6.0.png",
-    "feature-4d.gif": "03-4d-playback.gif",
-    "feature-water-qa.png": "68-water-qa-2.6.0.png",
-    "feature-mtf.png": "67-mtf-analysis-2.5.0.png",
+    "hero-mpr.png": "11-mpr-3d-layout-voxplane-2.6.0.png",
+    "feature-mr-reading.png": "07-mr-reading-voxplane-2.6.0.png",
+    "feature-fusion.png": "05-pet-ct-fusion-voxplane-2.6.0.png",
+    "feature-analysis.gif": "38-segmentation-refinement-voxplane-2.6.0.gif",
+    "feature-ai-segmentation.gif": "49-ai-workflow-voxplane-2.6.0.gif",
+    "feature-ai-segmentation.png": "48-ai-complete-voxplane-2.6.0.png",
+    "feature-measurements.png": "63-measurement-voxplane-2.6.0.png",
+    "feature-theme-graphite.png": "37-theme-graphite-voxplane-2.6.0.png",
+    "feature-theme-dark.png": "25-theme-dark-voxplane-2.6.0.png",
+    "feature-theme-light.png": "26-theme-light-voxplane-2.6.0.png",
+    "feature-pacs.png": "16-pacs-browser-voxplane-2.6.0.png",
+    "feature-zip-drop.png": "35-zip-drop-voxplane-2.6.0.png",
+    "feature-zip-drag.gif": "06-zip-drag-voxplane-2.6.0.gif",
+    "feature-workspace-overview.png": "69-workspace-home-voxplane-2.6.0.png",
+    "feature-4d.gif": "03-4d-playback-voxplane-2.6.0.gif",
+    "feature-water-qa.png": "68-water-qa-voxplane-2.6.0.png",
+    "feature-mtf.png": "67-mtf-analysis-voxplane-2.6.0.png",
 }
 for media, source in {
-    'feature-water-qa.png': '68-water-qa-2.6.0.png',
-    'feature-workspace-overview.png': '69-workspace-home-2.6.0.png',
-    'feature-cpr-reference.png': '61-cpr-reference-2.4.0.png',
-    'feature-dimse-settings.png': '51-dimse-settings.png',
-    'feature-dimse-import.gif': '52-dimse-import.gif',
-    'feature-dimse-import.png': '52-dimse-import.png',
-    'feature-toolbar.gif': '53-toolbar-customization.gif',
-    'feature-toolbar.png': '53-toolbar-customization.png',
-    'feature-focus.gif': '54-focus-view.gif',
-    'feature-focus.png': '54-focus-view.png',
-    'feature-window-favorites.png': '55-window-favorites-2.4.0.png',
+    'feature-water-qa.png': '68-water-qa-voxplane-2.6.0.png',
+    'feature-workspace-overview.png': '69-workspace-home-voxplane-2.6.0.png',
+    'feature-cpr-reference.png': '61-cpr-reference-voxplane-2.6.0.png',
+    'feature-dimse-settings.png': '51-dimse-settings-voxplane-2.6.0.png',
+    'feature-dimse-import.gif': '52-dimse-import-voxplane-2.6.0.gif',
+    'feature-dimse-import.png': '52-dimse-import-voxplane-2.6.0.png',
+    'feature-toolbar.gif': '53-toolbar-customization-voxplane-2.6.0.gif',
+    'feature-toolbar.png': '53-toolbar-customization-voxplane-2.6.0.png',
+    'feature-focus.gif': '54-focus-view-voxplane-2.6.0.gif',
+    'feature-focus.png': '54-focus-view-voxplane-2.6.0.png',
+    'feature-window-favorites.png': '55-window-favorites-voxplane-2.6.0.png',
 }.items():
     PRODUCT_SCREENSHOTS[media] = source
     PRODUCT_SCREENSHOTS['en-' + media] = 'en/' + source
+# Localized screenshots match the language of each product page.
+for media, source in list(PRODUCT_SCREENSHOTS.items()):
+    if not media.startswith('en-') and (ROOT / 'docs/screenshots/en' / source).is_file():
+        PRODUCT_SCREENSHOTS['en-' + media] = 'en/' + source
 PRODUCT_IMAGE_WIDTHS = (640, 960, 1600)
 PRODUCT_IMAGE_SIZES = {
     "hero": "(max-width: 940px) calc(100vw - 48px), (max-width: 1536px) 54vw, 800px",
@@ -86,7 +90,7 @@ def product_image_size(name: str) -> str:
     return image_size(ROOT / "docs/screenshots" / PRODUCT_SCREENSHOTS[name])
 
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=512)
 def encode_webp(source: Path, source_digest: str, width: int) -> bytes:
     """Cache by source content, preserving GIF timing and composited frames.
 
@@ -220,11 +224,11 @@ def site_header(code: str, section: str, chapter_id: str | None = None) -> str:
     active_manual = ' class="is-active" aria-current="location"' if section == "manual" else ""
     current_brand = ' aria-current="page"' if section == "product" else ""
     return (f'<header class="site-header"><div class="site-header-inner">{menu}'
-            f'<a class="site-brand" href="{home}" aria-label="Voxenra"{current_brand}><img src="{prefix}assets/voxenra-mark.svg" alt=""><span>Voxenra</span></a>'
+            f'<a class="site-brand" href="{home}" aria-label="VoxPlane"{current_brand}><img src="{prefix}assets/voxplane-mark.svg" alt=""><span>VoxPlane</span></a>'
             f'<nav class="site-nav" aria-label="{labels[3]}">'
             f'<a class="site-nav-features" href="{home}#features">{labels[0]}</a>'
             f'<a{active_manual} href="{manual}">{labels[1]}</a>'
-            '<a class="site-nav-github" href="https://github.com/l5769389/voxenra">GitHub</a>'
+            '<a class="site-nav-github" href="https://github.com/junforge-dev/voxplane">GitHub</a>'
             f'<a class="site-nav-language" href="{alternate}" lang="{"en-US" if code == "zh" else "zh-CN"}">{labels[2]}</a>'
             '</nav></div></header>')
 
@@ -323,12 +327,12 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
     return f'''<!doctype html>
 <html lang="{language["pack"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(messages[f'manual.{chapter["id"]}.summary'])}">
-<title>{escape(title)} · Voxenra {escape(language["site"])}</title>
-<link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
+<title>{escape(title)} · VoxPlane {escape(language["site"])}</title>
+<link rel="icon" href="../assets/voxplane-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
 <link rel="alternate" hreflang="zh-CN" href="../zh/{escape(chapter["id"])}.html"><link rel="alternate" hreflang="en-US" href="../en/{escape(chapter["id"])}.html">
 </head><body>{header}
 <div class="layout"><aside id="sidebar" class="sidebar"><div class="search"><label class="sr-only" for="manual-search">{escape(language["search"])}</label><input id="manual-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><a class="sidebar-home" href="index.html">{escape(language["home"])}</a><nav aria-label="{escape(language["menu"])}">{nav}</nav><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p></aside>
-<main id="content"><div class="reading-layout"><article>{article}</article><aside class="page-outline"><h2>{'本页内容' if code == 'zh' else 'On this page'}</h2><nav>{outline}</nav></aside></div><footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main></div>
+<main id="content"><div class="reading-layout"><article>{article}</article><aside class="page-outline"><h2>{'本页内容' if code == 'zh' else 'On this page'}</h2><nav>{outline}</nav></aside></div><footer>VoxPlane · <a href="https://github.com/junforge-dev/voxplane">GitHub</a></footer></main></div>
 <script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
 
 
@@ -362,13 +366,13 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
             links.append(f'<a href="{escape(chapter["id"])}.html" data-search="{escape(searchable.lower())}">{escape(title)}</a>')
         groups.append(f'<section class="home-group">{icon(category["icon"])}<div><h2>{escape(messages["manual.category." + category["id"]])}</h2>{"".join(links)}</div></section>')
     return f'''<!doctype html><html lang="{language["pack"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="{escape(description)}"><title>Voxenra · {escape(heading)}</title>
-<link rel="icon" href="../assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
+<meta name="description" content="{escape(description)}"><title>VoxPlane · {escape(heading)}</title>
+<link rel="icon" href="../assets/voxplane-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
 <body class="home">{header}
-<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img {product_image_attributes('../', 'hero-mpr.png', 'hero')} {product_image_size('hero-mpr.png')} fetchpriority="high" alt="{'Voxenra 多平面重建与三维视图' if code == 'zh' else 'Voxenra multiplanar and 3D views'}" loading="eager"></figure></div>
+<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img {product_image_attributes('../', 'hero-mpr.png', 'hero')} {product_image_size('hero-mpr.png')} fetchpriority="high" alt="{'VoxPlane 多平面重建与三维视图' if code == 'zh' else 'VoxPlane multiplanar and 3D views'}" loading="eager"></figure></div>
 {start}<div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
-<footer>Voxenra · <a href="https://github.com/l5769389/voxenra">GitHub</a></footer></main><script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
+<footer>VoxPlane · <a href="https://github.com/junforge-dev/voxplane">GitHub</a></footer></main><script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
 
 
 PRODUCT_COPY = {
@@ -383,7 +387,7 @@ PRODUCT_COPY = {
         'controls_captions': ('可视化拖拽工具栏 · 选择、拖动与保存', '最大化视图区 · 隐藏两侧并恢复原布局'),
         'controls_link': '查看工具栏设置教程',
         'favorites_link': '查看窗模板收藏示例',
-        "lang": "zh-CN", "title": "Voxenra · DICOM 医学影像工作台",
+        "lang": "zh-CN", "title": "VoxPlane · DICOM 医学影像工作台",
         "description": "跨平台 DICOM 影像工作台：CT/MR/PET 阅片、MPR / CPR 与 3D、融合、测量分割和导出。支持基于 TotalSegmentator 的本地 AI 自动分割。",
         "features": "功能", "manual": "操作手册", "language": "English",
         "heading": "让医学影像工作更连贯", "intro": "导入 CT、MR 与 PET 影像，在同一工作区中完成阅片、重建、融合与分析。",
@@ -397,7 +401,7 @@ PRODUCT_COPY = {
         "workflow_cards": (
             ("本地导入", "文件、文件夹和压缩包可混合选择，也可拖入窗口。"),
             ("PACS 查询", "支持 DICOMweb 与传统 DICOM（DIMSE），查询检查并选择序列导入。"),
-            ("工作区", "新建、保存与恢复工作区；关闭页签保留结果，重新打开可继续编辑。请同时保留原始影像。"),
+            ("工作区", "保存页签、测量与分析状态，打开工作区继续编辑；误关页签可在页签栏撤销。请同时保留原始影像。"),
         ),
         "workflow_images": (("拖拽 ZIP 压缩包导入", "feature-zip-drag.gif"), ("PACS 检索与序列选择", "feature-pacs.png"), ("保存与恢复工作区", "feature-workspace-overview.png")),
         "cpr_title": "沿路径查看曲面与横截面",
@@ -418,14 +422,14 @@ PRODUCT_COPY = {
         "quality_title": "CT 图像质量分析",
         "quality_body": "水模 QA 分组查看 CT 值、均匀性、水中噪声与模体外空气。圆形区域可移动、缩放及撤销重做，编辑后自动计算，失败可重试；PDF 报告含影像与统计表，可自定义署名。点源 MTF、斜坡线 FWHM 与分析记录随工作区保存。",
         "quality_captions": ("水模 QA · CT 值与均匀性", "点源 MTF · 曲线与指标"),
-        "closing_title": "开始使用 Voxenra", "closing_body": "适用于 macOS Apple Silicon 与 Windows。",
+        "closing_title": "开始使用 VoxPlane", "closing_body": "适用于 macOS Apple Silicon 与 Windows。2.5.0 及更早版本需手动安装一次；已有设置和工作区保留。",
         "mac_download": "下载 DMG", "win_setup": "下载安装版", "win_portable": "下载便携版",
-        "mac_help": "适用于 Apple 芯片（M 系列），不适用于 Intel Mac。打开 DMG 后，将 Voxenra 拖入应用程序文件夹。",
+        "mac_help": "适用于 Apple 芯片（M 系列），不适用于 Intel Mac。打开 DMG 后，将 VoxPlane 拖入应用程序文件夹。",
         "win_help": "日常使用建议选安装版；便携版无需安装，保存 EXE 后直接运行。两者均适用于 64 位 Windows。",
         "first_run": "下载后从快速开始入门",
-        "releases": "发布记录", "github": "GitHub 仓库", "alt_hero": "Voxenra 中的 MR 多平面重建与 3D 视图",
-        "alt_viewing": "Voxenra 中的 MR 原始切片视图", "alt_fusion": "Voxenra 中的 CT、PET 与融合视图",
-        "alt_analysis": "Voxenra 中的 MPR 分割与统计面板",
+        "releases": "发布记录", "github": "GitHub 仓库", "alt_hero": "VoxPlane 中的 MR 多平面重建与 3D 视图",
+        "alt_viewing": "VoxPlane 中的 MR 原始切片视图", "alt_fusion": "VoxPlane 中的 CT、PET 与融合视图",
+        "alt_analysis": "VoxPlane 中的 MPR 分割与统计面板",
         "measurement_caption": "ROI 统计与测量结果列表",
         "appearance_title": "适合你的外观与操作习惯",
         "appearance_body": "界面可跟随系统切换深浅色，也可固定为深色、中性深灰或浅色。可调整界面大小、鼠标操作和工具快捷键。四角信息支持全局默认与视口覆盖；正方形视口可自动调整应用窗口。",
@@ -442,13 +446,13 @@ PRODUCT_COPY = {
         'controls_captions': ('Visual toolbar editing · choose, drag and save', 'Maximize the image area and restore the previous layout'),
         'controls_link': 'Toolbar settings guide',
         'favorites_link': 'View favorite window presets',
-        "lang": "en-US", "title": "Voxenra · DICOM imaging workspace",
+        "lang": "en-US", "title": "VoxPlane · DICOM imaging workspace",
         "description": "A cross-platform DICOM workspace for CT/MR/PET, MPR, 3D, fusion, segmentation and export. Supports local AI auto-segmentation with TotalSegmentator.",
         "features": "Features", "manual": "Manual", "language": "简体中文",
         "heading": "A connected workspace for medical imaging", "intro": "Import CT, MR, and PET studies, then view, reconstruct, fuse, and analyze them in one workspace.",
         "download": "Download", "explore": "Read the manual",
         "ai_highlight": "Local AI segmentation · TotalSegmentator",
-        "ai_caption": "Synthetic phantom workflow demo (Chinese UI): failure, retry and successful import. Simulated inference output; not model accuracy or runtime.",
+        "ai_caption": "Synthetic phantom workflow demo: failure, retry and successful import. Simulated inference output; not model accuracy or runtime.",
         "ai_scope": "Requires a separate TotalSegmentator environment and CT fast model. Review and refine automatic results.",
         "topics": (("Import & workspace", "workflow"), ("PACS connections", "pacs"), ("AI segmentation", "ai"), ("Viewing & reconstruction", "viewing"), ("PET/CT fusion", "fusion"), ("Measurement & export", "analysis"), ("Reading controls", "controls"), ("Image-quality analysis", "quality")),
         "workflow_title": "Import and workspace",
@@ -456,7 +460,7 @@ PRODUCT_COPY = {
         "workflow_cards": (
             ("Local import", "Select files, folders, and archives together, or drag them into the window."),
             ("PACS query", "Use DICOMweb or traditional DICOM (DIMSE) to find studies and import selected series."),
-            ("Workspace", "Create, save and restore workspaces; reopen closed tabs with their results. Keep the original image files alongside the workspace."),
+            ("Workspace", "Save tabs, measurements and analysis, then open the workspace to continue. Undo an accidental tab closure from the tab bar. Keep the original image files."),
         ),
         "workflow_images": (("Drag a ZIP archive to import", "feature-zip-drag.gif"), ("PACS search and series selection", "feature-pacs.png"), ("Save and restore a workspace", "feature-workspace-overview.png")),
         "cpr_title": "Follow a path through curved and cross-sectional views",
@@ -477,14 +481,14 @@ PRODUCT_COPY = {
         "quality_title": "CT image-quality analysis",
         "quality_body": "Separate water CT number, uniformity, noise, and external-air groups. Move or resize circles, undo edits, calculate automatically, and retry failures. Export images and tables as PDF with optional branding. Save point-source MTF, ramp FWHM, and analysis records in workspaces.",
         "quality_captions": ("Water-phantom QA · CT values and uniformity", "Point-source MTF · curve and metrics"),
-        "closing_title": "Get started with Voxenra", "closing_body": "Available for macOS Apple Silicon and Windows.",
+        "closing_title": "Get started with VoxPlane", "closing_body": "Available for macOS Apple Silicon and Windows. Version 2.5.0 and earlier need a one-time manual installation; settings and workspaces are preserved.",
         "mac_download": "Download DMG", "win_setup": "Download installer", "win_portable": "Download portable",
-        "mac_help": "For Apple silicon (M-series), not Intel Macs. Open the DMG, then drag Voxenra into Applications.",
+        "mac_help": "For Apple silicon (M-series), not Intel Macs. Open the DMG, then drag VoxPlane into Applications.",
         "win_help": "Choose the installer for everyday use. The portable EXE runs without installation. Both require 64-bit Windows.",
         "first_run": "After downloading, follow Quick start",
-        "releases": "Releases", "github": "GitHub repository", "alt_hero": "MR multiplanar and 3D views in Voxenra",
-        "alt_viewing": "MR original-slice view in Voxenra", "alt_fusion": "CT, PET, and fused views in Voxenra",
-        "alt_analysis": "MPR segmentation and statistics panel in Voxenra",
+        "releases": "Releases", "github": "GitHub repository", "alt_hero": "MR multiplanar and 3D views in VoxPlane",
+        "alt_viewing": "MR original-slice view in VoxPlane", "alt_fusion": "CT, PET, and fused views in VoxPlane",
+        "alt_analysis": "MPR segmentation and statistics panel in VoxPlane",
         "measurement_caption": "ROI statistics and measurement list",
         "appearance_title": "Appearance and controls",
         "appearance_body": "Follow the system appearance or choose a fixed dark, neutral gray, or light theme. Customize interface size, mouse bindings, and tool shortcuts. Corner overlays use a global default with viewport overrides; a square viewport can resize the application window. Preferences persist after restart.",
@@ -494,24 +498,39 @@ PRODUCT_COPY = {
 
 
 def render_product_home(code: str, release: dict[str, str]) -> str:
+    def localized(name):
+        return 'en-' + name if code == 'en' and 'en-' + name in PRODUCT_SCREENSHOTS else name
+
+    def localized_image_asset(prefix, name):
+        return product_image_asset(prefix, localized(name))
+
+    def localized_image_size(name):
+        return product_image_size(localized(name))
+
+    def localized_image_sources(prefix, name):
+        return product_image_sources(prefix, localized(name))
+
+    def localized_image_attributes(prefix, name, layout='half'):
+        return product_image_attributes(prefix, localized(name), layout)
+
     copy = PRODUCT_COPY[code]
     header = site_header(code, "product")
     heading = "让医学影像<br>工作更连贯" if code == "zh" else escape(copy["heading"])
     prefix = "" if code == "zh" else "../"
     other_home = "en-us/index.html" if code == "zh" else "index.html"
     manual_home = "zh/index.html" if code == "zh" else "en/index.html"
-    download_base = f'https://github.com/l5769389/voxenra/releases/download/{quote(release["tag"], safe="")}/'
+    download_base = f'https://github.com/junforge-dev/voxplane/releases/download/{quote(release["tag"], safe="")}/'
     mac_url = escape(download_base + quote(release["macos"], safe=""))
     win_setup_url = escape(download_base + quote(release["windows_installer"], safe=""))
     win_portable_url = escape(download_base + quote(release["windows_portable"], safe=""))
     version = escape('v' + release["version"])
     development_notice = (f'<p class="development-note product-container">{escape(copy["development_note"].format(version=release["version"]))}</p>'
                           if release["version"] == "2.1.3" else "")
-    ai_image = product_image_asset(prefix, "feature-ai-segmentation.gif")
-    ai_still = ", ".join(f"{url} {width}w" for width, url in product_image_sources(prefix, "feature-ai-segmentation.png"))
+    ai_image = localized_image_asset(prefix, "feature-ai-segmentation.gif")
+    ai_still = ", ".join(f"{url} {width}w" for width, url in localized_image_sources(prefix, "feature-ai-segmentation.png"))
     feature_rows = [f'''<section class="product-feature product-feature-wide" id="ai">
 <div class="product-feature-copy"><h2>{escape(copy["ai_title"])}</h2><p>{escape(copy["ai_body"])}</p></div>
-<figure><a href="{ai_image}" target="_blank" rel="noopener"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{ai_still}" sizes="{PRODUCT_IMAGE_SIZES["wide"]}"><img {product_image_attributes(prefix, "feature-ai-segmentation.gif", "wide")} {product_image_size("feature-ai-segmentation.gif")} alt="{escape(copy["ai_caption"])}" loading="lazy"></picture></a><figcaption>{escape(copy["ai_caption"])}</figcaption></figure>
+<figure><a href="{ai_image}" target="_blank" rel="noopener"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{ai_still}" sizes="{PRODUCT_IMAGE_SIZES["wide"]}"><img {localized_image_attributes(prefix, "feature-ai-segmentation.gif", "wide")} {localized_image_size("feature-ai-segmentation.gif")} alt="{escape(copy["ai_caption"])}" loading="lazy"></picture></a><figcaption>{escape(copy["ai_caption"])}</figcaption></figure>
 <div class="ai-details"><p>{escape(copy["ai_scope"])}</p><a href="{prefix}{code}/segmentation.html#step-11">{escape(copy["ai_link"])}</a></div></section>''']
     # New workflow captures have real, separately recorded English interfaces.
     media_prefix = 'en-' if code == 'en' else ''
@@ -525,12 +544,12 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
             name = media_prefix + name
             still = ''
             if name.endswith('.gif'):
-                poster = ', '.join(f'{url} {width}w' for width, url in product_image_sources(prefix, name[:-4] + '.png'))
+                poster = ', '.join(f'{url} {width}w' for width, url in localized_image_sources(prefix, name[:-4] + '.png'))
                 still = f'<source media="(prefers-reduced-motion: reduce)" srcset="{poster}" sizes="{PRODUCT_IMAGE_SIZES["half"]}">'
-            figures.append(f'<figure><a href="{product_image_asset(prefix, name)}" target="_blank" rel="noopener">'
-                           f'<picture>{still}<img {product_image_attributes(prefix, name)} {product_image_size(name)} '
+            figures.append(f'<figure><a href="{localized_image_asset(prefix, name)}" target="_blank" rel="noopener">'
+                           f'<picture>{still}<img {localized_image_attributes(prefix, name)} {localized_image_size(name)} '
                            f'alt="{escape(caption)}" loading="lazy"></picture></a><figcaption>{escape(caption)}</figcaption></figure>')
-        extra = (f'<a href="{product_image_asset(prefix, media_prefix + "feature-window-favorites.png")}" target="_blank" rel="noopener">'
+        extra = (f'<a href="{localized_image_asset(prefix, media_prefix + "feature-window-favorites.png")}" target="_blank" rel="noopener">'
                  f'{escape(copy["favorites_link"])}</a> · ' if key == 'controls' else '')
         workflow_features[key] = (f'<section class="product-feature product-feature-wide" id="{key}">'
                             f'<div class="product-feature-copy"><h2>{escape(copy[key + "_title"])}</h2><p>{escape(copy[key + "_body"])}</p></div>'
@@ -538,7 +557,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
                                  f'<a href="{prefix}{code}/{guide}">{escape(copy[key + "_link"])}</a></div></section>')
     for key, image in (("viewing", "feature-mr-reading.png"), ("cpr", media_prefix + "feature-cpr-reference.png"), ("fusion", "feature-fusion.png"), ("analysis", "feature-analysis.gif")):
         title = escape(copy[key + "_title"])
-        image_url = product_image_asset(prefix, image)
+        image_url = localized_image_asset(prefix, image)
         if key in ("viewing", "analysis"):
             media = (
                 (("feature-mr-reading.png", copy["viewing_caption"]),
@@ -549,15 +568,15 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
             )
             figures = []
             for asset, caption in media:
-                url = product_image_asset(prefix, asset)
-                figures.append(f'<figure><a href="{url}" target="_blank" rel="noopener"><img {product_image_attributes(prefix, asset)} {product_image_size(asset)} alt="{escape(caption)}" loading="lazy"></a><figcaption>{escape(caption)}</figcaption></figure>')
+                url = localized_image_asset(prefix, asset)
+                figures.append(f'<figure><a href="{url}" target="_blank" rel="noopener"><img {localized_image_attributes(prefix, asset)} {localized_image_size(asset)} alt="{escape(caption)}" loading="lazy"></a><figcaption>{escape(caption)}</figcaption></figure>')
             feature_rows.append(f'''<section class="product-feature product-feature-wide" id="{key}">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
 <div class="feature-media-grid">{"".join(figures)}</div></section>''')
             continue
         feature_rows.append(f'''<section class="product-feature" id="{key}">
 <div class="product-feature-copy"><h2>{title}</h2><p>{escape(copy[key + "_body"])}</p></div>
-<figure><a href="{image_url}" target="_blank" rel="noopener"><img {product_image_attributes(prefix, image, "hero")} {product_image_size(image)} alt="{escape(copy["alt_" + key])}" loading="lazy"></a><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
+<figure><a href="{image_url}" target="_blank" rel="noopener"><img {localized_image_attributes(prefix, image, "hero")} {localized_image_size(image)} alt="{escape(copy["alt_" + key])}" loading="lazy"></a><figcaption>{escape(copy[key + "_caption"])}</figcaption></figure></section>''')
     feature_rows.insert(0, workflow_features['pacs'])
     feature_rows.append(workflow_features['controls'])
     topics = "".join(f'<a href="#{anchor}">{escape(label)}</a>' for label, anchor in copy["topics"])
@@ -565,45 +584,45 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     for (title, body), (caption, image) in zip(copy["workflow_cards"], copy["workflow_images"], strict=True):
         if code == "en" and "en-" + image in PRODUCT_SCREENSHOTS:
             image = "en-" + image
-        image_url = product_image_asset(prefix, image)
-        full_image_url = product_image_asset(prefix, "feature-zip-drop.png") if image == "feature-zip-drag.gif" else image_url
+        image_url = localized_image_asset(prefix, image)
+        full_image_url = localized_image_asset(prefix, "feature-zip-drop.png") if image.endswith("feature-zip-drag.gif") else image_url
         full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
         workflow_cards.append(
             f'<article class="workflow-card"><h3>{escape(title)}</h3><p>{escape(body)}</p>'
             f'<figure class="workflow-image"><a href="{full_image_url}" target="_blank" rel="noopener" '
             f'aria-label="{escape(full_image_label)}"><span class="workflow-image-frame">'
-            f'<img {product_image_attributes(prefix, image, "third")} {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<img {localized_image_attributes(prefix, image, "third")} {localized_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure></article>'
         )
     quality_images = []
     for caption, image in zip(copy["quality_captions"], ("feature-water-qa.png", "feature-mtf.png"), strict=True):
         if code == "en" and "en-" + image in PRODUCT_SCREENSHOTS:
             image = "en-" + image
-        image_url = product_image_asset(prefix, image)
+        image_url = localized_image_asset(prefix, image)
         full_image_label = ("查看大图：" if code == "zh" else "View full image: ") + caption
         quality_images.append(
             f'<figure class="quality-image"><a href="{image_url}" target="_blank" rel="noopener" '
             f'aria-label="{escape(full_image_label)}"><span class="quality-image-frame">'
-            f'<img {product_image_attributes(prefix, image)} {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
+            f'<img {localized_image_attributes(prefix, image)} {localized_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure>'
         )
     theme_images = []
     for caption, image in zip(copy["appearance_captions"], (
         "feature-theme-dark.png", "feature-theme-graphite.png", "feature-theme-light.png",
     ), strict=True):
-        image_url = product_image_asset(prefix, image)
+        image_url = localized_image_asset(prefix, image)
         theme_images.append(
             f'<figure><a href="{image_url}" target="_blank" rel="noopener">'
-            f'<img {product_image_attributes(prefix, image, "third")} {product_image_size(image)} alt="{escape(caption)}" loading="lazy"></a>'
+            f'<img {localized_image_attributes(prefix, image, "third")} {localized_image_size(image)} alt="{escape(caption)}" loading="lazy"></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure>'
         )
     return f'''<!doctype html><html lang="{copy["lang"]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="{escape(copy["description"])}"><title>{escape(copy["title"])}</title>
-<link rel="icon" href="{prefix}assets/voxenra-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset(prefix, 'site-shell.css')}"><link rel="stylesheet" href="{site_asset(prefix, 'product.css')}">
+<link rel="icon" href="{prefix}assets/voxplane-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset(prefix, 'site-shell.css')}"><link rel="stylesheet" href="{site_asset(prefix, 'product.css')}">
 <link rel="alternate" hreflang="zh-CN" href="{prefix}index.html"><link rel="alternate" hreflang="en-US" href="{prefix}en-us/index.html"></head>
 <body><a class="skip-link" href="#main">{'跳转到正文' if code == 'zh' else 'Skip to content'}</a>{header}
 <main id="main"><section class="product-hero product-container"><div class="hero-copy"><h1>{heading}</h1><p>{escape(copy["intro"])}</p><a class="ai-highlight" href="#ai">{escape(copy["ai_highlight"])}</a><div class="product-actions"><a class="primary-action" href="#download">{escape(copy["download"])}</a><a class="text-action" href="{prefix}{manual_home}">{escape(copy["explore"])}</a></div></div>
-<figure class="hero-visual"><img {product_image_attributes(prefix, 'hero-mpr.png', 'hero')} {product_image_size("hero-mpr.png")} alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
+<figure class="hero-visual"><img {localized_image_attributes(prefix, 'hero-mpr.png', 'hero')} {localized_image_size("hero-mpr.png")} alt="{escape(copy["alt_hero"])}" fetchpriority="high"><figcaption class="sr-only">{escape(copy["alt_hero"])}</figcaption></figure></section>
 <nav class="product-topics product-container" aria-label="{escape(copy["features"])}">{topics}</nav>
 {development_notice}
 <div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{"".join(workflow_cards)}</div></section>
@@ -615,7 +634,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 <div class="download-platforms"><div class="download-platform"><img src="{prefix}assets/macos.svg" alt=""><h3>macOS</h3><p>Apple Silicon · {version}</p><div class="download-links"><a href="{mac_url}">{escape(copy["mac_download"])}</a></div><p class="download-help">{escape(copy["mac_help"])}</p></div>
 <div class="download-platform"><img src="{prefix}assets/windows.svg" alt=""><h3>Windows</h3><p>x64 · {version}</p><div class="download-links"><a href="{win_setup_url}">{escape(copy["win_setup"])}</a><a href="{win_portable_url}">{escape(copy["win_portable"])}</a></div><p class="download-help">{escape(copy["win_help"])}</p></div></div>
 <a class="closing-manual" href="{prefix}{code}/quick-start.html">{escape(copy["first_run"])}</a></section></main>
-<footer class="product-footer"><div class="product-container"><div><strong>Voxenra</strong><p>{escape(copy["description"])}</p></div><nav aria-label="{'页脚' if code == 'zh' else 'Footer'}"><a href="https://github.com/l5769389/voxenra">{escape(copy["github"])}</a><a href="{prefix}{manual_home}">{escape(copy["manual"])}</a><a href="https://github.com/l5769389/voxenra/releases">{escape(copy["releases"])}</a><a href="{prefix}{other_home}">{escape(copy["language"])}</a></nav></div></footer></body></html>'''
+<footer class="product-footer"><div class="product-container"><div><strong>VoxPlane</strong><p>{escape(copy["description"])}</p></div><nav aria-label="{'页脚' if code == 'zh' else 'Footer'}"><a href="https://github.com/junforge-dev/voxplane">{escape(copy["github"])}</a><a href="{prefix}{manual_home}">{escape(copy["manual"])}</a><a href="https://github.com/junforge-dev/voxplane/releases">{escape(copy["releases"])}</a><a href="{prefix}{other_home}">{escape(copy["language"])}</a></nav></div></footer></body></html>'''
 
 
 def build(output: Path) -> None:
@@ -638,7 +657,7 @@ def build(output: Path) -> None:
     output.mkdir(parents=True, exist_ok=True)
     asset_output = output / "assets"
     asset_output.mkdir(exist_ok=True)
-    shutil.copy2(ASSETS / "brand/voxenra-mark.svg", asset_output / "voxenra-mark.svg")
+    shutil.copy2(ASSETS / "brand/voxplane-mark.svg", asset_output / "voxplane-mark.svg")
     for target, source in PRODUCT_SCREENSHOTS.items():
         shutil.copy2(ROOT / "docs/screenshots" / source, asset_output / target)
         for _, filename, data in product_image_variants(target):

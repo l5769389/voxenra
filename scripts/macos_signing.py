@@ -65,7 +65,7 @@ def staple(target: Path) -> None:
 
 def notarize_app(application: Path, profile: str, logs: Path) -> None:
     # Staple the app before putting it inside the final read-only DMG.
-    with TemporaryDirectory(prefix='voxenra-notary-') as temporary:
+    with TemporaryDirectory(prefix='voxplane-notary-') as temporary:
         archive = Path(temporary) / f'{application.stem}.zip'
         subprocess.run(['ditto', '-c', '-k', '--keepParent', str(application), str(archive)], check=True)
         notarize(archive, profile, logs, 'app')

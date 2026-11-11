@@ -1,6 +1,6 @@
 # macOS Developer ID 签名与公证
 
-Voxenra 通过官网／GitHub 分发 DMG，采用 Developer ID Application 签名和 Apple 公证，不要求上架 Mac App Store。会员资格本身不会自动签名已有安装包。
+VoxPlane 通过官网／GitHub 分发 DMG，采用 Developer ID Application 签名和 Apple 公证，不要求上架 Mac App Store。会员资格本身不会自动签名已有安装包。
 
 ## 一次性配置
 
@@ -17,7 +17,7 @@ Voxenra 通过官网／GitHub 分发 DMG，采用 Developer ID Application 签�
 4. 保存公证凭据到本机钥匙串。在终端执行以下命令，按交互提示输入 Apple ID、Team ID 和 **App 专用密码**：
 
    ```bash
-   xcrun notarytool store-credentials "voxenra-notary"
+   xcrun notarytool store-credentials "voxplane-notary"
    ```
 
    App 专用密码在 Apple Account 网站创建，不是账号登录密码。不要把密码、私钥、证书导出文件或 API 私钥发到聊天、写入仓库或放入命令行参数。工具也支持 App Store Connect API 密钥，按 Apple 官方说明配置即可。
@@ -28,7 +28,7 @@ Voxenra 通过官网／GitHub 分发 DMG，采用 Developer ID Application 签�
 
 ```bash
 export MACOS_SIGN_IDENTITY='Developer ID Application: YOUR NAME (TEAMID)'
-export MACOS_NOTARY_PROFILE='voxenra-notary'
+export MACOS_NOTARY_PROFILE='voxplane-notary'
 
 # 只验证本地证书、工具及 Apple 认证；不构建、不上传应用。
 bash scripts/build_macos.sh --check-signing
@@ -55,6 +55,6 @@ Apple 返回值及公证日志位于 `build/macos/notarization/<版本>-<架构>
 
 完成脚本接入并不等于产物已获 Apple 认可。首次配置后仍需实测正式包的 QML、Python 扩展、Qt/VTK 插件、文件访问及自动更新；若 Hardened Runtime 暴露兼容问题，先根据日志定位，不直接关闭库校验等保护。
 
-在另一台未运行过 Voxenra 的 Mac 上，从正式下载链接获取 DMG（保留正常下载隔离属性），断网安装并启动，确认无需“设置 → 仍要打开”。正常的“来自互联网，是否打开”确认以及机构管理策略仍可能存在。
+在另一台未运行过 VoxPlane 的 Mac 上，从正式下载链接获取 DMG（保留正常下载隔离属性），断网安装并启动，确认无需“设置 → 仍要打开”。正常的“来自互联网，是否打开”确认以及机构管理策略仍可能存在。
 
 参考：[Apple Developer ID](https://developer.apple.com/developer-id/)、[公证流程](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)、[PyInstaller macOS 签名](https://pyinstaller.org/en/stable/feature-notes.html#macos-binary-code-signing)。

@@ -8,9 +8,9 @@ import pytest
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtQuick import QQuickItem
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.model import ToolType
-from qt_dicom_viewer.settings.preferences import DEFAULTS, normalize_settings
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.model import ToolType
+from voxplane.settings.preferences import DEFAULTS, normalize_settings
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_display_tools_qml import display_panel, _find, _click
 from test_measurement_qml import viewport, qt_app
 from test_series_sidebar import sidebar_scene
@@ -152,7 +152,7 @@ def test_corner_default_migration_and_explicit_removal_survive_restart(qt_app, t
 
 from test_pacs_qml import scene
 from test_pet_fusion import paired_series
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.model import DicomFolderScanSnapshot
 
 
 def test_pet_mpr_shortcuts_and_compact_transform_field(scene, paired_series, tmp_path):

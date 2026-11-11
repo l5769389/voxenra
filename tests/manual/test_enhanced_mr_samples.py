@@ -7,11 +7,11 @@ import pytest
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.mr import mr_series_error
-from qt_dicom_viewer.core.series_thumbnail import read_series_thumbnail
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.mr import mr_series_error
+from voxplane.core.series_thumbnail import read_series_thumbnail
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_tag_qml import find, click, descendants
@@ -183,7 +183,7 @@ def test_native_thin_mr_3d_and_mpr_reference(scene,sample_root,tmp_path):
 @pytest.mark.parametrize('polarity', ['MONOCHROME1','MONOCHROME2'])
 def test_native_mr_padding_stays_excluded_on_mip_and_reset(scene,tmp_path,polarity):
     from test_mr import write_mr_series
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     from vtkmodules.util.numpy_support import vtk_to_numpy
     window,app,warnings=scene
     def padding(ds,index):

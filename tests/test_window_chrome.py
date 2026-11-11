@@ -6,7 +6,7 @@ import sys
 import pytest
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.infrastructure import brand_settings
+from voxplane.infrastructure import brand_settings
 from test_pacs_qml import scene
 from test_dicom_tags import qt_app, wait_until
 from test_tag_qml import find, click, descendants
@@ -41,10 +41,10 @@ def test_title_brand_replaces_sidebar_brand_and_compact_collapse(scene, tmp_path
     assert header.height() == (0 if sys.platform == "win32" else 32)
     assert find(window, "sidebarToggle").mapToScene(QPointF()).y() > header.height()
     assert find(window, "sidebarToggle").isVisible()
-    assert window.grabWindow().save(str(tmp_path / "voxenra-collapsed.png"))
+    assert window.grabWindow().save(str(tmp_path / "voxplane-collapsed.png"))
     click(window, find(window, "sidebarToggle"))
     assert sidebar.width() == 300 and sidebar.isVisible()
-    assert window.grabWindow().save(str(tmp_path / "voxenra-titlebar.png"))
+    assert window.grabWindow().save(str(tmp_path / "voxplane-titlebar.png"))
     assert not warnings, warnings
 
 
@@ -62,16 +62,16 @@ def test_migration_preserves_old_files_and_never_overwrites_new(tmp_path):
     assert "Saved PACS" in (old / "pacs.json").read_text()
 
 
-def test_storage_identity_uses_voxenra_and_copies_legacy(qt_app, tmp_path, monkeypatch):
+def test_storage_identity_uses_voxplane_and_copies_legacy(qt_app, tmp_path, monkeypatch):
     original = qt_app.organizationName(), qt_app.applicationName()
-    old, new = tmp_path / "legacy", tmp_path / "voxenra"
+    old, new = tmp_path / "legacy", tmp_path / "voxplane"
     old.mkdir()
     (old / "display-settings.json").write_text('{"layout":{"rightPanelWidth":350}}')
-    monkeypatch.setattr(brand_settings, "QStandardPaths", SimpleNamespace(AppConfigLocation=0,
+    monkeypatch.setattr(brand_settings, "QStandardPaths", SimpleNamespace(AppConfigLocation=0, AppLocalDataLocation=1,
         writableLocation=lambda _: str(old if qt_app.applicationName() == brand_settings.LEGACY_APPLICATION else new)))
     try:
         brand_settings.configure_storage_identity()
-        assert (qt_app.organizationName(), qt_app.applicationName()) == ("Voxenra", "Voxenra")
+        assert (qt_app.organizationName(), qt_app.applicationName()) == ("VoxPlane", "VoxPlane")
         assert (new / "display-settings.json").read_bytes() == (old / "display-settings.json").read_bytes()
     finally:
         qt_app.setOrganizationName(original[0])
@@ -89,7 +89,7 @@ def _mac_send(obj, selector, *args):
     return send(obj, lib.sel_registerName(selector.encode()), *args)
 
 
-@pytest.mark.skipif(os.environ.get("VOXENRA_NATIVE_QA") != "1", reason="Requires native window controls")
+@pytest.mark.skipif(os.environ.get("VOXPLANE_NATIVE_QA") != "1", reason="Requires native window controls")
 @pytest.mark.parametrize("theme", ["dark", "light"])
 def test_native_window_maximize_restore_minimize_and_close(scene, tmp_path, theme):
     import sys
@@ -102,7 +102,7 @@ def test_native_window_maximize_restore_minimize_and_close(scene, tmp_path, them
         ns_window = _mac_send(int(window.winId()), "window")
         buttons = [_mac_send(ns_window, "standardWindowButton:", index) for index in range(3)]
         assert _mac_send(ns_window, "titleVisibility") == 1
-        assert window.title() == "Voxenra"
+        assert window.title() == "VoxPlane"
         assert _mac_send(ns_window, "titlebarAppearsTransparent")
         # Verify the actual AppKit appearance, not only the QML header fill.
         name = _mac_send(_mac_send(ns_window, "effectiveAppearance"), "name")
@@ -152,7 +152,7 @@ def test_native_window_maximize_restore_minimize_and_close(scene, tmp_path, them
     assert not warnings, warnings
 
 
-@pytest.mark.skipif(sys.platform != "win32" or os.environ.get("VOXENRA_NATIVE_QA") != "1",
+@pytest.mark.skipif(sys.platform != "win32" or os.environ.get("VOXPLANE_NATIVE_QA") != "1",
                     reason="Requires the native Windows desktop")
 @pytest.mark.parametrize("theme", ["dark", "light"])
 def test_windows_native_caption_has_matching_controls_and_drag_hit_target(scene, tmp_path, theme):
@@ -177,7 +177,7 @@ def test_windows_native_caption_has_matching_controls_and_drag_hit_target(scene,
     user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
     title = ctypes.create_unicode_buffer(256)
     user32.GetWindowTextW(hwnd, title, len(title))
-    assert title.value == "Voxenra"
+    assert title.value == "VoxPlane"
     rect, client = wintypes.RECT(), wintypes.POINT(0, 0)
     assert user32.GetWindowRect(hwnd, ctypes.byref(rect))
     assert user32.ClientToScreen(hwnd, ctypes.byref(client))

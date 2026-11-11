@@ -12,7 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
-from qt_dicom_viewer.core import bead_mtf
+from voxplane.core import bead_mtf
 
 
 def background_cases():

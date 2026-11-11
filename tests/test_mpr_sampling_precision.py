@@ -4,10 +4,10 @@ from itertools import product
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.mpr_rotation import rotate_mpr_state_3d
-from qt_dicom_viewer.model import MprPlane
-from qt_dicom_viewer.model.dicom_core import MprFrame, MprState
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.mpr_rotation import rotate_mpr_state_3d
+from voxplane.model import MprPlane
+from voxplane.model.dicom_core import MprFrame, MprState
 from test_mpr_reslicer import _volume
 
 

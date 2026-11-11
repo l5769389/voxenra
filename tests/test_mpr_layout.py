@@ -11,17 +11,17 @@ from PySide6.QtTest import QTest
 from vtkmodules.vtkRenderingCore import vtkRenderer
 from shiboken6 import delete
 
-from qt_dicom_viewer.core.mpr_layout import MPR_LAYOUTS, plane_box_intersection
-from qt_dicom_viewer.core.volume_view import view_basis, rotate_drag, camera_parameters
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import MprPlane
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
-from qt_dicom_viewer.ui.mpr_reference_overlay import MprReferenceOverlay
+from voxplane.core.mpr_layout import MPR_LAYOUTS, plane_box_intersection
+from voxplane.core.volume_view import view_basis, rotate_drag, camera_parameters
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import MprPlane
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
+from voxplane.ui.mpr_reference_overlay import MprReferenceOverlay
 from test_pet_fusion import paired_series
 from test_measurement_qml import qt_app, _visual_children
 from test_volume_view import volume
@@ -83,8 +83,8 @@ def test_layout_reuses_volume_and_preserves_mpr_and_view_state(loaded):
 
 
 def test_layout_language_switch_preserves_geometry_and_render_state(loaded, tmp_path):
-    from qt_dicom_viewer.ui.controller.language_controller import LanguageController
-    from qt_dicom_viewer.ui.controller.manual_tab_controller import ManualTabController
+    from voxplane.ui.controller.language_controller import LanguageController
+    from voxplane.ui.controller.manual_tab_controller import ManualTabController
 
     _, tab, _, requests, failures = loaded
     layout = tab.mprLayout
@@ -189,7 +189,7 @@ def test_reference_pet_units_use_shared_mpr_loading(loaded):
     _, tab, _, requests, failures = loaded
     if not hasattr(tab, "pet_display"):
         return
-    from qt_dicom_viewer.model.render_models import VolumeLoadRequest
+    from voxplane.model.render_models import VolumeLoadRequest
     layout = tab.mprLayout
     layout.setLayout("quad")
     layout.activate()
@@ -278,8 +278,8 @@ def test_reference_planes_clip_to_oblique_anisotropic_volume(volume):
 
 def test_four_d_reference_tracks_phase_and_ignores_closed_updates(qt_app, tmp_path):
     from test_four_d import _cross_series_four_d
-    from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.application.series_catalog import SeriesCatalog
+    from voxplane.model import DicomFolderScanSnapshot
     series = _cross_series_four_d(tmp_path)
     catalog = SeriesCatalog()
     catalog.update(DicomFolderScanSnapshot(folder=tmp_path, series=series,
@@ -341,7 +341,7 @@ def test_pet_reference_restore_before_first_volume_and_reset_uses_shared_unit(lo
     _, tab, _, requests, failures = loaded
     if not hasattr(tab, "pet_display"):
         return
-    from qt_dicom_viewer.ui.controller.tab.mpr_layout_controller import MprLayoutController
+    from voxplane.ui.controller.tab.mpr_layout_controller import MprLayoutController
     layout = tab.mprLayout
     layout.setLayout("quad")
     view = layout.volumeViewport
@@ -448,7 +448,7 @@ def test_real_qml_layout_choices_bounds_and_state(loaded, monkeypatch, size):
         QTest.qWait(20)
 
 
-@pytest.mark.skipif(os.environ.get("VOXENRA_NATIVE_QA") != "1", reason="requires native desktop window")
+@pytest.mark.skipif(os.environ.get("VOXPLANE_NATIVE_QA") != "1", reason="requires native desktop window")
 def test_native_four_up_reference_view(loaded, tmp_path):
     workspace, tab, provider, _, failures = loaded
     layout = tab.mprLayout
@@ -571,8 +571,8 @@ def test_main_toolbar_tracks_reference_across_tabs_and_windows(sidebar_scene, mo
 def test_four_d_playback_waits_for_visible_reference_frame(qt_app, tmp_path):
     from types import SimpleNamespace
     from test_four_d import _cross_series_four_d
-    from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.application.series_catalog import SeriesCatalog
+    from voxplane.model import DicomFolderScanSnapshot
     records = _cross_series_four_d(tmp_path)
     catalog = SeriesCatalog()
     catalog.update(DicomFolderScanSnapshot(folder=tmp_path, series=records,

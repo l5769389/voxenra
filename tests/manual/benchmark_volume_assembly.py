@@ -19,8 +19,8 @@ import numpy as np
 from pydicom.dataset import Dataset, FileDataset, FileMetaDataset
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, PositronEmissionTomographyImageStorage
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
 
 
 def generate_case(folder, kind, slices=128, size=512):

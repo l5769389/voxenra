@@ -288,7 +288,7 @@ def test_save_all_windows_and_restore_flattened_order(sidebar_scene, tmp_path):
     session, other = detached(app, tabs[0])
     draw_length(tabs[0].activeViewport)
     draw_length(tabs[1].activeViewport)
-    from qt_dicom_viewer.ui.controller.measurement_report_controller import capture_results
+    from voxplane.ui.controller.measurement_report_controller import capture_results
     rows, _, _ = capture_results(session, app._series_catalog, all_tabs=False)
     all_rows, _, _ = capture_results(session, app._series_catalog, all_tabs=True)
     assert len(rows) == 1 and len(all_rows) == 2
@@ -310,7 +310,7 @@ def test_save_all_windows_and_restore_flattened_order(sidebar_scene, tmp_path):
 
 
 def test_loading_failure_retry_close_and_stale_result_after_transfer(sidebar_scene):
-    from qt_dicom_viewer.model import RenderFailure
+    from voxplane.model import RenderFailure
     window, app, records, warnings = sidebar_scene
     registry = app.workspaceController
     requests = []
@@ -424,8 +424,8 @@ def test_other_page_types_move_without_rebuilding_controller(sidebar_scene, kind
 
 @pytest.mark.parametrize('kind', ['pet', 'fusion', '4d'])
 def test_reconstructed_pages_keep_volume_and_phase(sidebar_scene, paired_series, tmp_path, kind):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.workspace_snapshot import editable_state, edit_signature
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.workspace_snapshot import editable_state, edit_signature
     from test_four_d import _cross_series_four_d
     window, app, records, warnings = sidebar_scene
     _, ct, pet = paired_series

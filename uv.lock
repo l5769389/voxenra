@@ -1407,7 +1407,7 @@ wheels = [
 ]
 
 [[package]]
-name = "qt-dicom-viewer"
+name = "voxplane"
 version = "2.6.0"
 source = { editable = "." }
 dependencies = [

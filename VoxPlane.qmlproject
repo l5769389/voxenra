@@ -1,0 +1,29 @@
+import QmlProject 1.1
+
+Project {
+    mainFile: "src/voxplane/qml/Main.qml"
+
+    qt6Project: true
+    widgetApp: true
+
+    importPaths: [
+        "src/voxplane/qml"
+    ]
+
+    QmlFiles {
+        directory: "src/voxplane/qml"
+    }
+
+    JavaScriptFiles {
+        directory: "src/voxplane/qml"
+    }
+
+    ImageFiles {
+        directory: "src/voxplane/qml"
+    }
+
+    Files {
+        directory: "src/voxplane/qml"
+        filter: "qmldir;*.svg;*.png;*.ttf;*.otf"
+    }
+}

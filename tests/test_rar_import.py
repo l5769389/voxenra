@@ -9,7 +9,7 @@ import zipfile
 
 import pytest
 
-from qt_dicom_viewer.core.local_import import (
+from voxplane.core.local_import import (
     ImportCancelled,
     ImportErrorDetail,
     ImportLimits,

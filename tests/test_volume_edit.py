@@ -11,12 +11,12 @@ from vtkmodules.vtkRenderingCore import vtkCamera
 from vtkmodules.vtkRenderingOpenGL2 import vtkGenericOpenGLRenderWindow
 from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
 
-from qt_dicom_viewer.core.volume_edit import bed_keep_mask, crop_keep_mask, polygon_contains
-from qt_dicom_viewer.core.volume_view import VolumeViewState, camera_parameters, face_rotation
-from qt_dicom_viewer.model import TabType
-from qt_dicom_viewer.model.dicom_core import VolumeGeometry
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.volume_render_backend import VolumeRenderBackend
+from voxplane.core.volume_edit import bed_keep_mask, crop_keep_mask, polygon_contains
+from voxplane.core.volume_view import VolumeViewState, camera_parameters, face_rotation
+from voxplane.model import TabType
+from voxplane.model.dicom_core import VolumeGeometry
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.volume_render_backend import VolumeRenderBackend
 from test_measurement_qml import qt_app
 from test_volume_display import loaded_tab
 from test_volume_view import volume, make_tab

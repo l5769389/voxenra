@@ -15,21 +15,21 @@ from pydicom.uid import (
     generate_uid,
 )
 
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import (
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import (
     _build_series_record,
     _read_instance,
 )
-from qt_dicom_viewer.core.measurement_geometry import roi_metrics
-from qt_dicom_viewer.core.pet import (
+from voxplane.core.measurement_geometry import roi_metrics
+from voxplane.core.pet import (
     ENHANCED_PET_IMAGE_STORAGE_UID,
     PET_IMAGE_STORAGE_UID,
     UnsupportedPetSeriesError,
     pet_2d_support_error,
     validate_pet_2d_series,
 )
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import (
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import (
     DicomFolderScanSnapshot,
     FrameDisplayMeta,
     ImageGeometryMeta,
@@ -50,13 +50,13 @@ from qt_dicom_viewer.model import (
     ViewportConfig,
     WindowLevel,
 )
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.stack_viewport_controller import (
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.viewport.image_2d.stack_viewport_controller import (
     StackViewportController,
 )
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
 from shiboken6 import delete
 from test_measurement_qml import _visual_children, qt_app
 
@@ -783,7 +783,7 @@ def test_pet_qml_uses_intensity_panel_without_wl_ww(qt_app, tmp_path) -> None:
     requests: list[StackRenderRequest] = []
     controller.renderRequested.connect(requests.append)
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(360, 720)
@@ -798,7 +798,7 @@ def test_pet_qml_uses_intensity_panel_without_wl_ww(qt_app, tmp_path) -> None:
     })
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/RightPanel.qml"
+        / "src/voxplane/qml/sections/RightPanel.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [
@@ -851,7 +851,7 @@ def test_pet_qml_uses_pet_specific_corner_information(qt_app, tmp_path) -> None:
     provider = DicomImageProvider()
     provider.set_array("pet-viewport", result.image)
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(720, 520)
@@ -866,7 +866,7 @@ def test_pet_qml_uses_pet_specific_corner_information(qt_app, tmp_path) -> None:
     })
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/center/viewportArea/Viewport.qml"
+        / "src/voxplane/qml/sections/center/viewportArea/Viewport.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [

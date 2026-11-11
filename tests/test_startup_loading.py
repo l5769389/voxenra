@@ -12,8 +12,8 @@ import sys
 import tempfile
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 app = QApplication([])
 with tempfile.TemporaryDirectory() as directory:
     root = Path(directory)

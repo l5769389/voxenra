@@ -6,7 +6,7 @@ from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_settings_redesign import reveal_setting

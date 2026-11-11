@@ -10,11 +10,11 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # Register Qt Quick before creating/destroying engines.
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.theme_palette import palette_for
+from voxplane.ui.theme_palette import palette_for
 from test_dicom_tags import qt_app
 
 ROOT = Path(__file__).resolve().parents[1]
-THEME = ROOT / 'src/qt_dicom_viewer/qml/theme'
+THEME = ROOT / 'src/voxplane/qml/theme'
 
 
 def test_theme_source_is_valid_complete_and_generated_assets_are_current():
@@ -29,15 +29,15 @@ def test_theme_source_is_valid_complete_and_generated_assets_are_current():
     assert palette_for('light')['textPrimary'] != 'red'
     generator = runpy.run_path(str(ROOT / 'scripts/generate_theme_data.py'))
     assert (THEME / 'PaletteData.js').read_text() == generator['generated_text'](THEME / 'palettes.json')
-    assets = {Path(source).resolve() for source, _ in runpy.run_path(str(ROOT / 'packaging/hooks/hook-qt_dicom_viewer.py'))['datas']}
-    qrc = (ROOT / 'Voxenra.qrc').read_text()
+    assets = {Path(source).resolve() for source, _ in runpy.run_path(str(ROOT / 'packaging/hooks/hook-voxplane.py'))['datas']}
+    qrc = (ROOT / 'VoxPlane.qrc').read_text()
     for name in ('palettes.json', 'PaletteData.js'):
         assert THEME / name in assets
         assert (THEME / name).relative_to(ROOT).as_posix() in qrc
 
 
 def test_pages_do_not_bypass_theme_with_literal_colors():
-    for path in (ROOT / 'src/qt_dicom_viewer/qml').rglob('*.qml'):
+    for path in (ROOT / 'src/voxplane/qml').rglob('*.qml'):
         assert not re.search(r'["\']#[0-9a-fA-F]{3,8}["\']', path.read_text()), path
 
 

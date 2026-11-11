@@ -12,15 +12,15 @@ from pydicom.uid import CTImageStorage, generate_uid
 from test_measurement_qml import qt_app, _visual_children, _scene
 from test_mpr_voi_qml import _owner
 from test_pet_2d import _pet_dataset, _write_dataset
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.core.volume_manager import VolumeManager
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.core.volume_manager import VolumeManager
 from PySide6.QtCore import QObject
 ROOT=Path(__file__).resolve().parents[1]
 

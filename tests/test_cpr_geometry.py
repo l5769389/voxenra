@@ -7,8 +7,8 @@ import pytest
 
 
 def api():
-    from qt_dicom_viewer.model.cpr import CprError, CprPath, CprSettings
-    from qt_dicom_viewer.core.cpr_geometry import sample_centerline
+    from voxplane.model.cpr import CprError, CprPath, CprSettings
+    from voxplane.core.cpr_geometry import sample_centerline
     return CprError, CprPath, CprSettings, sample_centerline
 
 
@@ -116,7 +116,7 @@ def test_oversized_sampling_fails_without_allocating_the_requested_grid():
 
 
 def test_cancelled_geometry_does_not_return_a_partial_path():
-    from qt_dicom_viewer.core.render_cancellation import render_cancellation
+    from voxplane.core.render_cancellation import render_cancellation
     cancelled = Event()
     cancelled.set()
     with render_cancellation(cancelled), pytest.raises(InterruptedError):

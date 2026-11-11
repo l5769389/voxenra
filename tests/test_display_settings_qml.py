@@ -6,9 +6,9 @@ import pytest
 from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtTest import QSignalSpy, QTest
 
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_pacs_qml import scene
 from test_tag_qml import find, click, type_text, descendants
 from test_dicom_tags import qt_app, make_dicom, wait_until
@@ -243,7 +243,7 @@ def test_window_preset_file_reload_and_location(scene, tmp_path, monkeypatch, th
     assert path.is_file()
     assert window.findChild(QObject, "windowPresetsPath") is None
     urls = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.settings_controller.QDesktopServices.openUrl',
+    monkeypatch.setattr('voxplane.ui.controller.settings_controller.QDesktopServices.openUrl',
                         lambda url: urls.append(url.toLocalFile()) or True)
     click(window, find(window, 'openWindowPresetsLocation'))
     assert [Path(url) for url in urls] == [path.parent]

@@ -1,0 +1,157 @@
+[
+  {
+    "id": "export",
+    "category": "output",
+    "title": "导出影像与测量结果",
+    "sections": [
+      {
+        "title": "当前画面 · PNG",
+        "body": "右侧 **导出 → 导出 PNG**：2D/MPR 保存激活视口，平铺保存可见区域，3D 保存当前画面与裁剪结果。当前视图加载中或失败时不可导出；平铺需等待全部可见切片加载完成。匿名时隐藏应用绘制的身份文字和文字标注，保留测量线段与箭头。",
+        "messageId": "manual.export.section0"
+      },
+      {
+        "title": "源影像 · DICOM",
+        "body": "导出源序列，保留像素；融合分开保存源序列，4D 包含时相。**窗值、测量、分割和裁剪不会写入 DICOM**。任务可取消，成功后发布输出目录。",
+        "messageId": "manual.export.section1"
+      },
+      {
+        "title": "整序列与测量",
+        "body": "左下角 **导出序列…** 导出全部 DICOM 或逐帧 PNG；逐帧 PNG 不含当前视口变换和测量。**测量 CSV / PDF** 导出已完成的结果，详细字段见测量报告章节。",
+        "messageId": "manual.export.section2"
+      },
+      {
+        "title": "匿名导出",
+        "body": "**默认勾选匿名**：清理 DICOM 身份元数据、隐藏 PNG 身份文字。**不会擦除原像素里的文字或人脸**；声明有身份像素或嵌入叠加层时拒绝匿名导出，请核对影像。取消匿名会保留身份信息。",
+        "important": true,
+        "messageId": "manual.export.section3"
+      },
+      {
+        "title": "找到结果",
+        "body": "成功后点击 **高亮结果路径**，在 Finder / 文件资源管理器中选中文件或打开目录。长路径悬停可查看全文；取消或失败会显示原因。",
+        "messageId": "manual.export.section4"
+      },
+      {
+        "title": "分割 SEG 与结构化 SR",
+        "body": "在 **DICOM 分割与结构化报告** 中选择 SEG 或 SR。每个 SEG 对应一份分割统计 SR；长度、角度和 ROI 另存平面测量 SR，不混入分割统计。不同检查分别保存。\n\n结果保留患者身份与原影像引用，不应用上方匿名化选项。\n\nSlicer 5.12.4 的平面测量 SR 读取仍有限制；可另导出 PDF／CSV 查看。",
+        "messageId": "manual.export.section5",
+        "important": true
+      }
+    ],
+    "summary": "先分清要导出画面、源文件还是测量结果。",
+    "related": [
+      "measurement-report"
+    ],
+    "example": "export-complete-voxplane-2.6.0.png",
+    "caption": "整序列导出完成后，可定位输出、完成或再次导出。",
+    "icon": "export",
+    "exampleCrop": [
+      875,
+      435,
+      1130,
+      1130
+    ]
+  },
+  {
+    "id": "measurement-report",
+    "category": "output",
+    "title": "测量结果 CSV／PDF",
+    "sections": [
+      {
+        "title": "1. 选择范围",
+        "body": "右侧 **导出 → 测量 CSV / 测量 PDF**，默认当前页签，可勾选 **包含所有页签**。先完成或取消编辑，并等待 VOI 统计完成。 4D 报告包含各时相的范围结果，并标明时相；缺失的统计在后台按对应时相影像计算，不改变当前阅片时相。",
+        "messageId": "manual.measurement-report.section0"
+      },
+      {
+        "title": "2. 确认内容",
+        "body": "**CSV** 包含类型、名称、视图、切片/时相、平面坐标及适用的长度、角度、面积、体积和强度统计；缺失项留空。**PDF** 按结果编号排版，可附对应切片参考图，不包含三维截图。数值沿用测量精度设置，导出开始后保持不变。",
+        "messageId": "manual.measurement-report.section1"
+      },
+      {
+        "title": "3. 保存与定位",
+        "body": "选择位置后后台导出，成功后点击 **高亮文件路径** 在 Finder / 文件资源管理器中定位。统计来自像素或体素，不受窗值、伪彩影响。",
+        "messageId": "manual.measurement-report.section2"
+      },
+      {
+        "title": "匿名范围",
+        "body": "沿用默认勾选的 **匿名导出**，替换患者和序列名称，省略 ID、UID、路径及自由标注文字。原像素中的文字不会擦除。**工作区文件不是匿名报告**，不能用于同样的分享目的。",
+        "important": true,
+        "messageId": "manual.measurement-report.section3"
+      },
+      {
+        "title": "结构化测量报告 · DICOM SR",
+        "body": "**导出 SR 报告** 生成 TID 1500 结构化结果，保留数值精度、单位、测量位置、追踪标识和源影像关联。二维源图使用图像坐标，MPR 使用患者空间坐标；VOI/分割引用 SEG。报告标记为未审核、初步结果。投影测量和未能核对到原始坐标的结果会说明原因并停止导出。",
+        "messageId": "manual.measurement-report.section4"
+      },
+      {
+        "title": "对应切片参考图",
+        "body": "PDF 默认附参考图，自动读取每项测量对应的切片、时相与重建平面，不改变当前阅片位置。同一视图、时相与采样平面的测量合并配图，以编号对应数值。使用导出开始时的窗宽窗位与色表；无法准确恢复时保留数值并注明原因，不使用当前切片替代。可查看进度和取消导出。",
+        "messageId": "manual.measurement-report.p0"
+      }
+    ],
+    "summary": "CSV 用于统计，PDF 用于查看和分享。",
+    "related": [
+      "export",
+      "workspace"
+    ],
+    "example": "export-voxplane-2.6.0.png",
+    "caption": "当前页签或全部页签的 CSV / PDF 导出。",
+    "icon": "export",
+    "exampleCrop": [
+      2260,
+      270,
+      590,
+      750
+    ]
+  },
+  {
+    "id": "faq",
+    "category": "output",
+    "title": "常见问题与支持范围",
+    "sections": [
+      {
+        "title": "按钮为什么不可用",
+        "body": "先选中序列并等待导入完成，再核对模态和格式。**MPR / 3D 需要规则体数据，4D 需要有效 CT 相位组**。MR 不开放 4D 播放、融合和 CT 分析工具；PET 不开放平铺。悬停入口查看原因，完整范围见 **支持的影像与格式**。",
+        "messageId": "manual.faq.section0"
+      },
+      {
+        "title": "ROI 与 VOI 有何区别",
+        "body": "普通矩形/椭圆 ROI 是 **二维切面统计**；MPR 分割和 VOI 是 **带深度的三维统计**。3D 裁剪只改变显示，PET MIP 是投影，不用于三维范围绘制。",
+        "messageId": "manual.faq.section1"
+      },
+      {
+        "title": "结果去哪里了",
+        "body": "若原页签仍在，点击它即可继续。若已关闭，选择 **工作区 → 撤销关闭页签**，再核对切片、采样网格与范围显隐。从序列列表再次打开会开始独立的阅片。\n\n保存工作区和自动恢复副本会包含已关闭页签的结果；草稿和撤销历史不保存。**自动恢复不能代替主动保存**，最近一次保存或恢复副本之后的操作可能丢失。工作区不含原始影像像素，请同时保留源文件。",
+        "messageId": "manual.faq.section2"
+      },
+      {
+        "title": "尚未支持",
+        "body": "尚未支持 SR 导入、RTSTRUCT 交换、概率或 LABELMAP SEG、跨层轮廓插值及分割表面生成。已支持画笔／橡皮精修、二值 SEG 与 NRRD 交换、SR 导出和自由形状单层转换。支持常见彩色二维及可逐帧解码的普通彩色多帧对象；视频编码、彩色 MPR／3D 和超声区域标定尚未支持；Enhanced PET、Mosaic 及 MR 定量分析尚未开放；灰度 Enhanced MR 已支持。非规则体数据不在当前规则重建范围。",
+        "messageId": "manual.faq.section3"
+      },
+      {
+        "messageId": "manual.faq.section4",
+        "title": "影像很大，加载慢或内存不足",
+        "body": "先等待当前任务完成，避免同时打开多个 MPR／3D 页签；可先用 **2D** 查看。仍然不足时，保存工作区并关闭不用的页签，再重试。大批量影像可分批导入。\n\n**取消加载不会删除源影像。** 如果提示无法记录撤销历史，先释放资源，再点击 **重试记录**；不要把暂时不可用的撤销当作已经保存。"
+      },
+      {
+        "messageId": "manual.faq.section5",
+        "title": "自动分割失败或看不到结果",
+        "body": "**失败时**，先读部位选择窗口里的具体原因，再打开 **详情** 查看日志。按提示核对环境、模型、设备或内存，处理后重试；失败和取消不会导入半成品。\n\n**运行完成但暂未显示时**，返回运行时的目标页签和时相，并结束正在进行的编辑；结果才会导入。成功导入后弹窗自动关闭，可在分割列表中核对部位、显隐和颜色。未检出的部位会单独提示。"
+      },
+      {
+        "messageId": "manual.faq.section6",
+        "title": "意外退出后如何继续",
+        "body": "重新打开软件，在 **工作区** 中查看是否有恢复副本；有副本时选择 **恢复**。如果提示缺少影像，使用 **重新定位…** 找到原文件、文件夹或压缩包。\n\n没有可用副本时，打开最近主动保存的工作区。**最近一次保存或恢复副本之后的操作可能无法找回**；请定期保存重要结果。",
+        "important": true
+      }
+    ],
+    "summary": "先确认来源、视图类型和当前切片。",
+    "related": [
+      "workspace",
+      "local-import",
+      "supported-images",
+      "segmentation"
+    ],
+    "icon": "help"
+  }
+]

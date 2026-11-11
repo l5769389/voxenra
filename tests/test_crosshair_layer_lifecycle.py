@@ -13,7 +13,7 @@ def test_crosshair_style_can_be_cleared_without_qml_errors(qt_app, cleared_style
     view = QQuickView()
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
-    source = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/sections/center/viewportArea/CrosshairLayer.qml'
+    source = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/sections/center/viewportArea/CrosshairLayer.qml'
     view.setInitialProperties({
         'crosshairStyle': {'centerGap': 4, 'lineWidth': 2,
                           'horizontalColor': '#ff0000', 'verticalColor': '#00ff00'},

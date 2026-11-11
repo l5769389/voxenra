@@ -7,11 +7,11 @@ from types import SimpleNamespace
 import pytest
 from PySide6.QtGui import QGuiApplication
 
-from qt_dicom_viewer.infrastructure.feedback_mail import (
+from voxplane.infrastructure.feedback_mail import (
     email_bytes, validate_attachments, MAX_ATTACHMENT_BYTES,
     MapiMessage, windows_compose)
-from qt_dicom_viewer.ui.controller.feedback_controller import FeedbackController, FEEDBACK_EMAIL
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.feedback_controller import FeedbackController, FEEDBACK_EMAIL
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app
 
 
@@ -78,7 +78,7 @@ def test_attachment_review_missing_files_and_atomic_export(qt_app, tmp_path, mon
     assert controller._checked_attachments() is None
     controller.setAttachmentsReviewed(True)
     target = tmp_path / 'report.eml'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.feedback_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.feedback_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(target), ''))
     controller.saveEmail('Title', 'bug', 'Body', True)
     mail = BytesParser(policy=policy.default).parsebytes(target.read_bytes())
@@ -105,7 +105,7 @@ def test_native_email_receives_full_body_and_files_but_github_does_not(qt_app, t
     controller.openDraft('email', 'Title', 'bug', 'x' * 20000, False)
     assert 'x' * 20000 in calls[0][1]
     urls = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.feedback_controller.QDesktopServices.openUrl',
+    monkeypatch.setattr('voxplane.ui.controller.feedback_controller.QDesktopServices.openUrl',
                         lambda url: urls.append(url.toString()) or True)
     controller.openDraft('github', 'Title', 'bug', 'Body', False)
     assert str(tmp_path) not in urls[0] and files[0].name not in urls[0]
@@ -115,7 +115,7 @@ def test_mac_native_service_prepares_items_without_sending(qt_app, tmp_path):
     import sys
     if sys.platform != 'darwin' or QGuiApplication.platformName() != 'cocoa':
         pytest.skip('Requires native macOS AppKit')
-    from qt_dicom_viewer.infrastructure.feedback_mail import MacMailComposer
+    from voxplane.infrastructure.feedback_mail import MacMailComposer
     composer = MacMailComposer()
     calls = []
     original = composer.call

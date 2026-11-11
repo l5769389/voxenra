@@ -7,23 +7,23 @@ import pytest
 from pydicom.dataset import FileDataset, FileMetaDataset, Dataset
 from pydicom.uid import ExplicitVRLittleEndian, ImplicitVRLittleEndian, MRImageStorage, EnhancedMRImageStorage, RLELossless, generate_uid
 
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.export_images import frame_image
-from qt_dicom_viewer.core.mr import automatic_mr_window, mr_series_error, mr_view_error, read_mr_parameters
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.compare import supports_compare
-from qt_dicom_viewer.model import (DicomFolderScanSnapshot, MprPlane, TabType, TabConfig, ToolType,
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.export_images import frame_image
+from voxplane.core.mr import automatic_mr_window, mr_series_error, mr_view_error, read_mr_parameters
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.compare import supports_compare
+from voxplane.model import (DicomFolderScanSnapshot, MprPlane, TabType, TabConfig, ToolType,
     WindowLevel, StackRenderRequest, MontageRenderRequest, MprRenderRequest, SeriesDisplayMeta)
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController, tool_available
-from qt_dicom_viewer.ui.controller.tab.compare_tab_controller import CompareTabController
-from qt_dicom_viewer.ui.controller.viewport.operation.window_level_operation import WindowLevelOperation, MR_WINDOW_LEVEL_CONFIG
-from qt_dicom_viewer.model import Point, PointerPosition, Offset, DragUpdateEvent
-from qt_dicom_viewer.model.interaction import WindowLevelContext
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.controller.tab.tab_controller import TabController
+from voxplane.ui.controller.tab.tool_controller import ToolController, tool_available
+from voxplane.ui.controller.tab.compare_tab_controller import CompareTabController
+from voxplane.ui.controller.viewport.operation.window_level_operation import WindowLevelOperation, MR_WINDOW_LEVEL_CONFIG
+from voxplane.model import Point, PointerPosition, Offset, DragUpdateEvent
+from voxplane.model.interaction import WindowLevelContext
 from test_dicom_tags import qt_app
 
 
@@ -81,7 +81,7 @@ def test_classic_mr_decode_rescale_padding_units_and_export(tmp_path, encoding):
     assert result.pixel_value_meta.unit == 'a.u.'
     assert 0 < result.window.width < 1
     assert result.image[0,0] == 0 and result.image[1,1] == 255
-    from qt_dicom_viewer.core.series_thumbnail import read_series_thumbnail
+    from voxplane.core.series_thumbnail import read_series_thumbnail
     thumbnail=read_series_thumbnail(path)
     assert thumbnail.pixelColor(0,0).red()==0
     assert thumbnail.pixelColor(thumbnail.width()-1,thumbnail.height()-1).red()==255
@@ -260,8 +260,8 @@ def test_invalid_mr_window_uses_finite_signal_range(field,value):
 
 
 def test_mr_workspace_restores_window_inversion_measurement_and_metadata(qt_app,tmp_path):
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     from test_workspace_persistence import draw_length
     from test_dicom_tags import wait_until
     series=write_mr_series(tmp_path/'images')

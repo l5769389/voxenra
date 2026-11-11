@@ -15,8 +15,8 @@ from test_cpr_persistence import cpr_app
 from test_dicom_tags import wait_until
 from test_measurement_qml import _visual_children
 from test_series_sidebar import sidebar_scene
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
 
 @pytest.mark.parametrize('completion', ['enter', 'double-click', 'double-click-existing-point'])
@@ -37,7 +37,7 @@ def test_four_views_accept_real_pointer_and_keyboard_path_drawing(cpr, completio
     view.resize(1000, 700)
     view.setInitialProperties(dict(controller=cpr))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        "src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPage.qml")))
+        "src/voxplane/qml/sections/center/viewportArea/CprPage.qml")))
     assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
     view.show()
     QTest.qWait(80)
@@ -129,7 +129,7 @@ def displayed_cpr_page(cpr):
     window.resize(1000, 700)
     window.setInitialProperties(dict(controller=cpr))
     window.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        "src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPage.qml")))
+        "src/voxplane/qml/sections/center/viewportArea/CprPage.qml")))
     assert window.status() == QQuickView.Ready
     window.show()
     QTest.qWait(80)
@@ -155,8 +155,8 @@ def double_click(window, item):
 
 
 def test_done_changes_visible_layout_and_edit_restores_four_views(cpr_page, tmp_path):
-    from qt_dicom_viewer.model import WindowLevel
-    from qt_dicom_viewer.model.interaction import WindowLevelChange
+    from voxplane.model import WindowLevel
+    from voxplane.model.interaction import WindowLevelChange
     window, tab = cpr_page
     root = window.rootObject()
     items = {role: named_item(root, 'cprViewport-' + role)
@@ -433,7 +433,7 @@ def test_path_panel_buttons_and_name_field_work_without_binding_errors(cpr):
     view.setInitialProperties(dict(toolController=cpr.toolController, toolVisible=True,
                                    viewportController=cpr.activeViewport, tabController=cpr))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        "src/qt_dicom_viewer/qml/sections/RightPanel.qml")))
+        "src/voxplane/qml/sections/RightPanel.qml")))
     assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
     view.show()
     QTest.qWait(40)
@@ -487,7 +487,7 @@ def test_panel_syncs_saved_values_when_loader_assigns_controller_late(cpr):
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setInitialProperties(dict(controller=None))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        "src/qt_dicom_viewer/qml/sections/right/panels/CprPanel.qml")))
+        "src/voxplane/qml/sections/right/panels/CprPanel.qml")))
     assert view.status() == QQuickView.Ready
     try:
         # ToolDetailPanel assigns its controller after Loader.onLoaded. Returning
@@ -522,7 +522,7 @@ def test_empty_cpr_results_do_not_show_unavailable_corner_values(cpr):
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(1000, 700)
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPage.qml')))
+        'src/voxplane/qml/sections/center/viewportArea/CprPage.qml')))
     assert view.status() == QQuickView.Ready
     view.show()
     QTest.qWait(30)
@@ -580,7 +580,7 @@ def test_numeric_position_history_return_and_locked_browse_ui(cpr_app, tmp_path)
     view.setInitialProperties(dict(toolController=tab.toolController, toolVisible=True,
                                    viewportController=cross, tabController=tab))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/RightPanel.qml')))
+        'src/voxplane/qml/sections/RightPanel.qml')))
     assert view.status() == QQuickView.Ready
     view.show()
     QTest.qWait(40)
@@ -904,9 +904,9 @@ def test_reference_drag_places_one_point_at_release(cpr_page):
 
 
 def test_sampling_guides_show_point_line_projection_and_share_color(cpr, tmp_path):
-    from qt_dicom_viewer.i18n import message
-    from qt_dicom_viewer.model import WindowLevel
-    from qt_dicom_viewer.model.interaction import WindowLevelChange
+    from voxplane.i18n import message
+    from voxplane.model import WindowLevel
+    from voxplane.model.interaction import WindowLevelChange
     draw(cpr, ((5, 20), (35, 20)))
     # Keep the synthetic 0..4440 ramp visible when reviewing native screenshots.
     cpr.set_linked_window(WindowLevelChange(WindowLevel(center=2200, width=4400), False))
@@ -1044,8 +1044,8 @@ def test_sampling_projection_label_follows_visible_segment_after_pan(cpr):
 
 @pytest.mark.parametrize('transform', ['none', 'rotate:cw90', 'rotate:mirror-h'])
 def test_cross_section_marks_sampling_line_continuation(cpr, tmp_path, transform):
-    from qt_dicom_viewer.model import WindowLevel
-    from qt_dicom_viewer.model.interaction import WindowLevelChange
+    from voxplane.model import WindowLevel
+    from voxplane.model.interaction import WindowLevelChange
     draw(cpr, ((5, 20), (35, 20)))
     cpr.set_linked_window(WindowLevelChange(WindowLevel(center=2200, width=4400), False))
     cpr.setParameter('crossWidth', 40)
@@ -1117,7 +1117,7 @@ def test_cross_section_marks_sampling_line_continuation(cpr, tmp_path, transform
 
 
 def test_sampling_end_on_label_describes_geometry_not_display_zoom(cpr):
-    from qt_dicom_viewer.i18n import message
+    from voxplane.i18n import message
     draw(cpr, ((5, 20), (35, 20)))
     cpr.setParameter('width', 1)
     cpr.setPositionMm(cpr.totalLength / 2)

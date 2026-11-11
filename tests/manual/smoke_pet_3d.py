@@ -23,10 +23,10 @@ if __package__:
     from .smoke_3d import make_series
 else:
     from smoke_3d import make_series
-from qt_dicom_viewer.app import bind_controller
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.core.volume_view import VolumeViewState
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.app import bind_controller
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.core.volume_view import VolumeViewState
+from voxplane.model import DicomFolderScanSnapshot
 
 
 def make_pair(folder):
@@ -68,7 +68,7 @@ def main():
         controller._series_catalog.update(DicomFolderScanSnapshot(Path(folder), 96, 96, 0, [ct, pet]))
         warnings = []
         engine.warnings.connect(lambda messages: warnings.extend(m.toString() for m in messages))
-        engine.load(files("qt_dicom_viewer").joinpath("qml/Main.qml"))
+        engine.load(files("voxplane").joinpath("qml/Main.qml"))
         assert engine.rootObjects(), "QML failed to load"
         root = engine.rootObjects()[0]
         root.resize(1440, 850)

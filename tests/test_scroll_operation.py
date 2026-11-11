@@ -1,4 +1,4 @@
-from qt_dicom_viewer.ui.controller.viewport.operation.scroll_operation import ScrollOperation
+from voxplane.ui.controller.viewport.operation.scroll_operation import ScrollOperation
 
 
 def test_pixel_wheel_accumulates_reverses_and_clamps():

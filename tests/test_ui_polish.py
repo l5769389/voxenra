@@ -162,7 +162,7 @@ def test_tool_detail_text_and_controls_stay_inside_pane(display_panel, width):
 def test_full_workspace_icon_navigation_and_annotation_preview(scene, tmp_path):
     from test_series_sidebar import phantom_series
     from test_dicom_tags import wait_until
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, warnings = scene
     series = phantom_series(tmp_path, 1, 'DEMO-A', '1.2.3.901', '20260906')
     app.panelController.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 3, 3, 0, [series]))

@@ -40,7 +40,7 @@ def display_panel(qt_app):
     viewport_controller = _controller()
     viewport_controller.handleRenderResult(_render_result(viewport_controller))
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(330, 720)
@@ -55,7 +55,7 @@ def display_panel(qt_app):
     })
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/RightPanel.qml"
+        / "src/voxplane/qml/sections/RightPanel.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [

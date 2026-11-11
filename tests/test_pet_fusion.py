@@ -7,19 +7,19 @@ import pydicom
 from pydicom.uid import CTImageStorage, generate_uid
 
 from test_pet_2d import _pet_dataset, _write_dataset
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
-from qt_dicom_viewer.core.pet_fusion import (transformed_volume, blend_pet_ct, rigid_matrix,
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.core.pet_reconstruction import PetReconstructor
+from voxplane.core.pet_fusion import (transformed_volume, blend_pet_ct, rigid_matrix,
     registration_from_parameters, registration_document, load_registration_document)
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.model import RenderFailure, WindowLevel, MprPlane, MprFrame
-from qt_dicom_viewer.model.render_models import PetBatchRenderRequest
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.model import RenderFailure, WindowLevel, MprPlane, MprFrame
+from voxplane.model.render_models import PetBatchRenderRequest
 from test_measurement_qml import qt_app
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 
 
 def test_workspace_batch_lifecycle(qt_app, paired_series, monkeypatch):
@@ -205,7 +205,7 @@ def test_per_slice_quantification_and_global_fallback(paired_series):
 
 @pytest.mark.parametrize("change", ["duplicate", "unequal", "offset", "orientation", "matrix", "reference", "nan"])
 def test_reconstruction_rejects_nonregular_geometry(paired_series, change):
-    from qt_dicom_viewer.core.pet_fusion import fusion_series_error
+    from voxplane.core.pet_fusion import fusion_series_error
     _, _, pet = paired_series
     i = pet.instances[1]
     edits = {
@@ -370,7 +370,7 @@ def test_stale_batches_failure_rollback_and_registration_files(qt_app, paired_se
 
 
 def test_selection_flows_and_identity_confirmation(qt_app, paired_series):
-    from qt_dicom_viewer.ui.controller.panel_controller import PanelController
+    from voxplane.ui.controller.panel_controller import PanelController
     catalog, ct, pet = paired_series
     panel = PanelController(series_catalog=catalog)
     panel._scan_series_record = {r.series_instance_uid: r for r in (ct, pet)}
@@ -419,7 +419,7 @@ def test_selection_flows_and_identity_confirmation(qt_app, paired_series):
 
 
 def test_pair_candidates_only_offer_complementary_patient_series(qt_app, paired_series):
-    from qt_dicom_viewer.ui.controller.panel_controller import PanelController
+    from voxplane.ui.controller.panel_controller import PanelController
     catalog, ct, pet = paired_series
     other = replace(ct, series_instance_uid="unrelated", patient_id="other-patient")
     old = replace(ct, series_instance_uid="prior", study_instance_uid="prior-study")
@@ -449,8 +449,8 @@ def test_pair_candidates_only_offer_complementary_patient_series(qt_app, paired_
 
 
 def test_registration_tool_and_window_are_independent(qt_app, paired_series):
-    from qt_dicom_viewer.model import ToolType, PointerPosition, ImagePoint, Point
-    from qt_dicom_viewer.utils.utils import _display_number
+    from voxplane.model import ToolType, PointerPosition, ImagePoint, Point
+    from voxplane.utils.utils import _display_number
     catalog, ct, pet = paired_series
     workspace = WorkspaceController(catalog, DicomImageProvider())
     renderer = PetReconstructor(catalog, VolumeManager())

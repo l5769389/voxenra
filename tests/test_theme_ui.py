@@ -1,5 +1,6 @@
 """Exercise actual Qt controls and capture theme states for visual review."""
 from copy import deepcopy
+from dataclasses import replace
 import os
 from pathlib import Path
 
@@ -8,13 +9,13 @@ from PySide6.QtGui import QPalette
 from PySide6.QtTest import QTest
 from PySide6.QtQml import QQmlProperty
 
-from qt_dicom_viewer.ui.theme_palette import palette_for
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.ui.theme_palette import palette_for
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from qt_pointer import move_pointer
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
-from test_tag_qml import click, find
+from test_tag_qml import click, find, settled_point
 from test_workspace_persistence import draw_length
 
 
@@ -98,6 +99,7 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     wait_until(lambda: view._state.width > 100 and view._state.height > 100)
     draw_length(view)
     app.panelController.selectSeries(records[0].series_instance_uid)
+    settled_point(find(window, "imageViewport-" + view.viewportId))
     initial_state = deepcopy(view._state)
     initial_size = window.size()
     initial_language = app.settingsController.values['appearance']['language']
@@ -168,11 +170,16 @@ def test_theme_switch_controls_dialogs_and_image_state(sidebar_scene, qt_app, tm
     app.windowManager._window_geometry['main'].fit()
     window.resize(initial_size)
     click(window, find(window, 'workspaceTab-' + image_tab.tab_config.tab_id))
-    click(window, find(window, 'primaryTool-measure'))
-    QTest.qWait(100)
+    canvas = find(window, 'imageViewport-' + view.viewportId)
+    settled_point(canvas)
     assert ws.activeViewport is view
-    assert view._state == initial_state
+    # Theme changes above preserve the entire state. This separate exercise
+    # deliberately resizes the desktop/window: canvas dimensions must match
+    # the actual layout, while all image, transform and measurement data stay.
+    assert (view._state.width, view._state.height) == (canvas.width(), canvas.height())
+    assert replace(view._state, width=initial_state.width, height=initial_state.height) == initial_state
     assert view._measure_controller._measurements == initial_measurements
+    click(window, find(window, 'primaryTool-measure'))
     border = find(window, 'viewportSelectionBorder')
     assert QQmlProperty(border, 'border.color').read().name() == palette_for('graphite')['viewportActiveBorder']
     assert QQmlProperty(border, 'border.width').read() == 2

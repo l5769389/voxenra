@@ -13,9 +13,9 @@ from PySide6.QtWidgets import QListWidget
 from PySide6.QtGui import QContextMenuEvent
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.ui.controller.panel_controller import PanelController
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_dicom_tags import make_dicom, qt_app, wait_until
 
 
@@ -180,7 +180,7 @@ def test_restart_reads_recent_sources_and_starting_directory_in_new_process(qt_a
     make_dicom(folder / 'image.dcm')
     complete_import(controller, [folder])
     script = '''import json, sys
-from qt_dicom_viewer.settings.recent_image_paths import RecentImagePathsStore
+from voxplane.settings.recent_image_paths import RecentImagePathsStore
 history = RecentImagePathsStore(sys.argv[1])
 print(json.dumps([history.items, history.directory]))
 '''
@@ -190,8 +190,8 @@ print(json.dumps([history.items, history.directory]))
 
 
 def test_cancel_after_partial_image_publication_does_not_record_source(qt_app, tmp_path, monkeypatch):
-    from qt_dicom_viewer.core import dicom_scanner
-    from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
+    from voxplane.core import dicom_scanner
+    from voxplane.ui.workers.dicom_scan_worker import DicomScanWorker
     controller = panel(tmp_path)
     first, second = tmp_path / 'first.dcm', tmp_path / 'second.dcm'
     make_dicom(first, 1)

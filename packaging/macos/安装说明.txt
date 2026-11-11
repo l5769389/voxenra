@@ -1,9 +1,9 @@
-Voxenra · macOS
+VoxPlane · macOS
 
-安装：将 Voxenra.app 拖到右侧 Applications 文件夹。
-完成后弹出此磁盘映像，再从“应用程序”打开 Voxenra。
+安装：将 VoxPlane.app 拖到右侧 Applications 文件夹。
+完成后弹出此磁盘映像，再从“应用程序”打开 VoxPlane。
 更新：先退出旧版，再替换“应用程序”中的同名应用。
-卸载：退出应用，将“应用程序”中的 Voxenra 移到废纸篓。
+卸载：退出应用，将“应用程序”中的 VoxPlane 移到废纸篓。
 
 请使用与 Mac 处理器对应的安装包：arm64（Apple Silicon）或 x86_64（Intel）。
 无需额外安装 Python、Qt 或 VTK。
@@ -13,7 +13,7 @@ Voxenra · macOS
 请先核实发布者和下载来源；正式分发应使用已签名并经 Apple 公证的版本。
 不要关闭系统安全保护来安装来源不明的应用。
 
-Install: drag Voxenra.app onto Applications, then eject this disk image.
+Install: drag VoxPlane.app onto Applications, then eject this disk image.
 Update: quit the old version before replacing the application.
 Uninstall: quit the app and move it from Applications to Trash.
 User-selected DICOM data and application logs are not removed by this process.

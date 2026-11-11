@@ -20,10 +20,10 @@ from shiboken6 import delete
 
 from i18n_support import install_default_language
 from test_dicom_tags import wait_until
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
 ROOT = Path(__file__).resolve().parents[2]
 qt = QApplication(["capture", "-platform", "offscreen:configfile=tests/qt-offscreen-desktop.json"])
@@ -36,7 +36,7 @@ fields = dict(patient_name='MR Demo', patient_id='Anonymous', study_description=
 records = [replace(r, **fields, instances=tuple(replace(i, **fields) for i in r.instances))
            for r in snapshot.series]
 snapshot = replace(snapshot, series=records)
-with TemporaryDirectory(prefix='voxenra-refinement-capture-') as temp:
+with TemporaryDirectory(prefix='voxplane-refinement-capture-') as temp:
     provider = DicomImageProvider()
     app = AppController(provider, settings_path=Path(temp)/'settings.json',
                         pacs_config_path=Path(temp)/'pacs.json', pacs_import_root=Path(temp)/'imports')
@@ -53,7 +53,7 @@ with TemporaryDirectory(prefix='voxenra-refinement-capture-') as temp:
     engine.rootContext().setContextProperty('appController',app)
     warnings=[]
     engine.warnings.connect(lambda items: warnings.extend(i.toString() for i in items))
-    engine.load(QUrl.fromLocalFile(str(ROOT/'src/qt_dicom_viewer/qml/Main.qml')))
+    engine.load(QUrl.fromLocalFile(str(ROOT/'src/voxplane/qml/Main.qml')))
     window=engine.rootObjects()[0]; window.resize(1440,900); window.show()
     frames=[]
     def shot(name=None):

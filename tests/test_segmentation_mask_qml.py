@@ -13,7 +13,7 @@ def test_mask_frames_do_not_clear_or_double_blend(qt_app):
     view.setColor(QColor('black'))
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(64, 64)
-    path = Path(__file__).parents[1] / 'src/qt_dicom_viewer/qml/sections/center/viewportArea/SegmentationMaskImage.qml'
+    path = Path(__file__).parents[1] / 'src/voxplane/qml/sections/center/viewportArea/SegmentationMaskImage.qml'
     view.setSource(QUrl.fromLocalFile(str(path.resolve())))
     assert view.status() == QQuickView.Ready
     view.show()

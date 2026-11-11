@@ -9,10 +9,10 @@ import pytest
 from PySide6.QtCore import QCoreApplication, QPointF, QThread
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.bead_mtf import compute_point_source_mtf, compute_mtf_with_context
-from qt_dicom_viewer.core.ramp_fwhm import compute_ramp_fwhm
-from qt_dicom_viewer.model import PixelSpacing, TabType, ToolType, WindowLevel
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.core.bead_mtf import compute_point_source_mtf, compute_mtf_with_context
+from voxplane.core.ramp_fwhm import compute_ramp_fwhm
+from voxplane.model import PixelSpacing, TabType, ToolType, WindowLevel
+from voxplane.ui.controller.tab.tool_controller import ToolController
 from test_bead_mtf import gaussian
 from test_measurement_qml import qt_app
 from test_viewport_transform import _controller, _render_result
@@ -92,7 +92,7 @@ def finish(view, job):
 
 
 def test_legacy_diagnostics_restore_but_recalculation_only_uses_default(mtf_viewport, monkeypatch):
-    from qt_dicom_viewer.core.workspace_state import dumps, loads
+    from voxplane.core.workspace_state import dumps, loads
     view, frame = mtf_viewport
     c = view.mtfController
     jobs = capture_tasks(view, monkeypatch)
@@ -136,7 +136,7 @@ def test_mtf_image_label_keeps_plain_metrics_when_equivalent_is_enabled(mtf_view
 
 
 def test_image_label_keeps_metrics_while_incomplete_check_stays_in_panel(mtf_viewport, monkeypatch):
-    from qt_dicom_viewer.model.mtf import MtfSensitivitySample
+    from voxplane.model.mtf import MtfSensitivitySample
     view, _ = mtf_viewport
     c = view.mtfController
     jobs = capture_tasks(view, monkeypatch)
@@ -541,7 +541,7 @@ def test_real_inflight_worker_does_not_access_removed_or_other_slice(mtf_viewpor
             finished.set()
 
     monkeypatch.setattr(
-        "qt_dicom_viewer.ui.controller.viewport.controller.mtf_controller.compute_mtf_with_context",
+        "voxplane.ui.controller.viewport.controller.mtf_controller.compute_mtf_with_context",
         slow_compute,
     )
     try:

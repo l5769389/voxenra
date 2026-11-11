@@ -15,7 +15,7 @@ from math import pi
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.mpr_rotation import (
+from voxplane.core.mpr_rotation import (
     axis_angle_rotation_matrix,
     resolve_sampling_basis,
     rotate_crosshair_state,
@@ -23,8 +23,8 @@ from qt_dicom_viewer.core.mpr_rotation import (
     rotate_mpr_frame_about_plane_normal,
     rotate_mpr_state_3d,
 )
-from qt_dicom_viewer.model import MprPlane, MprState, MprViewRolls
-from qt_dicom_viewer.model.dicom_core import MprFrame
+from voxplane.model import MprPlane, MprState, MprViewRolls
+from voxplane.model.dicom_core import MprFrame
 
 
 def _basis(frame: MprFrame) -> np.ndarray:

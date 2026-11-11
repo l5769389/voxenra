@@ -138,7 +138,7 @@ def test_controls_are_excluded_from_export_and_plain_mode_position_remain(sideba
 
 def test_source_without_geometry_does_not_claim_a_plane_or_position(sidebar_scene, tmp_path):
     from test_mr import write_mr_series
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, _, warnings = sidebar_scene
 
     def remove_geometry(ds, index):
@@ -198,7 +198,7 @@ def test_each_cell_menu_targets_its_own_view_and_focus_does_not_change_layout(si
 @pytest.mark.parametrize('invalid_volume', [False, True])
 def test_oblique_mr_keeps_source_orientation_and_can_return_after_reconstruction_error(sidebar_scene, tmp_path, invalid_volume):
     from test_mr import write_mr_series
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, _, warnings = sidebar_scene
     def oblique(ds, index):
         ds.ImageOrientationPatient = [1, 0, 0, 0, .8, .6]

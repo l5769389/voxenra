@@ -6,11 +6,11 @@ import shutil
 import pytest
 from PySide6.QtCore import QUrl
 
-from qt_dicom_viewer.core.local_import import ImportCancelled
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.pacs.client import check_cancel
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.local_import import ImportCancelled
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.pacs.client import check_cancel
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_four_d import _cross_series_four_d
 
@@ -43,7 +43,7 @@ def importing_app(qt_app, tmp_path, monkeypatch):
         def studies(self, filters, offset, limit):
             return [{'uid': records[0].study_instance_uid}]
 
-    monkeypatch.setattr('qt_dicom_viewer.pacs.transport.DicomWebClient', Client)
+    monkeypatch.setattr('voxplane.pacs.transport.DicomWebClient', Client)
     app = AppController(DicomImageProvider(), settings_path=False,
                         pacs_config_path=tmp_path / 'pacs.json', pacs_import_root=tmp_path / 'downloads')
     pacs = app.pacsController

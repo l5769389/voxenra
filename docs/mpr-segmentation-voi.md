@@ -129,7 +129,7 @@ PYTHONPATH=src QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software uv run pytest
 
 ### 本地验证（2026-09-27）
 
-使用本地 MR（192 × 256 × 256）及两个重叠测试区域，经已安装的 Slicer 5.12.4 读取：体素、LPS/RAS 几何、区域名称、颜色及重叠均一致。两个区域各 3125 个体素；在 Slicer 修改第一个区域增加一个体素并重新保存，Voxenra 读回为 3126 / 3125，逐体素一致。
+使用本地 MR（192 × 256 × 256）及两个重叠测试区域，经已安装的 Slicer 5.12.4 读取：体素、LPS/RAS 几何、区域名称、颜色及重叠均一致。两个区域各 3125 个体素；在 Slicer 修改第一个区域增加一个体素并重新保存，VoxPlane 读回为 3126 / 3125，逐体素一致。
 
 独立验证脚本：`tests/manual/verify_nrrd_slicer.py`。回归覆盖各向异性笔刷、连续笔画、六邻域、取消、空区域、工作区、撤销重做、NRRD 裁剪/翻转/重叠、错误网格、取消导出与稳定遮罩图层。
 

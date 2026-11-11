@@ -8,17 +8,17 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import TabType
-from qt_dicom_viewer.pacs.client import DicomWebClient
-from qt_dicom_viewer.settings.preferences import normalize_settings
-from qt_dicom_viewer.ui.svg_icon_provider import NAMES, render_icon
+from voxplane.model import TabType
+from voxplane.pacs.client import DicomWebClient
+from voxplane.settings.preferences import normalize_settings
+from voxplane.ui.svg_icon_provider import NAMES, render_icon
 from test_dicom_tags import qt_app, wait_until
 from test_pacs import controller, pacs_server
 from test_pacs_qml import scene
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, type_text, descendants
 
-QML = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml'
+QML = Path(__file__).resolve().parents[1] / 'src/voxplane/qml'
 
 
 def test_number_commit_and_reset_while_input_keeps_focus(scene):
@@ -90,7 +90,7 @@ def test_test_connection_timeout_cancel_and_stale_callback(controller, monkeypat
     class TimeoutOpener:
         def open(self, *args, **kwargs):
             raise TimeoutError()
-    monkeypatch.setattr('qt_dicom_viewer.pacs.client.build_opener', lambda *args: TimeoutOpener())
+    monkeypatch.setattr('voxplane.pacs.client.build_opener', lambda *args: TimeoutOpener())
     controller.testDraft({'name': 'Timeout', 'url': 'http://127.0.0.1/dicom-web'})
     wait_until(lambda: not controller.busy)
     assert '超时' in controller.draftTestResult['message']

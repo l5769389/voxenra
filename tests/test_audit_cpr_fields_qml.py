@@ -14,7 +14,7 @@ from test_tag_qml import find, click, type_text
 @pytest.fixture
 def parameter_scene(cpr, tmp_path):
     draw(cpr)
-    panels = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/sections/right/panels'
+    panels = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/sections/right/panels'
     source = tmp_path / 'Parameter.qml'
     source.write_text('''import QtQuick
 import "''' + panels.as_uri() + '''" as Panels
@@ -25,7 +25,7 @@ Rectangle {
     Panels.CprParameterField { y: 70; width: parent.width; controller: parent.controller; parameter: "angle" }
 }''')
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setInitialProperties(dict(controller=cpr))
     view.setSource(QUrl.fromLocalFile(str(source)))
@@ -69,7 +69,7 @@ def test_empty_parameter_blur_restores_actual_model(parameter_scene):
 
 
 def test_export_progress_cancel_and_result_location_are_operable(qt_app, tmp_path):
-    panels = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/sections/right/panels'
+    panels = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/sections/right/panels'
     source = tmp_path / 'Export.qml'
     source.write_text('''import QtQuick
 import "''' + panels.as_uri() + '''" as Panels
@@ -90,7 +90,7 @@ Rectangle {
     Panels.CprExportPanel { width: parent.width; controller: root; exportController: root; exportItem: root }
 }''')
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, view.errors()
@@ -113,7 +113,7 @@ Rectangle {
 
 
 def test_tab_insertion_clamps_stale_indices_on_list_shrink(qt_app, tmp_path):
-    center = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/sections/center'
+    center = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/sections/center'
     source = tmp_path / 'Tabs.qml'
     source.write_text('''import QtQuick
 import "''' + center.as_uri() + '''" as Center
@@ -128,7 +128,7 @@ Rectangle {
     function emptyWidth() { return bar.widthForTab(undefined) }
 }''')
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
@@ -150,7 +150,7 @@ def test_fusion_picker_above_native_volume_cancel_and_confirm(sidebar_scene, pai
     from PySide6.QtGui import QGuiApplication
     from PySide6.QtQuick import QQuickWindow
     from PySide6.QtCore import QPointF
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     from test_measurement_qml import _visual_children
     from qt_pointer import move_pointer
     if QGuiApplication.platformName() == 'offscreen':

@@ -54,7 +54,7 @@ def test_template_cancel_clears_name_and_restores_scoped_shortcuts(sidebar_scene
 
 @pytest.fixture
 def number_scene(qt_app, tmp_path):
-    components = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/components'
+    components = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/components'
     source = tmp_path / 'Numbers.qml'
     source.write_text('''import QtQuick
 import "''' + components.as_uri() + '''" as Components
@@ -74,7 +74,7 @@ Rectangle {
     Components.AppTextField { objectName: "other"; x: 10; y: 70; width: 150 }
 }''')
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
@@ -162,7 +162,7 @@ def test_number_equal_value_context_change_discards_draft(number_scene):
 
 
 def test_window_equal_values_loading_transition_discards_draft(qt_app, tmp_path):
-    panels = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/sections/right/panels'
+    panels = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/sections/right/panels'
     source = tmp_path / 'Window.qml'
     source.write_text('''import QtQuick
 import "''' + panels.as_uri() + '''" as Panels
@@ -177,7 +177,7 @@ Rectangle {
     }
 }''')
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
@@ -210,13 +210,13 @@ def pet_numeric_panel(qt_app):
     views = []
     def create(controller, name):
         view = QQuickView()
-        from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+        from voxplane.ui.svg_icon_provider import SvgIconProvider
         view.engine().addImageProvider('navigation', SvgIconProvider())
         view.resize(320, 600)
         warnings = []
         view.engine().warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
         view.setInitialProperties({'controller': controller})
-        source = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/sections/right/panels' / name
+        source = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/sections/right/panels' / name
         view.setSource(QUrl.fromLocalFile(str(source)))
         assert view.status() == QQuickView.Ready, view.errors()
         view.show()

@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.model import WindowLevel
+from voxplane.model import WindowLevel
 from test_dicom_tags import qt_app,wait_until
 from test_pacs_qml import scene
 from test_tag_qml import find,click
@@ -15,15 +15,15 @@ pytestmark=pytest.mark.skipif(os.getenv('QT_QPA_PLATFORM')=='offscreen',reason='
 
 @pytest.fixture
 def library():
-    root=os.getenv('VOXENRA_TEST_DICOM_DIR')
-    if not root:pytest.skip('Set VOXENRA_TEST_DICOM_DIR to the existing sample library')
+    root=os.getenv('VOXPLANE_TEST_DICOM_DIR')
+    if not root:pytest.skip('Set VOXPLANE_TEST_DICOM_DIR to the existing sample library')
     assert Path(root).is_dir()
     return Path(root)
 
 
 def test_real_perfusion_custom_mapping_restore_and_montage(scene,library,tmp_path):
     window,app,warnings=scene
-    import_local(app,[library/'Voxenra-EnhancedCT-TestData/pydicom/eCT_Supplemental.dcm'])
+    import_local(app,[library/'VoxPlane-EnhancedCT-TestData/pydicom/eCT_Supplemental.dcm'])
     series=next(iter(app.panelController._scan_series_record.values()))
     ws=app.workspaceController;window.resize(1400,900)
     ws.createTab(series.series_instance_uid,'RCBF display mapping','2d');ready(ws)

@@ -3,13 +3,13 @@ import numpy as np
 import pydicom
 import pytest
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.series_import import merge_import_snapshot
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.controller.dicom_results_controller import capture_dicom_results
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.series_import import merge_import_snapshot
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import ImagePoint, MeasurementKind
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.controller.dicom_results_controller import capture_dicom_results
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_four_d import _cross_series_four_d, _scan_series
 
@@ -150,7 +150,7 @@ def test_previously_independent_phase_groups_keep_each_anchors_identity(tmp_path
 
 
 def test_scan_worker_previews_keep_new_phase_ids_without_counting_new_files_as_existing(tmp_path):
-    from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
+    from voxplane.ui.workers.dicom_scan_worker import DicomScanWorker
 
     records = _cross_series_four_d(tmp_path, phase_count=4, source_keyword='AcquisitionTime',
                                    source_values=('110000', '120000', '100000', '090000'))

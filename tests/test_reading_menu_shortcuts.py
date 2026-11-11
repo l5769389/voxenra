@@ -239,7 +239,7 @@ def test_detached_window_and_tab_only_reset_their_own_tool(sidebar_scene):
 
 
 def test_fusion_view_reset_uses_selected_modality(sidebar_scene, paired_series, tmp_path):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, _, warnings = sidebar_scene
     _, ct, pet = paired_series
     app.panelController.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 6, 6, 0, [ct, pet]))
@@ -279,7 +279,7 @@ def test_fusion_view_reset_uses_selected_modality(sidebar_scene, paired_series, 
     assert not warnings, warnings
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1', reason='Requires a native desktop OpenGL window')
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1', reason='Requires a native desktop OpenGL window')
 def test_native_volume_canvas_keeps_active_menu_shortcut(sidebar_scene):
     window, app, records, warnings = sidebar_scene
     ws = app.workspaceController
@@ -349,7 +349,7 @@ def test_orientation_reset_is_owned_by_mpr_comparison_layout_only(sidebar_scene)
 
 
 def test_3d_camera_reset_requires_visible_enabled_tool(sidebar_scene, monkeypatch):
-    from qt_dicom_viewer.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
+    from voxplane.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
     monkeypatch.setattr(VolumeViewportController, 'ensureNativeView', lambda self: None)
     monkeypatch.setattr(VolumeViewportController, 'setNativeVisible', lambda self, visible: None)
     window, app, records, warnings = sidebar_scene

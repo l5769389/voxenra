@@ -68,7 +68,7 @@ def test_corner_editor_switch_reorder_remove_add_and_preview(scene):
     original = settings.values['corners']['topLeft'][:]
     drag_corner(window, 'topLeft', 0, 1)
     assert settings.values['corners']['topLeft'] == [original[1], original[0], *original[2:]]
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     assert SettingsController(path=settings._path).values['corners']['topLeft'] == settings.values['corners']['topLeft']
     before_cancel = settings.values['corners']['topLeft'][:]
     drag_corner(window, 'topLeft', 0, 1, cancel=True)
@@ -183,13 +183,13 @@ def test_settings_preview_remains_bounded_on_wide_screens(scene, category, tmp_p
 @pytest.mark.parametrize('size', [24, 28, 48])
 def test_mpr_crosshair_and_color_mapping_are_legible_at_toolbar_sizes(qt_app, size, tmp_path):
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
     view.setColor(QColor('black'))
     view.setInitialProperties({'iconName': 'nav-view-mpr', 'iconSize': size})
-    view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/components/AppIcon.qml')))
+    view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / 'src/voxplane/qml/components/AppIcon.qml')))
     assert view.status() == QQuickView.Ready
     view.show()
     try:
@@ -320,7 +320,7 @@ def test_metric_card_settings_have_live_interactive_preview(scene, tmp_path):
 
 
 def test_settings_group_collapse_survives_page_reload_and_language_switch(scene, tmp_path):
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     window, app, warnings = open_page(scene, 'measurement')
     settings = app.settingsController
     click(window, find(window, 'settingsGroup-measurement-cards'))
@@ -342,7 +342,7 @@ def test_settings_group_collapse_survives_page_reload_and_language_switch(scene,
 
 @pytest.mark.parametrize('width', [1000, 1400])
 def test_mtf_equivalent_setting_default_toggle_and_reset(scene, tmp_path, width):
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     window, app, warnings = open_page(scene, 'services', width)
     checkbox = find(window, 'setting-services-mtfGaussianEquivalent')
     assert checkbox.property('checked')

@@ -1,0 +1,222 @@
+[
+  {
+    "id": "measurement",
+    "category": "measure",
+    "title": "绘制长度、角度与 ROI",
+    "sections": [
+      {
+        "title": "长度",
+        "body": "依次按下鼠标确定 **起点 → 终点**，第二个有效点按下时立即完成。移动鼠标预览下一点，松开不确认点。按真实像素间距计算长度，完成后可拖动端点调整。缺少有效像素间距时，影像仍可查看，但长度、角度和 ROI 测量不可用；显示用像素网格不代表毫米标定。仅一个点或端点重合时不显示长度；形成有效线段后显示实时预览。",
+        "messageId": "manual.measurement.section0"
+      },
+      {
+        "title": "角度",
+        "body": "依次按下鼠标确定 **起点 → 顶点 → 终点**，第二点是顶点，第三个有效点按下时立即完成。移动鼠标预览下一条边；夹角为 0～180°。两条边形成后才显示角度，单点或缺少一条边时不显示数值。",
+        "messageId": "manual.measurement.section1"
+      },
+      {
+        "title": "矩形与椭圆",
+        "body": "依次按下鼠标确定包围范围的 **两个对角点**，第二个有效点按下时立即完成，移动鼠标只预览。矩形显示宽高，椭圆显示两轴直径。完成后可拖动四角调整，松开后提交编辑。仅一个点、宽或高为零时不显示指标卡片；形成有效区域后显示实时统计。",
+        "messageId": "manual.measurement.section2"
+      },
+      {
+        "title": "继续绘制",
+        "body": "完成后对象保持选中，移动鼠标不会改变它。在空白处再次按下可新建，按 Esc 取消草稿。长度、角度、矩形、椭圆及箭头按有效点数自动完成，不等待双击，也不因双击取消。曲线、勾画和 CPR 路径使用双击结束；这些多点工具完成后，双击可放大或还原当前视口。\n\n点击 **测量结果** 可折叠或展开列表。结果标题旁的 **更多** 可清除当前视口的测量，保留其他视口的结果。",
+        "messageId": "manual.measurement.section3"
+      },
+      {
+        "title": "自由形状 ROI",
+        "body": "选择 **自由形状 ROI**，单击或按住拖动后松开，每次确定一个控制点，自动生成经过各点的平滑闭合曲线。移动鼠标只预览。双击不落点，不足三点时取消草稿。点击起点、双击或按 `Enter` 完成，`Esc` 取消。拖动控制点调整形状，拖动内部整体移动。面积、周长、像素统计和分割转换均使用平滑边界；至少需要三个点；会导致交叉的落点和拖动不会改变已有轮廓。旧工作区中的折线 ROI 保留原轮廓。",
+        "messageId": "manual.measurement.section4"
+      },
+      {
+        "title": "自由形状转分割",
+        "body": "在 MPR / 4D 选中已完成的自由形状 ROI，点击该条结果上的 **转换为分割**。转换反馈显示在列表下方。按原体素中心生成最接近当前切面的单层掩膜，保留原测量，不向其他层延伸。暂不支持斜切或投影轮廓。之后修改轮廓不会更新已转换掩膜；掩膜可保存及导出 SEG。",
+        "messageId": "manual.measurement.section5"
+      },
+      {
+        "title": "曲线",
+        "body": "选择 **曲线**，单击或按住拖动后松开，依次确定至少三个控制点，双击或按 `Enter` 完成，`Esc` 取消。双击不落点，不足三点时取消草稿。平滑曲线穿过控制点且不闭合，显示按真实像素间距计算的弧长。可拖动控制点调整；会导致交叉或重叠的落点和拖动不会改变已有曲线。支持复制、撤销、工作区保存及测量报告。",
+        "messageId": "manual.measurement.section6"
+      }
+    ],
+    "example": "measurement-voxplane-2.6.0.png",
+    "summary": "先激活视口，再选择右侧测量工具。",
+    "related": [
+      "measurement-edit",
+      "measurement-roi"
+    ],
+    "shortcuts": [
+      {
+        "label": "取消绘制",
+        "keys": "Esc",
+        "mac": "Esc"
+      }
+    ],
+    "caption": "测量工具、选中对象与分组结果列表。",
+    "icon": "measure"
+  },
+  {
+    "id": "measurement-edit",
+    "category": "measure",
+    "title": "编辑、复制与撤销",
+    "sections": [
+      {
+        "title": "完成与编辑",
+        "body": "**松开：选中已完成**，使用完成样式并保留控制点。**再次点击：选中编辑状态**，使用草稿样式；仅点击不会改变几何。拖动后松开重新完成。",
+        "messageId": "manual.measurement-edit.section0"
+      },
+      {
+        "title": "调整对象",
+        "body": "点击轮廓、标签、信息块或 ROI 内部选中。拖动控制点改形状，拖动轮廓或内部移动图形。默认卡片与图形独立移动；可在 **设置 → 测量 → 指标与卡片** 开启联动，并调整字号和背景透明度，右侧实时预览。按 `Esc` 取消本次编辑。",
+        "messageId": "manual.measurement-edit.section1"
+      },
+      {
+        "title": "复制与粘贴",
+        "body": "选中测量或标注后使用 **⌘C / ⌘V（Windows/Linux：Ctrl+C / Ctrl+V）** 复制粘贴。焦点移到操作栏按钮后仍有效；输入框内只复制粘贴文字，弹窗打开时不操作影像对象。副本独立可编辑，偏移 10 像素；跨切片沿用 **像素坐标**，按目标间距和像素重算结果。未完成对象不可复制。QA 圆不使用这组剪贴板快捷键。",
+        "messageId": "manual.measurement-edit.section2"
+      },
+      {
+        "title": "撤销、删除与保存",
+        "body": "图像获得焦点后可撤销、重做或删除所选；输入框中的快捷键只操作文字。**关闭前保存工作区**，或导出 PNG、CSV、PDF；原始 DICOM 不保存测量对象。\n\n如果因内存不足等原因无法记录撤销历史，窗口底部会显示原因。当前编辑和已有历史保持保留，撤销／重做暂时不可用。释放资源后点击 **重试记录**；重试期间的多个编辑会合并为一步。",
+        "messageId": "manual.measurement-edit.section3"
+      },
+      {
+        "title": "测量结果列表",
+        "body": "右侧 **测量 → 测量结果** 汇总当前页签各视图、切片和时相的已完成测量。点击条目返回来源位置；可修改名称、显示或隐藏、锁定及删除。锁定保护图形和卡片，复制得到独立、未锁定的副本。显隐不影响报告导出。名称、显隐和锁定支持撤销及工作区保存。",
+        "messageId": "manual.measurement-edit.p0"
+      }
+    ],
+    "summary": "完成后可再次选中、编辑或复制。",
+    "related": [
+      "measurement-style",
+      "workspace"
+    ],
+    "shortcuts": [
+      {
+        "label": "复制",
+        "keys": "Ctrl+C",
+        "mac": "⌘C"
+      },
+      {
+        "label": "粘贴",
+        "keys": "Ctrl+V",
+        "mac": "⌘V"
+      },
+      {
+        "label": "撤销",
+        "keys": "Ctrl+Z",
+        "mac": "⌘Z"
+      },
+      {
+        "label": "重做",
+        "keys": "Ctrl+Y",
+        "mac": "⇧⌘Z"
+      },
+      {
+        "label": "删除所选",
+        "keys": "Delete / Backspace",
+        "mac": "⌫"
+      }
+    ],
+    "example": "measurement-voxplane-2.6.0.png",
+    "caption": "已完成的测量可再次选中编辑。",
+    "icon": "copy"
+  },
+  {
+    "id": "measurement-roi",
+    "category": "measure",
+    "title": "ROI 指标与测量样式",
+    "sections": [
+      {
+        "title": "尺寸与面积",
+        "body": "宽高单位 **mm**，面积 **mm²**；椭圆宽高为两轴直径。面积是完整轮廓的几何面积，**不是有效像素数乘像素面积**。",
+        "messageId": "manual.measurement-roi.section0"
+      },
+      {
+        "title": "读取统计",
+        "body": "**Mean** 均值，**SD** 总体标准差，**Min / Max** 极值，**N** 有效像素数。使用模态像素，MPR 使用重采样后的模态像素；不取屏幕灰度。",
+        "messageId": "manual.measurement-roi.section1"
+      },
+      {
+        "title": "有效范围",
+        "body": "灰度统计只使用轮廓内的有效像素；部分越界时仍统计与影像相交的部分，排除图像外与非有限值。完全没有有效样本时显示 **无有效像素**，不当作零；移回影像后自动恢复统计。面积和尺寸始终保留完整绘制范围。CT 单位 HU；PET 以实际可用单位为准。",
+        "messageId": "manual.measurement-roi.section2"
+      },
+      {
+        "title": "显示哪些指标",
+        "body": "在 **设置 → ROI 指标** 开关内容。宽高共用开关，与面积同行；关闭显示不改变计算。",
+        "messageId": "manual.measurement-roi.section3"
+      },
+      {
+        "title": "颜色与线型",
+        "body": "进入 **设置 → 测量与标注**，设置绘制/编辑和完成颜色、实线/虚线、线宽及字号。箭头和 CPR 路径共用绘制/编辑样式。测量和 CPR 的默认完成色为金黄，箭头为淡紫。如需同色，在「箭头标注」中勾选「跟随通用完成色」。其他 CPR 路径以较淡的完成色作参照。设置立即应用；缩放图像不放大文字和线宽。 **测量精度** 默认保留 **2 位小数**，可选 **整数、1 位、2 位、3 位**；长度、角度、ROI 尺寸/面积/强度统计、VOI 体积/统计及 MTF、水模 QA 结果统一更新。像素/体素数量保持整数，原始计算值和工作区保存的数据不舍入。",
+        "messageId": "manual.measurement-style.section0"
+      },
+      {
+        "title": "保存与恢复",
+        "body": "样式自动保存到本机，**恢复默认** 只恢复当前设置分类。测量对象需另行保存工作区，样式保存不等于结果保存。",
+        "messageId": "manual.measurement-style.section1"
+      }
+    ],
+    "summary": "理解 ROI 尺寸与统计，并调整测量样式。",
+    "related": [
+      "quantification",
+      "measurement-edit"
+    ],
+    "example": "roi-voxplane-2.6.0.png",
+    "caption": "ROI 尺寸及像素统计。",
+    "icon": "measure-rect"
+  },
+  {
+    "id": "annotation",
+    "category": "measure",
+    "title": "箭头与文字箭头",
+    "sections": [
+      {
+        "title": "绘制",
+        "body": "选择 **标注 → 箭头 / 文字箭头**，依次按下鼠标确定 **箭尾 → 箭尖**。第二个有效点按下时立即完成，移动只预览，Esc 取消草稿。文字内容在右侧输入；选中已有文字箭头可修改文字。",
+        "messageId": "manual.annotation.section0"
+      },
+      {
+        "title": "调整",
+        "body": "拖动端点改方向，拖动对象整体移动。面板可调整颜色、线宽、箭头大小；文字箭头还可调整字号。",
+        "messageId": "manual.annotation.section1"
+      },
+      {
+        "title": "保留结果",
+        "body": "支持选中后复制、粘贴、删除及撤销。已完成标注可随工作区保存；PNG 和测量报告沿用各自匿名选项。",
+        "messageId": "manual.annotation.section2"
+      }
+    ],
+    "summary": "用箭头或文字箭头说明影像位置。",
+    "related": [
+      "measurement-edit"
+    ],
+    "shortcuts": [
+      {
+        "label": "复制",
+        "keys": "Ctrl+C",
+        "mac": "⌘C"
+      },
+      {
+        "label": "粘贴",
+        "keys": "Ctrl+V",
+        "mac": "⌘V"
+      },
+      {
+        "label": "取消",
+        "keys": "Esc",
+        "mac": "Esc"
+      },
+      {
+        "label": "删除",
+        "keys": "Delete / Backspace",
+        "mac": "⌫"
+      }
+    ],
+    "example": "annotation-voxplane-2.6.0.png",
+    "caption": "箭头与文字箭头。",
+    "icon": "annotate"
+  }
+]

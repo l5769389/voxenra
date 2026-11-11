@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from PySide6.QtGui import QWindow
 
-from qt_dicom_viewer import app as application
+from voxplane import app as application
 from test_measurement_qml import qt_app
 
 
@@ -18,7 +18,7 @@ def test_new_windows_inherit_brand_icon_without_changing_settings_identity(qt_ap
         assert not qt_app.windowIcon().isNull()
         assert not window.icon().isNull()
         assert not window.icon().pixmap(32, 32).isNull()
-        assert qt_app.applicationDisplayName() == "Voxenra"
+        assert qt_app.applicationDisplayName() == "VoxPlane"
         assert (qt_app.organizationName(), qt_app.applicationName()) == settings_identity
     finally:
         qt_app.setWindowIcon(previous_icon)
@@ -34,5 +34,5 @@ def test_windows_process_identity_matches_installer_shortcuts(monkeypatch):
     monkeypatch.setattr(ctypes, "windll", SimpleNamespace(shell32=SimpleNamespace(
         SetCurrentProcessExplicitAppUserModelID=set_identity)), raising=False)
     application.configure_process_identity()
-    assert calls == ["com.junliu.voxenra"]
+    assert calls == ["com.junliu.voxplane"]
     assert set_identity.argtypes == [ctypes.c_wchar_p]

@@ -3,7 +3,7 @@ import base64
 import numpy as np
 from PySide6.QtGui import QImage
 
-from qt_dicom_viewer.core.segmentation_display import segmentation_rgba
+from voxplane.core.segmentation_display import segmentation_rgba
 from test_mpr_voi_controller import setup_voi, draw
 from test_measurement_qml import qt_app
 from test_mpr_voi_qml import settle
@@ -39,8 +39,8 @@ def test_display_does_not_resample_recalculate_or_mutate_masks(setup_voi, monkey
     before = result.mask.copy()
     revision = c._revision
     first = c.masks(v)[0]['source']
-    import qt_dicom_viewer.ui.controller.tab.mpr_voi_controller as module
-    import qt_dicom_viewer.ui.segmentation_overlay_renderer as renderer
+    import voxplane.ui.controller.tab.mpr_voi_controller as module
+    import voxplane.ui.segmentation_overlay_renderer as renderer
     def unexpected(*args, **kwargs):
         raise AssertionError('Display-only change resampled or recalculated')
     monkeypatch.setattr(renderer, 'plane_mask', unexpected)

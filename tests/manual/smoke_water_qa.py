@@ -20,10 +20,10 @@ from PySide6.QtCore import QPointF, QTimer, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from qt_dicom_viewer.app import bind_controller
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, TabType
+from voxplane.app import bind_controller
+from voxplane.ui.app_controller import AppController
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.model import DicomFolderScanSnapshot, TabType
 
 
 def make_water_series(folder):
@@ -71,13 +71,13 @@ def main():
     series, expected = make_water_series(Path(temp.name))
     isolated = partial(AppController, settings_path=Path(temp.name) / "settings.json",
                        pacs_config_path=Path(temp.name) / "pacs.json", pacs_import_root=Path(temp.name) / "imports")
-    with patch("qt_dicom_viewer.app.AppController", isolated):
+    with patch("voxplane.app.AppController", isolated):
         engine = bind_controller()
     app_controller = engine.app_controller
     app_controller._series_catalog.update(DicomFolderScanSnapshot(Path(temp.name), 3, 3, 0, [series]))
     warnings, errors = [], []
     engine.warnings.connect(lambda entries: warnings.extend(e.toString() for e in entries))
-    engine.load(files("qt_dicom_viewer").joinpath("qml/Main.qml"))
+    engine.load(files("voxplane").joinpath("qml/Main.qml"))
     assert engine.rootObjects()
     root = engine.rootObjects()[0]
     workspace = app_controller.workspaceController

@@ -1,6 +1,6 @@
 """Slicer --python-script verification, including Segment Statistics and edits.
 
-VOXENRA_NRRD_QA points to a case directory, or a parent with case directories.
+VOXPLANE_NRRD_QA points to a case directory, or a parent with case directories.
 Each case contains source.nrrd, segmentation.seg.nrrd and expected.npz.
 Optional dicom-reference.json enables independent GDCM decoding of source DICOM.
 No data leaves this computer. Results and a Slicer-edited .seg.nrrd stay local.
@@ -73,9 +73,9 @@ def verify(root):
         np.testing.assert_allclose(segmentation.GetSegment(sid).GetColor(), expected[f'color{i}'], atol=1e-6)
         counts.append(int(mask.sum()))
     statistics_checked = False
-    if (root / 'voxenra-metrics.json').exists():
+    if (root / 'voxplane-metrics.json').exists():
         from SegmentStatistics import SegmentStatisticsLogic
-        metrics = json.loads((root / 'voxenra-metrics.json').read_text())
+        metrics = json.loads((root / 'voxplane-metrics.json').read_text())
         logic = SegmentStatisticsLogic()
         logic.getParameterNode().SetParameter('Segmentation', node.GetID())
         logic.getParameterNode().SetParameter('ScalarVolume', volume.GetID())
@@ -91,7 +91,7 @@ def verify(root):
                 if values['count']:
                     np.testing.assert_allclose(value, values[field], rtol=1e-5, atol=1e-7)
                 result[field] = value
-            # VTK reports sample SD. Voxenra explicitly reports population SD.
+            # VTK reports sample SD. VoxPlane explicitly reports population SD.
             sample_sd = stats.get((sid, 'ScalarVolumeSegmentStatisticsPlugin.stdev'))
             if values['count'] > 1:
                 population_sd = sample_sd * np.sqrt((values['count'] - 1) / values['count'])
@@ -113,7 +113,7 @@ def verify(root):
     return result
 
 
-root = Path(os.environ['VOXENRA_NRRD_QA'])
+root = Path(os.environ['VOXPLANE_NRRD_QA'])
 try:
     cases = [root] if (root / 'expected.npz').exists() else sorted(p.parent for p in root.glob('*/expected.npz'))
     assert cases, 'No prepared cases'

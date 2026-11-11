@@ -1,5 +1,5 @@
 """Isolated native UI fixture; drive interactions manually or through CUA.
-VOXENRA_SPATIAL_UI is an output folder containing imports.json (path list).
+VOXPLANE_SPATIAL_UI is an output folder containing imports.json (path list).
 The periodic state file is read-only evidence, not a control endpoint.
 """
 import json
@@ -11,20 +11,20 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QUrl, QTimer
 from PySide6.QtQml import QQmlApplicationEngine
-from qt_dicom_viewer.app import configure_application_identity
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.app import configure_application_identity
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
-base=Path(os.environ['VOXENRA_SPATIAL_UI']).resolve();base.mkdir(parents=True,exist_ok=True)
+base=Path(os.environ['VOXPLANE_SPATIAL_UI']).resolve();base.mkdir(parents=True,exist_ok=True)
 started_at = datetime.now(timezone.utc).isoformat()
 app=QApplication(sys.argv);configure_application_identity(app)
 provider=DicomImageProvider()
 ctrl=AppController(provider,settings_path=base/'settings.json',pacs_config_path=base/'pacs.json',pacs_import_root=base/'imports')
 engine=QQmlApplicationEngine();engine.addImageProvider('dicom',provider)
 engine.addImageProvider('navigation',SvgIconProvider());engine.rootContext().setContextProperty('appController',ctrl)
-engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[2]/'src/qt_dicom_viewer/qml/Main.qml')))
-engine.rootObjects()[0].setTitle('Voxenra — Spatial validation')
+engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[2]/'src/voxplane/qml/Main.qml')))
+engine.rootObjects()[0].setTitle('VoxPlane — Spatial validation')
 
 def state():
     ws=ctrl.workspaceController;v=ws.activeViewport

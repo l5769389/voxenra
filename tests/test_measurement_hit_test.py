@@ -4,13 +4,13 @@ from dataclasses import replace
 
 import pytest
 
-from qt_dicom_viewer.core.measurement_hit_test import (
+from voxplane.core.measurement_hit_test import (
     hit_test_control_points,
     hit_test_interior,
     hit_test_label,
     hit_test_outline,
 )
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     AngleMeasurement,
     EditTargetKind,
     ImagePoint,
@@ -23,7 +23,7 @@ from qt_dicom_viewer.model import (
     RoiMeasurement,
     RoiMetrics,
 )
-from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
+from voxplane.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
 
 
 def _line():

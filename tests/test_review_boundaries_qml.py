@@ -20,7 +20,7 @@ def test_voi_mm_input_is_independent_of_relative_brush(temporal, field, key, tmp
     controller = tab.voiController
     controller.setBrushRelative(True)
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(330, 900)
@@ -28,7 +28,7 @@ def test_voi_mm_input_is_independent_of_relative_brush(temporal, field, key, tmp
     view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
     view.setInitialProperties(dict(controller=controller, mode='voi', tabController=tab))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/right/panels/MprVoiPanel.qml')))
+        'src/voxplane/qml/sections/right/panels/MprVoiPanel.qml')))
     assert view.status() == QQuickView.Ready
     view.show()
     QTest.qWait(80)

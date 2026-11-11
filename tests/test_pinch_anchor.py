@@ -79,7 +79,7 @@ def test_pinch_limit_preserves_anchor_and_reverses_immediately(viewport,trackpad
 
 
 def project_volume(geometry,state,size,point):
-    from qt_dicom_viewer.core.volume_view import camera_parameters,view_basis
+    from voxplane.core.volume_view import camera_parameters,view_basis
     camera=camera_parameters(geometry,state,size)
     delta=np.asarray(point)-camera['focal']
     basis=view_basis(state)
@@ -89,7 +89,7 @@ def project_volume(geometry,state,size,point):
 
 
 def test_volume_zoom_keeps_offcenter_patient_point_fixed(qt_app,volume):
-    from qt_dicom_viewer.core.volume_view import VolumeViewState,rotate_drag
+    from voxplane.core.volume_view import VolumeViewState,rotate_drag
     tab=make_tab();controller=tab.activeViewport
     controller._set_status('ready')
     controller.state=rotate_drag(VolumeViewState(pan=(.12,-.07)),(300,250),(330,290),(800,600))

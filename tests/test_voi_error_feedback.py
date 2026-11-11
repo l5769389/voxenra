@@ -10,7 +10,7 @@ from test_mpr_voi_controller import draw
 
 @pytest.mark.parametrize('mode', ['voi', 'segmentation'])
 def test_calculation_error_is_visible_without_scrolling(sidebar_scene, monkeypatch, mode):
-    from qt_dicom_viewer.ui.controller.tab import mpr_voi_controller as module
+    from voxplane.ui.controller.tab import mpr_voi_controller as module
     window, app, records, warnings = sidebar_scene
     window.resize(1000, 600)
     workspace = app.workspaceController
@@ -49,7 +49,7 @@ def test_calculation_error_is_visible_without_scrolling(sidebar_scene, monkeypat
 
 
 def test_new_error_revealed_after_scrolling_to_threshold(sidebar_scene, monkeypatch):
-    from qt_dicom_viewer.ui.controller.tab import mpr_voi_controller as module
+    from voxplane.ui.controller.tab import mpr_voi_controller as module
     window, app, records, warnings = sidebar_scene
     window.resize(1000, 600)
     ws = app.workspaceController

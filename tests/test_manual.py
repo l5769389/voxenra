@@ -8,15 +8,15 @@ from PySide6.QtCore import QCoreApplication, QEvent, QObject, QPointF, Qt, QUrl
 from PySide6.QtTest import QTest
 from shiboken6 import isValid
 
-from qt_dicom_viewer.ui.controller.manual_tab_controller import ManualTabController, manual_content, manual_rich_text
-from qt_dicom_viewer.ui.svg_icon_provider import render_icon
+from voxplane.ui.controller.manual_tab_controller import ManualTabController, manual_content, manual_rich_text
+from voxplane.ui.svg_icon_provider import render_icon
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, type_text, descendants
 
 ROOT = Path(__file__).resolve().parents[1]
-QML = ROOT / 'src/qt_dicom_viewer/qml'
+QML = ROOT / 'src/voxplane/qml'
 
 
 def test_manual_content_and_bundled_resources(qt_app):
@@ -27,7 +27,7 @@ def test_manual_content_and_bundled_resources(qt_app):
     assert next(c for c in content['categories'] if c['id'] == 'start')['title'] != next(
         c for c in chapters if c['id'] == 'quick-start')['title']
     assert {'workspace', 'measurement-report'} <= {c['id'] for c in chapters}
-    resources = {f.text for f in ET.parse(ROOT / 'Voxenra.qrc').iter('file')}
+    resources = {f.text for f in ET.parse(ROOT / 'VoxPlane.qrc').iter('file')}
     expected = {'assets/help/manual.json', 'assets/icons/manual.svg'}
     expected.update('assets/help/' + c['file'] for c in content['categories'])
     expected.add('sections/manual/ManualNavigation.qml')
@@ -47,7 +47,7 @@ def test_manual_content_and_bundled_resources(qt_app):
             expected.add('assets/help/' + example)
     for path in expected:
         assert (QML / path).is_file()
-        assert 'src/qt_dicom_viewer/qml/' + path in resources
+        assert 'src/voxplane/qml/' + path in resources
     for size in (18, 36):
         image = render_icon('manual', '#aabcc8', 'transparent', size, size)
         assert not image.isNull() and image.width() == size
@@ -58,7 +58,7 @@ def test_offline_tutorial_catalog_has_packaged_assets_and_localized_sections(qt_
     catalog = json.loads((QML / 'assets/help/tutorials.json').read_text())
     assert {'pacs-dimse', 'toolbar-customization', 'focus-view'} <= {item['name'] for item in catalog}
     assert len(catalog) == len({item['name'] for item in catalog})
-    resources = {f.text for f in ET.parse(ROOT / 'Voxenra.qrc').iter('file')}
+    resources = {f.text for f in ET.parse(ROOT / 'VoxPlane.qrc').iter('file')}
     controller = ManualTabController()
     for item in catalog:
         controller.selectChapter(item['chapter'])
@@ -67,7 +67,7 @@ def test_offline_tutorial_catalog_has_packaged_assets_and_localized_sections(qt_
         assert any(demo['id'] == item['name'] for demo in demos)
         for path in list(item['sources'].values()) + list(item['posters'].values()):
             assert (QML / 'assets/help' / path).is_file()
-            assert 'src/qt_dicom_viewer/qml/assets/help/' + path in resources
+            assert 'src/voxplane/qml/assets/help/' + path in resources
 
 
 def test_manual_emphasis_preserves_literal_html_and_searchable_shortcuts(qt_app):
@@ -130,8 +130,8 @@ def test_language_pack_tutorial_animation_and_english_switch(scene):
     app.languageController.selectLanguage('en-US')
     wait_until(lambda: find(window, 'manualChapterTitle').property('text') == 'Add a language pack')
     shot = reveal_tutorial(window, 'language-pack')
-    assert shot.property('file') == 'en/language-pack.gif'
-    assert shot.property('poster') == 'tutorials/en-language-pack.png'
+    assert shot.property('file') == 'en/tutorials/language-pack-voxplane-2.6.0.gif'
+    assert shot.property('poster') == 'en/tutorials/language-pack-voxplane-2.6.0.png'
     assert 'reload' in shot.property('caption').lower()
     assert shot.property('withinViewport')
     click(window, shot.findChild(QObject, 'manualTutorialPlay'))
@@ -266,7 +266,7 @@ def test_manual_shortcuts_screenshot_zoom_and_related_chapter(sidebar_scene, tmp
 
 
 def test_manual_navigation_groups_search_aliases_and_width_persist(scene):
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     window, app, warnings = scene
     window.resize(1440, 900)
     app.workspaceController.openManual()
@@ -454,7 +454,7 @@ def test_manual_all_chapters_layout_and_examples(scene, size, tmp_path):
 
 
 def test_manual_roundtrip_preserves_mpr_measurement_and_segmentation(sidebar_scene):
-    from qt_dicom_viewer.model import TabType
+    from voxplane.model import TabType
     from test_dicom_tags import wait_until
     from test_measurement_qml import _scene, _mouse_drag, _click_points
     from test_mpr_voi_qml import _owner, settle
@@ -462,8 +462,8 @@ def test_manual_roundtrip_preserves_mpr_measurement_and_segmentation(sidebar_sce
     window, app, records, warnings = sidebar_scene
     window.resize(1400, 900)
     ws = app.workspaceController
-    from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-    from qt_dicom_viewer.core.volume_manager import VolumeManager
+    from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+    from voxplane.core.volume_manager import VolumeManager
     worker = DicomRenderWorker(app._series_catalog, VolumeManager())
     ws.renderRequested.disconnect(app.render_service.submit)
     ws.renderRequested.connect(worker.handleRenderRequest)
@@ -514,8 +514,8 @@ def test_manual_roundtrip_preserves_mpr_measurement_and_segmentation(sidebar_sce
 
 def test_manual_roundtrip_preserves_3d_controller_state(sidebar_scene, monkeypatch):
     from dataclasses import replace
-    from qt_dicom_viewer.model import TabType
-    from qt_dicom_viewer.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
+    from voxplane.model import TabType
+    from voxplane.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
     from test_dicom_tags import wait_until
 
     # Native GPU rendering has separate smoke tests; this test exercises Loader

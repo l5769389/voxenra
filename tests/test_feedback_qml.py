@@ -18,7 +18,7 @@ def test_feedback_entry_draft_preview_and_channels(scene, theme, locale, monkeyp
     app.settingsController.setValue('appearance', 'theme', theme)
     app.languageController.selectLanguage(locale)
     urls = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.feedback_controller.QDesktopServices.openUrl',
+    monkeypatch.setattr('voxplane.ui.controller.feedback_controller.QDesktopServices.openUrl',
                         lambda url: urls.append(url.toString()) or True)
     app.workspaceController.openSettings()
     QTest.qWait(100)
@@ -28,7 +28,7 @@ def test_feedback_entry_draft_preview_and_channels(scene, theme, locale, monkeyp
     assert window.findChild(QObject, 'feedbackDialog').property('titleIcon') == 'feedback'
     assert find(window, 'feedbackGitHub').isEnabled()
     click(window, find(window, 'feedbackGitHub'))
-    assert urls[-1] == 'https://github.com/l5769389/voxenra/issues/new'
+    assert urls[-1] == 'https://github.com/junforge-dev/voxplane/issues/new'
     subject = find(window, 'feedbackSubject')
     subject.setProperty('text', 'Window display & layout')
     description = find(window, 'feedbackDescription')
@@ -48,7 +48,7 @@ def test_feedback_entry_draft_preview_and_channels(scene, theme, locale, monkeyp
     click(window, find(window, 'feedbackCopy'))
     assert 'Version:' in QGuiApplication.clipboard().text()
     click(window, find(window, 'feedbackGitHub'))
-    assert urls[-1].startswith('https://github.com/l5769389/voxenra/issues/new?')
+    assert urls[-1].startswith('https://github.com/junforge-dev/voxplane/issues/new?')
     click(window, find(window, 'feedbackIncludeInfo'))
     click(window, find(window, 'feedbackEmail'))
     assert urls[-1].startswith('mailto:5769389@qq.com?')
@@ -75,9 +75,9 @@ def test_feedback_attachment_selection_review_export_and_remove(scene, tmp_path,
     app.languageController.selectLanguage(locale)
     files = make_files(tmp_path)
     target = tmp_path / 'feedback.eml'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.feedback_controller.QFileDialog.getOpenFileNames',
+    monkeypatch.setattr('voxplane.ui.controller.feedback_controller.QFileDialog.getOpenFileNames',
                         lambda *args: ([str(p) for p in files], ''))
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.feedback_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.feedback_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(target), ''))
     calls = []
     class Mail:
@@ -88,7 +88,7 @@ def test_feedback_attachment_selection_review_export_and_remove(scene, tmp_path,
             pass
     app.feedbackController._mac_mail = Mail()
     # Never invoke a real system mail composer from GUI regression tests.
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.feedback_controller.windows_compose',
+    monkeypatch.setattr('voxplane.ui.controller.feedback_controller.windows_compose',
                         lambda *args: 'unavailable')
     app.workspaceController.openSettings()
     QTest.qWait(80)
@@ -134,7 +134,7 @@ def test_feedback_attachment_selection_review_export_and_remove(scene, tmp_path,
 def test_workspace_selected_tools_visible_after_reopen(scene, tmp_path, theme, locale):
     from test_series_sidebar import phantom_series
     from test_dicom_tags import wait_until
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, warnings = scene
     window.resize(1280, 720)
     app.settingsController.setValue('appearance', 'theme', theme)

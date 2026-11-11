@@ -15,9 +15,9 @@ from PySide6.QtCore import Qt, QMetaObject, Q_ARG
 from PySide6.QtTest import QTest
 
 from manual.pacs_lab import ARTIFACTS, PRIMARY_STUDY, PRIMARY_SERIES, MR_SERIES, profiles
-from qt_dicom_viewer.pacs.client import Cancelled, DicomWebClient, PacsError
-from qt_dicom_viewer.pacs.config import PacsProfile
-from qt_dicom_viewer.pacs.importer import import_series
+from voxplane.pacs.client import Cancelled, DicomWebClient, PacsError
+from voxplane.pacs.config import PacsProfile
+from voxplane.pacs.importer import import_series
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_tag_qml import find, click, type_text

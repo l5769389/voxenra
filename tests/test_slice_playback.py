@@ -1,6 +1,6 @@
 """Cine navigation uses real image requests and respects render backpressure."""
 import pytest
-from qt_dicom_viewer.model import RenderFailure
+from voxplane.model import RenderFailure
 from test_compare_2d import comparison
 from test_pet_fusion import paired_series
 from test_dicom_tags import qt_app, wait_until
@@ -100,7 +100,7 @@ def test_slice_playback_buttons_in_expanded_and_compact_qml(comparison, tab_type
     from PySide6.QtQuick import QQuickView
     from PySide6.QtTest import QTest
     from shiboken6 import delete
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     from test_four_d_qml import _find, _click
     from test_measurement_qml import _visual_children
     app, records = comparison
@@ -116,7 +116,7 @@ def test_slice_playback_buttons_in_expanded_and_compact_qml(comparison, tab_type
                                    viewportController=tab.activeViewport, tabController=tab))
     view.resize(280, 760)
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-                                        'src/qt_dicom_viewer/qml/sections/RightPanel.qml')))
+                                        'src/voxplane/qml/sections/RightPanel.qml')))
     assert view.status() == QQuickView.Ready
     view.show()
     QTest.qWait(30)
@@ -147,10 +147,10 @@ def test_slice_playback_buttons_in_expanded_and_compact_qml(comparison, tab_type
 
 
 def test_pet_mpr_playback_waits_for_transactional_batch(qt_app, paired_series):
-    from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.service.render_serivce import RenderService
-    from qt_dicom_viewer.core.volume_manager import VolumeManager
+    from voxplane.ui.controller.workspace_controller import WorkspaceController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.service.render_serivce import RenderService
+    from voxplane.core.volume_manager import VolumeManager
     catalog, ct, pet = paired_series
     workspace = WorkspaceController(catalog, DicomImageProvider())
     service = RenderService(catalog, VolumeManager())

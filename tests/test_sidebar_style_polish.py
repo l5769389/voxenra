@@ -11,7 +11,7 @@ from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, descendants
 from test_workspace_dialog_layout import workspace_dialog
 from qt_pointer import move_pointer
-from qt_dicom_viewer.ui.controller.viewport.controller.overlay_presenter import _format_view_position
+from voxplane.ui.controller.viewport.controller.overlay_presenter import _format_view_position
 
 
 def open_image(app, record):
@@ -197,7 +197,7 @@ def test_recovery_location_hover_copy_and_open_closes_card(sidebar_scene, tmp_pa
         QGuiApplication.clipboard().setText(previous)
     assert popup.grabWindow().save(str(tmp_path/'workspace-location-card.png'))
     opened = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.reveal_path',lambda path: opened.append(path) or True)
+    monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.reveal_path',lambda path: opened.append(path) or True)
     click(popup, card.findChild(QObject,'workspaceRecoveryOpen'))
     wait_until(lambda: not card.property('visible'))
     assert opened == [str(manager._recovery_path.parent)]
@@ -243,7 +243,7 @@ def test_sidebar_tooltip_is_on_right_from_first_exposure(sidebar_scene, tmp_path
 
 
 def test_mpr_rotation_updates_visible_plane_names_and_reset_restores(sidebar_scene, tmp_path):
-    from qt_dicom_viewer.model import MprPlane
+    from voxplane.model import MprPlane
     window, app, records, warnings = sidebar_scene
     ws = app.workspaceController
     ws.createTab(records[0].series_instance_uid, 'Oblique review', 'mpr')

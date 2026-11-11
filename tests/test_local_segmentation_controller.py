@@ -5,13 +5,13 @@ import pytest
 from PySide6.QtCore import QObject
 from test_mpr_voi_controller import setup_voi
 from test_measurement_qml import qt_app
-from qt_dicom_viewer.model import PixelValueMeta
-from qt_dicom_viewer.core.segmentation_masks import mask_record
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.model import PixelValueMeta
+from voxplane.core.segmentation_masks import mask_record
+from voxplane.ui.controller.settings_controller import SettingsController
 
 @pytest.fixture
 def integrated(setup_voi,tmp_path):
-    from qt_dicom_viewer.ui.controller.local_segmentation_controller import LocalSegmentationController
+    from voxplane.ui.controller.local_segmentation_controller import LocalSegmentationController
     voi,view,tools=setup_voi
     volume=replace(view._voi_volume,pixel_value_meta=PixelValueMeta(unit='HU'),fingerprint='source')
     view._voi_volume=volume;voi.set_source(volume)
@@ -71,7 +71,7 @@ def test_pending_cancel_and_closed_target_never_mutate(integrated):
 
 
 def test_batch_import_one_undo_and_original_mask_preserved(integrated):
-    from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
+    from voxplane.ui.controller.edit_history_controller import EditHistoryController
     from PySide6.QtTest import QTest
     c,tab,voi,v,_=integrated
     tab.viewports_by_id={}
@@ -107,7 +107,7 @@ def test_diagnostic_write_failure_still_cleans_source_files(integrated,monkeypat
     import time
     from pathlib import Path
     from PySide6.QtTest import QTest
-    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    import voxplane.ui.controller.local_segmentation_controller as module
     c,tab,voi,v,s=integrated
     c.prepare(tab)
     def fake_run(command,log,cancel,*args,**kwargs):
@@ -138,7 +138,7 @@ def test_missing_environment_and_incomplete_model_are_actionable(integrated):
 def test_bridge_dependency_error_reaches_user(integrated,monkeypatch):
     import time
     from PySide6.QtTest import QTest
-    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    import voxplane.ui.controller.local_segmentation_controller as module
     c,tab,voi,v,s=integrated
     def fake_run(command,log,cancel,receive,**kwargs):
         receive({'event':'error','reason':"No module named 'torch'"})
@@ -168,7 +168,7 @@ def test_startup_cleanup_never_removes_running_old_job(integrated):
 def test_duplicate_start_and_stale_completion_are_ignored(integrated,monkeypatch):
     import time
     from PySide6.QtTest import QTest
-    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    import voxplane.ui.controller.local_segmentation_controller as module
     c,tab,voi,v,s=integrated
     c.prepare(tab);c._checked_config=c._configuration()
     c._environment={'model_ready':True,'devices':['cpu'],'organs':['liver']}
@@ -217,7 +217,7 @@ def test_explicit_missing_python_never_falls_back_to_discovery(integrated):
 
 
 def test_python_picker_preserves_virtual_environment_symlink(integrated,monkeypatch,tmp_path):
-    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    import voxplane.ui.controller.local_segmentation_controller as module
     from PySide6.QtWidgets import QFileDialog
     c,tab,voi,v,s=integrated
     actual=tmp_path/'base-python';actual.touch()
@@ -265,7 +265,7 @@ def test_malformed_bridge_event_is_actionable_and_environment_retry_succeeds(int
     import sys
     from pathlib import Path
     from test_dicom_tags import wait_until
-    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    import voxplane.ui.controller.local_segmentation_controller as module
     c, tab, voi, volume, settings = integrated
     settings.setValue('services', 'segmentationPython', sys.executable)
     response = {'event': event}
@@ -307,7 +307,7 @@ def test_external_probe_failure_is_terminal_and_retry_recovers(integrated, monke
     import json
     import sys
     from test_dicom_tags import wait_until
-    import qt_dicom_viewer.ui.controller.local_segmentation_controller as module
+    import voxplane.ui.controller.local_segmentation_controller as module
     c, tab, voi, volume, settings = integrated
     script = tmp_path / 'fake_bridge.py'
     script.write_text("""import json, sys
@@ -315,7 +315,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 response = json.loads(Path(sys.argv[2]).read_text())
 if 'event' in response:
-    print('VOXENRA_EVENT ' + json.dumps(response['event']), flush=True)
+    print('VOXPLANE_EVENT ' + json.dumps(response['event']), flush=True)
 (root / 'result.json').write_text(json.dumps(response['result']))
 """)
     control = tmp_path / 'response.json'

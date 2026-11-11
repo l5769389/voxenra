@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from test_mtf_controller import (qt_app, mtf_viewport, capture_tasks, draw, finish, deliver_frame)
 from test_water_qa_controller import qa_view, wait_qa
-from qt_dicom_viewer.core.workspace_state import dumps, loads
+from voxplane.core.workspace_state import dumps, loads
 
 
 @pytest.mark.parametrize('target', ['mtf', 'fwhm'])
@@ -87,9 +87,9 @@ def test_workspace_file_reopens_completed_analysis(qt_app, tmp_path, kind):
     from test_bead_mtf import gaussian
     from test_water_qa import water_image
     from test_dicom_tags import wait_until
-    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.core.dicom_scanner import DicomFolderScanner
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     phantom_series(tmp_path, 1, 'QA-TEST', '1.2.3.1', '20260903')
     pixels = water_image(mean=2) if kind == 'qa' else gaussian(sigma_x=.2, sigma_y=.15)
     for path in tmp_path.glob('*.dcm'):

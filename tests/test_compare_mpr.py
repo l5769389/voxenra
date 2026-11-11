@@ -10,9 +10,9 @@ from test_compare_2d import comparison
 from test_series_sidebar import sidebar_scene, right_click
 from test_tag_qml import find, click, descendants
 from test_workspace_persistence import draw_length
-from qt_dicom_viewer.core.compare import supports_mpr_compare
-from qt_dicom_viewer.core.workspace_document import read_document
-from qt_dicom_viewer.model import MprPlane, WindowLevel, WindowLevelChange
+from voxplane.core.compare import supports_mpr_compare
+from voxplane.core.workspace_document import read_document
+from voxplane.model import MprPlane, WindowLevel, WindowLevelChange
 
 
 def open_pair(app, records):
@@ -111,7 +111,7 @@ def test_independent_measurements_history_and_workspace_roundtrip(comparison, tm
     assert first in av._measure_controller._measurements and not bv._measure_controller._measurements
     tab.historyController.redo()
     assert second in bv._measure_controller._measurements
-    from qt_dicom_viewer.ui.controller.measurement_report_controller import capture_results
+    from voxplane.ui.controller.measurement_report_controller import capture_results
     rows, _, _ = capture_results(app.workspaceController, app._series_catalog, anonymous=False)
     assert len(rows) == 2
     assert {row['series'] for row in rows} == {r.series_description for r in records[:2]}
@@ -228,8 +228,8 @@ def test_detach_rejoin_and_close_during_linked_render(sidebar_scene):
 
 def test_workspace_rejects_malformed_mpr_groups(comparison):
     from copy import deepcopy
-    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
-    from qt_dicom_viewer.core.workspace_document import _validate_tab
+    from voxplane.ui.workspace_snapshot import tab_snapshot
+    from voxplane.core.workspace_document import _validate_tab
     app, records = comparison
     saved = tab_snapshot(open_pair(app, records))
     _validate_tab(saved)
@@ -314,8 +314,8 @@ def test_out_of_range_and_recenter_only_affect_the_requested_series(comparison):
 
 
 def test_window_link_is_unavailable_for_mixed_modalities_and_old_workspaces(comparison):
-    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
-    from qt_dicom_viewer.core.workspace_document import _validate_tab
+    from voxplane.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
+    from voxplane.core.workspace_document import _validate_tab
     app, records = comparison
     tab = open_pair(app, records)
     original = tab.tab_config
@@ -338,8 +338,8 @@ def test_window_link_is_unavailable_for_mixed_modalities_and_old_workspaces(comp
 
 
 def test_geometric_coverage_handles_dark_pixels_oblique_planes_and_slabs():
-    from qt_dicom_viewer.core.compare_mpr import plane_intersects_volume, matched_zooms
-    from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
+    from voxplane.core.compare_mpr import plane_intersects_volume, matched_zooms
+    from voxplane.core.mpr_reslicer import MprReslicer
     from test_mpr_reslicer import _volume
     volume = _volume(np.zeros((5, 10, 12)), origin=(120., -40., 3.))
     reslicer = MprReslicer()
@@ -354,8 +354,8 @@ def test_geometric_coverage_handles_dark_pixels_oblique_planes_and_slabs():
     # A finite grid can miss the volume even when its infinite plane intersects.
     lateral = replace(plane, image_origin_mpr=tuple(origin + np.asarray(plane.column_direction_mpr) * 100))
     assert not plane_intersects_volume(volume.geometry, lateral)
-    from qt_dicom_viewer.core.mpr_rotation import rotate_mpr_state_3d
-    from qt_dicom_viewer.model import MprState, MprFrame
+    from voxplane.core.mpr_rotation import rotate_mpr_state_3d
+    from voxplane.model import MprState, MprFrame
     state = MprState(MprFrame.standard_lps(volume.geometry.center_patient))
     state = rotate_mpr_state_3d(state, (1., 1., 0.), .6)
     oblique, _, _ = reslicer.prepare_plane(volume, MprPlane.AXIAL, frame=state.frame)
@@ -374,7 +374,7 @@ def test_always_visible_link_controls_physical_scale_and_range_recovery(sidebar_
     assert find(window, 'rightPanel').property('collapsed')
     for key in ('position', 'rotation', 'window', 'zoom'):
         button = find(window, 'compareMprStatus-' + key)
-        from qt_dicom_viewer.ui.svg_icon_provider import NAMES
+        from voxplane.ui.svg_icon_provider import NAMES
         assert button.property('iconName') in NAMES
         assert not button.property('checked')
         click(window, button)

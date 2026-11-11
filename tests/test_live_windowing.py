@@ -11,15 +11,15 @@ import pytest
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import QImage
 
-from qt_dicom_viewer.core.color_maps import apply_color_map
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.pet_fusion import blend_pet_ct, pet_rgb
-from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import WindowLevel, WindowLevelChange
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.core.color_maps import apply_color_map
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.pet_fusion import blend_pet_ct, pet_rgb
+from voxplane.core.pet_reconstruction import PetReconstructor
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import WindowLevel, WindowLevelChange
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
 from test_compare_2d import comparison, open_pair as open_2d_pair
 from test_compare_mpr import open_pair as open_mpr_pair
 from test_dicom_tags import qt_app, wait_until
@@ -215,9 +215,9 @@ def test_pet_and_fusion_window_live_without_reslicing(qt_app, paired_series, mod
 
 
 def test_four_d_drag_live_during_pending_phase_and_obsolete_result(qt_app):
-    from qt_dicom_viewer.model import TabConfig, TabType, MprFrame
-    from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-    from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
+    from voxplane.model import TabConfig, TabType, MprFrame
+    from voxplane.application.series_catalog import SeriesCatalog
+    from voxplane.ui.controller.tab.tab_controller import TabController
     from test_four_d import _four_d_meta
     from test_linked_ct_window import result_for
     tab = TabController(TabConfig('live-4d', '4D', TabType.FOUR_D, (_four_d_meta(),)))
@@ -261,7 +261,7 @@ def headless_volume_interactor(monkeypatch):
     from PySide6.QtWidgets import QWidget
     from vtkmodules.vtkRenderingOpenGL2 import vtkGenericOpenGLRenderWindow
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
-    from qt_dicom_viewer.ui import volume_viewport_host
+    from voxplane.ui import volume_viewport_host
     class Canvas(QWidget):
         def __init__(self, host):
             super().__init__(host)
@@ -284,8 +284,8 @@ def test_native_3d_host_renders_window_changes_during_held_drag(qt_app, volume, 
 
     Only the final GPU draw is replaced so this contract runs on headless CI.
     """
-    from qt_dicom_viewer.model.render_models import VolumeLoadResult
-    from qt_dicom_viewer.ui.volume_viewport_host import VolumeViewportHost
+    from voxplane.model.render_models import VolumeLoadResult
+    from voxplane.ui.volume_viewport_host import VolumeViewportHost
     tab = make_tab('live-3d')
     view = tab.activeViewport
     pending = []
@@ -327,7 +327,7 @@ def test_native_3d_host_renders_window_changes_during_held_drag(qt_app, volume, 
 
 @pytest.mark.parametrize('fusion', [False, True])
 def test_pet_3d_display_controls_request_live_native_render(qt_app, paired_series, monkeypatch, headless_volume_interactor, fusion):
-    from qt_dicom_viewer.ui.volume_viewport_host import VolumeViewportHost
+    from voxplane.ui.volume_viewport_host import VolumeViewportHost
     catalog, ct, pet = paired_series
     ws = WorkspaceController(catalog, DicomImageProvider())
     pending = []
@@ -394,7 +394,7 @@ def test_disabled_window_link_preserves_peer_pixels_and_selected_lut(comparison,
 
 
 def test_pet_failed_window_restores_pixels_and_next_drag_starts_at_visible_window(qt_app, paired_series):
-    from qt_dicom_viewer.model import RenderFailure
+    from voxplane.model import RenderFailure
     catalog, _, pet = paired_series
     provider = DicomImageProvider()
     ws = WorkspaceController(catalog, provider)
@@ -425,8 +425,8 @@ def test_pet_failed_window_restores_pixels_and_next_drag_starts_at_visible_windo
 
 @pytest.mark.parametrize('mode', ['stack', 'axial', 'coronal', 'sagittal', 'mpr', 'compare2d', 'comparempr', 'montage'])
 def test_mr_fractional_window_and_polarity_stay_live_across_views(qt_app, tmp_path, mode):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.app_controller import AppController
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.app_controller import AppController
     from test_mr import write_mr_series
 
     def fractional_mr(ds, index):

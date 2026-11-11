@@ -32,7 +32,7 @@ def test_dimse_configuration_query_import_and_persistence(scene, peer, tmp_path)
     assert not any(i.isVisible() for i in descendants(window.contentItem())
                    if i.objectName() in ('pacsProfileUrl', 'pacsProfileAuth'))
     for name, value in [('Host', '127.0.0.1'), ('Port', str(peer.port)), ('CalledAe', 'LABPACS'),
-                        ('CallingAe', 'VOXENRA'), ('ListenHost', '127.0.0.1'),
+                        ('CallingAe', 'VOXPLANE'), ('ListenHost', '127.0.0.1'),
                         ('ListenPort', str(peer.destination))]:
         item = find(window, 'pacsProfile' + name)
         reveal(window, item)

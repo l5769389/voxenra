@@ -8,9 +8,9 @@ from PySide6.QtCore import QPoint, QPointF, Qt, QCoreApplication
 from PySide6.QtGui import QWheelEvent
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import InteractionType, MprFrame, MprPlane, TabType, WindowLevel
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.mpr_viewport_controller import MprViewportController
+from voxplane.model import InteractionType, MprFrame, MprPlane, TabType, WindowLevel
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.viewport.image_2d.mpr_viewport_controller import MprViewportController
 from test_measurement_qml import qt_app, viewport, _scene
 from test_viewport_transform import _controller, _render_result
 from test_viewport_controller_hierarchy import _viewport_config, _mpr_result
@@ -199,7 +199,7 @@ def test_real_right_drag_cursor_and_wheel_with_active_tool(viewport, tool):
 @pytest.mark.skipif(os.environ.get("QT_QPA_PLATFORM") == "offscreen", reason="Native QVTK canvas")
 def test_native_volume_canvas_routes_right_drag_and_keeps_left_rotation(qt_app, loaded_tab):
     from unittest.mock import Mock
-    from qt_dicom_viewer.ui.volume_viewport_host import VolumeViewportHost
+    from voxplane.ui.volume_viewport_host import VolumeViewportHost
     c = loaded_tab.activeViewport
     host = VolumeViewportHost(c, backend_factory=lambda widget: Mock())
     host.resize(600, 400)

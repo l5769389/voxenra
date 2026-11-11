@@ -2,13 +2,13 @@
 from dataclasses import replace
 import numpy as np
 import pytest
-from qt_dicom_viewer.core.display_mapping import map_display
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.workspace_state import encode, decode
-from qt_dicom_viewer.model.display_mapping import DisplayMappingIntent, capabilities
-from qt_dicom_viewer.model import PixelValueMeta, ToolType
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.display_mapping import map_display
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.workspace_state import encode, decode
+from voxplane.model.display_mapping import DisplayMappingIntent, capabilities
+from voxplane.model import PixelValueMeta, ToolType
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_ct_perfusion import perfusion, save_and_scan
 from test_dicom_tags import qt_app, wait_until
 from test_live_windowing import image_pixels, pause_worker, drain, begin_drag, move_drag

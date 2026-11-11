@@ -4,8 +4,8 @@ from PySide6.QtCore import QPoint, QPointF
 from PySide6.QtTest import QTest
 import pytest
 
-from qt_dicom_viewer.model import TabType
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.model import TabType
+from voxplane.ui.controller.tab.tool_controller import ToolController
 from test_series_sidebar import sidebar_scene
 from test_dicom_tags import qt_app, wait_until
 from test_tag_qml import click, descendants, find

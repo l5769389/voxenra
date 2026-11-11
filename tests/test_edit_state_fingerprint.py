@@ -5,8 +5,8 @@ import zlib
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.workspace_state import dumps, loads, encode, fingerprint
-from qt_dicom_viewer.ui.workspace_snapshot import edit_signature
+from voxplane.core.workspace_state import dumps, loads, encode, fingerprint
+from voxplane.ui.workspace_snapshot import edit_signature
 
 
 def test_masks_keep_portable_encoding_and_content_changes_are_detected(monkeypatch):
@@ -33,7 +33,7 @@ def test_masks_keep_portable_encoding_and_content_changes_are_detected(monkeypat
 
 
 def test_signature_preserves_type_and_metadata_distinctions():
-    from qt_dicom_viewer.model import ImagePoint
+    from voxplane.model import ImagePoint
     for a, b in (([1, 2], (1, 2)),
                  (ImagePoint(1., 2.), ImagePoint(2., 1.)),
                  ({'name': 'one'}, {'name': 'two'}),
@@ -48,8 +48,8 @@ def test_signature_preserves_type_and_metadata_distinctions():
 
 
 def test_signature_ignores_roi_statistics_but_not_geometry():
-    from qt_dicom_viewer.model.measure import RoiMeasurement, RoiMetrics, MeasurementKind
-    from qt_dicom_viewer.model import ImagePoint
+    from voxplane.model.measure import RoiMeasurement, RoiMetrics, MeasurementKind
+    from voxplane.model import ImagePoint
     roi = RoiMeasurement('roi', 'series', 'sop', 0, MeasurementKind.RECT,
                          (ImagePoint(1., 2.), ImagePoint(4., 6.)), RoiMetrics())
     state = {'views': {'a': {'measurements': {'roi': roi}}}}

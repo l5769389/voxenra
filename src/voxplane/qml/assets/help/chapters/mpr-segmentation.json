@@ -1,0 +1,177 @@
+[
+  {
+    "id": "segmentation",
+    "category": "mpr-segmentation",
+    "title": "分割与精修",
+    "sections": [
+      {
+        "title": "1. 画范围",
+        "body": "在 CT 或 PET 的 **MPR → 阈值分割**、或 CT 的 **4D → 阈值分割** 中勾选 **启用**，左键拖出矩形，松开完成。三切面同步显示范围；4D 仅显示当前时相的范围。",
+        "messageId": "manual.segmentation.section0"
+      },
+      {
+        "title": "2. 设阈值",
+        "body": "选择 **绝对值 / %**，输入阈值或拖动滑块。范围内 **≥ 阈值** 的体素着色并参与统计；先确认 CT/PET 单位。",
+        "messageId": "manual.segmentation.section1"
+      },
+      {
+        "title": "3. 设深度",
+        "body": "默认深度为 **√(宽 × 高)**，以绘制切面向两侧延伸。直接调整深度会进入 **手动**；切回 **自动** 后随宽高变化。",
+        "messageId": "manual.segmentation.section2"
+      },
+      {
+        "title": "修改或排查",
+        "body": "回原切面拖动内部移动，拖动角点改尺寸。无结果时检查位置、阈值、单位与深度；**N = 0** 表示没有符合条件的有效体素。",
+        "messageId": "manual.segmentation.section3"
+      },
+      {
+        "title": "导出 SEG",
+        "body": "完成分割并等待统计后，选择 **导出 → 导出 SEG**。导出当前标签页、当前时相的所有分割。同一源网格的区域合并为多区域二值 SEG，重叠部分分别保留；大数据按内存预算分批。空分割需先调整阈值或范围。",
+        "messageId": "manual.segmentation.section4"
+      },
+      {
+        "title": "导入与管理 SEG",
+        "body": "左侧导入原始 DICOM，打开对应 MPR / 4D 和时相，再通过右侧导入分割。支持原网格匹配的二值、多区域和重叠 SEG。可改名、换色、显隐、精修或删除，支持撤销与工作区保存。",
+        "messageId": "manual.segmentation.section5"
+      },
+      {
+        "title": "画笔与橡皮",
+        "body": "没有分割时，选择 **画笔** 直接绘制，第一笔完成后自动创建。已有分割时，画笔和橡皮编辑当前选中项；切换工具不会新建。点击 **分割管理** 旁的 **＋** 可创建并选中空分割，新区域优先使用尚未使用的颜色。画笔与橡皮使用不同光标，并显示作用范围。\n\n**毫米**：滑块 1–50 mm，精确输入 0.1–100 mm，默认 5 mm。**相对视图**：直径为视口较短边的 1%–25%，默认 3%；缩放时屏幕大小不变，实际毫米大小随之变化。\n\n选择 **当前切面 / 3D 球形** 后拖动，松开提交，Esc 取消；一笔对应一次撤销，其他分割不受影响。分割管理旁提供撤销、重做图标，悬停显示本机快捷键。教程入口位于顶部切面选择旁。CT、MR、PET 的 MPR 均可使用；阈值结果首次精修后转为固定体素掩膜。",
+        "messageId": "manual.segmentation.section6"
+      },
+      {
+        "title": "连通区域",
+        "body": "选择 **仅保留选中块 / 删除选中块**，点击所选分割内部。按三维六邻域（共享面）识别连通区域，不按二维轮廓操作。结果支持撤销；橡皮清空分割后可以继续绘制，导出 DICOM SEG 前须补绘或删除空项。",
+        "messageId": "manual.segmentation.section7"
+      },
+      {
+        "title": "轮廓与填充显示",
+        "body": "展开分割面板的 **显示**，选择 **填充 / 轮廓 / 填充＋轮廓**。默认填充＋轮廓、填充不透明度 30%；滑块 0–100%，数值越高遮挡越强。仅轮廓模式下滑块禁用，原值保留。轮廓显示当前切面实际掩膜的内侧像素边界，包括孔洞和独立区域；不做平滑。设置作用于当前页签所有分割（4D 各时相共用），不影响其他页签或 VOI。显示设置随工作区保存，不改变掩膜、统计和 SEG / NRRD 导出；隐藏仍由各分割的显隐按钮控制。",
+        "messageId": "manual.segmentation.section9"
+      },
+      {
+        "title": "NRRD / Slicer 交换",
+        "body": "在原始 DICOM 的 MPR / 4D 中选择 **导出 → 导出 NRRD / Slicer**，输出当前时相体数据 source.nrrd 和分割 segmentation.seg.nrrd（含隐藏项和重叠区域）。在 Slicer 中分别加载，编辑并保存 .seg.nrrd；回到原 DICOM 的同一时相，通过右侧 **导入分割 → 导入分割 · SEG / NRRD** 导入。也支持三维整数标签 NRRD。文件须使用毫米单位及 LPS/RAS 坐标；不一致网格会拒绝导入，不自动重采样。NRRD 通常没有可靠的患者/序列身份信息，请确认参考影像和时相。",
+        "messageId": "manual.segmentation.section8"
+      },
+      {
+        "title": "本地自动分割：环境",
+        "body": "在 **设置 → AI → 本地自动分割** 点击 **检测环境**。软件查找专用 TotalSegmentator-Local、常见 Conda 环境及 PATH 中已安装 TotalSegmentator 的解释器；未找到时打开 **高级配置**，手动选择 Python 解释器和模型目录。Windows 选择环境中的 python.exe（venv 通常在 Scripts 中，Conda 通常在环境根目录）；macOS 选择 bin/python。手动配置优先保留，**恢复自动发现** 可清除路径覆盖并重新检测。路径仅在悬停提示中显示。\n\n模型目录应包含 Dataset297_TotalSegmentator_total_3mm_1559subj，也可选择该模型、训练器或 fold_0 目录，软件会识别其上级目录。检测检查依赖、调用接口、设备、模型文件及 JSON 配置；不会运行分割，不保证显存充足或权重文件无损，不安装依赖或下载模型。**自动** 依次选择 CUDA、Apple MPS、CPU。保存的设备若不可用会明确标注，需改选，不会静默替换。\n\n已实测组合为 TotalSegmentator 2.18.0、macOS / MPS。其他版本或平台即使接口检查通过，也显示尚未实测；接口或 CT 快速模型变化时拒绝使用。升级环境后请重新检测，并用样例复核分割和空间位置。Windows 环境发现有自动化覆盖，尚未完成 Windows 实机验收。",
+        "messageId": "manual.segmentation.auto0"
+      },
+      {
+        "title": "本地自动分割：运行",
+        "body": "在 CT 的 **MPR / 4D → 分割** 面板顶部点击 **自动分割** 图标。确认序列和当前时相，搜索并勾选器官，然后开始。默认肝脏、脾脏、双肾；保留上次选择。输入为当前时相完整原始 HU 体数据，不受窗值、显示裁剪和旋转影响。仅支持可靠标定的规则正交 CT 网格；不支持 MR、普通 2D、非 HU 派生图、剪切及不规则体数据。\n\n部位列表在检测环境时从所选 TotalSegmentator 的 total 模型标签表读取，表示模型支持的结构，不表示本次影像已经检出这些器官。VoxPlane 提供中英文名称，未收录的名称显示英文。升级环境后重新检测可刷新列表；不能通过输入名称添加模型不支持的结构。",
+        "messageId": "manual.segmentation.auto1"
+      },
+      {
+        "title": "本地自动分割：结果与取消",
+        "body": "运行时可继续浏览；切换时相或正在编辑时，结果暂存，返回目标时相并结束编辑后导入。关闭目标或替换数据会丢弃结果。可取消，失败和取消均不导入半成品；详细原因与日志位于 **详情**。不会因 GPU 失败自动改用 CPU。\n\n全部校验通过后，结果一次性追加；重复运行不会覆盖原分割，整批支持撤销重做。未检出的器官跳过提示。可继续改名、换色、显隐、调整轮廓/透明度和画笔精修，保存工作区或导出 SEG / NRRD。工作区恢复无需 TotalSegmentator，也不会重新计算。自动结果需由使用者核查和精修。\n\n成功导入后，部位选择和详情弹窗自动关闭，显示分割结果；面板保留完成数量及未检出部位提示。失败时，部位选择弹窗保持打开并显示具体原因，保留已选部位，可查看详细日志并重试。",
+        "messageId": "manual.segmentation.auto2"
+      }
+    ],
+    "figure": "segmentation",
+    "summary": "在 MPR 中创建、精修与交换分割，保留独立掩膜和重叠区域。",
+    "related": [
+      "quantification",
+      "management"
+    ],
+    "caption": "合成模体流程演示：失败保留选择供重试，成功导入后关闭弹窗并显示结果；不代表模型精度或耗时。",
+    "icon": "segmentation",
+    "example": "ai-workflow-voxplane-2.6.0.gif"
+  },
+  {
+    "id": "voi",
+    "category": "mpr-segmentation",
+    "title": "VOI 分析",
+    "sections": [
+      {
+        "title": "1. 绘制",
+        "body": "在 **VOI** 面板勾选 **启用**，从圆心向外拖动，松开完成。",
+        "messageId": "manual.voi.section0"
+      },
+      {
+        "title": "2. 调整",
+        "body": "回原切面，拖动内部移动，拖动圆周或控制点调整半径；也可输入直径。**自动深度 = 直径**，形成球体；手动改深度形成椭球。",
+        "messageId": "manual.voi.section1"
+      },
+      {
+        "title": "翻页后轮廓变小",
+        "body": "显示的是三维范围与当前切面的交集；远离中心会变小，超出范围会消失。回原切面继续编辑。**VOI 不使用分割阈值，PET MIP 不支持绘制。**",
+        "messageId": "manual.voi.section2"
+      }
+    ],
+    "figure": "voi",
+    "examples": [
+      "voi-ct-voxplane-2.6.0.png",
+      "voi-pt-voxplane-2.6.0.png"
+    ],
+    "summary": "在 MPR 中绘制球体或椭球，统计范围内全部有效体素。",
+    "related": [
+      "quantification",
+      "management"
+    ],
+    "caption": "CT / PET MPR 的范围绘制与统计。",
+    "icon": "voi"
+  },
+  {
+    "id": "interaction",
+    "category": "mpr-segmentation",
+    "title": "分割与 VOI 编辑",
+    "sections": [
+      {
+        "title": "看光标操作",
+        "body": "影像工具统一使用 **指针 + 工具图标**。分割/VOI 范围内部显示移动图标，边缘或控制点显示调整尺寸；在范围外拖动可新建。",
+        "messageId": "manual.interaction.section0"
+      },
+      {
+        "title": "十字线优先级",
+        "body": "普通工具下，命中十字线时优先定位或旋转。启用分割/VOI 后由范围编辑接管；需操作十字线时切换到调窗等工具。",
+        "messageId": "manual.interaction.section1"
+      },
+      {
+        "title": "取消与删除",
+        "body": "先点击影像让它获得键盘焦点。`Esc` 取消当前绘制或编辑，`Delete / Backspace` 删除所选；输入框中的按键只编辑文字。",
+        "messageId": "manual.interaction.section2"
+      },
+      {
+        "title": "选择与命名",
+        "body": "点击列表名称选中，**双击名称改名**。左侧眼睛按钮显示/隐藏该项，右侧删除按钮删除。取消 **启用** 会隐藏该类型范围并暂停绘制。",
+        "messageId": "manual.management.section0"
+      },
+      {
+        "title": "清除范围",
+        "body": "**清除分割 / 清除 VOI** 删除当前类型，**全部清除** 删除当前 MPR 页签两种范围，不影响其他页签。**4D 中两种清除都仅作用于当前时相**，其他时相的范围保留。",
+        "messageId": "manual.management.section1",
+        "important": true
+      },
+      {
+        "title": "下次继续",
+        "body": "范围与实际分割掩膜可随 **工作区** 保存恢复，同时恢复所选区域、画笔／橡皮模式、尺寸及作用范围；未提交的笔画不保存，播放保持暂停。统计可导出测量报告，分割可通过 SEG / NRRD 交换。支持结构化 SR 导出；RTSTRUCT 和 SR 导入尚未实现。关闭未保存页签会丢失当前结果。",
+        "messageId": "manual.management.section2",
+        "important": true
+      }
+    ],
+    "cursorLegend": true,
+    "summary": "编辑、命名、隐藏或删除分割与 VOI 范围。",
+    "related": [
+      "mpr",
+      "measurement-edit",
+      "workspace",
+      "measurement-report"
+    ],
+    "shortcuts": [
+      {
+        "label": "取消",
+        "keys": "Esc",
+        "mac": "Esc"
+      },
+      {
+        "label": "删除所选",
+        "keys": "Delete / Backspace",
+        "mac": "⌫"
+      }
+    ],
+    "icon": "pan"
+  }
+]

@@ -2,8 +2,8 @@ from dataclasses import replace
 from test_dicom_tags import qt_app, wait_until
 from test_workspace_persistence import populated_app, draw_length
 from test_water_qa_controller import qa_view, wait_qa
-from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
-from qt_dicom_viewer.model import WindowLevel, WindowLevelChange
+from voxplane.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
+from voxplane.model import WindowLevel, WindowLevelChange
 
 
 def test_located_projection_survives_windowing(qt_app, tmp_path):
@@ -47,9 +47,9 @@ def test_qa_restore_warns_if_already_loaded_source_changed(qa_view, qt_app):
 
 def test_4d_locate_save_restore_preserves_peer_phases(qt_app, tmp_path):
     from test_four_d import _cross_series_four_d
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     records = _cross_series_four_d(tmp_path)
     app = AppController(DicomImageProvider(), settings_path=False)
     try:

@@ -9,7 +9,7 @@ import pytest
 from PySide6.QtCore import QObject, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.nrrd_exchange import write_nrrd
+from voxplane.core.nrrd_exchange import write_nrrd
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import click, descendants, find
@@ -51,7 +51,7 @@ def automatic_scene(sidebar_scene, monkeypatch):
         }))
         log.write_text('Synthetic inference completed')
 
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.local_segmentation_controller.run_process', bridge)
+    monkeypatch.setattr('voxplane.ui.controller.local_segmentation_controller.run_process', bridge)
     try:
         yield window, app, ws.activeTab, c, job, warnings
     finally:

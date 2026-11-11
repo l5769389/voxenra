@@ -4,7 +4,7 @@ import pytest
 
 
 def module():
-    from qt_dicom_viewer.infrastructure import local_segmentation_environment
+    from voxplane.infrastructure import local_segmentation_environment
     return local_segmentation_environment
 
 
@@ -57,7 +57,7 @@ def test_model_directory_accepts_dataset_or_trainer_and_rejects_arbitrary_folder
 
 
 def bridge():
-    path=Path(__file__).resolve().parents[1]/'src/qt_dicom_viewer/infrastructure/totalsegmentator_bridge.py'
+    path=Path(__file__).resolve().parents[1]/'src/voxplane/infrastructure/totalsegmentator_bridge.py'
     spec=importlib.util.spec_from_file_location('isolated_totalseg_bridge',path)
     result=importlib.util.module_from_spec(spec);spec.loader.exec_module(result)
     return result

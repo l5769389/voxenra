@@ -2,8 +2,8 @@ from dataclasses import replace
 import gzip
 import numpy as np
 import pytest
-from qt_dicom_viewer.core.nrrd_exchange import read_nrrd, write_nrrd, read_segmentation, write_segmentation
-from qt_dicom_viewer.core.segmentation_masks import mask_record
+from voxplane.core.nrrd_exchange import read_nrrd, write_nrrd, read_segmentation, write_segmentation
+from voxplane.core.segmentation_masks import mask_record
 from test_mpr_reslicer import _volume
 
 
@@ -39,6 +39,19 @@ def test_volume_and_overlapping_segmentation_roundtrip(tmp_path):
     for r,m in zip(read,masks):np.testing.assert_array_equal(dense(r,m.shape),m)
     assert np.logical_and(*(dense(r,masks[0].shape) for r in read)).sum()>0
     assert [ev[r['id']].metrics['volume'] for r in read]==[results[r['id']].metrics['volume'] for r in records]
+
+
+def test_pre_rename_segmentation_keeps_source_identity_validation(tmp_path):
+    volume, masks, records, results = sample()
+    path = tmp_path / 'legacy.seg.nrrd'
+    write_segmentation(path, volume, records, results)
+    payload = path.read_bytes()
+    assert b'VoxPlane_SourceSeriesUID' in payload
+    path.write_bytes(payload.replace(b'VoxPlane_SourceSeriesUID', b'Voxenra_SourceSeriesUID'))
+    restored, _ = read_segmentation(path, volume)
+    np.testing.assert_array_equal(dense(restored[0], masks[0].shape), masks[0])
+    with pytest.raises(ValueError):
+        read_segmentation(path, replace(volume, series_uid='different-source-series'))
 
 
 def test_ras_flip_cropped_labels_and_reject_subvoxel_mismatch(tmp_path):

@@ -10,17 +10,17 @@ import json
 import sys
 import numpy as np
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.dicom_results import (
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.dicom_results import (
     SegmentResult,
     PlanarResult,
     write_results,
 )
-from qt_dicom_viewer.core.mpr_voi import VoiRegion, evaluate_voi
-from qt_dicom_viewer.core.measurement_geometry import roi_metrics
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
-from qt_dicom_viewer.model.measure import RoiMeasurement
+from voxplane.core.mpr_voi import VoiRegion, evaluate_voi
+from voxplane.core.measurement_geometry import roi_metrics
+from voxplane.model import ImagePoint, MeasurementKind
+from voxplane.model.measure import RoiMeasurement
 
 source, output = map(Path, sys.argv[1:3])
 output.mkdir(parents=True, exist_ok=True)

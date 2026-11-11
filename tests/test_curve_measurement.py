@@ -6,11 +6,11 @@ import numpy as np
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.core.curve_geometry import sample_curve, curve_length_mm
-from qt_dicom_viewer.core.measurement_hit_test import hit_test_outline, hit_test_control_points
-from qt_dicom_viewer.core.workspace_state import dumps, loads
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
-from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
+from voxplane.core.curve_geometry import sample_curve, curve_length_mm
+from voxplane.core.measurement_hit_test import hit_test_outline, hit_test_control_points
+from voxplane.core.workspace_state import dumps, loads
+from voxplane.model import ImagePoint, MeasurementKind
+from voxplane.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
 from test_measurement_controller import _context, _position, _drag
 from test_measurement_qml import qt_app, viewport, _scene, _visual_children
 
@@ -103,8 +103,8 @@ def test_drag_does_not_sample_path_and_escape_discards_it(viewport):
 
 
 def test_curve_tightens_a_loop_without_moving_controls_and_uses_repaired_arc():
-    from qt_dicom_viewer.core.curve_geometry import _sample_open_curve
-    from qt_dicom_viewer.core.freehand_roi import simple_path
+    from voxplane.core.curve_geometry import _sample_open_curve
+    from voxplane.core.freehand_roi import simple_path
     controls = tuple(ImagePoint(*p) for p in [(0,0),(10,0),(10,10),(9.9,.1),(0,10)])
     old = _sample_open_curve(controls, 128, 1.0)
     assert simple_path(controls) and not simple_path(old)
@@ -129,7 +129,7 @@ def test_curve_tightens_a_loop_without_moving_controls_and_uses_repaired_arc():
     ([(0,0),(10,0),(20,0)], True),
 ])
 def test_open_curve_rejects_crossing_retracing_and_duplicate_controls(coords, valid):
-    from qt_dicom_viewer.core.freehand_roi import simple_path
+    from voxplane.core.freehand_roi import simple_path
     controls = tuple(ImagePoint(*p) for p in coords)
     assert simple_path(controls) is valid
     assert bool(sample_curve(controls)) is valid
@@ -180,7 +180,7 @@ def test_restored_curve_length_is_refreshed_from_the_safe_path(viewport):
 
 
 def test_real_curve_crossing_preview_is_blocked_and_controls_can_continue(viewport,tmp_path):
-    from qt_dicom_viewer.core.freehand_roi import simple_path
+    from voxplane.core.freehand_roi import simple_path
     view,controller,layer,warnings = viewport
     controller._tool_controller.selectInteraction('measure:curve')
     for p in [(30,35),(95,35),(95,95)]:

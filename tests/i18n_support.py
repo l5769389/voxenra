@@ -1,7 +1,7 @@
 """Component-only QML scenes use the same bundled default translator as the app."""
 from PySide6.QtCore import QObject
-from qt_dicom_viewer.ui.controller.language_controller import JsonTranslator
-from qt_dicom_viewer.i18n.messages import builtin
+from voxplane.ui.controller.language_controller import JsonTranslator
+from voxplane.i18n.messages import builtin
 
 
 def install_default_language(app):

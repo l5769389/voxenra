@@ -5,7 +5,7 @@ from test_mpr_sampling_precision import reference_sample
 
 
 def sampler():
-    from qt_dicom_viewer.core.volume_sampling import sample_volume
+    from voxplane.core.volume_sampling import sample_volume
     return sample_volume
 
 
@@ -42,12 +42,12 @@ def test_broadcasting_and_missing_weight_renormalization():
 @pytest.mark.parametrize("pixels", [np.zeros((2, 2)), np.zeros((0, 2, 2)),
                                     np.full((2, 2, 2), "x"), np.zeros((2, 2, 2), complex)])
 def test_invalid_volume_is_a_clear_sampling_error(pixels):
-    from qt_dicom_viewer.core.volume_sampling import VolumeSamplingError
+    from voxplane.core.volume_sampling import VolumeSamplingError
     with pytest.raises(VolumeSamplingError):
         sampler()(pixels, [0.], [0.], [0.])
 
 
 def test_mpr_keeps_its_existing_error_contract_for_invalid_volume():
-    from qt_dicom_viewer.core.mpr_reslicer import MprReslicer, MprResliceError
+    from voxplane.core.mpr_reslicer import MprReslicer, MprResliceError
     with pytest.raises(MprResliceError):
         MprReslicer._trilinear_sample(np.zeros((2, 2)), np.array([0.]), np.array([0.]), np.array([0.]))

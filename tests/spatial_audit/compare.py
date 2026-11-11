@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 import sys
 import numpy as np
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.nrrd_exchange import read_segmentation
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.nrrd_exchange import read_segmentation
 from .verify import close
 
 
@@ -29,10 +29,10 @@ def compare(root):
             result.update(status='blocked',reason='Slicer result missing');results.append(result);continue
         slicer=json.loads(source.read_text());result['slicer_version']=slicer['slicer']
         if not manifest.get('expected_volume',True):
-            result.update(status='explicitly_unsupported',reason='Voxenra rejects irregular or incomplete geometry',
+            result.update(status='explicitly_unsupported',reason='VoxPlane rejects irregular or incomplete geometry',
                 slicer_corrections=[dict(warning=x.get('warning'),transform=x.get('transform'),shape=x.get('shape')) for x in slicer['dicom']])
             results.append(result);continue
-        vox_files=sorted(case.glob('group-*/voxenra.npz'))
+        vox_files=sorted(case.glob('group-*/voxplane.npz'))
         candidates=[(p,np.load(p)) for p in vox_files]
         for n,loaded in enumerate(slicer['dicom']):
             item=dict(slicer_volume=n)
@@ -45,7 +45,7 @@ def compare(root):
                 matched=[(p,v) for p,v in candidates if same_grid(v,s)]
                 if len(matched)!=1:
                     item.update(status='definition_difference',reason='Different frame grouping or physical grid',
-                                slicer_shape=list(s['pixels'].shape),voxenra_shapes=[list(v['pixels'].shape) for p,v in candidates])
+                                slicer_shape=list(s['pixels'].shape),voxplane_shapes=[list(v['pixels'].shape) for p,v in candidates])
                     if len(candidates)==1 and 'affine' not in candidates[0][1] and 'plane_affine' not in candidates[0][1]:
                         v=candidates[0][1]
                         item.update(status='blocked',reason='Original DICOM has no patient plane geometry',
@@ -58,11 +58,11 @@ def compare(root):
                         geometry_scope='single_plane' if 'plane_affine' in v else 'volume',
                         intensity_max_error=float(np.max(abs(expected[valid]-actual[valid]))),
                         valid_voxels=int(valid.sum()),padding_voxels=int((~valid).sum()),
-                        padding_policy='Excluded explicitly: Voxenra NaN; Slicer retains numeric padding')
+                        padding_policy='Excluded explicitly: VoxPlane NaN; Slicer retains numeric padding')
                     if not same:
                         item['reason']='Slicer intensity differs from independently checked DICOM rescale values'
-                        if case.name=='mr-mono1':item['reason']='GDCM complements MONOCHROME1 stored pixels before rescale; Voxenra only inverts display'
-                        if case.name=='enhanced-ct-rle':item['reason']='Slicer GDCM uses first-frame slope for all frames; Voxenra applies per-frame slope'
+                        if case.name=='mr-mono1':item['reason']='GDCM complements MONOCHROME1 stored pixels before rescale; VoxPlane only inverts display'
+                        if case.name=='enhanced-ct-rle':item['reason']='Slicer GDCM uses first-frame slope for all frames; VoxPlane applies per-frame slope'
                     if case.name.startswith('pet-') or case.name=='petct-2':
                         item['suv_slicer']='not_verified: scalar DICOM plugin provides source values only'
             result['comparisons'].append(item)

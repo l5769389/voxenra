@@ -8,13 +8,13 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
 from test_measurement_qml import qt_app, _visual_children
 from test_pet_fusion import paired_series
 from test_mr import write_mr_series
@@ -47,7 +47,7 @@ def scene(qt_app, paired_series, request, tmp_path):
     view.setInitialProperties(dict(toolController=tab.activeToolController,
         viewportController=tab.activeViewport, tabController=tab, toolVisible=True, collapsed=True))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/RightPanel.qml')))
+        'src/voxplane/qml/sections/RightPanel.qml')))
     assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
     view.show()
     QTest.qWait(60)

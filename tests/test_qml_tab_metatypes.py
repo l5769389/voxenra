@@ -5,16 +5,16 @@ import pytest
 from PySide6.QtQml import QQmlEngine
 from shiboken6 import delete, getCppPointer
 
-from qt_dicom_viewer.model import TabConfig, TabType
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
-from qt_dicom_viewer.ui.controller.tab.pet_workspace_controller import PetWorkspaceController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.tab.mpr_voi_controller import MprVoiController
-from qt_dicom_viewer.ui.controller.tab.compare_tab_controller import CompareTabController
-from qt_dicom_viewer.ui.controller.tab.compare_mpr_tab_controller import CompareMprTabController
-from qt_dicom_viewer.ui.controller.manual_tab_controller import ManualTabController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
+from voxplane.model import TabConfig, TabType
+from voxplane.ui.controller.tab.tab_controller import TabController
+from voxplane.ui.controller.tab.pet_workspace_controller import PetWorkspaceController
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.tab.mpr_voi_controller import MprVoiController
+from voxplane.ui.controller.tab.compare_tab_controller import CompareTabController
+from voxplane.ui.controller.tab.compare_mpr_tab_controller import CompareMprTabController
+from voxplane.ui.controller.manual_tab_controller import ManualTabController
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
 from test_dicom_tags import qt_app
 from test_pet_fusion import paired_series
 from test_viewport_controller_hierarchy import _series_meta
@@ -85,9 +85,9 @@ def test_recreated_controllers_keep_qml_properties_and_declared_metaobject(qt_ap
 
 
 def test_recreated_cpr_and_two_d_tabs_keep_layout_and_loading_interfaces(qt_app):
-    from qt_dicom_viewer.ui.controller.tab.cpr_tab_controller import CprTabController
-    from qt_dicom_viewer.ui.controller.tab.two_d_tab_controller import TwoDTabController
-    from qt_dicom_viewer.ui.controller.tab_loading_controller import TabLoadingController
+    from voxplane.ui.controller.tab.cpr_tab_controller import CprTabController
+    from voxplane.ui.controller.tab.two_d_tab_controller import TwoDTabController
+    from voxplane.ui.controller.tab_loading_controller import TabLoadingController
 
     engine = QQmlEngine()
     try:
@@ -127,9 +127,9 @@ def test_recreated_cpr_and_two_d_tabs_keep_layout_and_loading_interfaces(qt_app)
 def test_recreated_app_tree_retains_declared_qml_interfaces(qt_app, tmp_path):
     from PySide6.QtCore import QObject
     from PySide6.QtQml import QQmlProperty
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     from test_dicom_tags import wait_until
     from test_series_sidebar import phantom_series
 
@@ -138,7 +138,7 @@ def test_recreated_app_tree_retains_declared_qml_interfaces(qt_app, tmp_path):
     def check_tree(app):
         for controller in [app, *app.findChildren(QObject)]:
             cls = type(controller)
-            if cls.__module__.startswith('qt_dicom_viewer'):
+            if cls.__module__.startswith('voxplane'):
                 assert getCppPointer(controller.metaObject()) == getCppPointer(cls.staticMetaObject), cls.__name__
 
     try:

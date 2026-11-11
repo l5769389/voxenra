@@ -7,20 +7,20 @@ import numpy as np
 import pytest
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
-from qt_dicom_viewer.core.volume_view import (
+from voxplane.core.volume_view import (
     VolumeViewState, camera_parameters, rotate_drag, rotation_matrix,
     validate_volume_series, zoom_by,
 )
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     DicomInstanceMeta, DicomSeriesRecord, InstanceDisplayMeta, PixelSpacing,
     RenderFailure, SeriesDisplayMeta, TabConfig, TabType, WindowLevel,
 )
-from qt_dicom_viewer.model.dicom_core import DicomVolume, VolumeGeometry
-from qt_dicom_viewer.model.render_models import VolumeLoadRequest, VolumeLoadResult
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.volume_render_backend import volume_to_vtk
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.model.dicom_core import DicomVolume, VolumeGeometry
+from voxplane.model.render_models import VolumeLoadRequest, VolumeLoadResult
+from voxplane.ui.controller.tab.tab_controller import TabController
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.volume_render_backend import volume_to_vtk
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
 
 
 @pytest.fixture

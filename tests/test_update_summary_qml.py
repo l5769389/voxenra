@@ -5,8 +5,8 @@ import pytest
 from PySide6.QtCore import QPointF
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.app_updates import Installation, parse_release
-from qt_dicom_viewer.i18n import message
+from voxplane.core.app_updates import Installation, parse_release
+from voxplane.i18n import message
 from test_app_updates import release_payload
 from test_pacs_qml import scene
 from test_tag_qml import find, click
@@ -18,7 +18,7 @@ def test_summary_language_scroll_layout_and_release_link(scene, tmp_path, monkey
     window, app, warnings = scene
     updater = app.updateController
     updater._cache = tmp_path / 'updates'
-    updater._installation = Installation('macos', tmp_path / 'Voxenra.app')
+    updater._installation = Installation('macos', tmp_path / 'VoxPlane.app')
     notes = '''## 更新摘要
 - 操作偏好：自定义鼠标拖动、滚轮方向与工具快捷键，支持冲突检查。
 - 界面与隐私：增加界面缩放、新视图隐藏身份信息和最近工作区清理。
@@ -82,8 +82,8 @@ def test_summary_language_scroll_layout_and_release_link(scene, tmp_path, monkey
     QTest.qWait(60)
     assert abs(flickable.property('contentY')) < 1
     urls = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.update_controller.QDesktopServices.openUrl',
+    monkeypatch.setattr('voxplane.ui.controller.update_controller.QDesktopServices.openUrl',
                         lambda url: urls.append(url.toString()) or True)
     click(window, find(window, 'applicationReleaseNotesLink'))
-    assert urls == ['https://github.com/l5769389/voxenra/releases/tag/v2.0.0']
+    assert urls == ['https://github.com/junforge-dev/voxplane/releases/tag/v2.0.0']
     assert not warnings, warnings

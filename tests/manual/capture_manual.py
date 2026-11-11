@@ -18,11 +18,11 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_tag_qml import find, descendants, click
 from test_measurement_qml import _scene, _mouse_drag
 from test_mpr_voi_qml import _owner
@@ -36,7 +36,7 @@ def main(output, volume_only=False, locale="zh-CN", volume_kind="ct", check_swit
     qt = QApplication.instance() or QApplication([])
     qt.setQuitOnLastWindowClosed(False)
     output.mkdir(parents=True, exist_ok=True)
-    with TemporaryDirectory(prefix="voxenra-manual-") as temporary:
+    with TemporaryDirectory(prefix="voxplane-manual-") as temporary:
         folder = Path(temporary)
         pair_dir, water_dir = folder / 'CT-PET', folder / 'Water-QA'
         pair_dir.mkdir(); water_dir.mkdir()
@@ -54,10 +54,12 @@ def main(output, volume_only=False, locale="zh-CN", volume_kind="ct", check_swit
         engine.rootContext().setContextProperty('appController', app)
         warnings = []
         engine.warnings.connect(lambda entries: warnings.extend(e.toString() for e in entries))
-        engine.load(QUrl.fromLocalFile(str(ROOT/'src/qt_dicom_viewer/qml/Main.qml')))
+        engine.load(QUrl.fromLocalFile(str(ROOT/'src/voxplane/qml/Main.qml')))
         assert engine.rootObjects(), warnings
         window = engine.rootObjects()[0]
         window.resize(1440, 900)
+        from qt_pointer import activate_window
+        activate_window(window)
         ws = app.workspaceController
 
         def pump(ms=120):
@@ -119,8 +121,8 @@ def main(output, volume_only=False, locale="zh-CN", volume_kind="ct", check_swit
                 pump(500)
                 capture('volume', native=True)
                 if check_switching:
-                    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
-                    from qt_dicom_viewer.core.workspace_state import dumps
+                    from voxplane.ui.workspace_snapshot import tab_snapshot
+                    from voxplane.core.workspace_state import dumps
                     if volume_kind != 'fusion':
                         volume.toolController.activateTool('volume-crop')
                         size = (view._host.width(), view._host.height())
@@ -160,21 +162,24 @@ def main(output, volume_only=False, locale="zh-CN", volume_kind="ct", check_swit
                 tab.toolController.selectInteraction('measure:' + kind)
                 view.measurementController.clear_selection()
                 pump()
-                _mouse_drag(window, _scene(layer, *a), _scene(layer, *b))
-                if kind == 'angle':
-                    _mouse_drag(window, _scene(layer, *b), _scene(layer, 210, 340))
+                points = (a, b, (210, 340)) if kind == 'angle' else (a, b)
+                for point in points:
+                    QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, _scene(layer, *point))
                 print(kind, len(view.measurementController.measurementItems), flush=True)
             assert len(view.measurementController.measurementItems) == 4
             capture('measurement')
             view.measurementController.clear_all()
             for key in ('mean', 'std', 'minimum', 'maximum', 'count'):
                 app.settingsController.setValue('roi', key, True)
-            _mouse_drag(window, _scene(layer, 250, 140), _scene(layer, 310, 205))
+            for point in ((250, 140), (310, 205)):
+                QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, _scene(layer, *point))
+            assert len(view.measurementController.measurementItems) == 1
             capture('roi')
             view.measurementController.clear_all()
             tab.toolController.activateTool('annotate')
             tab.toolController.selectInteraction('annotate:arrow')
-            _mouse_drag(window, _scene(layer, 100, 250), _scene(layer, 160, 185))
+            for point in ((100, 250), (160, 185)):
+                QTest.mouseClick(window, Qt.LeftButton, Qt.NoModifier, _scene(layer, *point))
             capture('annotation')
             tab.toolController.activateTool('export')
             capture('export')

@@ -1,7 +1,7 @@
-"""Capture actual Voxenra UI from local MR / 4D CT samples and a loopback PACS demo.
+"""Capture actual VoxPlane UI from local MR / 4D CT samples and a loopback PACS demo.
 
 QT_QPA_PLATFORM=cocoa QT_QUICK_BACKEND=software PYTHONPATH=src:tests:tests/manual \
-  python tests/manual/capture_readme.py --samples ~/Documents/Voxenra-MR-TestData \
+  python tests/manual/capture_readme.py --samples ~/Documents/VoxPlane-MR-TestData \
   --output docs/screenshots
 
 Original DICOM files are read only. Display records use anonymous demo labels;
@@ -24,11 +24,11 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QWidget
 from shiboken6 import delete
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 from test_tag_qml import find
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,7 +81,7 @@ def capture(samples, output, scene, ct_samples=None, mtf_samples=None):
                    *scan(samples / '02_T1_Brain_HFDR', 'T1 · HFDR')]
     else:
         records = scan(samples / 'Thin-3D-T1/DICOM', '3D T1 · 1 mm')
-    with TemporaryDirectory(prefix='voxenra-readme-') as tmp:
+    with TemporaryDirectory(prefix='voxplane-readme-') as tmp:
         folder = Path(tmp)
         if scene == '28-mtf-analysis' and not mtf_samples:
             from io import BytesIO
@@ -104,7 +104,7 @@ def capture(samples, output, scene, ct_samples=None, mtf_samples=None):
         app = AppController(provider, settings_path=folder / 'settings.json',
                             pacs_config_path=folder / 'pacs.json', pacs_import_root=folder / 'imports')
         app.workspaceDocumentController.setAutomaticRecovery(False)
-        app.languageController.selectLanguage(os.environ.get('VOXENRA_CAPTURE_LANGUAGE', 'zh-CN'))
+        app.languageController.selectLanguage(os.environ.get('VOXPLANE_CAPTURE_LANGUAGE', 'zh-CN'))
         if scene == '26-theme-light':
             app.settingsController.setValue('appearance', 'theme', 'light')
         app.settingsController.setValue('layout', 'rightPanelWidth', 300)
@@ -117,7 +117,7 @@ def capture(samples, output, scene, ct_samples=None, mtf_samples=None):
         engine.rootContext().setContextProperty('appController', app)
         warnings = []
         engine.warnings.connect(lambda items: warnings.extend(i.toString() for i in items))
-        engine.load(QUrl.fromLocalFile(str(ROOT / 'src/qt_dicom_viewer/qml/Main.qml')))
+        engine.load(QUrl.fromLocalFile(str(ROOT / 'src/voxplane/qml/Main.qml')))
         assert engine.rootObjects(), warnings
         window = engine.rootObjects()[0]
         area = (QGuiApplication.screenAt(window.position()) or QGuiApplication.primaryScreen()).availableGeometry()
@@ -306,7 +306,7 @@ def capture(samples, output, scene, ct_samples=None, mtf_samples=None):
                     wait(lambda: not tab._active_mpr_requests and not tab._dirty_mpr_viewport_ids)
                 elif scene == '14-oblique-mpr':
                     from math import radians
-                    from qt_dicom_viewer.model import MprPlane
+                    from voxplane.model import MprPlane
                     tab.mprLayout.setLayout('left')
                     tab._handle_crosshair_rotation_requested(MprPlane.AXIAL, radians(23))
                     tab._handle_mpr_3d_rotation_requested((1., 0., 0.), radians(12))

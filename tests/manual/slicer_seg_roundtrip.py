@@ -164,7 +164,7 @@ try:
                 },
             )
         else:
-            bridge = json.loads((root / "voxenra.json").read_text())
+            bridge = json.loads((root / "voxplane.json").read_text())
             output = Path(bridge["output"])
             files = sorted(output.glob("SEG-*.dcm"))
             assert files, "Missing exported SEG files"

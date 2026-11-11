@@ -14,9 +14,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from test_mpr_reslicer import _volume
-from qt_dicom_viewer.model.cpr import CprPath, CprSettings
-from qt_dicom_viewer.core.cpr_geometry import sample_centerline
-from qt_dicom_viewer.core.cpr_reslicer import CprReslicer
+from voxplane.model.cpr import CprPath, CprSettings
+from voxplane.core.cpr_geometry import sample_centerline
+from voxplane.core.cpr_reslicer import CprReslicer
 
 
 def main():

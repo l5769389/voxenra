@@ -27,9 +27,9 @@ uv run python tests/manual/dimse_lab.py launch
 | --- | --- | --- |
 | Orthanc 25.10.3 镜像 | DICOM `127.0.0.1:14242`；HTTP `127.0.0.1:18042` | ORTHANC |
 | dcm4chee 5.35.0 | DICOM `127.0.0.1:14243`；HTTP `127.0.0.1:18080` | DCM4CHEE |
-| Mac 临时接收器 | 监听 `0.0.0.0:11113`；仅导入期间 | VOXENRA |
+| Mac 临时接收器 | 监听 `0.0.0.0:11113`；仅导入期间 | VOXPLANE |
 
-两台 PACS 的 VOXENRA 目的节点配置为 `host.docker.internal:11113`。
+两台 PACS 的 VOXPLANE 目的节点配置为 `host.docker.internal:11113`。
 路径为 Mac → 已映射的容器 DICOM 端口 → PACS → `host.docker.internal` → Mac 接收器。
 Orthanc 通过 `DICOM_MODALITIES` 登记；dcm4chee 的 LDAP 初始化通过
 `STORESCP_AE_TITLE/HOST/PORT` 登记。LDAP 参数只在新数据卷初始化时应用。

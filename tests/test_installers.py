@@ -58,11 +58,11 @@ def test_missing_explicit_inno_compiler_does_not_fallback(builders, tmp_path):
 
 def test_dmg_has_app_applications_link_and_instructions(builders, tmp_path):
     mac, _, _ = builders
-    defines = {"app": str(tmp_path / "path with spaces/Voxenra.app"),
+    defines = {"app": str(tmp_path / "path with spaces/VoxPlane.app"),
                "icon": str(tmp_path / "app.icns"), "readme": str(tmp_path / "安装说明.txt")}
     settings = runpy.run_path(str(ROOT / "packaging/macos/dmg_settings.py"), init_globals={"defines": defines})
     assert settings["symlinks"] == {"Applications": "/Applications"}
-    assert set(settings["icon_locations"]) == {"Voxenra.app", "Applications", "安装说明.txt"}
+    assert set(settings["icon_locations"]) == {"VoxPlane.app", "Applications", "安装说明.txt"}
     assert settings["show_toolbar"] is False
     assert settings["format"] == "ULMO" and settings["compression_level"] == 9
     command = mac.dmg_command(ROOT, ROOT / "build/assets", Path(defines["app"]), ROOT / "dist/test.dmg")
@@ -91,25 +91,29 @@ def test_windows_compile_error_is_propagated(builders, monkeypatch):
 
 
 def test_installer_is_per_user_and_does_not_delete_user_data():
-    source = (ROOT / "packaging/windows/Voxenra.iss").read_text()
+    source = (ROOT / "packaging/windows/VoxPlane.iss").read_text()
     assert "PrivilegesRequired=lowest" in source
-    assert "UsePreviousAppDir=no" in source
+    assert "UsePreviousAppDir=yes" in source
     assert "Compression=lzma2/ultra64" in source
     assert "LZMAUseSeparateProcess=yes" in source
-    assert r"DefaultDirName={localappdata}\Programs\Voxenra" in source
+    assert r"DefaultDirName={localappdata}\Programs\VoxPlane" in source
     assert 'Type: filesandordirs; Name: "{app}\\_internal\\PySide6"' in source
     assert "[UninstallDelete]" not in source
     assert "skipifsilent" in source
     assert "ChineseSimplified.isl" in source
     assert "WizardStyle=modern dynamic" in source
-    assert source.count('AppUserModelID: "com.junliu.voxenra"') == 2
+    assert source.count('AppUserModelID: "com.junliu.voxplane"') == 2
+    assert 'Type: files; Name: "{app}\\Voxenra.exe"' in source
+    assert 'Type: files; Name: "{autoprograms}\\Voxenra.lnk"' in source
+    assert 'Type: files; Name: "{autodesktop}\\Voxenra.lnk"' in source
+    assert 'AppId={{EA2DF9C6-5DC1-4CC3-913B-DB87DB5D0B5E}' in source
 
 
 def test_generated_icons_include_small_and_retina_images(builders, tmp_path):
     import shutil
     Image = pytest.importorskip("PIL.Image")
     _, _, utils = builders
-    brand = "src/qt_dicom_viewer/qml/assets/brand/voxenra-mark.png"
+    brand = "src/voxplane/qml/assets/brand/voxplane-mark.png"
     (tmp_path / brand).parent.mkdir(parents=True)
     shutil.copyfile(ROOT / brand, tmp_path / brand)
     assets = utils.prepare_assets(tmp_path)

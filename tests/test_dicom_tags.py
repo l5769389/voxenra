@@ -11,16 +11,16 @@ from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, ImplicitVRLittle
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.core.dicom_tag_reader import read_dicom_tags
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.model.dicom_tags import TagReadRequest, TagReadResult
-from qt_dicom_viewer.service.tag_read_service import TagReadService
-from qt_dicom_viewer.ui.controller.tab.tag_controller import TagController
-from qt_dicom_viewer.ui.controller.tab.tag_tree_model import TagTreeModel
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.core.dicom_tag_reader import read_dicom_tags
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.model.dicom_tags import TagReadRequest, TagReadResult
+from voxplane.service.tag_read_service import TagReadService
+from voxplane.ui.controller.tab.tag_controller import TagController
+from voxplane.ui.controller.tab.tag_tree_model import TagTreeModel
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 
 
 @pytest.fixture(scope="module")

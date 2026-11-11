@@ -12,8 +12,8 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.model import EditTargetKind, ImagePoint, Point
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import EditTargetKind, ImagePoint, Point
 from test_dicom_tags import wait_until
 from test_viewport_transform import _controller, _render_result
 
@@ -39,7 +39,7 @@ def viewport(qt_app):
                      geometry=replace(original.frame_meta.geometry, rows=256, columns=256)))
     controller.handleRenderResult(result)
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(1000, 720)
@@ -49,7 +49,7 @@ def viewport(qt_app):
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
     view.setInitialProperties({"viewportController": controller, "hasTabs": True})
-    source = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/sections/center/viewportArea/Viewport.qml"
+    source = Path(__file__).resolve().parents[1] / "src/voxplane/qml/sections/center/viewportArea/Viewport.qml"
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [error.toString() for error in view.errors()]
     view.show()
@@ -644,7 +644,7 @@ def test_card_has_no_shape_title_and_stays_put_when_roi_moves(viewport, kind, tm
     view, controller, pixel_layer, warnings = viewport
     controller._tool_controller.selectInteraction('measure:'+kind)
     if kind == 'freehand':
-        from qt_dicom_viewer.model import MeasurementKind
+        from voxplane.model import MeasurementKind
         context = controller._measurement_context(3, 2, kind=MeasurementKind.FREEHAND)
         controller.measurementController.paste_points([ImagePoint(30,35), ImagePoint(95,35),
                                                        ImagePoint(95,95), ImagePoint(30,95)], context)

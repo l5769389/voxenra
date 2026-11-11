@@ -8,18 +8,18 @@ import pytest
 from pydicom.uid import EnhancedCTImageStorage, LegacyConvertedEnhancedCTImageStorage, RLELossless, generate_uid
 from PySide6.QtGui import QImage
 
-from qt_dicom_viewer.core.ct import ct_series_error, ct_view_error
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.enhanced_frames import frame_metadata
-from qt_dicom_viewer.core.export_images import frame_image
-from qt_dicom_viewer.core.series_export import ExportRequest, export_series
-from qt_dicom_viewer.core.volume_manager import VolumeManager, VolumeBuildError
-from qt_dicom_viewer.core.series_thumbnail import read_series_thumbnail
-from qt_dicom_viewer.model import WindowLevel
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
+from voxplane.core.ct import ct_series_error, ct_view_error
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.enhanced_frames import frame_metadata
+from voxplane.core.export_images import frame_image
+from voxplane.core.series_export import ExportRequest, export_series
+from voxplane.core.volume_manager import VolumeManager, VolumeBuildError
+from voxplane.core.series_thumbnail import read_series_thumbnail
+from voxplane.model import WindowLevel
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.workers.dicom_scan_worker import DicomScanWorker
 from test_enhanced_mr import item
 from test_mr import mr_dataset
 from test_dicom_tags import qt_app, wait_until
@@ -240,7 +240,7 @@ def test_shared_only_single_frame_and_top_level_cannot_mask_missing_groups(tmp_p
 
 
 def test_unsupported_ct_cannot_enter_compare(qt_app, tmp_path):
-    from qt_dicom_viewer.core.compare import supports_compare
+    from voxplane.core.compare import supports_compare
     d = enhanced_ct_dataset()
     d.SharedFunctionalGroupsSequence[0].CTImageFrameTypeSequence[0].PixelPresentation = 'COLOR'
     _, snapshot = save_and_scan(tmp_path, d)

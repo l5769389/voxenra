@@ -5,7 +5,7 @@ from PySide6.QtCore import QPointF, Qt
 from PySide6.QtTest import QTest
 from pydicom.uid import SecondaryCaptureImageStorage
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.dicom_scanner import DicomFolderScanner
 from test_dicom_tags import qt_app, wait_until
 from test_enhanced_mr import enhanced_dataset
 from test_mr import mr_dataset
@@ -60,7 +60,7 @@ def test_double_click_creates_error_tab_and_blocks_png(scene, tmp_path, monkeypa
     assert not app.exportController.canExportPng
     def unexpected_dialog(*args):
         pytest.fail("A failed view must not offer a PNG save dialog")
-    monkeypatch.setattr("qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName", unexpected_dialog)
+    monkeypatch.setattr("voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName", unexpected_dialog)
     app.exportController.exportPng(None, 1, False)
     assert app.exportController.isError and "无法导出" in app.exportController.message
     assert app.exportController.current_series()  # Source DICOM still exists.

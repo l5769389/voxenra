@@ -8,8 +8,8 @@ from PySide6.QtGui import QColor
 from PySide6.QtQml import QQmlEngine, QQmlExpression
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.settings.preferences import DEFAULTS, normalize_settings
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.settings.preferences import DEFAULTS, normalize_settings
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import wait_until
 from test_measurement_qml import qt_app, viewport, _scene, _click_points, _visual_children
 from test_pacs_qml import scene
@@ -129,7 +129,7 @@ def test_roi_dimension_migration_toggle_and_reload(tmp_path, legacy):
 def test_roi_single_dimension_toggle_changes_preview_and_live_card(scene, tmp_path):
     from test_series_sidebar import phantom_series
     from test_dicom_tags import wait_until
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, warnings = scene
     series = phantom_series(tmp_path, 1, 'DEMO-A', '1.2.3.901', '20260907')
     app.panelController.acceptPacsImport(DicomFolderScanSnapshot(tmp_path, 3, 3, 0, [series]))
@@ -247,7 +247,7 @@ def test_legacy_arrow_color_mode_preserves_saved_appearance(tmp_path, legacy_col
 
 
 def test_workspace_annotation_colors_remember_whether_they_follow_settings(viewport):
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     _, controller, _, _ = viewport
     annotations = controller.textAnnotationController
     annotations.addAnnotation(30, 30, 80, 50)

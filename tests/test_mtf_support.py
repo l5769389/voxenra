@@ -4,7 +4,7 @@ import math
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.bead_mtf import compute_point_source_mtf, compute_mtf_with_context
+from voxplane.core.bead_mtf import compute_point_source_mtf, compute_mtf_with_context
 
 
 def wide_source(amplitude, *, slope=False, center=(128., 128.), size=257):
@@ -69,7 +69,7 @@ def test_wide_response_is_stable_under_subpixel_phase_and_slope():
 
 
 def test_sampling_geometry_survives_context_expansion_and_workspace_roundtrip():
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     image = wide_source(.02)
     result = compute_mtf_with_context(image[121:136, 121:136], .1, .1,
                                       context=(image, (121, 121)))
@@ -146,7 +146,7 @@ def test_narrow_diagonal_tail_in_opposed_sectors_is_retained(major, size):
 ])
 def test_invalid_saved_sampling_bounds_are_rejected(changes):
     from dataclasses import replace
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     result = compute_point_source_mtf(wide_source(.02), .1, .1, analysis_method='tukey_fft')
     with pytest.raises(ValueError):
         decode(encode(replace(result, sampling=replace(result.sampling, **changes))))

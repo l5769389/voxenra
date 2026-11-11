@@ -6,12 +6,12 @@ import numpy as np
 import pytest
 from PySide6.QtCore import QSize
 
-from qt_dicom_viewer.core.color_maps import apply_color_map, color_lut, COLOR_MAPS
-from qt_dicom_viewer.settings.preferences import DEFAULTS, normalize_settings
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.controller.viewport.image_2d.mpr_viewport_controller import MprViewportController
-from qt_dicom_viewer.model import MprPlane
+from voxplane.core.color_maps import apply_color_map, color_lut, COLOR_MAPS
+from voxplane.settings.preferences import DEFAULTS, normalize_settings
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.controller.viewport.image_2d.mpr_viewport_controller import MprViewportController
+from voxplane.model import MprPlane
 from test_viewport_transform import _controller, _render_result
 
 
@@ -163,8 +163,8 @@ def test_palette_changes_while_first_frame_pending_request_latest_color():
 
 
 def test_arrow_and_measurement_resets_are_separate():
-    from qt_dicom_viewer.model import MeasurementKind
-    from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
+    from voxplane.model import MeasurementKind
+    from voxplane.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
     from test_measurement_controller import _context, _position, _drag
     controller = MeasurementController()
     for kind, y in [(MeasurementKind.LENGTH, 10), (MeasurementKind.ARROW, 30)]:
@@ -233,7 +233,7 @@ def test_every_preference_survives_process_restart(tmp_path):
     env['PYTHONPATH'] = str(Path(__file__).resolve().parents[1] / 'src')
     script = '''import json, sys
 from PySide6.QtCore import QCoreApplication
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.settings_controller import SettingsController
 app = QCoreApplication([])
 settings = SettingsController(path=sys.argv[1])
 print(json.dumps(settings.values))

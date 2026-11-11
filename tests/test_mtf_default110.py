@@ -4,9 +4,9 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.bead_mtf import compute_point_source_mtf, compute_mtf_with_context
-from qt_dicom_viewer.core.workspace_state import encode, decode
-from qt_dicom_viewer.core.mtf_quality import sensitivity_details
+from voxplane.core.bead_mtf import compute_point_source_mtf, compute_mtf_with_context
+from voxplane.core.workspace_state import encode, decode
+from voxplane.core.mtf_quality import sensitivity_details
 
 
 def noisy_source(slope=False):

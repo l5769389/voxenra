@@ -6,18 +6,18 @@ from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, generate_uid
 import highdicom as hd
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.dicom_results import (
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.dicom_results import (
     SegmentResult,
     PlanarResult,
     write_results,
     tracking_uid,
 )
-from qt_dicom_viewer.core.mpr_voi import VoiRegion, evaluate_voi
-from qt_dicom_viewer.core.measurement_geometry import roi_metrics
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
-from qt_dicom_viewer.model.measure import RoiMeasurement
+from voxplane.core.mpr_voi import VoiRegion, evaluate_voi
+from voxplane.core.measurement_geometry import roi_metrics
+from voxplane.model import ImagePoint, MeasurementKind
+from voxplane.model.measure import RoiMeasurement
 from test_enhanced_mr import enhanced_dataset, save_and_scan
 
 
@@ -218,8 +218,8 @@ def test_sr_tids_numeric_units_geometry_tracking_and_seg_link(source, tmp_path):
     assert sr.ContentTemplateSequence[0].TemplateIdentifier == "1500"
     assert sr.VerificationFlag == "UNVERIFIED" and sr.PreliminaryFlag == "PRELIMINARY"
     assert sr.PatientName == "测试^病人"
-    assert sr.SeriesDescription == "Voxenra segmentation measurements"
-    assert planar_sr.SeriesDescription == "Voxenra planar measurements"
+    assert sr.SeriesDescription == "VoxPlane segmentation measurements"
+    assert planar_sr.SeriesDescription == "VoxPlane planar measurements"
     assert not sr.content.get_planar_roi_measurement_groups()
     assert not planar_sr.content.get_volumetric_roi_measurement_groups()
     items = [*walk(sr), *walk(planar_sr)]
@@ -320,7 +320,7 @@ def test_enhanced_mr_segment_uses_actual_frame_numbers(tmp_path):
 def test_mpr_sr_uses_patient_coordinates_and_native_mismatch_is_rejected(
     source, tmp_path
 ):
-    from qt_dicom_viewer.core.dicom_results import planar_group
+    from voxplane.core.dicom_results import planar_group
 
     series, vol = source
     roi = freehand(series, vol)
@@ -346,7 +346,7 @@ def test_mpr_sr_uses_patient_coordinates_and_native_mismatch_is_rejected(
 def test_sr_existing_measurement_types_have_units_and_readable_regions(
     source, tmp_path, kind
 ):
-    from qt_dicom_viewer.model.measure import LengthMeasurement, AngleMeasurement
+    from voxplane.model.measure import LengthMeasurement, AngleMeasurement
 
     series, vol = source
     roi = freehand(series, vol)
@@ -362,8 +362,8 @@ def test_sr_existing_measurement_types_have_units_and_readable_regions(
             **common, points=p, length_mm=float(np.hypot(4 * 0.7, 3 * 2))
         )
     elif kind in ("curve", "curve_tight"):
-        from qt_dicom_viewer.core.curve_geometry import curve_length_mm, _sample_open_curve
-        from qt_dicom_viewer.core.freehand_roi import simple_path
+        from voxplane.core.curve_geometry import curve_length_mm, _sample_open_curve
+        from voxplane.core.freehand_roi import simple_path
         p = (*p, ImagePoint(8, 2))
         if kind == "curve_tight":
             p = tuple(ImagePoint(*v) for v in [(1,1),(5,1),(5,5),(4.95,1.05),(1,5)])
@@ -387,7 +387,7 @@ def test_sr_existing_measurement_types_have_units_and_readable_regions(
     groups = sr.content.get_planar_roi_measurement_groups()
     assert len(groups) == 1 and groups[0].get_measurements()
     if kind in ("curve", "curve_tight"):
-        from qt_dicom_viewer.core.curve_geometry import sample_curve
+        from voxplane.core.curve_geometry import sample_curve
         expected = np.array([(p.column+.5, p.row+.5) for p in sample_curve(item.points)])
         np.testing.assert_allclose(np.asarray(groups[0].roi.GraphicData).reshape(-1, 2), expected, atol=1e-5)
         assert float(groups[0].get_measurements()[0].value) == pytest.approx(item.length_mm)
@@ -397,7 +397,7 @@ def test_sr_existing_measurement_types_have_units_and_readable_regions(
 
 
 def test_enhanced_sr_points_reference_selected_frame(tmp_path):
-    from qt_dicom_viewer.model.measure import LengthMeasurement
+    from voxplane.model.measure import LengthMeasurement
 
     d = enhanced_dataset()
     path, snapshot = save_and_scan(tmp_path, d)
@@ -438,14 +438,14 @@ def test_enhanced_sr_points_reference_selected_frame(tmp_path):
 def test_projection_or_registration_origin_survives_display_reset(
     source, tmp_path, context
 ):
-    from qt_dicom_viewer.core.workspace_state import dumps, loads
+    from voxplane.core.workspace_state import dumps, loads
 
     series, volume = source
     result = freehand(series, volume)
     result = replace(result, frame=loads(dumps(result.frame + (context,))))
     with pytest.raises(ValueError):
         write_results(tmp_path, planar=[result])
-    assert not list(tmp_path.glob("voxenra-results-*"))
+    assert not list(tmp_path.glob("voxplane-results-*"))
 
 
 @pytest.mark.parametrize(
@@ -492,7 +492,7 @@ def test_seg_only_rejects_inconsistent_source_identity(source, tmp_path, key, va
     ds.save_as(path, enforce_file_format=True)
     with pytest.raises(ValueError):
         write_results(tmp_path, segments=[segmentation(series, volume)], report=False)
-    assert not list(tmp_path.glob("voxenra-results-*"))
+    assert not list(tmp_path.glob("voxplane-results-*"))
 
 
 def test_grouped_segments_reference_matching_numbers_and_keep_overlap(source, tmp_path):
@@ -523,7 +523,7 @@ def test_grouped_segments_reference_matching_numbers_and_keep_overlap(source, tm
 def test_bounded_segment_batches_have_separate_readable_reports(
     source, tmp_path, monkeypatch
 ):
-    import qt_dicom_viewer.core.dicom_results as module
+    import voxplane.core.dicom_results as module
 
     series, volume = source
     monkeypatch.setattr(module, "SEG_BATCH_BYTES", volume.modality_pixels.size)
@@ -550,7 +550,7 @@ def test_bounded_segment_batches_have_separate_readable_reports(
 
 def test_enhanced_ct_seg_export_keeps_source_phase_frames(tmp_path):
     from test_enhanced_ct import save_and_scan
-    from qt_dicom_viewer.core.segmentation_import import read_segmentation
+    from voxplane.core.segmentation_import import read_segmentation
 
     _, snapshot = save_and_scan(tmp_path)
     series = snapshot.series[0]
@@ -585,7 +585,7 @@ def test_enhanced_ct_seg_export_keeps_source_phase_frames(tmp_path):
 
 
 def test_smooth_roi_sr_exports_boundary_not_control_polygon(source, tmp_path):
-    from qt_dicom_viewer.core.freehand_roi import roi_outline
+    from voxplane.core.freehand_roi import roi_outline
     series, volume = source
     result = freehand(series, volume)
     metrics = roi_metrics(result.measurement.points, MeasurementKind.FREEHAND,

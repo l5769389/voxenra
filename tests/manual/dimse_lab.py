@@ -14,9 +14,9 @@ import pydicom
 from pynetdicom import AE
 from pydicom.uid import CTImageStorage, MRImageStorage, ExplicitVRLittleEndian
 
-from qt_dicom_viewer.pacs.config import PacsProfile
-from qt_dicom_viewer.pacs.dimse_client import DimseClient
-from qt_dicom_viewer.pacs.client import PacsError
+from voxplane.pacs.config import PacsProfile
+from voxplane.pacs.dimse_client import DimseClient
+from voxplane.pacs.client import PacsError
 
 ROOT = Path(__file__).resolve().parents[2]
 LAB = ROOT / 'docker/pacs-dimse'
@@ -29,9 +29,9 @@ COMPOSE = ['docker', '--context', 'orbstack', 'compose', '-f', str(LAB / 'compos
 
 
 def profiles():
-    return [dict(key=key, id=str(uuid.uuid5(uuid.NAMESPACE_URL, 'voxenra-dimse/' + key)),
+    return [dict(key=key, id=str(uuid.uuid5(uuid.NAMESPACE_URL, 'voxplane-dimse/' + key)),
                  name='DIMSE Lab ' + key, protocol='dimse', host='127.0.0.1',
-                 port=port, called_ae=ae, calling_ae='VOXENRA',
+                 port=port, called_ae=ae, calling_ae='VOXPLANE',
                  listen_host='0.0.0.0', listen_port=11113, timeout=30)
             for key, port, ae in [('Orthanc', 14242, 'ORTHANC'), ('dcm4chee', 14243, 'DCM4CHEE')]]
 
@@ -59,7 +59,7 @@ def seed():
     manifest = json.loads((ARTIFACTS / 'manifest.json').read_text())
     for profile in profiles():
         wait_ready(profile)
-        ae = AE(ae_title='VOXENRA')
+        ae = AE(ae_title='VOXPLANE')
         ae.add_requested_context(CTImageStorage, ExplicitVRLittleEndian)
         ae.add_requested_context(MRImageStorage, ExplicitVRLittleEndian)
         association = ae.associate(profile['host'], profile['port'], ae_title=profile['called_ae'])
@@ -95,12 +95,12 @@ def launch():
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QCoreApplication, QTimer, QUrl
     from PySide6.QtQml import QQmlApplicationEngine
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     app = QApplication(sys.argv)
-    QCoreApplication.setOrganizationName('VoxenraDIMSELab')
-    QCoreApplication.setApplicationName('VoxenraDIMSELab')
+    QCoreApplication.setOrganizationName('VoxPlaneDIMSELab')
+    QCoreApplication.setApplicationName('VoxPlaneDIMSELab')
     provider = DicomImageProvider()
     controller = AppController(provider, settings_path=False,
         pacs_config_path=ARTIFACTS / 'pacs.json', pacs_import_root=ARTIFACTS / 'imports')
@@ -111,7 +111,7 @@ def launch():
     engine.addImageProvider('dicom', provider)
     engine.addImageProvider('navigation', SvgIconProvider())
     engine.rootContext().setContextProperty('appController', controller)
-    engine.load(QUrl.fromLocalFile(str(ROOT / 'src/qt_dicom_viewer/qml/Main.qml')))
+    engine.load(QUrl.fromLocalFile(str(ROOT / 'src/voxplane/qml/Main.qml')))
     assert engine.rootObjects()
     def record():
         workspace = controller.workspaceController

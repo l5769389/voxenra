@@ -13,7 +13,7 @@ from PySide6.QtCore import QMimeData, QPoint, QPointF, QUrl, Qt
 from PySide6.QtGui import QDragEnterEvent, QDragLeaveEvent, QDropEvent
 from PySide6.QtWidgets import QApplication
 
-from qt_dicom_viewer.core.local_import import (
+from voxplane.core.local_import import (
     LocalImportStore,
     ImportLimits,
     ImportErrorDetail,
@@ -21,7 +21,7 @@ from qt_dicom_viewer.core.local_import import (
 )
 from test_dicom_tags import make_series as original_series, wait_until, qt_app
 import pydicom
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
 from test_pet_fusion import paired_series
 from test_pacs_qml import scene
 from test_tag_qml import find, click
@@ -77,8 +77,8 @@ def make_archive(root, series, kind):
 @pytest.mark.parametrize('single_catalog_record', [False, True])
 @pytest.mark.parametrize('phase_index', [0, 1])
 def test_reimport_single_phase_preserves_cross_series_four_d(tmp_path, single_catalog_record, phase_index):
-    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-    from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
+    from voxplane.core.dicom_scanner import DicomFolderScanner
+    from voxplane.ui.workers.dicom_scan_worker import DicomScanWorker
     from test_four_d import _cross_series_four_d
 
     records = _cross_series_four_d(tmp_path)
@@ -300,7 +300,7 @@ def test_real_qml_drop_imports_without_modifying_source_and_can_open_views(
 
 @pytest.mark.parametrize("source", ["local", "pacs"])
 def test_import_selects_first_series_in_sidebar_order(scene, tmp_path, source):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     from test_series_sidebar import phantom_series
 
     window, app, warnings = scene
@@ -386,7 +386,7 @@ def test_busy_drop_cancel_failure_and_manual_file_selection(
     assert "取消" in panel.statusMessage and not panel.hasSeries
     monkeypatch.setattr(panel._import_store, "prepare", prepare)
     monkeypatch.setattr(
-        "qt_dicom_viewer.ui.controller.panel_controller.select_import_paths",
+        "voxplane.ui.controller.panel_controller.select_import_paths",
         lambda *args: [str(i.path) for i in series.instances],
     )
     click(window, find(window, "homeOpenImport"))
@@ -450,12 +450,12 @@ def test_shutdown_cancels_extraction_before_removing_cache(
 
 
 @pytest.mark.skipif(
-    os.environ.get("VOXENRA_NATIVE_QA") != "1",
+    os.environ.get("VOXPLANE_NATIVE_QA") != "1",
     reason="Requires a native desktop OpenGL window",
 )
 @pytest.mark.parametrize("kind", ["ct", "pet", "fusion"])
 def test_native_volume_receives_file_drop(scene, paired_series, tmp_path, kind, monkeypatch):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
 
     window, app, warnings = scene
     _, ct, pet = paired_series
@@ -493,7 +493,7 @@ def test_native_volume_receives_file_drop(scene, paired_series, tmp_path, kind, 
     assert workspace.activeViewport is view and view.loadState == "ready"
     # The single mixed picker must open above VTK from either rail width.
     from PySide6.QtCore import QTimer
-    from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+    from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
     errors, opened = [], []
     for entry in ("sidebarOpenFolder", "compactSidebarImport"):
         if entry == "compactSidebarImport":

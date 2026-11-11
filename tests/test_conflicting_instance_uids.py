@@ -5,13 +5,13 @@ import shutil
 import pydicom
 import pytest
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.local_import import LocalImportStore
-from qt_dicom_viewer.core.workspace_document import source_manifest, load_referenced_series
-from qt_dicom_viewer.core.workspace_state import dumps, loads
-from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
-from qt_dicom_viewer.ui.controller.tab.tag_controller import TagController
-from qt_dicom_viewer.service.tag_read_service import TagReadService
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.local_import import LocalImportStore
+from voxplane.core.workspace_document import source_manifest, load_referenced_series
+from voxplane.core.workspace_state import dumps, loads
+from voxplane.ui.workers.dicom_scan_worker import DicomScanWorker
+from voxplane.ui.controller.tab.tag_controller import TagController
+from voxplane.service.tag_read_service import TagReadService
 from test_dicom_tags import qt_app, wait_until
 from test_local_import import make_series
 

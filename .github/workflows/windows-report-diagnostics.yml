@@ -32,10 +32,10 @@ jobs:
       PYTHONUNBUFFERED: "1"
       OMP_NUM_THREADS: "1"
       OPENBLAS_NUM_THREADS: "1"
-      VOXENRA_NATIVE_QA: "1"
+      VOXPLANE_NATIVE_QA: "1"
       UV_PROJECT_ENVIRONMENT: .venv-build-windows
-      VOXENRA_QA_PRELOAD_PDF: ${{ matrix.preload_pdf }}
-      VOXENRA_QA_ITERATIONS: ${{ inputs.iterations }}
+      VOXPLANE_QA_PRELOAD_PDF: ${{ matrix.preload_pdf }}
+      VOXPLANE_QA_ITERATIONS: ${{ inputs.iterations }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -54,14 +54,14 @@ jobs:
           @'
           import os
           import sys
-          if os.environ['VOXENRA_QA_PRELOAD_PDF'] == 'yes':
+          if os.environ['VOXPLANE_QA_PRELOAD_PDF'] == 'yes':
               from PySide6.QtCore import QBuffer, QIODevice, QRectF, Qt, QMarginsF
               from PySide6.QtGui import QPdfWriter, QPageSize, QPageLayout, QPainter, QFont, QColor, QFontMetricsF
           import pytest
           raise SystemExit(pytest.main(sys.argv[1:]))
           '@ | Set-Content build/report-diagnostics/runner.py
           $failed = $false
-          for ($iteration = 1; $iteration -le [int]$env:VOXENRA_QA_ITERATIONS; $iteration++) {
+          for ($iteration = 1; $iteration -le [int]$env:VOXPLANE_QA_ITERATIONS; $iteration++) {
             uv run --locked --python 3.13 --group dev --group build python build/report-diagnostics/runner.py tests/test_workspace_persistence.py -vv --tb=short -o faulthandler_timeout=90 "--junitxml=build/report-diagnostics/round-$iteration.xml" *> "build/report-diagnostics/round-$iteration.log"
             $code = $LASTEXITCODE
             Get-Content "build/report-diagnostics/round-$iteration.log"

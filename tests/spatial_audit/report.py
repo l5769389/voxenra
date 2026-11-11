@@ -6,7 +6,7 @@ import hashlib
 from importlib.metadata import version
 import json
 from pathlib import Path
-from qt_dicom_viewer import __version__
+from voxplane import __version__
 import subprocess
 
 
@@ -16,7 +16,7 @@ def report(root):
         folder=root/category
         comparison=folder/'comparison.json'
         comparisons={r['case']:r for r in json.loads(comparison.read_text())} if comparison.exists() else {}
-        for p in sorted(folder.glob('*/voxenra-result.json')):
+        for p in sorted(folder.glob('*/voxplane-result.json')):
             r=json.loads(p.read_text());c=comparisons.get(p.parent.name,{})
             groups=r.get('volumes',r.get('groups',[]))
             groups=groups if isinstance(groups,list) else []
@@ -68,7 +68,7 @@ def report(root):
     return dict(schema=1,created=datetime.now(timezone.utc).isoformat(),
         baseline=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
         working_tree_sha256=hashes,
-        software=dict(Voxenra=__version__,**{p:version(p) for p in ['numpy','pydicom','PySide6','vtk']}),slicer='5.12.4',
+        software=dict(VoxPlane=__version__,**{p:version(p) for p in ['numpy','pydicom','PySide6','vtk']}),slicer='5.12.4',
         tolerances=dict(geometry_mm=.001,intensity_atol=1e-4,intensity_rtol=1e-6,
                         interpolation_atol=1e-4,interpolation_rtol=5e-6,statistics_rtol=1e-5),
         cases=cases,counts=dict(product=dict(Counter(r['product_status'] for r in cases)),

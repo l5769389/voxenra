@@ -3,7 +3,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     DragUpdateEvent,
     EditTargetKind,
     ImageGeometryMeta,
@@ -15,7 +15,7 @@ from qt_dicom_viewer.model import (
     Point,
     PointerPosition,
 )
-from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import (
+from voxplane.ui.controller.viewport.controller.measure.measure_controller import (
     MeasurementController,
 )
 

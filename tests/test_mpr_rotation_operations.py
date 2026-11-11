@@ -3,7 +3,7 @@ from math import pi
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     CrosshairRotationContext,
     DragUpdateEvent,
     ImagePoint,
@@ -12,10 +12,10 @@ from qt_dicom_viewer.model import (
     Point,
     PointerPosition,
 )
-from qt_dicom_viewer.ui.controller.viewport.operation.crosshair_rotate_operation import (
+from voxplane.ui.controller.viewport.operation.crosshair_rotate_operation import (
     CrosshairRotateOperation,
 )
-from qt_dicom_viewer.ui.controller.viewport.operation.mpr_3d_rotate_operation import (
+from voxplane.ui.controller.viewport.operation.mpr_3d_rotate_operation import (
     Mpr3DRotateOperation,
 )
 

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from test_dicom_tags import qt_app, wait_until
-from qt_dicom_viewer.infrastructure import update_health
+from voxplane.infrastructure import update_health
 
 
 def manifest_at(tmp_path, executable, version='1.7.0'):
@@ -12,7 +12,7 @@ def manifest_at(tmp_path, executable, version='1.7.0'):
 
 
 def test_confirmation_requires_matching_version_and_executable(qt_app, tmp_path):
-    executable = tmp_path/'Voxenra'
+    executable = tmp_path/'VoxPlane'
     executable.touch()
     manifest = manifest_at(tmp_path, executable)
     assert not update_health.acknowledge_startup(manifest, executable=executable, version='1.6.0')
@@ -29,7 +29,7 @@ def test_confirmation_runs_only_after_visible_window_event_loop(qt_app, tmp_path
     called=[]
     monkeypatch.setattr(update_health, 'STARTUP_STABILITY_MS', 20)
     monkeypatch.setattr(update_health, 'acknowledge_startup', lambda path: called.append(path))
-    args=['Voxenra', update_health.CHECK_ARGUMENT, str(tmp_path/'health.json')]
+    args=['VoxPlane', update_health.CHECK_ARGUMENT, str(tmp_path/'health.json')]
     update_health.arm_startup_confirmation(window,args)
     QTest.qWait(40)
     assert not called

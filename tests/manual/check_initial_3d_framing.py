@@ -15,9 +15,9 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 from smoke_3d import make_series
 
-from qt_dicom_viewer.app import bind_controller
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.app import bind_controller
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.controller.settings_controller import SettingsController
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     controller = engine.app_controller
     warnings, errors = [], []
     engine.warnings.connect(lambda items: warnings.extend(i.toString() for i in items))
-    engine.load(files('qt_dicom_viewer').joinpath('qml/Main.qml'))
+    engine.load(files('voxplane').joinpath('qml/Main.qml'))
     root = engine.rootObjects()[0]
     workspace = controller.workspaceController
 

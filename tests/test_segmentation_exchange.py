@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, ImagePoint, MeasurementKind
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import DicomFolderScanSnapshot, ImagePoint, MeasurementKind
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_results import source as source
 from test_dicom_tags import qt_app as qt_app, wait_until
 from test_segmentation_import import external_seg as external_seg, full_mask
@@ -110,7 +110,7 @@ def test_import_does_not_publish_after_target_changes(
     exchange, external_seg, monkeypatch, change
 ):
     app, tab, controller = exchange
-    import qt_dicom_viewer.core.segmentation_import as module
+    import voxplane.core.segmentation_import as module
 
     actual = module.read_segmentation
     entered, release = Event(), Event()
@@ -181,7 +181,7 @@ def test_import_button_and_mask_list_at_small_window(
     window.resize(1000, 600)
     app.settingsController.setValue("layout", "rightPanelWidth", 240)
     monkeypatch.setattr(
-        "qt_dicom_viewer.ui.controller.dicom_results_controller.QFileDialog.getOpenFileName",
+        "voxplane.ui.controller.dicom_results_controller.QFileDialog.getOpenFileName",
         lambda *args: (str(external_seg[0]), ""),
     )
     QTest.qWait(100)
@@ -500,7 +500,7 @@ def test_refinement_tool_preferences_dirty_but_display_refresh_is_not(exchange, 
 
 def test_history_signal_connections_preserve_static_qml_metadata(exchange):
     """QML must not cache transient per-instance signal-receiver metaobjects."""
-    from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
+    from voxplane.ui.controller.edit_history_controller import EditHistoryController
     _, tab, _ = exchange
     history = tab.historyController
     assert history.metaObject().methodCount() == EditHistoryController.staticMetaObject.methodCount()

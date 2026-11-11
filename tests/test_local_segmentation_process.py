@@ -5,16 +5,16 @@ import pytest
 
 
 def test_external_process_unicode_path_and_events(tmp_path):
-    from qt_dicom_viewer.infrastructure.local_inference_process import run_process
+    from voxplane.infrastructure.local_inference_process import run_process
     script=tmp_path/'有 空格.py'
-    script.write_text('print(\'VOXENRA_EVENT {"event":"stage","stage":"running"}\')\n')
+    script.write_text('print(\'VOXPLANE_EVENT {"event":"stage","stage":"running"}\')\n')
     events=[]
     run_process([sys.executable,str(script)],tmp_path/'run.log',threading.Event(),events.append)
     assert events==[{'event':'stage','stage':'running'}]
 
 
 def test_cancel_terminates_child_and_timeout(tmp_path):
-    from qt_dicom_viewer.infrastructure.local_inference_process import run_process
+    from voxplane.infrastructure.local_inference_process import run_process
     cancel=threading.Event()
     t=threading.Timer(.3,cancel.set);t.start()
     with pytest.raises(InterruptedError):
@@ -25,13 +25,13 @@ def test_cancel_terminates_child_and_timeout(tmp_path):
 
 
 def test_nonzero_exit_is_failure(tmp_path):
-    from qt_dicom_viewer.infrastructure.local_inference_process import run_process
+    from voxplane.infrastructure.local_inference_process import run_process
     with pytest.raises(RuntimeError):
         run_process([sys.executable,'-c','raise SystemExit(3)'],tmp_path/'run.log',threading.Event())
 
 
 def test_cancel_terminates_real_descendant(tmp_path):
-    from qt_dicom_viewer.infrastructure.local_inference_process import run_process
+    from voxplane.infrastructure.local_inference_process import run_process
     pidfile=tmp_path/'child.pid'
     heartbeat=tmp_path/'heartbeat'
     child=f'import pathlib,time; p=pathlib.Path({str(heartbeat)!r});\nwhile True: p.write_text(str(time.monotonic()));time.sleep(.03)'
@@ -50,8 +50,8 @@ def test_cancel_terminates_real_descendant(tmp_path):
 
 def test_windows_parent_exit_still_closes_owned_job(tmp_path,monkeypatch):
     from types import SimpleNamespace
-    from qt_dicom_viewer.infrastructure import local_inference_process as runner
-    from qt_dicom_viewer.infrastructure import windows_inference_job
+    from voxplane.infrastructure import local_inference_process as runner
+    from voxplane.infrastructure import windows_inference_job
     events=[]
     class Job:
         def __init__(self):events.append('create')

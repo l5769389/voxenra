@@ -33,7 +33,7 @@ dcm4chee 使用独立的 PostgreSQL 和 LDAP 服务。共运行 6 个容器，�
 ## 启动与体验
 
 以下命令在 main 工作目录执行：
-`/Users/jun/Documents/git-repo/qt-dicom-viewer`。本地凭据、测试数据和网关挂载已迁移到此目录。
+`/Users/jun/Documents/git-repo/voxplane`。本地凭据、测试数据和网关挂载已迁移到此目录。
 
 ```bash
 open -a OrbStack
@@ -48,7 +48,7 @@ uv run python tests/manual/pacs_lab.py launch
 STOW-RS 装入三个独立数据库。上传只存在于实验脚本，查看器本身仍只查询和下载。
 `install-profiles` 更新这四个实验配置，同时保留其他已有配置和默认选择。
 `launch` 打开当前 worktree 的应用并带入认证信息，关闭后会话凭据即失效。
-普通 `uv run qt-dicom-viewer` 也能使用保存的地址，但 Basic/Bearer 需在详情中重新填写凭据。
+普通 `uv run voxplane` 也能使用保存的地址，但 Basic/Bearer 需在详情中重新填写凭据。
 
 在首页点击 **从 PACS 导入序列**，选择实验连接，输入患者 ID `PACSLAB-001`，点击查询。
 选择检查后，勾选 `Synthetic CT volume 01`（16 张切片）与 `Synthetic MR volume 02`

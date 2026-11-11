@@ -19,10 +19,10 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.controller import language_controller as language_module
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.controller import language_controller as language_module
 from test_tag_qml import find
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -49,7 +49,7 @@ def launch(qt, settings_path, english=False):
     engine.rootContext().setContextProperty('appController', app)
     warnings = []
     engine.warnings.connect(lambda items: warnings.extend(item.toString() for item in items))
-    engine.load(QUrl.fromLocalFile(str(ROOT / 'src/qt_dicom_viewer/qml/Main.qml')))
+    engine.load(QUrl.fromLocalFile(str(ROOT / 'src/voxplane/qml/Main.qml')))
     assert engine.rootObjects(), warnings
     window = engine.rootObjects()[0]
     window.resize(1300, 780)
@@ -103,7 +103,7 @@ def capture(destination, english=False):
         '4  重启后，Español 自动出现在语言列表',
         '5  选择新语言，即时生效',
     ])
-    with TemporaryDirectory(prefix='voxenra-language-demo-') as temp:
+    with TemporaryDirectory(prefix='voxplane-language-demo-') as temp:
         settings_path = Path(temp) / 'settings.json'
         app, engine, window = launch(qt, settings_path, english)
         try:

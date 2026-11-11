@@ -1,7 +1,7 @@
 import json
 
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_workspace_persistence import populated_app
 
@@ -69,7 +69,7 @@ def test_recent_open_respects_cancel_and_busy(qt_app, tmp_path, monkeypatch):
 
 
 def test_history_is_bounded_and_defensive(tmp_path):
-    from qt_dicom_viewer.infrastructure.recent_workspaces import RecentWorkspaces
+    from voxplane.infrastructure.recent_workspaces import RecentWorkspaces
     path = tmp_path / 'recent.json'
     path.write_text('{bad')
     history = RecentWorkspaces(path)

@@ -5,10 +5,10 @@ import time
 from pathlib import Path
 import numpy as np
 from PySide6.QtWidgets import QApplication
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.model import MeasurementKind
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.model import MeasurementKind
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_measurement_controller import _position, _drag
 
 

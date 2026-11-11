@@ -6,8 +6,8 @@ from PySide6.QtTest import QTest
 from PySide6.QtQuick import QQuickView
 from PySide6.QtCore import QUrl
 import pytest
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_pacs_qml import scene
 from test_pet_fusion import paired_series, qt_app
 from test_tag_qml import find, click, descendants, type_text, settled_point
@@ -69,7 +69,7 @@ def test_right_and_settings_widths_clamp_persist_and_restore(scene, paired_serie
 
 
 def test_pet_panel_and_narrow_corner_lines(scene, paired_series, tmp_path, monkeypatch):
-    from qt_dicom_viewer.ui.controller.viewport.standalone_pet_volume_controller import StandalonePetVolumeController
+    from voxplane.ui.controller.viewport.standalone_pet_volume_controller import StandalonePetVolumeController
     monkeypatch.setattr(StandalonePetVolumeController, "ensureNativeView", lambda self: None)
     window, app, warnings = scene
     view = load_pet(scene, paired_series, tmp_path)
@@ -117,7 +117,7 @@ def test_scale_fits_screen_budget_without_losing_physical_calibration(qt_app, sp
     view = QQuickView()
     view.setInitialProperties({"pixelsPerMm": spacing, "calibrated": True,
                                "options": {"lengthMm": 100, "enabled": True}})
-    view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/sections/center/viewportArea/ScaleBar.qml")))
+    view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/voxplane/qml/sections/center/viewportArea/ScaleBar.qml")))
     item = view.rootObject()
     try:
         for width in (90, 240, 900):
@@ -132,7 +132,7 @@ def test_scale_fits_screen_budget_without_losing_physical_calibration(qt_app, sp
         delete(view)
 
 
-@pytest.mark.skipif(os.environ.get("VOXENRA_NATIVE_QA") != "1", reason="Requires a native desktop OpenGL window")
+@pytest.mark.skipif(os.environ.get("VOXPLANE_NATIVE_QA") != "1", reason="Requires a native desktop OpenGL window")
 @pytest.mark.parametrize("kind", ["ct", "pet", "fusion"])
 def test_native_volume_sidebar_drag_and_png(scene, paired_series, tmp_path, kind, monkeypatch):
     window, app, warnings = scene
@@ -149,7 +149,7 @@ def test_native_volume_sidebar_drag_and_png(scene, paired_series, tmp_path, kind
     wait_until(lambda: workspace.activeLoadState.status == "ready")
     view = workspace.activeViewport
     wait_until(lambda: view._host is not None and view._host.isVisible())
-    from qt_dicom_viewer.ui.cursors import tool_cursor
+    from voxplane.ui.cursors import tool_cursor
     tools = workspace.activeTab.toolController
     available = {definition["toolType"] for definition in tools.tools}
     for tool, cursor_kind in (("pan", "pan"), ("zoom", "zoom"), ("volume-rotate", "rotate-3d"),
@@ -190,7 +190,7 @@ def test_native_volume_sidebar_drag_and_png(scene, paired_series, tmp_path, kind
     assert original.save(str(tmp_path / (kind + "-3d-no-corner-text.png")))
     from PySide6.QtGui import QImage
     target = tmp_path / (kind + "-3d-anonymous-export.png")
-    monkeypatch.setattr("qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName",
+    monkeypatch.setattr("voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName",
                         lambda *args: (str(target), "PNG"))
     app.exportController.exportPng(None, window.devicePixelRatio())
     wait_until(lambda: not app.exportController.busy)

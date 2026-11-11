@@ -6,9 +6,9 @@ from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtGui import QImage
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.service.thumbnail_service import ThumbnailRequest
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.service.thumbnail_service import ThumbnailRequest
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene, right_click, drag_width
 from test_tag_qml import find, click, type_text, descendants
@@ -114,7 +114,7 @@ def test_numeric_window_apply_template_validation_persistence_and_delete(display
     settings = controller.settingsController
     settings._path = tmp_path / "preferences.json"
     settings._window_path = tmp_path / "window-presets.json"
-    from qt_dicom_viewer.settings.window_presets import write_document
+    from voxplane.settings.window_presets import write_document
     settings._window_revision = write_document(settings._window_path, settings._window_entries)
     _click(view, _find(root, "primaryTool-window"))
     width, center = _find(root, "windowWidthInput"), _find(root, "windowCenterInput")

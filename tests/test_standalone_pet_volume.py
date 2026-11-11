@@ -6,12 +6,12 @@ import pytest
 from vtkmodules.vtkRenderingOpenGL2 import vtkGenericOpenGLRenderWindow
 from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import RenderFailure
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.ui.standalone_pet_volume_backend import StandalonePetVolumeBackend
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import RenderFailure
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.standalone_pet_volume_backend import StandalonePetVolumeBackend
 from test_pet_fusion import paired_series, qt_app
 from test_dicom_tags import wait_until
 
@@ -115,7 +115,7 @@ def test_invalid_upper_does_not_change_image(pet_volume, value):
 def test_missing_units_are_not_offered_or_relabelled(pet_volume):
     workspace, view, requests, worker, pet = pet_volume
     ready(pet_volume)
-    from qt_dicom_viewer.model.dicom_types import PixelUnitOption
+    from voxplane.model.dicom_types import PixelUnitOption
     native = PixelUnitOption("native", "counts", "counts", 1.)
     view._unit = "native"
     view.volume = replace(view.volume, pixel_value_meta=replace(view.volume.pixel_value_meta,

@@ -12,7 +12,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import WindowLevel
+from voxplane.model import WindowLevel
 from test_montage_controller import _controller
 
 
@@ -38,7 +38,7 @@ def test_montage_grid_scrolls_on_wheel_event(qt_app, tmp_path) -> None:
         lambda *args: opened.append(args)
     )
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(1000, 720)
@@ -51,7 +51,7 @@ def test_montage_grid_scrolls_on_wheel_event(qt_app, tmp_path) -> None:
     view.setInitialProperties({"viewportController": controller})
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/center/viewportArea/"
+        / "src/voxplane/qml/sections/center/viewportArea/"
         / "MontageViewport.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
@@ -135,8 +135,8 @@ def test_montage_grid_scrolls_on_wheel_event(qt_app, tmp_path) -> None:
 
 def test_first_tile_renders_when_bootstrap_finishes_before_grid(qt_app, tmp_path):
     from PySide6.QtCore import QTimer
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     from test_dicom_tags import wait_until
     from test_montage_controller import _result
     controller = _controller(24)
@@ -164,7 +164,7 @@ def test_first_tile_renders_when_bootstrap_finishes_before_grid(qt_app, tmp_path
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(1000, 720)
     view.setInitialProperties({"viewportController": controller})
-    source = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/sections/center/viewportArea/MontageViewport.qml"
+    source = Path(__file__).resolve().parents[1] / "src/voxplane/qml/sections/center/viewportArea/MontageViewport.qml"
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, view.errors()
     view.show()
@@ -245,7 +245,7 @@ def test_first_tile_renders_when_bootstrap_finishes_before_grid(qt_app, tmp_path
 
 @pytest.fixture
 def cursor_scene(qt_app):
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     controller = _controller(320)
     controller._baseline_window = WindowLevel(center=40, width=400)
     controller._state = replace(controller.viewport_state, window=controller._baseline_window)
@@ -256,7 +256,7 @@ def cursor_scene(qt_app):
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(1000, 720)
     view.setInitialProperties({"viewportController": controller})
-    source = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/sections/center/viewportArea/MontageViewport.qml"
+    source = Path(__file__).resolve().parents[1] / "src/voxplane/qml/sections/center/viewportArea/MontageViewport.qml"
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, view.errors()
     view.show()

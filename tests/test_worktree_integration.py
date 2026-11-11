@@ -3,12 +3,12 @@ from dataclasses import replace
 
 import numpy as np
 
-from qt_dicom_viewer.core.color_maps import color_lut
-from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.color_maps import color_lut
+from voxplane.core.pet_reconstruction import PetReconstructor
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_measurement_qml import qt_app
 from test_pet_fusion import paired_series
 from test_viewport_transform import _controller, _render_result
@@ -99,8 +99,8 @@ def test_window_template_updates_notify_open_ct_but_leave_pet_presets_empty(qt_a
 
 def test_image_and_volume_tab_transitions_keep_controller_types_separate(sidebar_scene, monkeypatch):
     from PySide6.QtTest import QTest
-    from qt_dicom_viewer.model import TabType
-    from qt_dicom_viewer.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
+    from voxplane.model import TabType
+    from voxplane.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
     from test_dicom_tags import wait_until
 
     # Rendering itself is covered by the native smoke test. Here the real QML
@@ -129,8 +129,8 @@ def test_image_and_volume_tab_transitions_keep_controller_types_separate(sidebar
 
 
 def test_closing_active_volume_detaches_qml_before_disposing_controller(sidebar_scene, monkeypatch):
-    from qt_dicom_viewer.model import TabType
-    from qt_dicom_viewer.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
+    from voxplane.model import TabType
+    from voxplane.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
     from test_dicom_tags import wait_until
 
     monkeypatch.setattr(VolumeViewportController, "ensureNativeView", lambda self: None)

@@ -86,8 +86,8 @@ def test_position_link_uses_current_path_during_pending_path_switch(cpr_app):
 
 def test_cpr_measurement_reference_renders_with_its_captured_plane(cpr_app):
     from threading import Event
-    from qt_dicom_viewer.ui.report_reference_images import render_references
-    from qt_dicom_viewer.ui.measurement_source import display_parameters
+    from voxplane.ui.report_reference_images import render_references
+    from voxplane.ui.measurement_source import display_parameters
     app, tab, _ = cpr_app
     view = tab.viewForRole('cross')
     mid = draw_length(view)
@@ -143,11 +143,11 @@ def test_deleting_last_path_hides_annotations_and_undo_restores_them(cpr_app):
 
 @pytest.mark.parametrize('count', [4097, 4098])
 def test_large_reference_navigation_count_can_be_saved(qt_app, count):
-    from qt_dicom_viewer.ui.controller.tab.cpr_tab_controller import CprTabController
-    from qt_dicom_viewer.model import TabConfig, TabType
-    from qt_dicom_viewer.model.render_models import VolumeLoadResult
-    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
-    from qt_dicom_viewer.core.workspace_document import _validate_tab
+    from voxplane.ui.controller.tab.cpr_tab_controller import CprTabController
+    from voxplane.model import TabConfig, TabType
+    from voxplane.model.render_models import VolumeLoadResult
+    from voxplane.ui.workspace_snapshot import tab_snapshot
+    from voxplane.core.workspace_document import _validate_tab
     from test_viewport_controller_hierarchy import _series_meta
     from test_mpr_reslicer import _volume
     tab = CprTabController(TabConfig('cpr', 'CPR', TabType.CPR, (_series_meta(),)))
@@ -173,8 +173,8 @@ def test_large_reference_navigation_count_can_be_saved(qt_app, count):
 def test_corrupted_historical_fingerprint_rejected_before_workspace_replacement(cpr_app, tmp_path, target):
     from copy import deepcopy
     from test_cpr_persistence import save
-    from qt_dicom_viewer.core.workspace_document import validate_document
-    from qt_dicom_viewer.core.workspace_state import dumps
+    from voxplane.core.workspace_document import validate_document
+    from voxplane.core.workspace_state import dumps
     app, tab, _ = cpr_app
     cross = tab.viewForRole('cross')
     mid = draw_length(cross)
@@ -224,7 +224,7 @@ def test_historical_restore_identity_failure_marks_loading_error(cpr_app):
                                               ('reference-b', 4098, 4098)])
 def test_cpr_source_rejects_invalid_navigation_provenance(cpr_app, role, count, index):
     from copy import deepcopy
-    from qt_dicom_viewer.ui.measurement_source import validate_cpr_source
+    from voxplane.ui.measurement_source import validate_cpr_source
     _, tab, _ = cpr_app
     cross = tab.viewForRole('cross')
     mid = draw_length(cross)

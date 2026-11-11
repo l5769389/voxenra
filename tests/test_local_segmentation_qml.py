@@ -43,7 +43,7 @@ def test_dialog_search_selection_and_responsive_size(scene,width):
     c._environment={'model_ready':True,'devices':['cpu'],'organs':['liver','spleen','kidney_left','kidney_right']}
     c._state='ready'
     c._checked_config=c._configuration()
-    path=Path(__file__).resolve().parents[1]/'src/qt_dicom_viewer/qml/sections/right/panels/AutomaticSegmentationDialog.qml'
+    path=Path(__file__).resolve().parents[1]/'src/voxplane/qml/sections/right/panels/AutomaticSegmentationDialog.qml'
     from PySide6.QtQml import qmlEngine
     component=QQmlComponent(qmlEngine(window),QUrl.fromLocalFile(str(path)))
     assert component.isReady(), [e.toString() for e in component.errors()]
@@ -71,7 +71,7 @@ def test_unsupported_target_error_is_not_replaced_by_automatic_probe(scene):
     c=app.localSegmentationController
     assert not c.prepare(None)
     error=c.message
-    path=Path(__file__).resolve().parents[1]/'src/qt_dicom_viewer/qml/sections/right/panels/AutomaticSegmentationDialog.qml'
+    path=Path(__file__).resolve().parents[1]/'src/voxplane/qml/sections/right/panels/AutomaticSegmentationDialog.qml'
     component=QQmlComponent(qmlEngine(window),QUrl.fromLocalFile(str(path)))
     dialog=component.createWithInitialProperties({'controller':c})
     dialog.setParent(window);dialog.setProperty('parent',window.contentItem())

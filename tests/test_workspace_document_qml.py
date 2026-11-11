@@ -94,7 +94,7 @@ def test_export_help_long_result_link_and_measurement_instructions(sidebar_scene
     assert link.property('text') == str(path)
     assert link.property('contentItem').property('truncated')
     calls = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.measurement_report_controller.reveal_path', lambda path: calls.append(path) or True)
+    monkeypatch.setattr('voxplane.ui.controller.measurement_report_controller.reveal_path', lambda path: calls.append(path) or True)
     click(window, link)
     assert calls == [str(path)]
     assert window.grabWindow().save(str(tmp_path / 'export-help-links.png'))
@@ -166,8 +166,8 @@ def test_report_controls_and_single_view_layout_binding(sidebar_scene, tmp_path)
 
 @pytest.mark.parametrize('outcome', ['invalid', 'cancelled'])
 def test_aborted_workspace_open_shows_reason_and_keeps_image(sidebar_scene, tmp_path, outcome):
-    from qt_dicom_viewer.core.workspace_document import read_document
-    from qt_dicom_viewer.core.workspace_state import dumps
+    from voxplane.core.workspace_document import read_document
+    from voxplane.core.workspace_state import dumps
     window, app, records, warnings = sidebar_scene
     manager, workspace = app.workspaceDocumentController, app.workspaceController
     workspace.createTab(records[0].series_instance_uid, 'CT', '2d')

@@ -3,12 +3,12 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.mpr_voi import (VoiRegion, automatic_depth, box_from_drag, circle_from_drag,
+from voxplane.core.mpr_voi import (VoiRegion, automatic_depth, box_from_drag, circle_from_drag,
                                          editing_handles, evaluate_voi, plane_polygon, plane_mask)
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.mpr_rotation import axis_angle_rotation_matrix
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import MprPlane, MprFrame
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.mpr_rotation import axis_angle_rotation_matrix
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import MprPlane, MprFrame
 from test_mpr_reslicer import _volume
 from test_pet_fusion import paired_series
 

@@ -57,7 +57,7 @@ def test_compact_workspace_save_and_manual_preserve_work(
     initial = native.geometry(), geometry(save), geometry(open_button)
     assert native.grabWindow().save(str(tmp_path / 'workspace-temporary.png'))
     target = tmp_path / '复查计划.voxworkspace'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(target), ''))
     click(native, save)
     wait_until(lambda: not manager.busy)
@@ -240,7 +240,7 @@ def test_export_hover_is_opaque_high_contrast_and_wraps_long_paths(sidebar_scene
     assert not warnings, warnings
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1' or sys.platform not in ('darwin', 'win32'), reason='Requires native caption and VTK windows')
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1' or sys.platform not in ('darwin', 'win32'), reason='Requires native caption and VTK windows')
 def test_workspace_native_close_and_save_stays_above_volume(sidebar_scene, tmp_path, monkeypatch):
     from test_import_dialog_chrome import caption_close
     window, app, records, warnings = sidebar_scene
@@ -253,7 +253,7 @@ def test_workspace_native_close_and_save_stays_above_volume(sidebar_scene, tmp_p
     close_caption = caption_close(native)
     assert native.transientParent() is window
     target = tmp_path / 'volume.voxworkspace'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName', lambda *args: (str(target), ''))
+    monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName', lambda *args: (str(target), ''))
     button = dialog.findChild(QObject, 'saveWorkspace')
     click(native, button)
     wait_until(lambda: not app.workspaceDocumentController.busy)

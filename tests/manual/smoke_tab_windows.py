@@ -17,10 +17,10 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete, isValid
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 from smoke_pet_3d import make_pair
 
 
@@ -43,7 +43,7 @@ def main(output):
         assert predicate(), 'Timed out during native tab migration'
         pump()
 
-    with TemporaryDirectory(prefix='voxenra-tab-windows-') as folder:
+    with TemporaryDirectory(prefix='voxplane-tab-windows-') as folder:
         root = Path(folder)
         ct, pet = make_pair(root)
         provider = DicomImageProvider()
@@ -59,7 +59,7 @@ def main(output):
         engine.rootContext().setContextProperty('appController', app)
         warnings = []
         engine.warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
-        engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[2]/'src/qt_dicom_viewer/qml/Main.qml')))
+        engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[2]/'src/voxplane/qml/Main.qml')))
         window = engine.rootObjects()[0]
         ws, manager = app.workspaceController, app.windowManager
         callback_errors = []
@@ -180,4 +180,4 @@ def main(output):
 
 
 if __name__ == '__main__':
-    main(Path(sys.argv[1] if len(sys.argv) > 1 else '/tmp/voxenra-tab-windows'))
+    main(Path(sys.argv[1] if len(sys.argv) > 1 else '/tmp/voxplane-tab-windows'))

@@ -4,10 +4,10 @@ from dataclasses import replace
 import pytest
 from PySide6.QtCore import QObject
 
-from qt_dicom_viewer.model import TabConfig, TabType
-from qt_dicom_viewer.settings.preferences import normalize_settings
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
+from voxplane.model import TabConfig, TabType
+from voxplane.settings.preferences import normalize_settings
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.tab.tab_controller import TabController
 from test_four_d import _four_d_meta
 from test_measurement_qml import qt_app
 

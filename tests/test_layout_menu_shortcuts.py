@@ -3,7 +3,7 @@ import pytest
 from PySide6.QtCore import QObject, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.model import DicomFolderScanSnapshot
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_four_d import _cross_series_four_d

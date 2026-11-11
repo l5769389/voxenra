@@ -9,7 +9,7 @@ from test_compare_2d import comparison
 from test_two_d_layout import open_scene
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, descendants
-from qt_dicom_viewer.ui.controller.viewport.image_2d.image_2d_viewport_controller import VIEWPORT_SETTING_FIELDS
+from voxplane.ui.controller.viewport.image_2d.image_2d_viewport_controller import VIEWPORT_SETTING_FIELDS
 
 
 @pytest.mark.parametrize('code', ['window-annotations', 'hide-sensitive-info', 'scale-bar',
@@ -141,7 +141,7 @@ def test_recover_closes_popup_immediately_and_errors_can_reopen_it(sidebar_scene
     manager._previous_recovery = True
     manager.changed.emit()
     monkeypatch.setattr(manager, '_confirm_replace', lambda path: True)
-    import qt_dicom_viewer.ui.controller.workspace_document_controller as module
+    import voxplane.ui.controller.workspace_document_controller as module
     real_read = module.read_document
     entered, release = Event(), Event()
     def slow_read(path):

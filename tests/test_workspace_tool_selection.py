@@ -1,7 +1,7 @@
 """Workspace selections are state, never commands or calculation requests."""
 import pytest
-from qt_dicom_viewer.model import TabType
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.model import TabType
+from voxplane.ui.controller.tab.tool_controller import ToolController
 from test_dicom_tags import qt_app, wait_until
 from test_workspace_persistence import populated_app
 

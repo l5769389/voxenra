@@ -8,8 +8,8 @@ from PySide6.QtGui import QImage
 from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
 
 def test_export_is_disabled_for_draft_preview_and_pending_reconstruction(cpr_app):
@@ -68,12 +68,12 @@ def test_three_scopes_write_real_anonymous_pngs_and_reject_changed_scope(cpr_app
     window.resize(1000, 700)
     window.setInitialProperties(dict(controller=tab))
     window.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1]/
-        'src/qt_dicom_viewer/qml/sections/center/viewportArea/CprPage.qml')))
+        'src/voxplane/qml/sections/center/viewportArea/CprPage.qml')))
     assert window.status() == QQuickView.Ready
     window.show()
     QTest.qWait(80)
     target = tmp_path/'initial.png'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName',
                         lambda *args, **kwargs: (str(target), 'PNG (*.png)'))
     images = {}
     try:

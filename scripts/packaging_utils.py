@@ -7,9 +7,9 @@ import tomllib
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-APP_NAME = "Voxenra"
+APP_NAME = "VoxPlane"
 # Match the runtime process identity and installed shortcuts.
-BUNDLE_ID = "com.junliu.voxenra"
+BUNDLE_ID = "com.junliu.voxplane"
 
 
 def app_version(root: Path = PROJECT_ROOT) -> str:
@@ -26,7 +26,7 @@ def prepare_assets(root: Path = PROJECT_ROOT) -> Path:
 
     output = root / "build" / "installer-assets"
     output.mkdir(parents=True, exist_ok=True)
-    with Image.open(root / "src/qt_dicom_viewer/qml/assets/brand/voxenra-mark.png") as source:
+    with Image.open(root / "src/voxplane/qml/assets/brand/voxplane-mark.png") as source:
         icon = source.convert("RGBA")
         if icon.width != icon.height:
             raise ValueError("应用品牌图标必须是正方形。")

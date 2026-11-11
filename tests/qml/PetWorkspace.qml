@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../../src/qt_dicom_viewer/qml/sections" as Sections
-import "../../src/qt_dicom_viewer/qml/sections/center/viewportArea" as Views
+import "../../src/voxplane/qml/sections" as Sections
+import "../../src/voxplane/qml/sections/center/viewportArea" as Views
 
 Rectangle {
     id: root

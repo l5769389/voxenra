@@ -21,7 +21,7 @@ def read(path):
 root, manifest_path, binaries = map(Path, sys.argv[1:4])
 manifest = read(manifest_path)
 edited = read(root / "slicer-edit.json")
-bridge = read(root / "voxenra.json")
+bridge = read(root / "voxplane.json")
 returned = read(root / "slicer-return.json")
 assert edited["gui_apply_enabled"]
 assert not bridge["qml_warnings"]

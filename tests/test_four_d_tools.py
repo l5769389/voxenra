@@ -7,15 +7,15 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, RenderFailure
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import DicomFolderScanSnapshot, RenderFailure
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
 from test_four_d import _cross_series_four_d
 from test_dicom_tags import qt_app
 from test_four_d_qml import _find, _click
@@ -253,7 +253,7 @@ def test_four_d_buttons_and_context_actions_in_real_qml(temporal):
     view.setInitialProperties(dict(toolController=tab.toolController, viewportController=tab.activeViewport,
         toolVisible=True, tabController=tab))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/RightPanel.qml')))
+        'src/voxplane/qml/sections/RightPanel.qml')))
     assert view.status() == QQuickView.Ready
     view.show()
     QTest.qWait(60)

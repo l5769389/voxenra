@@ -1,8 +1,8 @@
 """Exercise MR through the real QML app and background renderer."""
 from pathlib import Path
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, WindowLevel
-from qt_dicom_viewer.core.mr import automatic_mr_window
+from voxplane.model import DicomFolderScanSnapshot, WindowLevel
+from voxplane.core.mr import automatic_mr_window
 from test_pacs_qml import scene
 from test_dicom_tags import qt_app, wait_until
 from test_tag_qml import find, click, descendants, type_text
@@ -86,7 +86,7 @@ def test_mr_montage_auto_window_small_values_and_reset(scene,tmp_path):
     click(window,find(window,'autoWindowButton'))
     wait_until(lambda:view.viewport_state.window==initial)
     assert view.inverted
-    from qt_dicom_viewer.model import ToolType
+    from voxplane.model import ToolType
     view.reset_tool_state(ToolType.WINDOW)
     assert view.viewport_state.window==initial and not view.inverted
     assert 'TE: 80 ms' in view.scanParameters
@@ -116,8 +116,8 @@ def test_shared_panels_tolerate_controller_properties_during_teardown(qt_app):
     from PySide6.QtCore import QUrl
     from PySide6.QtQuick import QQuickView
     from shiboken6 import delete
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-    qml = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml'
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
+    qml = Path(__file__).resolve().parents[1] / 'src/voxplane/qml'
     for file, properties in [
         ('sections/right/ToolResetBar.qml', {'toolController': None, 'voiController': {}}),
         ('sections/center/viewportArea/MprReferenceViewport.qml', {'controller': {}}),

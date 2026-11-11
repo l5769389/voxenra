@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     MprFrame,
     MprGridSpec,
     MprGridAnchor,

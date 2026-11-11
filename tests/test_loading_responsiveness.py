@@ -9,15 +9,15 @@ import pytest
 from PySide6.QtCore import QEvent, QTimer
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.volume_render_data import prepare_volume_data, prepare_fusion_data
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.model.dicom_types import MrParameters
-from qt_dicom_viewer.model.render_models import StackRenderRequest
-from qt_dicom_viewer.service.render_serivce import RenderService
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.volume_viewport_host import VolumeViewportHost
+from voxplane.core.volume_render_data import prepare_volume_data, prepare_fusion_data
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.model.dicom_types import MrParameters
+from voxplane.model.render_models import StackRenderRequest
+from voxplane.service.render_serivce import RenderService
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.volume_viewport_host import VolumeViewportHost
 from test_measurement_qml import qt_app
 from test_dicom_tags import wait_until
 from test_live_windowing import headless_volume_interactor
@@ -244,10 +244,10 @@ def test_volume_cache_eviction_preserves_live_view_and_one_oversized_volume(volu
     assert len(manager._volumes_by_series_uid)==1
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1',
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1',
                     reason='requires native desktop window')
 def test_native_main_window_switches_during_preparation(sidebar_scene, monkeypatch):
-    from qt_dicom_viewer.ui.volume_render_backend import VolumeRenderBackend
+    from voxplane.ui.volume_render_backend import VolumeRenderBackend
     window, app, records, warnings = sidebar_scene
     workspace = app.workspaceController
     entered, release = Event(), Event()
@@ -330,7 +330,7 @@ def test_native_child_timeout_is_actionable_error_not_empty_tab(host, monkeypatc
     wait_until(lambda: h.data_ready)
     monkeypatch.setattr(h, 'surface_ready', lambda: False)
     h._surface_wait_started = 1.0
-    monkeypatch.setattr('qt_dicom_viewer.ui.volume_viewport_host.monotonic', lambda: 17.0)
+    monkeypatch.setattr('voxplane.ui.volume_viewport_host.monotonic', lambda: 17.0)
     h._render()
     assert c.loadState == 'error' and '3D' in c.errorMessage
     assert h.stack.currentWidget() is h.status_page
@@ -358,7 +358,7 @@ def test_native_creation_exception_becomes_load_error(loaded_tab, monkeypatch):
 
 def test_windows_paint_is_coalesced_and_swap_paint_does_not_loop(host, monkeypatch):
     h, c = host
-    monkeypatch.setattr('qt_dicom_viewer.ui.volume_viewport_host.monotonic', lambda: 50.0)
+    monkeypatch.setattr('voxplane.ui.volume_viewport_host.monotonic', lambda: 50.0)
     h._last_draw = 49.0
     h.native_paint()
     assert h._timer.isActive() and h._dirty

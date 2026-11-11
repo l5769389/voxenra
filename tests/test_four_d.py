@@ -9,10 +9,10 @@ import pytest
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import (
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import (
     MprFrame,
     MprPlane,
     MprRenderRequest,
@@ -21,11 +21,11 @@ from qt_dicom_viewer.model import (
     TabConfig,
     TabType,
 )
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.mpr_viewport_controller import (
+from voxplane.ui.controller.tab.tab_controller import TabController
+from voxplane.ui.controller.viewport.image_2d.mpr_viewport_controller import (
     MprViewportController,
 )
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
 from test_viewport_controller_hierarchy import _mpr_result
 
 
@@ -581,5 +581,5 @@ def test_gated_description_links_full_cycle_before_repeated_content_times(tmp_pa
 
 @pytest.mark.parametrize('description', ['Gated 20', 'series 20%A', 'P4, Gated, 120%A', 'P4, Gated, -10%A'])
 def test_gated_description_rejects_ambiguous_or_invalid_percentages(description):
-    from qt_dicom_viewer.core.dicom_scanner import _series_description_phase_marker
+    from voxplane.core.dicom_scanner import _series_description_phase_marker
     assert _series_description_phase_marker(description) is None

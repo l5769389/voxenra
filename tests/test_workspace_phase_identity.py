@@ -3,13 +3,13 @@ from dataclasses import replace
 
 import pytest
 
-from qt_dicom_viewer.core.workspace_document import source_manifest, read_document, FORMAT, VERSION
-from qt_dicom_viewer.core.workspace_state import dumps
-from qt_dicom_viewer.core.local_import import LocalImportStore
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, ImagePoint, MeasurementKind
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.controller.dicom_results_controller import capture_dicom_results
+from voxplane.core.workspace_document import source_manifest, read_document, FORMAT, VERSION
+from voxplane.core.workspace_state import dumps
+from voxplane.core.local_import import LocalImportStore
+from voxplane.model import DicomFolderScanSnapshot, ImagePoint, MeasurementKind
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.controller.dicom_results_controller import capture_dicom_results
 from test_four_d import _cross_series_four_d
 from test_dicom_tags import qt_app, wait_until
 

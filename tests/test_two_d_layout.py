@@ -9,8 +9,8 @@ from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, descendants
 from test_workspace_persistence import draw_length
-from qt_dicom_viewer.core.workspace_document import read_document
-from qt_dicom_viewer.ui.controller.tab.two_d_tab_controller import PRESETS, placements
+from voxplane.core.workspace_document import read_document
+from voxplane.ui.controller.tab.two_d_tab_controller import PRESETS, placements
 
 
 def open_scene(app, records):
@@ -118,7 +118,7 @@ def test_replacing_cell_rejects_late_frame_and_preserves_other_views(comparison)
     # Empty active cells are also a valid autosave state.
     layout.setLayout('2x2')
     layout.activateCell(3)
-    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
+    from voxplane.ui.workspace_snapshot import tab_snapshot
     assert tab_snapshot(tab)['activeView'] == ''
 
 
@@ -133,7 +133,7 @@ def test_layout_tools_collapse_drag_and_cell_activation_in_qml(sidebar_scene, th
     target = find(window, 'twoDSeriesDrop-1')
     position = target.mapToScene(QPointF(target.width()/2, target.height()/2))
     mime = QMimeData()
-    mime.setData('application/x-voxenra-series', records[1].series_instance_uid.encode())
+    mime.setData('application/x-voxplane-series', records[1].series_instance_uid.encode())
     enter = QDragEnterEvent(position.toPoint(), Qt.CopyAction, mime, Qt.LeftButton, Qt.NoModifier)
     QCoreApplication.sendEvent(window, enter)
     move = QDragMoveEvent(position.toPoint(), Qt.CopyAction, mime, Qt.LeftButton, Qt.NoModifier)
@@ -227,7 +227,7 @@ def test_sidebar_hands_drag_outside_window_to_native(sidebar_scene, monkeypatch,
     captured = []
     from PySide6.QtGui import QDrag
     def capture(drag, *args):
-        captured.append(bytes(drag.mimeData().data('application/x-voxenra-series')).decode())
+        captured.append(bytes(drag.mimeData().data('application/x-voxplane-series')).decode())
         return Qt.IgnoreAction
     monkeypatch.setattr(QDrag, 'exec', capture)
     if collapsed:
@@ -264,7 +264,7 @@ def test_layout_persistence_changes_do_not_create_fake_edit_undo(comparison):
 
 
 def test_reject_malformed_layout_before_workspace_restore():
-    from qt_dicom_viewer.core.scene_layout import validate_scene
+    from voxplane.core.scene_layout import validate_scene
     valid = dict(layout='1x1', rows=1, columns=1, active=0,
                  cells=[dict(uid='series', mode='stack', modes=['stack'])])
     validate_scene(valid, ['series'])
@@ -279,9 +279,9 @@ from test_pet_fusion import paired_series
 
 
 def test_pet_orthogonal_cells_preserve_display_units(qt_app, paired_series, tmp_path):
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     _, ct, pet = paired_series
     app = AppController(DicomImageProvider(), settings_path=tmp_path / 'pet-settings.json')
     try:

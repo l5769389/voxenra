@@ -4,8 +4,8 @@ import math
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core import bead_mtf as mtf
-from qt_dicom_viewer.core.workspace_state import encode, decode
+from voxplane.core import bead_mtf as mtf
+from voxplane.core.workspace_state import encode, decode
 from test_bead_mtf import gaussian
 
 
@@ -65,7 +65,7 @@ def test_warning_threshold_never_changes_calculated_values():
 
 
 def test_equivalent_inherits_anchor_sensitivity_not_measured_mtf50():
-    from qt_dicom_viewer.model.mtf import MtfSensitivitySample
+    from voxplane.model.mtf import MtfSensitivitySample
     base = mtf.compute_point_source_mtf(gaussian(sigma_x=.2, sigma_y=.2), .15, .1, analysis_method='tukey_fft', check_stability=True)
     axis = replace(base.x, mtf50=1., mtf10=2., sensitivity=(
         MtfSensitivitySample('window90', .1, 2.1),
@@ -97,7 +97,7 @@ def test_missing_baseline_crossing_stays_missing():
 
 
 def test_new_missing_anchor_is_not_reported_as_legacy_withheld():
-    from qt_dicom_viewer.core.mtf_quality import quality_warnings
+    from voxplane.core.mtf_quality import quality_warnings
     pixels = np.zeros((33, 33)); pixels[16, 16] = 10
     measured = mtf.compute_point_source_mtf(pixels, .1, .1, analysis_method='tukey_fft', check_stability=True)
     result = mtf.gaussian_equivalent_from_mtf10(measured)
@@ -106,7 +106,7 @@ def test_new_missing_anchor_is_not_reported_as_legacy_withheld():
 
 
 def test_metric_diagnostics_show_percent_and_preserve_comparison_units():
-    from qt_dicom_viewer.core.mtf_quality import metric_quality, sensitivity_details
+    from voxplane.core.mtf_quality import metric_quality, sensitivity_details
     result = mtf.compute_point_source_mtf(noisy_source(), .1953, .1953, analysis_method='tukey_fft', check_stability=True)
     quality = metric_quality(result.x, 'mtf10', result.sensitivity_threshold, 'X')
     assert quality['status'] == 'sensitive'
@@ -121,8 +121,8 @@ def test_metric_diagnostics_show_percent_and_preserve_comparison_units():
 
 
 def test_incomplete_and_no_crossing_comparisons_are_distinct():
-    from qt_dicom_viewer.core.mtf_quality import metric_quality
-    from qt_dicom_viewer.model.mtf import MtfSensitivitySample
+    from voxplane.core.mtf_quality import metric_quality
+    from voxplane.model.mtf import MtfSensitivitySample
     result = mtf.compute_point_source_mtf(noisy_source(), .1953, .1953, analysis_method='tukey_fft', check_stability=True)
     failed = replace(result.x, sensitivity=(MtfSensitivitySample('window90', None, None, 'error'),))
     missing = replace(result.x, sensitivity=(MtfSensitivitySample('window90', None, None),))
@@ -131,7 +131,7 @@ def test_incomplete_and_no_crossing_comparisons_are_distinct():
 
 
 def test_sensitivity_setting_is_bounded_and_persistent(tmp_path):
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     path = tmp_path / 'settings.json'
     settings = SettingsController(path=path)
     assert settings.section('services')['mtfSensitivityPercent'] == 20
@@ -142,7 +142,7 @@ def test_sensitivity_setting_is_bounded_and_persistent(tmp_path):
 
 
 def test_unknown_saved_comparison_name_has_safe_text_fallback():
-    from qt_dicom_viewer.core.mtf_quality import sensitivity_details
+    from voxplane.core.mtf_quality import sensitivity_details
     result = mtf.compute_point_source_mtf(noisy_source(), .1953, .1953, analysis_method='tukey_fft', check_stability=True)
     axis = replace(result.x, sensitivity=(replace(result.x.sensitivity[0], variant='future-comparison'),))
     restored = decode(encode(replace(result, x=axis)))

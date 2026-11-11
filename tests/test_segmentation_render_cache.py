@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 from PySide6.QtGui import QImage
 
-from qt_dicom_viewer.core.mpr_voi import plane_mask, VoiEvaluation
-from qt_dicom_viewer.ui.segmentation_overlay_renderer import SegmentationOverlayRenderer
+from voxplane.core.mpr_voi import plane_mask, VoiEvaluation
+from voxplane.ui.segmentation_overlay_renderer import SegmentationOverlayRenderer
 from test_mpr_voi_controller import setup_voi, draw
 from test_measurement_qml import qt_app
 from test_mpr_voi_qml import settle
@@ -52,7 +52,7 @@ def test_cache_validates_pixels_offset_geometry_style_and_keeps_bound(setup_voi,
     draw(c, view); settle(c)
     result, plane = c.evaluations[c.selectedId], view._plane_geometry
     renderer = SegmentationOverlayRenderer(max_entries=2, max_bytes=1024**2)
-    import qt_dicom_viewer.ui.segmentation_overlay_renderer as module
+    import voxplane.ui.segmentation_overlay_renderer as module
     actual = module.plane_mask
     calls = []
     def sample(*args):
@@ -104,7 +104,7 @@ def test_repeated_brush_preview_reads_reuse_sample_but_new_stroke_and_cancel_do_
     c, view, _ = setup_voi
     c.newSegment(); c.begin(view, 3, 3, .1)
     before = c.masks(view)
-    import qt_dicom_viewer.ui.segmentation_overlay_renderer as module
+    import voxplane.ui.segmentation_overlay_renderer as module
     actual = module.plane_mask
     calls = []
     def sample(*args):

@@ -1,5 +1,5 @@
 import QtQuick
-import "../../src/qt_dicom_viewer/qml/components" as Components
+import "../../src/voxplane/qml/components" as Components
 
 Rectangle {
     width: 420

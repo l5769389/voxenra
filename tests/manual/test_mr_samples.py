@@ -1,6 +1,6 @@
 """Opt-in regression against original public MR DICOM samples.
 
-VOXENRA_MR_SAMPLE_DIR=/path/to/Voxenra-MR-TestData PYTHONPATH=src:tests \
+VOXPLANE_MR_SAMPLE_DIR=/path/to/VoxPlane-MR-TestData PYTHONPATH=src:tests \
     python -m pytest tests/manual/test_mr_samples.py -q
 See docs/mr-test-data.md for fixed upstream versions and file checksums.
 """
@@ -17,12 +17,12 @@ from PySide6.QtCore import QUrl
 from PySide6.QtGui import QImage
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.mpr_layout import MPR_LAYOUTS
-from qt_dicom_viewer.core.series_export import ExportRequest, export_series
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import MeasurementKind, MprPlane, WindowLevel
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.mpr_layout import MPR_LAYOUTS
+from voxplane.core.series_export import ExportRequest, export_series
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import MeasurementKind, MprPlane, WindowLevel
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_tag_qml import find, click, descendants
@@ -33,9 +33,9 @@ T1_FOLDERS = ('01_T1_Brain_HFS', '02_T1_Brain_HFDR')
 
 @pytest.fixture(scope='module')
 def sample_root():
-    value = os.getenv('VOXENRA_MR_SAMPLE_DIR')
+    value = os.getenv('VOXPLANE_MR_SAMPLE_DIR')
     if not value:
-        pytest.skip('Set VOXENRA_MR_SAMPLE_DIR to the public sample directory')
+        pytest.skip('Set VOXPLANE_MR_SAMPLE_DIR to the public sample directory')
     root = Path(value)
     assert root.is_dir(), root
     return root
@@ -266,7 +266,7 @@ def test_real_mouse_roi_and_current_view_export(scene,sample_root,tmp_path,monke
     assert any(i.objectName()=='roiMetricCard' and i.isVisible() for i in descendants(window.contentItem()))
     click(window,find(window,'primaryTool-export'))
     destination=tmp_path/'mr-current-view.png'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName',lambda *args:(str(destination),'PNG'))
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName',lambda *args:(str(destination),'PNG'))
     click(window,find(window,'exportPng'))
     wait_until(lambda:not app.exportController.busy)
     assert not app.exportController.isError,app.exportController.message

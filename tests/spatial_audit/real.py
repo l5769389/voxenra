@@ -9,10 +9,10 @@ import sys
 import traceback
 import numpy as np
 import pydicom
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.pixel_codecs import decode_pixels
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.pixel_codecs import decode_pixels
 from .verify import close
 from .pet_reference import suvbw_factor
 
@@ -77,7 +77,7 @@ def verify(config,root):
                 pos,ori,spacing=positions[0];u,v=np.array(ori,float).reshape(2,3)
                 matrix=np.eye(4);matrix[:3,:3]=np.column_stack([np.cross(u,v),v*float(spacing[0]),u*float(spacing[1])]);matrix[:3,3]=pos
                 extra=dict(plane_affine=matrix)
-            np.savez_compressed(dest/'voxenra.npz',pixels=np.stack(data),source_pixels=np.stack(data),**extra)
+            np.savez_compressed(dest/'voxplane.npz',pixels=np.stack(data),source_pixels=np.stack(data),**extra)
         else:
             expected=np.stack(data)
             # PET display may be SUVbw; compare original BQML through source_pixels.
@@ -96,11 +96,11 @@ def verify(config,root):
                     gerror=max(gerror,close(actual,truth,atol=.001,rtol=0))
             entry.update(volume='pass',geometry_max_error_mm=gerror)
             dest=root/f'group-{n}';dest.mkdir(exist_ok=True)
-            np.savez_compressed(dest/'voxenra.npz',pixels=volume.modality_pixels,source_pixels=expected,
+            np.savez_compressed(dest/'voxplane.npz',pixels=volume.modality_pixels,source_pixels=expected,
                 affine=volume.geometry.voxel_to_patient)
         (dest/'sources.json').write_text(json.dumps([dict(path=str(i.path),frame=i.frame_index) for i in series.instances]))
         result['groups'].append(entry)
-    (root/'voxenra-result.json').write_text(json.dumps(result,indent=2))
+    (root/'voxplane-result.json').write_text(json.dumps(result,indent=2))
     return result
 
 
@@ -113,9 +113,9 @@ def main():
             result=dict(case=config['name'],status='failure',reason=traceback.format_exc())
             dest=root/config['name'];dest.mkdir(parents=True,exist_ok=True)
             # A failed rerun must replace an older successful per-case report.
-            (dest/'voxenra-result.json').write_text(json.dumps(result,indent=2))
+            (dest/'voxplane-result.json').write_text(json.dumps(result,indent=2))
         results.append(result);print(config['name'],result['status'],flush=True)
-        (root/'voxenra-summary.json').write_text(json.dumps(results,indent=2))
+        (root/'voxplane-summary.json').write_text(json.dumps(results,indent=2))
     return int(any(r['status']=='failure' for r in results))
 
 if __name__=='__main__':raise SystemExit(main())

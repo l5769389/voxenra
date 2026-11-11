@@ -4,12 +4,12 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.model import MprFrame, TabConfig, TabType, ToolType, WindowLevel
-from qt_dicom_viewer.model.interaction import WindowLevelChange
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.model import MprFrame, TabConfig, TabType, ToolType, WindowLevel
+from voxplane.model.interaction import WindowLevelChange
+from voxplane.ui.controller.tab.tab_controller import TabController
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app
 from test_four_d import _four_d_meta
 from test_viewport_controller_hierarchy import _mpr_result

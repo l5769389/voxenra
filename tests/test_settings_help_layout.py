@@ -47,7 +47,7 @@ def test_all_settings_pages_keep_actions_inside_form(scene, theme, locale, tmp_p
     categories = ['appearance', 'input', 'privacy', 'workspace', 'updates', 'sources',
                   'export', 'colormap', 'window', 'crosshair', 'corners', 'scale',
                   'measurement', 'roi', 'services', 'ai']
-    output = Path(os.environ.get('VOXENRA_LAYOUT_CAPTURES', tmp_path))
+    output = Path(os.environ.get('VOXPLANE_LAYOUT_CAPTURES', tmp_path))
     output.mkdir(parents=True, exist_ok=True)
     for width, height in [(1280, 720), (1440, 900)]:
         window.resize(width, height)

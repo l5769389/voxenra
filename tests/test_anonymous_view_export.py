@@ -9,7 +9,7 @@ import pytest
 from PySide6.QtGui import QImage
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.ui.controller.export_controller import ExportController, copy_dicom_series
+from voxplane.ui.controller.export_controller import ExportController, copy_dicom_series
 from test_measurement_qml import viewport, qt_app, _visual_children
 from test_dicom_tags import make_series, wait_until
 
@@ -36,7 +36,7 @@ def exporter(viewport, tmp_path, monkeypatch):
     exporter = ExportController(workspace, None)
     exporter.current_series = lambda: [series]
     target = tmp_path / 'anonymous.png'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(target), 'PNG'))
     try:
         yield view, controller, exporter, series, target, warnings
@@ -87,7 +87,7 @@ def test_header_check_cancellation_and_tab_changes_do_not_export_other_view(expo
     def check(_):
         entered.set()
         assert release.wait(5)
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.check_pixel_identity', check)
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.check_pixel_identity', check)
     exporter.exportPng(view.rootObject(), 1.0)
     wait_until(entered.is_set)
     if action == 'cancel':
@@ -124,7 +124,7 @@ def test_capture_cancel_restores_overlay_and_old_callback_cannot_save_new_captur
 
 def test_write_failure_restores_anonymous_capture_state(exporter, monkeypatch):
     view, controller, exporter, series, target, warnings = exporter
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(target / 'unwritable.png'), 'PNG'))
     exporter.exportPng(view.rootObject(), 1.0)
     wait_until(lambda: not exporter.busy)
@@ -199,7 +199,7 @@ def test_montage_anonymous_png_hides_details_without_changing_expanded_state(sid
     item.setProperty('anonymousExport', False)
     assert pixels(identified) != pixels(expected)
     target = tmp_path / 'montage-anonymous.png'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName',
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(target), 'PNG'))
     click(window, find(window, 'exportPng'))
     wait_until(lambda: not app.exportController.busy)

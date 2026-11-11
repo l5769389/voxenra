@@ -61,7 +61,7 @@ def test_initial_failure_is_not_lost_when_switching_group(qa_workspace, qt_app, 
 def test_retry_recovers_failed_auto_air_without_restoring_user_deleted_circles(qa_view, qt_app, monkeypatch):
     from test_water_qa_controller import deliver_frame, water_render, pump_until
     from test_qa_resize_air import air_image
-    from qt_dicom_viewer.ui.controller.viewport.controller import water_qa_controller as module
+    from voxplane.ui.controller.viewport.controller import water_qa_controller as module
     view, _ = qa_view
     deliver_frame(view, water_render(view, pixels=air_image()))
     qa = view.qaController

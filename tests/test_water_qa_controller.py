@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 from PySide6.QtCore import QPointF, QThread
 
-from qt_dicom_viewer.core.water_qa import analyze_water_phantom
-from qt_dicom_viewer.model import PixelSpacing, ToolType, WindowLevel
-from qt_dicom_viewer.ui.controller.viewport.controller.water_qa_controller import WaterQaController
+from voxplane.core.water_qa import analyze_water_phantom
+from voxplane.model import PixelSpacing, ToolType, WindowLevel
+from voxplane.ui.controller.viewport.controller.water_qa_controller import WaterQaController
 from test_measurement_qml import qt_app
 from test_viewport_transform import _controller, _render_result
 from test_water_qa import water_image
@@ -110,7 +110,7 @@ def test_non_water_image_creates_editable_circles_and_keeps_them_in_image(qa_vie
 
 @pytest.mark.parametrize('fallback', [False, True])
 def test_delete_baseline_remeasure_and_workspace_roundtrip(qa_view, qt_app, fallback):
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     view, first = qa_view
     if fallback:
         first = water_render(view, pixels=np.zeros((320, 400), dtype=np.float32))
@@ -257,7 +257,7 @@ def test_fast_slice_changes_coalesce_to_latest_snapshot(qa_view, qt_app, monkeyp
             entered.set()
             assert release.wait(5)
         return analyze_water_phantom(pixels, spacing, settings)
-    monkeypatch.setattr("qt_dicom_viewer.ui.controller.viewport.controller.water_qa_controller.analyze_water_phantom", delayed)
+    monkeypatch.setattr("voxplane.ui.controller.viewport.controller.water_qa_controller.analyze_water_phantom", delayed)
     qa.activate()
     pump_until(qt_app, entered.is_set)
     try:
@@ -420,7 +420,7 @@ def test_copies_are_independent_and_slice_cached(qa_view, qt_app):
 
 
 def test_legacy_water_result_can_still_be_decoded():
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     result = analyze_water_phantom(water_image(), (1, 1))
     encoded = encode(result)
     encoded['fields'].pop('detection_issue')
@@ -431,7 +431,7 @@ def test_unexpected_detector_failure_remains_an_error(qa_view, qt_app, monkeypat
     view, _ = qa_view
     def fail(*args):
         raise RuntimeError('detector failed')
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.viewport.controller.water_qa_controller.analyze_water_phantom', fail)
+    monkeypatch.setattr('voxplane.ui.controller.viewport.controller.water_qa_controller.analyze_water_phantom', fail)
     qa = view.qaController
     qa.activate()
     pump_until(qt_app, lambda: qa.status != 'calculating')
@@ -496,7 +496,7 @@ def test_qa_exports_current_valid_result_as_pdf(qa_view, qt_app, tmp_path):
     doc = QPdfDocument()
     assert doc.load(str(target)) == QPdfDocument.Error.None_
     text = '\n'.join(doc.getAllText(i).text() for i in range(doc.pageCount()))
-    assert 'Voxenra' not in text and 'HU' in text
+    assert 'VoxPlane' not in text and 'HU' in text
     assert qa.currentResult['uniformity_hu'] is None
     doc.close()
     qa.set_current_slice(1)
@@ -509,7 +509,7 @@ def test_qa_pdf_save_cancel_and_slice_change_keep_frozen_source(qa_view, qt_app,
     import unicodedata
     from test_water_qa_report import picture
     from PySide6.QtPdf import QPdfDocument
-    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    from voxplane.i18n.widgets import QFileDialog
     view, _ = qa_view
     qa = view.qaController
     qa.activate()
@@ -540,7 +540,7 @@ def test_qa_pdf_save_cancel_and_slice_change_keep_frozen_source(qa_view, qt_app,
 def test_air_report_filename_and_frozen_category(qa_view, qt_app, monkeypatch):
     from dataclasses import replace
     from test_water_qa_report import picture
-    from qt_dicom_viewer.i18n.widgets import QFileDialog
+    from voxplane.i18n.widgets import QFileDialog
     view, _ = qa_view
     qa = view.qaController
     qa.activate(); wait_qa(qt_app, qa)
@@ -559,7 +559,7 @@ def test_air_report_filename_and_frozen_category(qa_view, qt_app, monkeypatch):
 
 
 def test_large_qa_region_survives_workspace_codec(qa_view, qt_app):
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     view, _ = qa_view
     qa = view.qaController
     qa.activate()

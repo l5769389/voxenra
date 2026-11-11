@@ -9,11 +9,11 @@ import pytest
 from PySide6.QtCore import QObject, Signal, QUrl
 from PySide6.QtNetwork import QNetworkReply
 
-from qt_dicom_viewer.core.app_updates import (
+from voxplane.core.app_updates import (
     Installation, REPOSITORY, RELEASE_API, parse_release, parse_checksum, version_tuple, trusted_download_url,
 )
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.update_controller import UpdateController
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.update_controller import UpdateController
 from test_dicom_tags import qt_app
 
 
@@ -24,7 +24,7 @@ DIGEST = hashlib.sha256(PAYLOAD).hexdigest()
 def release_payload(version='1.7.0', kind='macos'):
     suffix = {'macos': 'macos-arm64.dmg', 'windows_installer': 'windows-x64-setup.exe',
               'windows_portable': 'windows-x64-portable.exe'}[kind]
-    name = f'Voxenra-{version}-{suffix}'
+    name = f'VoxPlane-{version}-{suffix}'
     base = f'https://github.com/{REPOSITORY}/releases/download/v{version}/'
     return dict(tag_name='v' + version, draft=False, prerelease=False, body='New features\n\n- Improved viewing.', assets=[
         dict(name=name, state='uploaded', size=len(PAYLOAD), browser_download_url=base + name, digest='sha256:' + DIGEST),
@@ -82,7 +82,7 @@ class Network(QObject):
 
 @pytest.fixture
 def updater(qt_app, tmp_path):
-    target = tmp_path / 'Voxenra.app'
+    target = tmp_path / 'VoxPlane.app'
     target.mkdir()
     settings = SettingsController(path=tmp_path / 'settings.json')
     network = Network()
@@ -167,7 +167,7 @@ def test_real_qt_reply_resumes_download_after_verified_redirect(updater, monkeyp
     thread.start()
     controller, _, _ = updater
     base = f'http://127.0.0.1:{server.server_port}'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.update_controller.trusted_download_url',
+    monkeypatch.setattr('voxplane.ui.controller.update_controller.trusted_download_url',
                         lambda url, redirect=False: redirect and url == base + '/checksum')
     manager = QNetworkAccessManager(controller)
     request = QNetworkRequest(QUrl(base + '/redirect'))
@@ -255,7 +255,7 @@ def test_check_failure_is_silent_only_for_automatic_checks(updater):
     network.last.code = 403
     network.last.deliver(b'rate limit')
     assert controller.state == 'error' and not prompts
-    from qt_dicom_viewer.i18n import message
+    from voxplane.i18n import message
     assert controller.message == str(message('updates.networkError'))
     assert not controller.busy
     controller.check()
@@ -280,7 +280,7 @@ def test_streamed_download_handoff_only_after_exit(updater, monkeypatch):
     controller, _, network = updater
     exits, launches = [], []
     controller.exitRequested.connect(lambda: exits.append(True))
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.update_controller.launch_installer', lambda *args: launches.append(args))
+    monkeypatch.setattr('voxplane.ui.controller.update_controller.launch_installer', lambda *args: launches.append(args))
     download(updater)
     reply = network.last
     reply.deliver(PAYLOAD[:10], complete=False)
@@ -418,11 +418,11 @@ def test_disk_full_and_file_write_failure_keep_running(updater, monkeypatch):
 
 
 def test_runtime_detection_never_confuses_installer_portable_or_source(tmp_path, monkeypatch):
-    import qt_dicom_viewer.core.app_updates as module
+    import voxplane.core.app_updates as module
     monkeypatch.setattr(module.sys, 'frozen', True, raising=False)
     monkeypatch.setattr(module.sys, 'platform', 'win32')
     monkeypatch.setattr(module.platform, 'machine', lambda: 'AMD64')
-    exe = tmp_path / 'Voxenra.exe'
+    exe = tmp_path / 'VoxPlane.exe'
     exe.touch()
     monkeypatch.setattr(module.sys, 'executable', str(exe))
     assert module.detect_installation().kind == 'windows_portable'

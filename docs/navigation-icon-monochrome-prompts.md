@@ -2,7 +2,7 @@
 
 > 历史设计记录：运行时现已使用 SVG，下文描述的 PNG 资源已清理。
 
-Generated using built-in ImageGen. These replace the earlier 3D orange icons in `src/qt_dicom_viewer/qml/assets/icons/nav-*.png`.
+Generated using built-in ImageGen. These replace the earlier 3D orange icons in `src/voxplane/qml/assets/icons/nav-*.png`.
 
 ## Shared prompt
 

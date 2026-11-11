@@ -8,8 +8,8 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 from test_dicom_tags import qt_app
 from test_measurement_qml import _visual_children
 from test_series_sidebar import sidebar_scene
@@ -57,7 +57,7 @@ def visual_editor(qt_app, tmp_path):
     window.setResizeMode(QQuickView.SizeRootObjectToView)
     window.setInitialProperties({'settingsController': settings})
     window.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/settings/ToolbarSettingsPage.qml')))
+        'src/voxplane/qml/sections/settings/ToolbarSettingsPage.qml')))
     assert window.status() == QQuickView.Ready
     window.resize(940, 720)
     window.show()
@@ -195,7 +195,7 @@ def test_tab_navigation_reveals_tools_below_scroll_view(visual_editor):
 
 @pytest.mark.parametrize('locale', ['zh-CN', 'en-US', 'pt-BR'])
 def test_narrow_editor_keeps_icon_buttons_and_save_controls_usable(visual_editor, locale):
-    from qt_dicom_viewer.ui.controller.language_controller import LanguageController
+    from voxplane.ui.controller.language_controller import LanguageController
     window, settings, _, warnings = visual_editor
     language = LanguageController(settings, root=False)
     language.attach_engine(window.engine())

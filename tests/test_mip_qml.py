@@ -10,18 +10,18 @@ from PySide6.QtQuick import QQuickItem, QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import (
+from voxplane.model import (
     MprFrame,
     MprPlane,
     MprRenderResult,
     MprState,
     TabType,
 )
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.mpr_viewport_controller import (
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.viewport.image_2d.mpr_viewport_controller import (
     MprViewportController,
 )
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_measurement_qml import _visual_children, qt_app
 from test_viewport_controller_hierarchy import (
     _frame_meta,
@@ -50,7 +50,7 @@ def _click(view: QQuickView, item, x_ratio: float = 0.5) -> None:
 def mip_panel(qt_app):
     controller = ToolController(tab_type=TabType.MPR)
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(340, 640)
@@ -65,7 +65,7 @@ def mip_panel(qt_app):
     })
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/RightPanel.qml"
+        / "src/voxplane/qml/sections/RightPanel.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [
@@ -184,7 +184,7 @@ def test_mpr_slab_guide_layer_tracks_image_transforms(qt_app, tmp_path) -> None:
     tools.setMprProjectionEnabled(True)
 
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(640, 480)
@@ -201,7 +201,7 @@ def test_mpr_slab_guide_layer_tracks_image_transforms(qt_app, tmp_path) -> None:
     })
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/center/viewportArea/Viewport.qml"
+        / "src/voxplane/qml/sections/center/viewportArea/Viewport.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [

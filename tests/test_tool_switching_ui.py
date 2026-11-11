@@ -35,7 +35,7 @@ def test_reselect_measure_preserves_pending_angle_through_completion(sidebar_sce
 
 
 def test_pending_angle_instruction_retranslates_without_showing_metrics_or_confirming_a_point(sidebar_scene):
-    from qt_dicom_viewer.i18n import localize, message
+    from voxplane.i18n import localize, message
     from test_tag_qml import descendants
     window, app, tab = reading_scene(sidebar_scene)
     measure = tab.activeViewport.measurementController

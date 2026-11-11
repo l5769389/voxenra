@@ -22,11 +22,11 @@ from i18n_support import install_default_language
 from test_series_sidebar import phantom_series
 from test_dicom_tags import wait_until
 from test_tag_qml import find, click, settled_point
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.model import ImagePoint, MeasurementKind
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
 output = ROOT / "build/validation/seg-sr/ui"
 source = output / "source"
@@ -57,7 +57,7 @@ engine.addImageProvider("dicom", provider)
 engine.rootContext().setContextProperty("appController", app)
 warnings = []
 engine.warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
-engine.load(QUrl.fromLocalFile(str(ROOT / "src/qt_dicom_viewer/qml/Main.qml")))
+engine.load(QUrl.fromLocalFile(str(ROOT / "src/voxplane/qml/Main.qml")))
 window = engine.rootObjects()[0]
 
 
@@ -106,7 +106,7 @@ try:
     # The 2D SR button exports the pointer-drawn contour.
     view._tool_controller.activateTool("export")
     with patch(
-        "qt_dicom_viewer.ui.controller.dicom_results_controller.QFileDialog.getExistingDirectory",
+        "voxplane.ui.controller.dicom_results_controller.QFileDialog.getExistingDirectory",
         return_value=str(output),
     ):
         click(window, reveal("exportStructuredReport"))
@@ -168,7 +168,7 @@ try:
     app.settingsController.setValue("layout", "rightPanelWidth", 260)
     QTest.qWait(100)
     with patch(
-        "qt_dicom_viewer.ui.controller.dicom_results_controller.QFileDialog.getExistingDirectory",
+        "voxplane.ui.controller.dicom_results_controller.QFileDialog.getExistingDirectory",
         return_value=str(output),
     ):
         click(window, reveal("exportStructuredReport"))
@@ -184,7 +184,7 @@ try:
     click(window, find(window, "primaryTool-import"))
     QTest.qWait(100)
     with patch(
-        "qt_dicom_viewer.ui.controller.dicom_results_controller.QFileDialog.getOpenFileName",
+        "voxplane.ui.controller.dicom_results_controller.QFileDialog.getOpenFileName",
         return_value=(str(seg_path), ""),
     ):
         click(window, reveal("importSegmentation"))

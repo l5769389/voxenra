@@ -3,8 +3,8 @@ import json
 import numpy as np
 import pytest
 from test_mpr_reslicer import _volume
-from qt_dicom_viewer.model import PixelValueMeta
-from qt_dicom_viewer.core.nrrd_exchange import write_nrrd
+from voxplane.model import PixelValueMeta
+from voxplane.core.nrrd_exchange import write_nrrd
 
 
 def ct():
@@ -13,7 +13,7 @@ def ct():
 
 
 def api():
-    from qt_dicom_viewer.core import local_segmentation
+    from voxplane.core import local_segmentation
     return local_segmentation
 
 
@@ -44,7 +44,7 @@ def test_complete_result_is_cropped_and_empty_organs_reported(tmp_path):
     assert r['phase']=='phase1' and r['mask'].shape==(3,3,4)
     assert ev[r['id']].metrics['count']==int(mask.sum())
     assert r['automatic_segmentation']['version']=='2.18.0'
-    from qt_dicom_viewer.core.workspace_state import dumps,loads
+    from voxplane.core.workspace_state import dumps,loads
     restored=loads(dumps({'voi':records}))['voi'][0]
     assert restored['automatic_segmentation']==r['automatic_segmentation']
     np.testing.assert_array_equal(restored['mask'],r['mask'])

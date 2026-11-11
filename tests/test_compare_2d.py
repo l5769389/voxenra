@@ -3,11 +3,11 @@ from dataclasses import replace
 import pytest
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.compare import relative_slice, supports_compare, SYNC_OPERATIONS
-from qt_dicom_viewer.core.workspace_document import read_document
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, WindowLevel, WindowLevelChange
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.compare import relative_slice, supports_compare, SYNC_OPERATIONS
+from voxplane.core.workspace_document import read_document
+from voxplane.model import DicomFolderScanSnapshot, WindowLevel, WindowLevelChange
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import phantom_series
 from test_workspace_persistence import draw_length
@@ -145,7 +145,7 @@ def test_display_sync_options_reset_and_measurement_isolation(comparison):
     assert not left._measure_controller._measurements and not right._measure_controller._measurements
     tab.historyController.redo()
     assert mid in left._measure_controller._measurements
-    from qt_dicom_viewer.ui.controller.measurement_report_controller import capture_results
+    from voxplane.ui.controller.measurement_report_controller import capture_results
     rows, _, _ = capture_results(app.workspaceController, app._series_catalog, anonymous=False)
     assert len(rows) == 2
     assert {row['series'] for row in rows} == {r.series_description for r in records[:2]}

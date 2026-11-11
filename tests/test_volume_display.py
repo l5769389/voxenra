@@ -6,15 +6,15 @@ import pytest
 from vtkmodules.vtkRenderingOpenGL2 import vtkGenericOpenGLRenderWindow
 from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
 
-from qt_dicom_viewer.core.volume_view import (
+from voxplane.core.volume_view import (
     VolumeViewState, face_rotation, nearest_face, view_basis, drag_volume_window,
 )
-from qt_dicom_viewer.model import ToolType, WindowLevel
-from qt_dicom_viewer.model.dicom_types import MrParameters
-from qt_dicom_viewer.model.render_models import VolumeLoadResult
-from qt_dicom_viewer.model.volume_models import VOLUME_DIRECTIONS, VolumeDisplayState, VolumeBlendMode
-from qt_dicom_viewer.volume_presets import VOLUME_PRESETS, VOLUME_PRESET_BY_ID
-from qt_dicom_viewer.ui.volume_render_backend import (
+from voxplane.model import ToolType, WindowLevel
+from voxplane.model.dicom_types import MrParameters
+from voxplane.model.render_models import VolumeLoadResult
+from voxplane.model.volume_models import VOLUME_DIRECTIONS, VolumeDisplayState, VolumeBlendMode
+from voxplane.volume_presets import VOLUME_PRESETS, VOLUME_PRESET_BY_ID
+from voxplane.ui.volume_render_backend import (
     VolumeRenderBackend, create_orientation_marker, create_transfer_functions,
 )
 from test_volume_view import make_tab, volume  # shared synthetic volume fixture

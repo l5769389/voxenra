@@ -11,17 +11,17 @@ import time
 from PySide6.QtCore import QTimer,QUrl
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.core.workspace_state import dumps,loads
-from qt_dicom_viewer.core.nrrd_exchange import write_nrrd,write_segmentation,read_segmentation
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.core.workspace_state import dumps,loads
+from voxplane.core.nrrd_exchange import write_nrrd,write_segmentation,read_segmentation
 import numpy as np
 
 ROOT=Path(__file__).resolve().parents[2]
 source=Path(sys.argv[1]);output=Path(sys.argv[2]).resolve();output.mkdir(parents=True,exist_ok=True)
-qt=QApplication(['Voxenra Local Segmentation QA']);qt.setApplicationName('Voxenra Local Segmentation QA')
+qt=QApplication(['VoxPlane Local Segmentation QA']);qt.setApplicationName('VoxPlane Local Segmentation QA')
 provider=DicomImageProvider()
 app=AppController(provider,settings_path=output/'settings.json',pacs_config_path=output/'pacs.json',pacs_import_root=output/'imports')
 app.workspaceDocumentController.setAutomaticRecovery(False)
@@ -33,7 +33,7 @@ engine=QQmlApplicationEngine();engine.addImageProvider('dicom',provider);engine.
 engine.rootContext().setContextProperty('appController',app)
 warnings=[]
 engine.warnings.connect(lambda items:warnings.extend(i.toString() for i in items))
-engine.load(QUrl.fromLocalFile(str(ROOT/'src/qt_dicom_viewer/qml/Main.qml')))
+engine.load(QUrl.fromLocalFile(str(ROOT/'src/voxplane/qml/Main.qml')))
 window=engine.rootObjects()[0];window.resize(1280 if '--small' in sys.argv else 1440,720 if '--small' in sys.argv else 900);window.show()
 if '--empty' in sys.argv:
     pass

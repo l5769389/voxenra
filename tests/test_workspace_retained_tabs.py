@@ -1,6 +1,6 @@
 import pytest
 from PySide6.QtWidgets import QMessageBox
-from qt_dicom_viewer.core.workspace_document import read_document
+from voxplane.core.workspace_document import read_document
 from test_dicom_tags import qt_app, wait_until
 from test_workspace_persistence import populated_app, draw_length
 
@@ -62,7 +62,7 @@ def test_closed_results_survive_file_recovery_and_require_exit_save(edited, tmp_
 
 
 def test_failed_snapshot_preserves_all_tabs(edited, monkeypatch):
-    import qt_dicom_viewer.ui.controller.workspace_controller as module
+    import voxplane.ui.controller.workspace_controller as module
     app, _ = edited
     ws = app.workspaceController
     tab = ws.activeTab
@@ -85,9 +85,9 @@ from test_pet_fusion import paired_series
 
 def test_reopen_fusion_volume_preserves_open_source(qt_app, tmp_path, paired_series):
     import numpy as np
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     _, ct, pet = paired_series
     app = AppController(DicomImageProvider(), settings_path=False)
     try:
@@ -121,7 +121,7 @@ def test_reopen_fusion_volume_preserves_open_source(qt_app, tmp_path, paired_ser
 
 
 def test_reopen_snapshot_failure_keeps_retained_result(edited, monkeypatch):
-    import qt_dicom_viewer.ui.controller.workspace_document_controller as module
+    import voxplane.ui.controller.workspace_document_controller as module
     app, _ = edited
     ws, doc = app.workspaceController, app.workspaceDocumentController
     assert ws.closeTab(ws.activeTabId)

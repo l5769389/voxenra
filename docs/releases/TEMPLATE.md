@@ -1,4 +1,4 @@
-# Voxenra X.Y.Z
+# VoxPlane X.Y.Z
 
 发布日期：YYYY-MM-DD · 用一句话说明本版最重要的用户收益。
 

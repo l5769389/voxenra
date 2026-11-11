@@ -11,13 +11,13 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.core.series_sidebar import build_sidebar_rows, patient_key
-from qt_dicom_viewer.core.series_thumbnail import read_series_thumbnail
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.service.thumbnail_service import ThumbnailRequest, ThumbnailService
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.core.series_sidebar import build_sidebar_rows, patient_key
+from voxplane.core.series_thumbnail import read_series_thumbnail
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.service.thumbnail_service import ThumbnailRequest, ThumbnailService
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, make_dicom, make_series, wait_until
 from test_tag_qml import find, click, type_text, descendants
 
@@ -182,13 +182,13 @@ def sidebar_scene(qt_app, tmp_path):
     panel.update_series_session(snapshot)
     panel._update_series_record(snapshot)
     engine = QQmlApplicationEngine()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     engine.addImageProvider("navigation", SvgIconProvider())
     warnings = []
     engine.warnings.connect(lambda errors: warnings.extend(error.toString() for error in errors))
     engine.addImageProvider("dicom", provider)
     engine.rootContext().setContextProperty("appController", app)
-    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/Main.qml")))
+    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/voxplane/qml/Main.qml")))
     assert engine.rootObjects(), warnings
     window = engine.rootObjects()[0]
     try:
@@ -415,7 +415,7 @@ def test_split_toolbar_and_series_context_menu(sidebar_scene, tmp_path):
 
 
 def test_mr_group_order_uses_numeric_time_echo_and_component_not_hashed_uid(tmp_path):
-    from qt_dicom_viewer.model.dicom_types import MrParameters
+    from voxplane.model.dicom_types import MrParameters
     base = replace(make_series(tmp_path, 1), modality='MR', series_number=301)
     records = []
     for uid, time, echo, component in [('1', 10, 23, 'MAGNITUDE'), ('2', 2, 23, 'PHASE'),

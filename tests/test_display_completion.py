@@ -6,15 +6,15 @@ import pytest
 from PySide6.QtCore import QPointF
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.color_maps import apply_color_map
-from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import ToolType, WindowLevel, RenderFailure
-from qt_dicom_viewer.model.interaction import WindowLevelChange
-from qt_dicom_viewer.model.render_models import PetBatchRenderRequest
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.color_maps import apply_color_map
+from voxplane.core.pet_reconstruction import PetReconstructor
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import ToolType, WindowLevel, RenderFailure
+from voxplane.model.interaction import WindowLevelChange
+from voxplane.model.render_models import PetBatchRenderRequest
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_montage_controller import _controller, _accept, _result
 from test_montage_rendering import _catalog, _dataset, _request
 from test_dicom_tags import qt_app, wait_until
@@ -26,7 +26,7 @@ from test_display_tools_qml import display_panel, _find, _click
 
 
 def test_montage_color_and_inversion_use_decoded_cache(tmp_path, monkeypatch):
-    from qt_dicom_viewer.core.dicom_loader import DicomLoader
+    from voxplane.core.dicom_loader import DicomLoader
     from pydicom.uid import CTImageStorage
     dataset = _dataset()
     dataset.SOPClassUID = CTImageStorage

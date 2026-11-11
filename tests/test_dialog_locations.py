@@ -7,9 +7,9 @@ import sys
 import pytest
 from PySide6 import QtWidgets
 
-from qt_dicom_viewer.i18n import message
-from qt_dicom_viewer.i18n.widgets import QFileDialog
-from qt_dicom_viewer.settings.dialog_locations import DialogLocations
+from voxplane.i18n import message
+from voxplane.i18n.widgets import QFileDialog
+from voxplane.settings.dialog_locations import DialogLocations
 from test_dicom_tags import qt_app
 
 
@@ -31,7 +31,7 @@ def test_locations_survive_a_new_process_and_missing_folder(locations, tmp_path)
         locations.remember(key, folder, directory=True)
         expected[key] = str(folder)
     script = '''import json, sys
-from qt_dicom_viewer.settings.dialog_locations import DialogLocations
+from voxplane.settings.dialog_locations import DialogLocations
 history = DialogLocations(sys.argv[1])
 print(json.dumps({key: history.directory(key) for key in ('images', 'workspace', 'attachments', 'export')}))
 '''
@@ -74,7 +74,7 @@ def test_export_folder_and_attachment_file_keep_distinct_locations(locations, tm
 
 @pytest.mark.parametrize('is_folder', [False, True])
 def test_mixed_import_remembers_selected_folder_itself_or_file_parent(locations, tmp_path, monkeypatch, is_folder):
-    from qt_dicom_viewer.ui.dialogs import local_import_dialog as module
+    from voxplane.ui.dialogs import local_import_dialog as module
     selected = tmp_path / 'dicom'
     selected.mkdir()
     if not is_folder:

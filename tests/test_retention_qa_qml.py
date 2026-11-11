@@ -111,7 +111,7 @@ def test_reopened_tab_keeps_slice_slider_and_image_in_sync(sidebar_scene, monkey
     assert ws.closeTab(ws.activeTabId)
     # The installed app can display the new view before its saved state arrives.
     # Ensure that ordering rather than relying on the fixture's fast rendering.
-    from qt_dicom_viewer.ui.controller import workspace_document_controller as module
+    from voxplane.ui.controller import workspace_document_controller as module
     apply_snapshot = module.apply_tab_snapshot
     def restore_after_slider_is_visible(tab, record):
         doc._restore_timer.stop()

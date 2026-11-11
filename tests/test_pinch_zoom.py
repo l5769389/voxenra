@@ -122,7 +122,7 @@ def test_all_cpr_views_pinch_without_moving_path_or_sampling_position(cpr_page, 
 
 def test_montage_pinch_scales_images_without_scrolling_or_opening_slice(qt_app, trackpad):
     from test_montage_controller import _controller
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     controller = _controller(100)
     opened = []
     controller.sliceOpenRequested.connect(lambda *args: opened.append(args))
@@ -133,7 +133,7 @@ def test_montage_pinch_scales_images_without_scrolling_or_opening_slice(qt_app, 
     warnings = []
     view.engine().warnings.connect(lambda es: warnings.extend(e.toString() for e in es))
     view.setInitialProperties(dict(viewportController=controller))
-    view.setSource(QUrl.fromLocalFile(str(ROOT / 'src/qt_dicom_viewer/qml/sections/center/viewportArea/MontageViewport.qml')))
+    view.setSource(QUrl.fromLocalFile(str(ROOT / 'src/voxplane/qml/sections/center/viewportArea/MontageViewport.qml')))
     assert view.status() == QQuickView.Ready
     view.show()
     QTest.qWait(80)
@@ -157,7 +157,7 @@ def test_montage_pinch_scales_images_without_scrolling_or_opening_slice(qt_app, 
 
 def test_native_volume_widget_routes_pinch_and_keeps_camera_orientation(qt_app, trackpad):
     from test_volume_view import make_tab
-    from qt_dicom_viewer.ui.volume_viewport_host import VolumeInteractor
+    from voxplane.ui.volume_viewport_host import VolumeInteractor
     tab = make_tab()
     controller = tab.activeViewport
     controller._set_status('ready')
@@ -217,7 +217,7 @@ def test_pinch_is_blocked_while_modal_is_open_and_recovers(viewport, trackpad, t
             self.popupChanged.emit()
     window = ModalView()
     source = tmp_path / 'Pinch.qml'
-    directory = (ROOT / 'src/qt_dicom_viewer/qml/sections/center/viewportArea').as_uri()
+    directory = (ROOT / 'src/voxplane/qml/sections/center/viewportArea').as_uri()
     source.write_text(f'''import QtQuick
 import "{directory}" as Views
 Item {{
@@ -274,9 +274,9 @@ def test_compare_mpr_pinch_respects_explicit_zoom_link(comparison, linked):
     assert second.zoom == pytest.approx(before * (1.5 if linked else 1))
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1', reason='requires native desktop window')
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1', reason='requires native desktop window')
 def test_native_rendered_reference_and_slice_pinch(loaded, trackpad, tmp_path):
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     workspace, tab, provider, requests, failures = loaded
     tab.mprLayout.setLayout('quad')
     view = QQuickView()

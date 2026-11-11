@@ -15,7 +15,7 @@ def test_home_first_use_and_direct_actions(scene, monkeypatch):
     assert find(window, 'homeOpenWorkspace').isVisible()
     assert not window.findChild(QObject, 'homeRecentSection').property('visible')
     calls = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.workspace_document_controller.QFileDialog.getOpenFileName',
+    monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.QFileDialog.getOpenFileName',
                         lambda *args: calls.append(args) or ('', ''))
     click(window, find(window, 'homeOpenWorkspace'))
     assert len(calls) == 1
@@ -55,7 +55,7 @@ def test_home_recent_layout_and_open(scene, tmp_path, locale, theme):
 
 def test_imported_home_opens_selected_series_and_keeps_import_separate(scene, tmp_path, monkeypatch):
     from test_series_sidebar import phantom_series
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, warnings = scene
     record = phantom_series(tmp_path, 1, 'HOME', '1.2.3.1', '20261014')
     snapshot = DicomFolderScanSnapshot(tmp_path, 3, 3, 0, [record])
@@ -77,7 +77,7 @@ def test_imported_home_opens_selected_series_and_keeps_import_separate(scene, tm
 
 def test_imported_home_scanning_action_is_explicit_cancel(scene, tmp_path, monkeypatch):
     from test_series_sidebar import phantom_series
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, warnings = scene
     app.languageController.selectLanguage('zh-CN')
     panel = app.panelController

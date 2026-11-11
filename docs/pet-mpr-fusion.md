@@ -91,7 +91,7 @@ CT 固定，4×4 矩阵的方向始终是 `PET LPS → CT LPS`。采样使用逆
 PYTHONPATH=src QT_QPA_PLATFORM=offscreen uv run pytest -q
 ```
 
-本轮业务与交互整理基于 `main` 的 `91adbf1`，独立 worktree 为 `qt-dicom-viewer-pet-fusion`，分支为 `codex/pet-fusion-workflow`。
+本轮业务与交互整理基于 `main` 的 `91adbf1`，独立 worktree 为 `voxplane-pet-fusion`，分支为 `codex/pet-fusion-workflow`。
 
 ## 业务与设计依据（2026-09-07）
 

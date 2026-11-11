@@ -8,8 +8,8 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import SeriesDisplayMeta, TabConfig, TabType
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
+from voxplane.model import SeriesDisplayMeta, TabConfig, TabType
+from voxplane.ui.controller.tab.tab_controller import TabController
 from test_measurement_qml import _visual_children, qt_app
 
 
@@ -33,14 +33,14 @@ def _controller(tab_type: TabType = TabType.FOUR_D) -> TabController:
 def four_d_panel(qt_app, request):
     controller = _controller()
     if getattr(request, "param", True):
-        from qt_dicom_viewer.model import MprFrame
+        from voxplane.model import MprFrame
         from test_four_d import _finish_requests
         requests = []
         controller.renderRequested.connect(requests.append)
         controller.init_render()
         _finish_requests(controller, requests, MprFrame.standard_lps((10., 20., 30.)))
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(280, 760)
@@ -56,7 +56,7 @@ def four_d_panel(qt_app, request):
     })
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/RightPanel.qml"
+        / "src/voxplane/qml/sections/RightPanel.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [
@@ -170,7 +170,7 @@ def test_four_d_panel_updates_fps_and_accepts_phase_click(
 def test_mpr_right_panel_offers_slice_playback_after_loading(qt_app) -> None:
     controller = _controller(TabType.MPR)
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(280, 640)
@@ -186,7 +186,7 @@ def test_mpr_right_panel_offers_slice_playback_after_loading(qt_app) -> None:
     })
     source = (
         Path(__file__).resolve().parents[1]
-        / "src/qt_dicom_viewer/qml/sections/RightPanel.qml"
+        / "src/voxplane/qml/sections/RightPanel.qml"
     )
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready

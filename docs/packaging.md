@@ -1,8 +1,8 @@
-# Voxenra 打包与安装
+# VoxPlane 打包与安装
 
 ## 应用内自动更新
 
-设置中的「软件更新」默认开启每次启动后检查（界面加载 5 秒后异步执行）。更新说明来自 `l5769389/voxenra` 的最新正式 GitHub Release；用户确认后才下载。取消会记住该版本，不再自动弹窗，设置版本号旁的更新标识仍可重新打开。关闭检查不影响手动检查，开关与取消版本均保存在用户设置中。
+设置中的「软件更新」默认开启每次启动后检查（界面加载 5 秒后异步执行）。更新说明来自 `junforge-dev/voxplane` 的最新正式 GitHub Release；用户确认后才下载。取消会记住该版本，不再自动弹窗，设置版本号旁的更新标识仍可重新打开。关闭检查不影响手动检查，开关与取消版本均保存在用户设置中。
 
 下载严格匹配平台、版本与附件名，并检查大小、SHA-256 文件及 GitHub 提供的摘要。下载完成后走工作区原有保存/退出流程；取消退出时保留待安装状态，只有事件循环结束、工作线程退出后才启动独立更新程序。
 
@@ -16,14 +16,14 @@
 
 | 平台 | 本机构建入口 | 产物 / 安装方式 |
 | --- | --- | --- |
-| macOS | `bash scripts/build_macos.sh` | `dist/macos/Voxenra.app`；`dist/installers/Voxenra-<版本>-macos-<架构>.dmg`，打开后将应用拖入 Applications |
-| Windows x64 | `./scripts/build_windows.ps1` | `dist/installers/Voxenra-<版本>-windows-x64-setup.exe`，原生安装向导 |
-| Windows x64 便携版 | `scripts\build_windows.bat` | `dist/Voxenra.exe`，保留原有入口，无安装向导 |
-| Windows x64 目录便携版 | `scripts\build_windows.bat --portable-dir` | `dist/portable/Voxenra/Voxenra.exe`，分发时保留整个 `Voxenra` 目录 |
+| macOS | `bash scripts/build_macos.sh` | `dist/macos/VoxPlane.app`；`dist/installers/VoxPlane-<版本>-macos-<架构>.dmg`，打开后将应用拖入 Applications |
+| Windows x64 | `./scripts/build_windows.ps1` | `dist/installers/VoxPlane-<版本>-windows-x64-setup.exe`，原生安装向导 |
+| Windows x64 便携版 | `scripts\build_windows.bat` | `dist/VoxPlane.exe`，保留原有入口，无安装向导 |
+| Windows x64 目录便携版 | `scripts\build_windows.bat --portable-dir` | `dist/portable/VoxPlane/VoxPlane.exe`，分发时保留整个 `VoxPlane` 目录 |
 
 脚本可以从任意工作目录调用。需要完整源码、uv，以及首次构建时的网络访问。
 使用锁定的 Python 3.13 依赖，分别创建 `.venv-build-macos` / `.venv-build-windows`，不修改开发虚拟环境。
-品牌源文件为 `voxenra-mark.svg`，随应用提供 1024 像素 PNG，并导出 ICO / ICNS；ICO 包含 16～256 像素表示，ICNS 包含最高 1024 像素的 Retina 表示。Windows 便携版、安装版与安装器均嵌入图标；开始菜单和桌面快捷方式与运行进程使用同一 AppUserModelID。Qt 窗口和 macOS Dock 使用同一品牌图标，macOS 应用包会检查 Info.plist 引用的 ICNS 存在。所有 QML、导航及操作图标随应用收集。
+品牌源文件为 `voxplane-mark.svg`，随应用提供 1024 像素 PNG，并导出 ICO / ICNS；ICO 包含 16～256 像素表示，ICNS 包含最高 1024 像素的 Retina 表示。Windows 便携版、安装版与安装器均嵌入图标；开始菜单和桌面快捷方式与运行进程使用同一 AppUserModelID。Qt 窗口和 macOS Dock 使用同一品牌图标，macOS 应用包会检查 Info.plist 引用的 ICNS 存在。所有 QML、导航及操作图标随应用收集。
 只收集源码和依赖，不收集本地 DICOM 文件。产物包含 Python、Qt、VTK；压缩像素解码器由锁定依赖提供。项目钩子同时收集原生库与插件元数据；构建工作流在上传产物前运行实际可执行文件的像素校验，失败则阻止继续发布。详见 [压缩 DICOM](compressed-dicom.md)。
 
 ## macOS
@@ -74,9 +74,9 @@ bash scripts/build_macos.sh \
 PowerShell 若被组织执行策略阻止，请按组织策略允许脚本，或通过 uv 直接运行 Python 入口；无需关闭系统安全策略。
 
 安装向导提供中英文选择、欢迎页、安装说明、路径、可选桌面快捷方式、安装进度与完成后启动。
-窗口使用原生现代样式，并随系统选择深浅色；复用 Voxenra 品牌图标。
+窗口使用原生现代样式，并随系统选择深浅色；复用 VoxPlane 品牌图标。
 中文覆盖主要安装/卸载流程，底层技术错误保留 Inno Setup 英文回退。
-默认安装到 `%LOCALAPPDATA%\Programs\Voxenra`，仅当前用户，无管理员权限要求。
+默认安装到 `%LOCALAPPDATA%\Programs\VoxPlane`，仅当前用户，无管理员权限要求。
 开始菜单会添加快捷方式；桌面快捷方式默认不选。
 固定 AppId 用于同一应用的升级识别；版本统一读取 `pyproject.toml`。
 卸载入口在 Windows“设置 → 已安装的应用”。卸载不执行通配目录清理；个人 DICOM 文件请保存在安装目录之外。
@@ -90,8 +90,8 @@ PowerShell 若被组织执行策略阻止，请按组织策略允许脚本，或
 
 推送 `v*` 版本标签后，会构建该标签源码；标签必须与 `pyproject.toml` 中的版本一致（例如 `v0.2.0` 对应 `0.2.0`）。测试与图标校验成功后，独立发布任务下载本次 Artifact，再校验 SHA-256，并将以下四个附件上传到同名 Release：
 
-- `Voxenra-<版本>-windows-x64-portable.exe` 与 `.exe.sha256`
-- `Voxenra-<版本>-windows-x64-setup.exe` 与 `.exe.sha256`
+- `VoxPlane-<版本>-windows-x64-portable.exe` 与 `.exe.sha256`
+- `VoxPlane-<版本>-windows-x64-setup.exe` 与 `.exe.sha256`
 
 已有 Release 保留说明、macOS 附件和发布状态；没有时先创建草稿，便于与 macOS 包一并发布。重跑只更新对应版本的 Windows 附件。Release Assets 不受 Actions Artifact 的 14 天保留期影响。
 
@@ -101,7 +101,7 @@ PowerShell 若被组织执行策略阻止，请按组织策略允许脚本，或
 macOS 架构随 runner 而定，以产物文件名为准；Intel 包可在 Intel Mac 本机构建。
 CI 默认也是测试签名/未签名产物；Windows CI 安装当前 Inno Setup 版本，因此编译器版本不由 uv.lock 锁定。
 
-应用现名 Voxenra，macOS bundle ID 与 Windows AppUserModelID 统一为 `com.junliu.voxenra`，Qt 的组织名及应用名均为 Voxenra，日志为 `voxenra.log`。安装器 AppId 保持不变以支持原安装升级；安装向导默认使用 `%LOCALAPPDATA%\Programs\Voxenra`，不再从注册表沿用旧品牌目录，仍可在目录页或 `/DIR` 指定自定义位置。升级时刷新安装器管理的 `_internal\PySide6` 运行库，防止已精简的 Qt 插件残留；清理安装目标内的旧品牌可执行文件和旧快捷方式，启动时复制旧版配置且不覆盖新配置。旧影像与日志不移动或删除。旧名称只在配置迁移、安装升级清理及历史构建记录中保留。Qt 工程与资源清单分别为 `Voxenra.qmlproject`、`Voxenra.qrc`。
+应用现名 VoxPlane，macOS bundle ID 与 Windows AppUserModelID 统一为 `com.junliu.voxplane`，Qt 的组织名及应用名均为 VoxPlane，日志为 `voxplane.log`。安装器 AppId 保持不变以支持原安装升级；安装向导默认使用 `%LOCALAPPDATA%\Programs\VoxPlane`，升级时沿用注册表中的原安装目录，仍可在目录页或 `/DIR` 指定自定义位置。升级时刷新安装器管理的 `_internal\PySide6` 运行库，防止已精简的 Qt 插件残留；清理安装目标内的旧品牌可执行文件和旧快捷方式，启动时复制旧版配置且不覆盖新配置。旧影像与日志不移动或删除。旧名称只在配置迁移、安装升级清理及历史构建记录中保留。Qt 工程与资源清单分别为 `VoxPlane.qmlproject`、`VoxPlane.qrc`。
 
 ## 验收清单
 
@@ -111,8 +111,8 @@ CI 默认也是测试签名/未签名产物；Windows CI 安装当前 Inno Setup
 
 - macOS arm64：完整回归 870 通过、15 跳过。Voxenra.app 和 223 MiB DMG 已构建；系统图标、新名称、0.2.0 版本、Retina 图标及签名完整性检查通过。只读挂载检查安装内容后推出；冻结应用运行 12 秒，无 Python 异常或 QML 加载失败。
 - 真实 Qt/QML 窗口验证 2D、MPR、4D、CT 3D、PET/CT 融合及融合 3D，并保存六张 README 截图；无 QML 警告。使用本地匿名化 DICOM 副本，PET SUV 换算比例与原数据一致；未提交原始影像。
-- Windows x64：[标签自动构建及 Release 上传](https://github.com/l5769389/qt-dicom-viewer/actions/runs/34192544207)成功，完整回归 870 通过、15 跳过。便携 EXE 与安装版应用的 7 个 PE 图标尺寸均与新品牌 ICO 逐字节一致。
-- [Voxenra v0.2.0](https://github.com/l5769389/qt-dicom-viewer/releases/tag/v0.2.0)提供 macOS arm64 DMG、Windows x64 便携版及安装器；三个包及各自 SHA-256 共 6 个附件，GitHub 摘要与校验文件一致。macOS DMG 约 223 MiB，Windows 便携版约 221 MiB、安装器约 149 MiB。
+- Windows x64：[标签自动构建及 Release 上传](https://github.com/junforge-dev/voxplane/actions/runs/34192544207)成功，完整回归 870 通过、15 跳过。便携 EXE 与安装版应用的 7 个 PE 图标尺寸均与新品牌 ICO 逐字节一致。
+- [Voxenra v0.2.0](https://github.com/junforge-dev/voxplane/releases/tag/v0.2.0)提供 macOS arm64 DMG、Windows x64 便携版及安装器；三个包及各自 SHA-256 共 6 个附件，GitHub 摘要与校验文件一致。macOS DMG 约 223 MiB，Windows 便携版约 221 MiB、安装器约 149 MiB。
 - 两个工作流通过 actionlint；README 图片链接、QRC 资源及依赖锁文件一致性检查通过。
 - Windows CI 改用 Qt 软件渲染执行离屏 QML 测试。首次尝试出现一次标签页 incubation 警告，下一次未复现该警告但 PET 首次加载超过 3 秒；现将首次体积加载与定位计时分开，加载等待 10 秒，拖动反馈第 95 百分位低于 33 ms 的断言保留。调整后 Windows 完整回归通过；本地标签 QML 连续 12 轮（60 项）及针对性回归 25 项通过。
 
@@ -121,9 +121,9 @@ CI 默认也是测试签名/未签名产物；Windows CI 安装当前 Inno Setup
 验证日期 2026-09-08，版本提交 `d8ae41b`：
 
 - macOS arm64：完整回归 870 通过、15 跳过；生成 0.1.0 的 `.app` 和约 224 MiB 的 DMG。系统图标读取显示正确 DV 图标；bundle 的 ICNS 引用、Retina 图标、签名完整性与 DMG 完整性检查通过。只读挂载检查应用、安装说明与 Applications 链接后推出。冻结应用离屏运行 12 秒，无 Python 异常、图标错误或 QML 加载失败。
-- Windows x64：[main 推送自动构建](https://github.com/l5769389/qt-dicom-viewer/actions/runs/34181423224)成功，完整回归 870 通过、15 跳过；便携 EXE 和 Inno Setup 安装包生成成功。读取便携版及安装版应用的 PE 图标资源，7 个尺寸均与品牌 ICO 逐字节一致。两个 EXE 及 SHA-256 文件已上传为 `DICOMVision-windows-x64` Artifact。
-- [v0.1.0 预发布](https://github.com/l5769389/qt-dicom-viewer/releases/tag/v0.1.0)已归档 macOS arm64 DMG、Windows x64 便携 EXE、安装向导 EXE 及各自 SHA-256，共 6 个附件；Windows 已通过 [Release 发布任务](https://github.com/l5769389/qt-dicom-viewer/actions/runs/34187595978)从原成功构建直接转存，构建提交与标签一致，GitHub 附件摘要与校验值一致。
-- Release 工作流通过 actionlint；版本不匹配、诊断版发布、摘要损坏、来源提交不一致、失败构建及其他工作流来源均有拒绝上传验证。新增标签构建配置的 [main 回归](https://github.com/l5769389/qt-dicom-viewer/actions/runs/34186709427)也已全部通过；日常 main 构建不会发布 Release。
+- Windows x64：[main 推送自动构建](https://github.com/junforge-dev/voxplane/actions/runs/34181423224)成功，完整回归 870 通过、15 跳过；便携 EXE 和 Inno Setup 安装包生成成功。读取便携版及安装版应用的 PE 图标资源，7 个尺寸均与品牌 ICO 逐字节一致。两个 EXE 及 SHA-256 文件已上传为 `DICOMVision-windows-x64` Artifact。
+- [v0.1.0 预发布](https://github.com/junforge-dev/voxplane/releases/tag/v0.1.0)已归档 macOS arm64 DMG、Windows x64 便携 EXE、安装向导 EXE 及各自 SHA-256，共 6 个附件；Windows 已通过 [Release 发布任务](https://github.com/junforge-dev/voxplane/actions/runs/34187595978)从原成功构建直接转存，构建提交与标签一致，GitHub 附件摘要与校验值一致。
+- Release 工作流通过 actionlint；版本不匹配、诊断版发布、摘要损坏、来源提交不一致、失败构建及其他工作流来源均有拒绝上传验证。新增标签构建配置的 [main 回归](https://github.com/junforge-dev/voxplane/actions/runs/34186709427)也已全部通过；日常 main 构建不会发布 Release。
 
 跳过项为需要外部 PACS / Docker 环境的测试。上述检查不等同于干净目标机的安装、升级、卸载或真实影像渲染验收；Windows 快捷方式的桌面视觉效果、Intel Mac 与商业签名 / 公证流程尚未实测。
 

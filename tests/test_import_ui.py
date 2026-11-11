@@ -9,7 +9,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QDialog, QPushButton
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_dicom_tags import qt_app as qt_app, wait_until
 from test_pacs_qml import scene as scene
 from test_tag_qml import find, click, descendants, settled_point
@@ -314,7 +314,7 @@ def test_picker_accessible_cells_invalidated_on_navigation_and_selection_survive
 
 def test_slow_directory_keeps_dialog_responsive_and_ignores_stale_result(qt_app, tmp_path, monkeypatch):
     import threading
-    import qt_dicom_viewer.ui.dialogs.local_import_dialog as picker
+    import voxplane.ui.dialogs.local_import_dialog as picker
 
     slow, fast = tmp_path / 'slow', tmp_path / 'fast'
     slow.mkdir(); fast.mkdir()
@@ -457,7 +457,7 @@ def test_confirm_commits_typed_path_instead_of_previous_selection(qt_app, tmp_pa
 
 def test_cancel_during_typed_path_check_never_accepts_late_result(qt_app, tmp_path, monkeypatch):
     from threading import Event
-    import qt_dicom_viewer.ui.dialogs.local_import_dialog as picker
+    import voxplane.ui.dialogs.local_import_dialog as picker
     original = tmp_path / 'original'; original.mkdir()
     target = tmp_path / 'target'; target.mkdir()
     entered, release = Event(), Event()

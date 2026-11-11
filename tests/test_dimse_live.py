@@ -8,10 +8,10 @@ import pydicom
 import pytest
 
 from manual.dimse_lab import ARTIFACTS, PRIMARY_STUDY, PRIMARY_SERIES, MR_SERIES, profiles
-from qt_dicom_viewer.pacs.client import Cancelled, PacsError
-from qt_dicom_viewer.pacs.config import PacsProfile
-from qt_dicom_viewer.pacs.dimse_client import DimseClient
-from qt_dicom_viewer.pacs.importer import import_series
+from voxplane.pacs.client import Cancelled, PacsError
+from voxplane.pacs.config import PacsProfile
+from voxplane.pacs.dimse_client import DimseClient
+from voxplane.pacs.importer import import_series
 from test_pacs_qml import scene, screenshot
 from test_tag_qml import find, click, type_text
 from test_dicom_tags import qt_app, wait_until

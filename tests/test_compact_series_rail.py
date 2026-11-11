@@ -4,8 +4,8 @@ import pytest
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QImage
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.service.thumbnail_service import ThumbnailRequest
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.service.thumbnail_service import ThumbnailRequest
 from test_series_sidebar import sidebar_scene, right_click, drag_width
 from test_tag_qml import find, click, descendants
 from test_dicom_tags import qt_app, wait_until

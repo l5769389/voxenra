@@ -6,10 +6,10 @@ import numpy as np
 import pytest
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.tab.mpr_voi_controller import MprVoiController
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.model import TabType, MprPlane, MprFrame
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.tab.mpr_voi_controller import MprVoiController
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.model import TabType, MprPlane, MprFrame
 from test_measurement_qml import qt_app
 from test_mpr_reslicer import _volume
 from test_mpr_voi_qml import settle
@@ -36,7 +36,7 @@ def draw(controller, viewport):
 
 def test_stale_async_result_cannot_replace_new_threshold_or_deleted_voi(setup_voi, monkeypatch):
     controller, viewport, _ = setup_voi
-    import qt_dicom_viewer.ui.controller.tab.mpr_voi_controller as module
+    import voxplane.ui.controller.tab.mpr_voi_controller as module
     actual = module.evaluate_voi
     entered, release = Event(), Event()
     calls = []
@@ -94,7 +94,7 @@ def test_resize_cancel_visibility_independence_and_clear_kind(setup_voi):
 
 def test_failures_are_reported_and_new_settings_retry(setup_voi, monkeypatch):
     controller, viewport, _ = setup_voi
-    import qt_dicom_viewer.ui.controller.tab.mpr_voi_controller as module
+    import voxplane.ui.controller.tab.mpr_voi_controller as module
     original = module.evaluate_voi
     def fail(*args, **kwargs):
         raise RuntimeError("test failure")
@@ -112,7 +112,7 @@ def test_failures_are_reported_and_new_settings_retry(setup_voi, monkeypatch):
 def test_empty_evaluation_exception_is_terminal_preserves_region_and_retries(setup_voi, monkeypatch, failure):
     from test_dicom_tags import wait_until
     controller, viewport, tools = setup_voi
-    import qt_dicom_viewer.ui.controller.tab.mpr_voi_controller as module
+    import voxplane.ui.controller.tab.mpr_voi_controller as module
     original = module.evaluate_voi
     entered = Event()
     def fail(*args, **kwargs):
@@ -203,7 +203,7 @@ def test_tiny_cancelled_circle_does_not_commit_last_large_draft(setup_voi):
 
 def test_drag_reuses_static_masks_and_contours_without_refreshing_statistics(setup_voi, monkeypatch):
     controller, viewport, tools = setup_voi
-    import qt_dicom_viewer.ui.controller.tab.mpr_voi_controller as module
+    import voxplane.ui.controller.tab.mpr_voi_controller as module
     draw(controller, viewport)
     settle(controller)
     segmentation = controller.selectedId
@@ -216,7 +216,7 @@ def test_drag_reuses_static_masks_and_contours_without_refreshing_statistics(set
     old_result = controller.evaluations[controller.selectedId]
     mask_calls, polygons, details, list_changes = [], [], [], []
     actual_polygon = module.plane_polygon
-    import qt_dicom_viewer.ui.segmentation_overlay_renderer as renderer
+    import voxplane.ui.segmentation_overlay_renderer as renderer
     monkeypatch.setattr(renderer, "plane_mask", lambda *args: mask_calls.append(args))
     def polygon(region, g):
         polygons.append(region.shape)

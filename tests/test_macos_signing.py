@@ -50,7 +50,7 @@ def test_notary_cli_failure_cannot_be_misreported_as_success(signing, monkeypatc
 
 
 def test_app_ticket_precedes_dmg_build_and_both_are_assessed(signing, monkeypatch, tmp_path):
-    app = tmp_path / 'Voxenra.app'
+    app = tmp_path / 'VoxPlane.app'
     app.mkdir()
     events = []
     def run(command, **kwargs):
@@ -58,7 +58,7 @@ def test_app_ticket_precedes_dmg_build_and_both_are_assessed(signing, monkeypatc
         return subprocess.CompletedProcess(command, 0, json.dumps({'id': 'request-id', 'status': 'Accepted'}), '')
     monkeypatch.setattr(signing.subprocess, 'run', run)
     signing.notarize_app(app, 'profile', tmp_path / 'logs')
-    output = tmp_path / 'Voxenra.dmg'
+    output = tmp_path / 'VoxPlane.dmg'
     output.write_bytes(b'dmg')
     signing.notarize_dmg(output, FINGERPRINT, 'profile', tmp_path / 'logs')
     app_staple = ['xcrun', 'stapler', 'staple', str(app)]
@@ -114,17 +114,17 @@ def test_dmg_replaced_only_after_successful_notarization(monkeypatch, tmp_path, 
     monkeypatch.setattr(mac.sys, 'version_info', (3, 13))
     monkeypatch.setattr(mac.platform, 'machine', lambda: 'arm64')
     monkeypatch.setattr(mac, 'prepare_assets', lambda _: tmp_path / 'assets')
-    for relative in ['src/qt_dicom_viewer/qml/Main.qml', 'scripts/windows_entry.py']:
+    for relative in ['src/voxplane/qml/Main.qml', 'scripts/windows_entry.py']:
         source = tmp_path / relative
         source.parent.mkdir(parents=True, exist_ok=True)
         source.touch()
-    app = tmp_path / 'dist/macos/Voxenra.app'
+    app = tmp_path / 'dist/macos/VoxPlane.app'
     (app / 'Contents/MacOS').mkdir(parents=True)
     (app / 'Contents/Resources').mkdir()
-    (app / 'Contents/MacOS/Voxenra').touch()
+    (app / 'Contents/MacOS/VoxPlane').touch()
     (app / 'Contents/Resources/app.icns').touch()
     (app / 'Contents/Info.plist').write_bytes(plistlib.dumps({'CFBundleIconFile': 'app.icns'}))
-    output = tmp_path / 'dist/installers/Voxenra-1.0.0-macos-arm64.dmg'
+    output = tmp_path / 'dist/installers/VoxPlane-1.0.0-macos-arm64.dmg'
     output.parent.mkdir()
     output.write_bytes(b'previous successful artifact')
     commands = []

@@ -6,8 +6,8 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_pacs import pacs_server, STUDY, SERIES
 from test_tag_qml import descendants, find, click, type_text
@@ -18,13 +18,13 @@ def scene(qt_app, tmp_path):
     provider = DicomImageProvider()
     controller = AppController(provider, settings_path=tmp_path / "display-settings.json", pacs_config_path=tmp_path / "pacs.json", pacs_import_root=tmp_path / "imports")
     engine = QQmlApplicationEngine()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     engine.addImageProvider("navigation", SvgIconProvider())
     warnings = []
     engine.warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
     engine.addImageProvider("dicom", provider)
     engine.rootContext().setContextProperty("appController", controller)
-    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/Main.qml")))
+    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/voxplane/qml/Main.qml")))
     assert engine.rootObjects(), warnings
     window = engine.rootObjects()[0]
     QTest.qWait(50)
@@ -175,7 +175,7 @@ def test_segmented_sources_and_advanced_filter_footer(scene, monkeypatch, tmp_pa
     click(window, pacs)
     assert app.workspaceController.activeTabType == "pacs"
     assert pacs.property("checked") and not folder.property("checked")
-    monkeypatch.setattr("qt_dicom_viewer.ui.controller.panel_controller.select_import_paths", lambda *args: [])
+    monkeypatch.setattr("voxplane.ui.controller.panel_controller.select_import_paths", lambda *args: [])
     click(window, folder)
     assert folder.property("checked") and not pacs.property("checked")
     click(window, pacs)

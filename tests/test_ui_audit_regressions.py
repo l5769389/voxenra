@@ -7,9 +7,9 @@ from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_settings_redesign import open_page
 from test_tag_qml import find
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
-from qt_dicom_viewer.ui.dialogs.favorite_directories_dialog import FavoriteDirectoriesDialog
+from voxplane.ui.controller.panel_controller import PanelController
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.ui.dialogs.favorite_directories_dialog import FavoriteDirectoriesDialog
 
 
 def test_preview_reflects_style(scene, tmp_path):
@@ -40,7 +40,7 @@ def test_preview_reflects_style(scene, tmp_path):
 
 
 def test_slow_favorite_add_keeps_ui_responsive(qt_app, tmp_path, monkeypatch):
-    from qt_dicom_viewer.ui.controller import favorite_directories_controller as module
+    from voxplane.ui.controller import favorite_directories_controller as module
     panel = PanelController()
     picker = LocalImportDialog(str(tmp_path), favorites=panel.favoriteDirectories)
     picker.show()

@@ -24,13 +24,13 @@ def worker(qml_import_root=None):
     from PySide6.QtQml import QQmlApplicationEngine
     from PySide6.QtWidgets import QApplication
     from shiboken6 import delete
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
 
     app = QApplication([])
     imported = time.perf_counter()
-    with tempfile.TemporaryDirectory(prefix="voxenra-startup-") as directory:
+    with tempfile.TemporaryDirectory(prefix="voxplane-startup-") as directory:
         root = Path(directory)
         provider = DicomImageProvider()
         controller = AppController(provider, pacs_config_path=root / "pacs.json",
@@ -49,7 +49,7 @@ def worker(qml_import_root=None):
         engine.rootContext().setContextProperty("appController", controller)
         sample = {}
         try:
-            engine.load(QUrl.fromLocalFile(str(files("qt_dicom_viewer").joinpath("qml/Main.qml"))))
+            engine.load(QUrl.fromLocalFile(str(files("voxplane").joinpath("qml/Main.qml"))))
             loaded = time.perf_counter()
             if not engine.rootObjects():
                 raise RuntimeError(warnings)

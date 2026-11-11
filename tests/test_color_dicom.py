@@ -10,17 +10,17 @@ from PySide6.QtTest import QTest
 from test_mr import mr_dataset
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.export_images import frame_image
-from qt_dicom_viewer.core.pixel_codecs import decode_pixels
-from qt_dicom_viewer.core.display_mapping import map_display
-from qt_dicom_viewer.core.volume_manager import VolumeManager, VolumeBuildError
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.model import WindowLevel, StackRenderRequest, MontageRenderRequest, TabType
-from qt_dicom_viewer.model.display_mapping import DisplayMappingIntent
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.export_images import frame_image
+from voxplane.core.pixel_codecs import decode_pixels
+from voxplane.core.display_mapping import map_display
+from voxplane.core.volume_manager import VolumeManager, VolumeBuildError
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.model import WindowLevel, StackRenderRequest, MontageRenderRequest, TabType
+from voxplane.model.display_mapping import DisplayMappingIntent
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.controller.tab.tool_controller import ToolController
 
 
 def color_dataset(kind='RGB', frames=1, calibrated=False):
@@ -157,8 +157,8 @@ def test_color_real_qml_switch_frames_and_export(scene,tmp_path):
 
 
 def test_color_workspace_restores_frame_and_calibrated_measurement(qt_app,tmp_path):
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
     from test_workspace_persistence import draw_length
     ds,path,snapshot = scan_color(tmp_path,frames=2,calibrated=True)
     app = AppController(DicomImageProvider(),settings_path=False)
@@ -172,8 +172,8 @@ def test_color_workspace_restores_frame_and_calibrated_measurement(qt_app,tmp_pa
         mid=draw_length(view)
         assert view._measure_controller._measurements[mid].length_mm == 7.5
         from threading import Event
-        from qt_dicom_viewer.ui.controller.measurement_report_controller import capture_results
-        from qt_dicom_viewer.ui.report_reference_images import render_references
+        from voxplane.ui.controller.measurement_report_controller import capture_results
+        from voxplane.ui.report_reference_images import render_references
         rows,pictures,_ = capture_results(work,app._series_catalog,include_images=True,anonymous=False)
         images,errors = render_references(pictures,app._series_catalog,Event(),lambda _:None)
         assert len(images) == 1 and not errors
@@ -202,7 +202,7 @@ def test_color_workspace_restores_frame_and_calibrated_measurement(qt_app,tmp_pa
 
 def test_mixed_2d_layout_updates_color_tools(scene,tmp_path):
     from test_mr import write_mr_series
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window,app,warnings=scene
     ds,path,snapshot=scan_color(tmp_path)
     app.panelController.acceptPacsImport(snapshot)

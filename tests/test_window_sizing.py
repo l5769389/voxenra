@@ -17,7 +17,7 @@ from test_tab_windows import detached
 from test_tag_qml import click, find, settled_point
 from test_two_d_layout import open_scene
 
-from qt_dicom_viewer.ui.window_geometry import WindowGeometry
+from voxplane.ui.window_geometry import WindowGeometry
 
 
 def test_destroying_sized_windows_does_not_invalidate_shared_screens(qt_app):

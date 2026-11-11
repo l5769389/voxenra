@@ -11,11 +11,11 @@ from shiboken6 import delete
 
 from test_measurement_qml import qt_app, _visual_children, _scene, _mouse_drag
 from test_pet_fusion import paired_series
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.mpr_voi import evaluate_voi
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.mpr_voi import evaluate_voi
 
 
 def settle(controller):
@@ -42,7 +42,7 @@ def test_real_mpr_draw_edit_threshold_depth_and_voi(qt_app, paired_series, tmp_p
     controller = tab.voiController
     tab.toolController.activateTool("segmentation")
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.engine().addImageProvider("dicom", provider)
     view.setResizeMode(QQuickView.SizeRootObjectToView)

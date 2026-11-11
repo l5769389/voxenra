@@ -128,13 +128,13 @@ def test_pet_secondary_controls(qt_app, paired_series, tmp_path):
     from PySide6.QtCore import QUrl
     from PySide6.QtQuick import QQuickView
     from shiboken6 import delete
-    from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-    from qt_dicom_viewer.ui.controller.language_controller import LanguageController
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-    from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
-    from qt_dicom_viewer.core.volume_manager import VolumeManager
+    from voxplane.ui.controller.workspace_controller import WorkspaceController
+    from voxplane.ui.controller.language_controller import LanguageController
+    from voxplane.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.core.pet_reconstruction import PetReconstructor
+    from voxplane.core.volume_manager import VolumeManager
     catalog, ct, pet = paired_series
     workspace = WorkspaceController(catalog, DicomImageProvider())
     requests = []
@@ -151,7 +151,7 @@ def test_pet_secondary_controls(qt_app, paired_series, tmp_path):
                                    tabController=tab, toolVisible=True))
     warnings = []
     view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
-    source = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/sections/RightPanel.qml'
+    source = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/sections/RightPanel.qml'
     view.setSource(QUrl.fromLocalFile(str(source)))
     view.show()
     try:

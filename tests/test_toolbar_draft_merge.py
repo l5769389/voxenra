@@ -1,5 +1,5 @@
 """Independent toolbar drafts merge only the ordering fields they changed."""
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.settings_controller import SettingsController
 from test_dicom_tags import qt_app
 
 

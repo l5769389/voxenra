@@ -15,9 +15,9 @@ from pynetdicom.pdu import A_RELEASE_RQ
 from pynetdicom.sop_class import Verification, StudyRootQueryRetrieveInformationModelFind as FIND, StudyRootQueryRetrieveInformationModelMove as MOVE
 import pytest
 
-from qt_dicom_viewer.pacs.client import PacsError, Cancelled
-from qt_dicom_viewer.pacs.config import PacsProfile
-from qt_dicom_viewer.pacs.importer import import_series
+from voxplane.pacs.client import PacsError, Cancelled
+from voxplane.pacs.config import PacsProfile
+from voxplane.pacs.importer import import_series
 from test_pacs import dicom_bytes, STUDY, SERIES
 
 
@@ -55,7 +55,7 @@ class DimsePeer:
 
     def profile(self, **changes):
         return PacsProfile.from_dict(dict(name='DIMSE lab', protocol='dimse', host='127.0.0.1',
-            port=self.port, called_ae='LABPACS', calling_ae='VOXENRA',
+            port=self.port, called_ae='LABPACS', calling_ae='VOXPLANE',
             listen_host='127.0.0.1', listen_port=self.destination, timeout=3) | changes)
 
     def receive_pdu(self, event):
@@ -98,7 +98,7 @@ class DimsePeer:
     def move(self, event):
         q = event.identifier
         assert q.QueryRetrieveLevel == 'SERIES' and q.StudyInstanceUID == STUDY and q.SeriesInstanceUID == SERIES
-        assert event.move_destination == 'VOXENRA'
+        assert event.move_destination == 'VOXPLANE'
         self.entered.set()
         if self.move_status == 0xA801:
             yield None, None
@@ -133,8 +133,8 @@ def peer():
 
 
 def client(peer, cancel=None, **kwargs):
-    assert importlib.util.find_spec('qt_dicom_viewer.pacs.dimse_client') is not None, 'DIMSE transport must exist'
-    from qt_dicom_viewer.pacs.dimse_client import DimseClient
+    assert importlib.util.find_spec('voxplane.pacs.dimse_client') is not None, 'DIMSE transport must exist'
+    from voxplane.pacs.dimse_client import DimseClient
     return DimseClient(peer.profile(**kwargs), cancel)
 
 
@@ -224,15 +224,15 @@ def test_duplicate_store_is_idempotent_only_for_identical_data(peer, tmp_path, c
 
 
 def test_receive_rejects_unrelated_sender_and_instance(peer, tmp_path):
-    from qt_dicom_viewer.pacs.dimse_receiver import MoveReceiver
+    from voxplane.pacs.dimse_receiver import MoveReceiver
     expected = {str(ds.SOPInstanceUID): (STUDY, SERIES, str(ds.SOPClassUID)) for ds in peer.datasets}
     with MoveReceiver(peer.profile(), Event(), tmp_path, expected, lambda *a: None) as receiver:
         ae = AE(ae_title='UNRELATED')
         ae.add_requested_context(CTImageStorage, ExplicitVRLittleEndian)
-        association = ae.associate('127.0.0.1', peer.destination, ae_title='VOXENRA')
+        association = ae.associate('127.0.0.1', peer.destination, ae_title='VOXPLANE')
         assert not association.is_established
         ae.ae_title = 'LABPACS'
-        association = ae.associate('127.0.0.1', peer.destination, ae_title='VOXENRA')
+        association = ae.associate('127.0.0.1', peer.destination, ae_title='VOXPLANE')
         assert association.is_established
         wrong = deepcopy(peer.datasets[0])
         wrong.SOPInstanceUID = '1.2.3.888'

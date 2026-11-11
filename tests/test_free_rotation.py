@@ -4,7 +4,7 @@ from math import cos, radians, sin
 import pytest
 from PySide6.QtCore import QPointF
 
-from qt_dicom_viewer.model import TabType, ToolType
+from voxplane.model import TabType, ToolType
 from test_dicom_tags import qt_app
 from test_viewport_transform import _controller, _render_result
 

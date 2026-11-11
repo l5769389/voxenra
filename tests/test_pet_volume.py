@@ -9,11 +9,11 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from test_pet_fusion import paired_series
 from test_measurement_qml import qt_app
-from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.pet_volume_render_backend import (
+from voxplane.core.pet_reconstruction import PetReconstructor
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.pet_volume_render_backend import (
     PetVolumeRenderBackend, fusion_camera_geometry, padding_safe_vtk, pet_transfer_functions,
 )
 

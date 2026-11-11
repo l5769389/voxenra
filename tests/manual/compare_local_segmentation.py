@@ -1,10 +1,10 @@
-"""Compare a verified Voxenra run with independent TotalSegmentator or Slicer.
+"""Compare a verified VoxPlane run with independent TotalSegmentator or Slicer.
 
 Run using the external TotalSegmentator Python (SimpleITK + NumPy required):
   python tests/manual/compare_local_segmentation.py RUN_DIRECTORY --standalone STANDALONE_DIRECTORY
 RUN_DIRECTORY contains source.nrrd and expected.npz written by verify_local_segmentation.
 Only axis permutation/flips are used to normalize grids; there is no interpolation.
-For the Slicer return, run with the Voxenra Python and --slicer-return after
+For the Slicer return, run with the VoxPlane Python and --slicer-return after
 verify_nrrd_slicer.py. This checks its intentional [1,2,3] edit as well.
 """
 import argparse
@@ -34,8 +34,8 @@ def standalone(root, previous):
 
 
 def slicer_return(root):
-    from qt_dicom_viewer.core.nrrd_exchange import read_nrrd,read_segmentation
-    from qt_dicom_viewer.model import DicomVolume,VolumeGeometry,PixelValueMeta
+    from voxplane.core.nrrd_exchange import read_nrrd,read_segmentation
+    from voxplane.model import DicomVolume,VolumeGeometry,PixelValueMeta
     expected=np.load(root/'expected.npz')
     pixels,affine,_=read_nrrd(root/'source.nrrd')
     spacing=np.linalg.norm(affine[:3,:3],axis=0);directions=affine[:3,:3]/spacing

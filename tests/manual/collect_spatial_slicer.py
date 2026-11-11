@@ -1,7 +1,7 @@
-"""Run with Slicer --python-script; VOXENRA_SPATIAL_AUDIT is a local case root.
+"""Run with Slicer --python-script; VOXPLANE_SPATIAL_AUDIT is a local case root.
 
 Uses an isolated DICOM database and the installed scalar-volume DICOM plugin.
-No Voxenra modules are imported. Failures and loadable warnings remain evidence.
+No VoxPlane modules are imported. Failures and loadable warnings remain evidence.
 """
 import json
 import os
@@ -12,7 +12,7 @@ import slicer
 import vtk
 from DICOMLib import DICOMUtils
 
-ROOT=Path(os.environ['VOXENRA_SPATIAL_AUDIT']).resolve()
+ROOT=Path(os.environ['VOXPLANE_SPATIAL_AUDIT']).resolve()
 
 
 def affine(node):
@@ -29,7 +29,7 @@ def exchange(root):
         slicer.mrmlScene.Clear(0)
         volume=slicer.util.loadVolume(str(group/'source.nrrd'))
         seg=slicer.util.loadSegmentation(str(group/'segmentation.seg.nrrd'))
-        expected=np.load(group/'masks.npz'); v=np.load(group/'voxenra.npz')
+        expected=np.load(group/'masks.npz'); v=np.load(group/'voxplane.npz')
         np.testing.assert_allclose(affine(volume),v['affine'],atol=.001,rtol=0)
         np.testing.assert_allclose(slicer.util.arrayFromVolume(volume),v['pixels'],atol=0,rtol=0,equal_nan=True)
         segmentation=seg.GetSegmentation();counts=[]
@@ -111,8 +111,8 @@ def collect(root):
     return result
 
 
-results=json.loads((ROOT/'slicer-summary.json').read_text()) if os.environ.get('VOXENRA_SPATIAL_CASES') and (ROOT/'slicer-summary.json').exists() else []
-selected=set(filter(None,os.environ.get('VOXENRA_SPATIAL_CASES','').split(',')))
+results=json.loads((ROOT/'slicer-summary.json').read_text()) if os.environ.get('VOXPLANE_SPATIAL_CASES') and (ROOT/'slicer-summary.json').exists() else []
+selected=set(filter(None,os.environ.get('VOXPLANE_SPATIAL_CASES','').split(',')))
 for path in sorted(ROOT.glob('*/case.json')):
     if selected and path.parent.name not in selected:continue
     try: result=collect(path.parent)

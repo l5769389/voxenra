@@ -26,15 +26,15 @@ from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
 from benchmark_pet_locator import representative_pair
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.mpr_rotation import rotate_crosshair_state, rotate_mpr_state_3d, resolve_sampling_basis
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, MprPlane, MprFrame, MprState, TabType
-from qt_dicom_viewer.service.render_serivce import RenderService
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.mpr_rotation import rotate_crosshair_state, rotate_mpr_state_3d, resolve_sampling_basis
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import DicomFolderScanSnapshot, MprPlane, MprFrame, MprState, TabType
+from voxplane.service.render_serivce import RenderService
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
 
 def summary(values):
@@ -108,7 +108,7 @@ def main():
         view.engine().warnings.connect(lambda es: warnings.extend(e.toString() for e in es))
         view.resize(1280, 900)
         view.setResizeMode(QQuickView.SizeRootObjectToView)
-        qml_dir = files('qt_dicom_viewer').joinpath('qml/sections/center/viewportArea')
+        qml_dir = files('voxplane').joinpath('qml/sections/center/viewportArea')
         scene = folder / 'Benchmark.qml'
         scene.write_text('''import QtQuick
 import "''' + QUrl.fromLocalFile(str(qml_dir)).toString() + '''" as Views

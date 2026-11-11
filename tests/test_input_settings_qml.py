@@ -160,7 +160,7 @@ def test_privacy_saved_view_wins_and_clear_history_keeps_files(sidebar_scene,tmp
     QTest.qWait(50)
     click(window,find(window,'clearRecentWorkspaces'))
     assert not manager.recentWorkspaces and path.is_file()
-    from qt_dicom_viewer.infrastructure.recent_workspaces import RecentWorkspaces
+    from voxplane.infrastructure.recent_workspaces import RecentWorkspaces
     assert not RecentWorkspaces(manager._recent.path).items
     assert not sidebar_scene[3],sidebar_scene[3]
 
@@ -280,7 +280,7 @@ def test_privacy_failed_save_restores_visible_and_persisted_value(sidebar_scene,
     assert settings.section('privacy')['hideIdentity'] == initial
     assert checkbox.property('checked') == initial
     assert window.grabWindow().save(str(tmp_path / 'privacy-save-failure.png'))
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     assert SettingsController(path=original_path).section('privacy')['hideIdentity'] == initial
     settings._path = original_path
     click(window, checkbox)

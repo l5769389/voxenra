@@ -1,6 +1,6 @@
 """Opt-in full QML/picker audit of each public sample; never downloads data.
 
-Set VOXENRA_COMPRESSED_SAMPLE_DIR to the folder containing manifest.json.
+Set VOXPLANE_COMPRESSED_SAMPLE_DIR to the folder containing manifest.json.
 Use QT_QPA_PLATFORM=cocoa on macOS for native-window verification.
 """
 import hashlib
@@ -18,14 +18,14 @@ from PySide6.QtCore import QItemSelectionModel, QPoint, QPointF, Qt, QTimer
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_tag_qml import click, descendants, find
 
-ROOT = Path(os.environ['VOXENRA_COMPRESSED_SAMPLE_DIR']) if os.environ.get('VOXENRA_COMPRESSED_SAMPLE_DIR') else None
+ROOT = Path(os.environ['VOXPLANE_COMPRESSED_SAMPLE_DIR']) if os.environ.get('VOXPLANE_COMPRESSED_SAMPLE_DIR') else None
 CASES = json.loads((ROOT / 'manifest.json').read_text()) if ROOT else []
-pytestmark = pytest.mark.skipif(ROOT is None, reason='Set VOXENRA_COMPRESSED_SAMPLE_DIR')
+pytestmark = pytest.mark.skipif(ROOT is None, reason='Set VOXPLANE_COMPRESSED_SAMPLE_DIR')
 
 
 def settle(milliseconds=180):
@@ -57,7 +57,7 @@ def test_public_sample_local_picker_and_view(scene, case):
     window.resize(1400, 900)
     panel, workspace = app.panelController, app.workspaceController
     path = ROOT / case['file']
-    output = Path(os.environ.get('VOXENRA_SAMPLE_QA_OUTPUT', 'build/public-compressed-qa'))
+    output = Path(os.environ.get('VOXPLANE_SAMPLE_QA_OUTPUT', 'build/public-compressed-qa'))
     output.mkdir(parents=True, exist_ok=True)
     panel._last_import_directory = str(path.parent)
     errors = []

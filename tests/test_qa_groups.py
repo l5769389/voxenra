@@ -1,8 +1,8 @@
 from dataclasses import replace
 import numpy as np
 import pytest
-from qt_dicom_viewer.core.water_qa import analyze_water_phantom, measure_qa_rois, resize_qa_rois
-from qt_dicom_viewer.model.water_qa import WaterQaRoi
+from voxplane.core.water_qa import analyze_water_phantom, measure_qa_rois, resize_qa_rois
+from voxplane.model.water_qa import WaterQaRoi
 from test_water_qa import water_image
 
 
@@ -70,7 +70,7 @@ def test_groups_preserve_results_and_only_active_group_is_editable(qa_view, qt_a
     before = qa.currentResult
     qa.regenerateRois(); wait_qa(qt_app, qa)
     assert [r for r in qa.currentResult['rois'] if r['group'] != 'noise'] == [r for r in before['rois'] if r['group'] != 'noise']
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     saved = qa.currentResult
     # Older saved reference-display preferences must not expose other groups.
     qa.restore_state(decode(encode({**qa.persistent_state(), 'showOtherGroups': True})))
@@ -79,7 +79,7 @@ def test_groups_preserve_results_and_only_active_group_is_editable(qa_view, qt_a
 
 
 def test_legacy_noise_is_not_relabelled_as_large_roi_before_recalculation(qa_view, qt_app):
-    from qt_dicom_viewer.core.workspace_state import encode, decode
+    from voxplane.core.workspace_state import encode, decode
     qa = qa_view[0].qaController
     qa.activate(); wait_qa(qt_app,qa)
     old = qa._result

@@ -8,10 +8,10 @@ from PySide6.QtQuick import QQuickItem, QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.core.workspace_state import dumps, loads
-from qt_dicom_viewer.model import StackRenderResult, TwoDViewType
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.workspace_snapshot import apply_edits, editable_state
+from voxplane.core.workspace_state import dumps, loads
+from voxplane.model import StackRenderResult, TwoDViewType
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.workspace_snapshot import apply_edits, editable_state
 from test_four_d_tools import temporal
 from test_measurement_qml import qt_app, viewport, _scene, _click_points, _visual_children
 
@@ -32,7 +32,7 @@ def temporal_viewport(temporal):
     window.setResizeMode(QQuickView.SizeRootObjectToView)
     window.resize(900, 700)
     window.setInitialProperties({"viewportController": controller, "hasTabs": True})
-    source = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/sections/center/viewportArea/Viewport.qml"
+    source = Path(__file__).resolve().parents[1] / "src/voxplane/qml/sections/center/viewportArea/Viewport.qml"
     window.setSource(QUrl.fromLocalFile(str(source)))
     assert window.status() == QQuickView.Ready, window.errors()
     window.show()

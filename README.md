@@ -1,21 +1,23 @@
 <p align="center">
-  <img src="src/qt_dicom_viewer/qml/assets/brand/voxenra-mark.svg" width="80" alt="Voxenra logo">
+  <img src="src/voxplane/qml/assets/brand/voxplane-mark.svg" width="80" alt="VoxPlane logo">
 </p>
 
-# Voxenra
+# VoxPlane
 
 [简体中文](README.md) | [English](README.en.md)
 
-[产品主页](https://l5769389.github.io/voxenra/) · [在线操作手册](https://l5769389.github.io/voxenra/zh/)
+[产品主页](https://junforge-dev.github.io/voxplane/) · [在线操作手册](https://junforge-dev.github.io/voxplane/zh/)
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.5.0/Voxenra-2.5.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/l5769389/voxenra/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/l5769389/voxenra/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-portable.exe) · [版本记录](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-portable.exe) · [版本记录](https://github.com/junforge-dev/voxplane/releases)
 
+
+VoxPlane 是 Voxenra 的新名称，Logo 保持不变。2.5.0 及更早版本需要手动安装一次新版本；首次启动自动复制旧设置与工作区记录，原文件保留。详见 [升级说明](docs/releases/v2.6.0.md)。
 
 ## 贡献者与致谢
 
-感谢所有为 Voxenra 提供贡献与支持的朋友。
+感谢所有为 VoxPlane 提供贡献与支持的朋友。
 
 <table>
 <tr>
@@ -56,7 +58,7 @@
 - **DICOMweb**：QIDO-RS 查询与 WADO-RS 下载，支持无认证、Basic 和 Bearer。
 - **传统 DICOM（DIMSE）**：C-ECHO 测试、Study Root C-FIND 查询、C-MOVE 回传，导入期间临时接收 C-STORE。填写 PACS 地址及远端 AE、本机接收 AE、监听 IPv4 与端口；PACS 端也需登记可回传的接收节点。
 
-[![传统 DICOM 设置、查询与序列导入演示](docs/screenshots/52-dimse-import.gif)](docs/screenshots/51-dimse-settings.png)
+[![传统 DICOM 设置、查询与序列导入演示](docs/screenshots/52-dimse-import-voxplane-2.6.0.gif)](docs/screenshots/51-dimse-settings-voxplane-2.6.0.png)
 
 原生界面演示，使用本机真实 DIMSE 服务和合成 DICOM 数据。C-ECHO 成功只代表连接测试通过；查询权限与回传链路需通过实际序列导入验证。当前 DIMSE 不含 C-GET、DICOM TLS、上传或常驻接收服务，具体部署条件见 [PACS 配置](docs/pacs.md) 与 [实际联调范围](docs/validation/dicom-dimse.md)。
 
@@ -68,11 +70,11 @@
 - **本机推理**：连接已有 TotalSegmentator 环境，计算当前时相的完整 CT；支持按环境选择 CUDA、Apple MPS 或 CPU。
 - **结果继续编辑**：三平面叠加查看，画笔／橡皮精修、显隐、撤销；随工作区保存，或导出 SEG / NRRD。
 
-[![Voxenra 自动分割流程：合成模体中的选择、失败重试与成功导入](docs/screenshots/49-ai-workflow-2.1.1.gif)](docs/screenshots/48-ai-complete-2.1.1.png)
+[![VoxPlane 自动分割流程：合成模体中的选择、失败重试与成功导入](docs/screenshots/49-ai-workflow-voxplane-2.6.0.gif)](docs/screenshots/48-ai-complete-voxplane-2.6.0.png)
 
 当前应用的合成模体流程演示，模拟推理输出以展示选择、失败重试和成功导入；不代表模型精度或计算耗时。需另行安装 TotalSegmentator 和 CT 快速模型；在 **设置 → AI** 检测环境。自动结果可核查和精修。
 
-[配置与使用教程](https://l5769389.github.io/voxenra/zh/segmentation.html) · [TotalSegmentator 项目](https://github.com/wasserth/TotalSegmentator)
+[配置与使用教程](https://junforge-dev.github.io/voxplane/zh/segmentation.html) · [TotalSegmentator 项目](https://github.com/wasserth/TotalSegmentator)
 
 ## 二维阅片与序列对比
 
@@ -82,14 +84,14 @@
 
 **双指缩放**适用于各类影像视图：触屏围绕双指中心，触控板围绕鼠标位置缩放，无需切换工具。选中序列后，按 **D / X / T / Y** 快速打开 2D / MPR / 3D / CPR；右键菜单显示可用快捷键。**A** 打开标注、**E** 打开导出；当前工具菜单、文本输入和弹窗优先处理自己的按键。**Q** 整体重置会清除当前视图相应的测量与标注，保留结果前请先保存工作区。
 
-[![序列右键菜单与视图快捷键](docs/screenshots/65-view-shortcuts-2.5.0.png)](https://l5769389.github.io/voxenra/zh/workspace.html#step-6)
+[![序列右键菜单与视图快捷键](docs/screenshots/65-view-shortcuts-voxplane-2.6.0.png)](https://junforge-dev.github.io/voxplane/zh/workspace.html#step-6)
 
 **2–4 序列对比**可逐项同步翻页、调窗、缩放等操作，重新开启同步时以当前选中视口为准。兼容的患者空间支持位置联动、定位线及 Alt＋单击定位；也可按相对进度比较不同层数。MR 默认独立调窗／反白。空间联动与进度对应均不执行自动配准。
 
 <table>
 <tr>
-<td width="50%"><b>MR 阅片</b><br><a href="docs/screenshots/07-mr-reading.png"><img src="docs/screenshots/07-mr-reading.png" alt="MR 阅片" width="100%"></a></td>
-<td width="50%"><b>自定义多视口</b><br><a href="docs/screenshots/10-2d-layout.png"><img src="docs/screenshots/10-2d-layout.png" alt="自定义多视口" width="100%"></a></td>
+<td width="50%"><b>MR 阅片</b><br><a href="docs/screenshots/07-mr-reading-voxplane-2.6.0.png"><img src="docs/screenshots/07-mr-reading-voxplane-2.6.0.png" alt="MR 阅片" width="100%"></a></td>
+<td width="50%"><b>自定义多视口</b><br><a href="docs/screenshots/10-2d-layout-voxplane-2.6.0.png"><img src="docs/screenshots/10-2d-layout-voxplane-2.6.0.png" alt="自定义多视口" width="100%"></a></td>
 </tr>
 </table>
 
@@ -97,11 +99,11 @@
 
 页签第一行优先显示原始序列描述，第二行显示患者与有效检查信息；缺失字段不占位，悬停查看完整来源。身份隐藏设置同时覆盖新增的阅片身份信息。窗值统一按 **WW → WL** 显示；CT 模板可星标收藏并优先排列，点击星标不改变当前窗值，模板列表独立滚动。
 
-![CT 窗模板收藏与独立滚动列表](docs/screenshots/55-window-favorites-2.4.0.png)
+![CT 窗模板收藏与独立滚动列表](docs/screenshots/55-window-favorites-voxplane-2.6.0.png)
 
 点击页签栏右端的 **最大化视图区**，或按 **F12**（部分 Mac 键盘需 Fn+F12），同时隐藏左右面板和按钮栏；再次操作恢复原宽度与展开状态。此状态仅作用于当前窗口，与双击放大单个视口、系统全屏各自独立。
 
-![最大化与还原视图区](docs/screenshots/54-focus-view.gif)
+![最大化与还原视图区](docs/screenshots/54-focus-view-voxplane-2.6.0.gif)
 
 ## MPR、CPR、3D 与 4D
 
@@ -110,39 +112,39 @@
 - **3D**：CT、MR、PET 体绘制，支持模板、调窗、方向、旋转和圈选裁剪；CT 提供 20 个模板及去床板。
 - **4D**：CT 多时相同步播放，分割和 VOI 按时相保存；可独立播放当前时相切片。影像及导出 PNG 标明实际显示的时相。
 
-![CPR 曲面重建：参考视图、曲面图和垂直横截面](docs/screenshots/61-cpr-reference-2.4.0.png)
+![CPR 曲面重建：参考视图、曲面图和垂直横截面](docs/screenshots/61-cpr-reference-voxplane-2.6.0.png)
 
 **双序列 MPR 对比**提供常驻的位置、旋转、CT 调窗与物理显示比例开关，默认独立操作。开启调窗／比例同步以当前组为准；位置／旋转同步保留原有偏移并同步后续操作。双击切面可并排放大对应平面，联动不执行自动配准。
 
 **MPR 布局切换**：三平面与 3D 同屏，可调整布局、放大单个视图并记住布局。
 
-![MPR 四宫格与布局切换](docs/screenshots/11-mpr-layouts.gif)
+![MPR 四宫格与布局切换](docs/screenshots/11-mpr-layouts-voxplane-2.6.0.gif)
 
 <table>
 <tr>
-<td width="50%"><b>斜面重建</b><br><a href="docs/screenshots/14-oblique-mpr.png"><img src="docs/screenshots/14-oblique-mpr.png" alt="旋转切面的斜面 MPR" width="100%"></a></td>
-<td width="50%"><b>双序列 MPR 对比</b><br><a href="docs/screenshots/09-mpr-compare.png"><img src="docs/screenshots/09-mpr-compare.png" alt="两组影像的三平面联动对比" width="100%"></a></td>
+<td width="50%"><b>斜面重建</b><br><a href="docs/screenshots/14-oblique-mpr-voxplane-2.6.0.png"><img src="docs/screenshots/14-oblique-mpr-voxplane-2.6.0.png" alt="旋转切面的斜面 MPR" width="100%"></a></td>
+<td width="50%"><b>双序列 MPR 对比</b><br><a href="docs/screenshots/09-mpr-compare-voxplane-2.6.0.png"><img src="docs/screenshots/09-mpr-compare-voxplane-2.6.0.png" alt="两组影像的三平面联动对比" width="100%"></a></td>
 </tr>
 </table>
 
 **3D 模板与旋转**
 
-![CT 3D 模板切换与旋转](docs/screenshots/04-volume-presets.gif)
+![CT 3D 模板切换与旋转](docs/screenshots/04-volume-presets-voxplane-2.6.0.gif)
 
 **4D 多时相播放**
 
-![CT 多时相同步播放](docs/screenshots/03-4d-playback.gif)
+![CT 多时相同步播放](docs/screenshots/03-4d-playback-voxplane-2.6.0.gif)
 
 ## PET/CT 融合
 
 CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、调整色表与融合比例，进行手动刚性配准。PET 按元数据提供 SUV 或源活度单位；切面中的 VOI／阈值分割使用原始定量数据。融合 3D 可分别控制 CT 与 PET 的显示。
 
-![PET/CT 切面与融合比例切换](docs/screenshots/05-pet-ct-fusion.gif)
+![PET/CT 切面与融合比例切换](docs/screenshots/05-pet-ct-fusion-voxplane-2.6.0.gif)
 
 <table>
 <tr>
-<td width="50%"><b>二维融合</b><br><a href="docs/screenshots/05-pet-ct-fusion.png"><img src="docs/screenshots/05-pet-ct-fusion.png" alt="CT、PET、融合和 MIP 四视图" width="100%"></a></td>
-<td width="50%"><b>三维融合</b><br><a href="docs/screenshots/06-fusion-3d.png"><img src="docs/screenshots/06-fusion-3d.png" alt="CT 解剖结构与 PET 信号的三维融合" width="100%"></a></td>
+<td width="50%"><b>二维融合</b><br><a href="docs/screenshots/05-pet-ct-fusion-voxplane-2.6.0.png"><img src="docs/screenshots/05-pet-ct-fusion-voxplane-2.6.0.png" alt="CT、PET、融合和 MIP 四视图" width="100%"></a></td>
+<td width="50%"><b>三维融合</b><br><a href="docs/screenshots/06-fusion-3d-voxplane-2.6.0.png"><img src="docs/screenshots/06-fusion-3d-voxplane-2.6.0.png" alt="CT 解剖结构与 PET 信号的三维融合" width="100%"></a></td>
 </tr>
 </table>
 
@@ -158,20 +160,20 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 未选中的 ROI 使用紧凑标签，选中后展开统计；点数不足时不显示指标。部分超出影像的 ROI 仅按有效像素计算灰度统计，面积和尺寸仍保留完整绘制范围。
 
-![测量工具与分组结果列表](docs/screenshots/63-measurement-2.5.0.png)
+![测量工具与分组结果列表](docs/screenshots/63-measurement-voxplane-2.6.0.png)
 
 **曲线测量**：逐点单击至少三个控制点，按 Enter 或双击完成，即可测量平滑路径的实际弧长。
 
-![曲线测量与控制点](docs/screenshots/33-curve-measurement.gif)
+![曲线测量与控制点](docs/screenshots/33-curve-measurement-voxplane-2.6.0.gif)
 
 **分割精修**：毫米或相对视图尺寸的画笔与橡皮，支持当前切面或 3D 球形范围。
 
-![MR 分割绘制、擦除与撤销重做](docs/screenshots/38-segmentation-refinement.gif)
+![MR 分割绘制、擦除与撤销重做](docs/screenshots/38-segmentation-refinement-voxplane-2.6.0.gif)
 
 <table>
 <tr>
-<td width="50%"><b>关联结果导入</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="右侧导入匹配影像的 SEG / NRRD" width="100%"></a></td>
-<td width="50%"><b>分割与报告导出</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG、SR 与 NRRD 导出" width="100%"></a></td>
+<td width="50%"><b>关联结果导入</b><br><a href="docs/screenshots/33-associated-import-voxplane-2.6.0.png"><img src="docs/screenshots/33-associated-import-voxplane-2.6.0.png" alt="右侧导入匹配影像的 SEG / NRRD" width="100%"></a></td>
+<td width="50%"><b>分割与报告导出</b><br><a href="docs/screenshots/32-structured-report-voxplane-2.6.0.png"><img src="docs/screenshots/32-structured-report-voxplane-2.6.0.png" alt="SEG、SR 与 NRRD 导出" width="100%"></a></td>
 </tr>
 </table>
 
@@ -182,8 +184,8 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 <table>
 <tr>
-<td width="50%"><b>CT 水模 QA</b><br><a href="docs/screenshots/68-water-qa-2.6.0.png"><img src="docs/screenshots/68-water-qa-2.6.0.png" alt="CT 值、噪声与均匀性分析" width="100%"></a></td>
-<td width="50%"><b>点源 MTF</b><br><a href="docs/screenshots/67-mtf-analysis-2.5.0.png"><img src="docs/screenshots/67-mtf-analysis-2.5.0.png" alt="独立的点源 MTF 曲线与空间分辨率分析" width="100%"></a></td>
+<td width="50%"><b>CT 水模 QA</b><br><a href="docs/screenshots/68-water-qa-voxplane-2.6.0.png"><img src="docs/screenshots/68-water-qa-voxplane-2.6.0.png" alt="CT 值、噪声与均匀性分析" width="100%"></a></td>
+<td width="50%"><b>点源 MTF</b><br><a href="docs/screenshots/67-mtf-analysis-voxplane-2.6.0.png"><img src="docs/screenshots/67-mtf-analysis-voxplane-2.6.0.png" alt="独立的点源 MTF 曲线与空间分辨率分析" width="100%"></a></td>
 </tr>
 </table>
 
@@ -193,38 +195,38 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 多页签可拖出成为独立窗口；工作区保存影像引用、布局、测量、分割掩膜与分析结果，并恢复之前选择的工具和精修参数。从序列列表打开影像时，若同一序列已有同类页签则直接切换并保留阅片状态，否则新建页签。误关时可在页签栏右键菜单选择 **撤销关闭页签**，或按 Ctrl+Shift+T／⇧⌘T。会话保留最近关闭的 20 个已就绪且无编辑的阅片页签，已完成的编辑结果随工作区保存。工作区保存影像引用和结果，仍需保留原始文件；未完成草稿与撤销历史不保存。支持自动恢复、跟随系统或固定主题、本地 JSON 语言包与窗模板、离线手册、反馈和可关闭的启动更新检查。离线手册包含可播放、暂停和放大的操作动图。
 
-![离线操作手册与操作演示](docs/screenshots/74-offline-manual-2.6.0.png)
+![离线操作手册与操作演示](docs/screenshots/74-offline-manual-voxplane-2.6.0.png)
 
 <table>
 <tr>
-<td width="50%"><b>导入后工作区</b><br><a href="docs/screenshots/69-workspace-home-2.6.0.png"><img src="docs/screenshots/69-workspace-home-2.6.0.png" alt="打开选中序列或继续导入" width="100%"></a></td>
-<td width="50%"><b>PACS 浏览器</b><br><a href="docs/screenshots/16-pacs-browser.png"><img src="docs/screenshots/16-pacs-browser.png" alt="PACS 检查查询与序列下载" width="100%"></a></td>
+<td width="50%"><b>导入后工作区</b><br><a href="docs/screenshots/69-workspace-home-voxplane-2.6.0.png"><img src="docs/screenshots/69-workspace-home-voxplane-2.6.0.png" alt="打开选中序列或继续导入" width="100%"></a></td>
+<td width="50%"><b>PACS 浏览器</b><br><a href="docs/screenshots/16-pacs-browser-voxplane-2.6.0.png"><img src="docs/screenshots/16-pacs-browser-voxplane-2.6.0.png" alt="PACS 检查查询与序列下载" width="100%"></a></td>
 </tr>
 <tr>
-<td><b>独立窗口</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="页签分离为独立窗口" width="100%"></a></td>
-<td><b>工作区恢复</b><br><a href="docs/screenshots/72-workspace-2.6.0.png"><img src="docs/screenshots/72-workspace-2.6.0.png" alt="新建、打开与保存工作区" width="100%"></a></td>
+<td><b>独立窗口</b><br><a href="docs/screenshots/13-detached-tabs-voxplane-2.6.0.png"><img src="docs/screenshots/13-detached-tabs-voxplane-2.6.0.png" alt="页签分离为独立窗口" width="100%"></a></td>
+<td><b>工作区恢复</b><br><a href="docs/screenshots/72-workspace-voxplane-2.6.0.png"><img src="docs/screenshots/72-workspace-voxplane-2.6.0.png" alt="新建、打开与保存工作区" width="100%"></a></td>
 </tr>
 </table>
 
 影像来源窗口左侧分区显示 **收藏目录** 与 **最近打开**，右侧浏览文件。路径栏的星标可收藏当前目录；最近记录单击打开，选中行末尾可清除单项，也可 **删除全部**。清除历史不删除文件或收藏。通过收藏标题旁的 **⋯** 管理名称、路径和顺序，重启后保留。
 
-![收藏目录快捷切换](docs/screenshots/66-image-sources-2.5.0.png)
+![收藏目录快捷切换](docs/screenshots/66-image-sources-voxplane-2.6.0.png)
 
 ## 外观与操作偏好
 
 在 **设置 → 外观与语言** 中选择 **跟随系统**，界面会随系统切换深浅色。也可固定为深色、中性深灰或浅色。中性深灰采用石墨灰面板与低饱和青色强调，保持影像区域突出。主题即时生效并在重启后保留，影像窗宽窗位与色表独立设置。
 
-![中性深灰主题下的 MR 阅片](docs/screenshots/37-theme-graphite.png)
+![中性深灰主题下的 MR 阅片](docs/screenshots/37-theme-graphite-voxplane-2.6.0.png)
 
-[深色主题](docs/screenshots/25-theme-dark.png) · [浅色主题](docs/screenshots/26-theme-light.png)
+[深色主题](docs/screenshots/25-theme-dark-voxplane-2.6.0.png) · [浅色主题](docs/screenshots/26-theme-light-voxplane-2.6.0.png)
 
 可设置界面大小、鼠标拖动、滚轮方向与工具快捷键，按钮标签会显示当前快捷键。支持数字键的菜单打开时，按数字可选取对应项。重复或保留按键会被拦截。四角信息直接显示示例，支持角内排序、跨角拖动、添加和删除，松手自动保存。十字线、比例尺、测量样式和 ROI 指标也可配置。内置中文、英文与巴西葡萄牙语，并支持添加本地 JSON 语言包。左侧栏操作与右侧工具说明文字可独立开关。隐私设置支持新视图隐藏身份叠加、清除最近工作区记录。
 
-![主题、语言与独立按钮说明文字设置](docs/screenshots/62-appearance-2.4.0.png)
+![主题、语言与独立按钮说明文字设置](docs/screenshots/62-appearance-voxplane-2.6.0.png)
 
-![四角信息直接编辑与跨角移动](docs/screenshots/58-corner-editor-2.1.5.gif)
+![四角信息直接编辑与跨角移动](docs/screenshots/58-corner-editor-voxplane-2.6.0.gif)
 
-[鼠标操作与工具快捷键设置](docs/screenshots/40-input-settings.png)
+[鼠标操作与工具快捷键设置](docs/screenshots/40-input-settings-voxplane-2.6.0.png)
 
 ### 按阅片任务组织工具栏
 
@@ -232,11 +234,11 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 直接拖动带图标的按钮排序或跨组放置，也可选中后前移、后移、转组。常用区最多 7 项；修改先保留为草稿，**保存** 后应用到所有窗口并持久保留，**取消** 放弃草稿，**恢复当前默认** 只调整当前配置。文件、PACS 与底部系统入口位置固定。
 
-![按视图分类拖动工具、调整常用与更多并保存](docs/screenshots/53-toolbar-customization.gif)
+![按视图分类拖动工具、调整常用与更多并保存](docs/screenshots/53-toolbar-customization-voxplane-2.6.0.gif)
 
-已发布安装包支持下载校验与应用内更新。更新提示按界面语言显示简短摘要，可查看完整发布说明。[更新弹窗](docs/screenshots/43-update-summary.png)
+已发布安装包支持下载校验与应用内更新。更新提示按界面语言显示简短摘要，可查看完整发布说明。[更新设置](docs/screenshots/43-update-settings-voxplane-2.6.0.png)
 
-[整序列导出完成](docs/screenshots/46-export-complete-2.1.1.png) · [自动分割失败与重试](docs/screenshots/47-ai-error-2.1.1.png)
+[整序列导出完成](docs/screenshots/46-export-complete-voxplane-2.6.0.png) · [自动分割失败与重试](docs/screenshots/47-ai-error-voxplane-2.6.0.png)
 
 [查看完整界面图集](docs/screenshots/README.md)
 
@@ -250,8 +252,8 @@ CT、PET、融合切面与全体积 MIP 联动显示；可切换三向切面、�
 
 ## 文档与运行
 
-[在线操作手册](https://l5769389.github.io/voxenra/zh/) · [影像支持](docs/image-support.md) · [本地导入](docs/local-import.md) · [PACS](docs/pacs.md) · [PET 与融合](docs/pet-mpr-fusion.md) · [分割与 VOI](docs/mpr-segmentation-voi.md) · [导出](docs/export.md) · [离线手册说明](docs/manual.md) · [开发与打包](docs/packaging.md)
+[在线操作手册](https://junforge-dev.github.io/voxplane/zh/) · [影像支持](docs/image-support.md) · [本地导入](docs/local-import.md) · [PACS](docs/pacs.md) · [PET 与融合](docs/pet-mpr-fusion.md) · [分割与 VOI](docs/mpr-segmentation-voi.md) · [导出](docs/export.md) · [离线手册说明](docs/manual.md) · [开发与打包](docs/packaging.md)
 
 ```bash
-uv run voxenra
+uv run voxplane
 ```

@@ -4,8 +4,8 @@ import math
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.water_qa import analyze_water_phantom, detect_water_phantom, measure_water_phantom
-from qt_dicom_viewer.model.water_qa import WaterPhantom, WaterQaSettings
+from voxplane.core.water_qa import analyze_water_phantom, detect_water_phantom, measure_water_phantom
+from voxplane.model.water_qa import WaterPhantom, WaterQaSettings
 
 
 def water_image(shape=(320, 400), spacing=(1.0, 1.0), center=(204.2, 149.4),
@@ -181,7 +181,7 @@ def test_nonfinite_pixels_and_under_sampled_rois_are_rejected():
 
 
 def test_fallback_uses_original_samples_with_physical_circles_and_no_water_metrics():
-    from qt_dicom_viewer.core.water_qa import create_fallback_rois
+    from voxplane.core.water_qa import create_fallback_rois
     y, x = np.indices((280, 400))
     pixels = (x*.8+y*.2).astype(np.float32)
     spacing = (.8, .6)
@@ -196,7 +196,7 @@ def test_fallback_uses_original_samples_with_physical_circles_and_no_water_metri
 
 
 def test_fallback_rejects_invalid_or_too_small_inputs():
-    from qt_dicom_viewer.core.water_qa import create_fallback_rois
+    from voxplane.core.water_qa import create_fallback_rois
     with pytest.raises(ValueError, match="直径"):
         create_fallback_rois(np.zeros((40, 40)), (1, 1))
     with pytest.raises(ValueError, match="16 个像素"):
@@ -207,8 +207,8 @@ def test_fallback_rejects_invalid_or_too_small_inputs():
 
 def test_existing_roi_diameter_limit_uses_physical_boundary_and_remaining_neighbors():
     from dataclasses import replace
-    from qt_dicom_viewer.core.water_qa import maximum_roi_diameter
-    from qt_dicom_viewer.model.water_qa import WaterQaRoi
+    from voxplane.core.water_qa import maximum_roi_diameter
+    from voxplane.model.water_qa import WaterQaRoi
     phantom = WaterPhantom(200, 100, 80, 1)
     center = WaterQaRoi('center', 'Center', 200, 100, 10, 1, 1, 0, 0, 0, 0, 0)
     spacing = (1., .5)

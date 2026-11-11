@@ -3,7 +3,7 @@ import pytest
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
+from voxplane.model import ImagePoint, MeasurementKind
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_sidebar_keyboard_access import all_controls_keyboard  # Use full keyboard navigation on macOS.

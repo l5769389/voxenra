@@ -4,8 +4,8 @@ from PySide6.QtQml import QQmlEngine
 from PySide6.QtTest import QSignalSpy
 from shiboken6 import delete, getCppPointer
 
-from qt_dicom_viewer.ui.controller.viewport.controller.mtf_controller import MtfController
-from qt_dicom_viewer.ui.controller.viewport.controller.fwhm_controller import FwhmController
+from voxplane.ui.controller.viewport.controller.mtf_controller import MtfController
+from voxplane.ui.controller.viewport.controller.fwhm_controller import FwhmController
 from test_dicom_tags import qt_app
 
 

@@ -14,7 +14,7 @@ def activity(qt_app):
     engine = QQmlEngine()
     warnings = []
     engine.warnings.connect(lambda values: warnings.extend(value.toString() for value in values))
-    path = Path(__file__).resolve().parents[1] / 'src/qt_dicom_viewer/qml/components/DelayedActivity.qml'
+    path = Path(__file__).resolve().parents[1] / 'src/voxplane/qml/components/DelayedActivity.qml'
     component = QQmlComponent(engine, QUrl.fromLocalFile(str(path)))
     root = component.create()
     assert root is not None, component.errors()

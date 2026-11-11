@@ -20,11 +20,11 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_tag_qml import find, click
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,7 +33,7 @@ output.mkdir(parents=True, exist_ok=True)
 english = '--english' in sys.argv
 qt = QApplication([])
 qt.setQuitOnLastWindowClosed(False)
-with TemporaryDirectory(prefix='Voxenra-Demo-', dir='/tmp') as temporary:
+with TemporaryDirectory(prefix='VoxPlane-Demo-', dir='/tmp') as temporary:
     folder = Path(temporary)
     # An anonymous copy is used for the real ZIP import. Never edit source files.
     paths = sorted(p for p in source.rglob('*') if p.is_file())
@@ -61,7 +61,7 @@ with TemporaryDirectory(prefix='Voxenra-Demo-', dir='/tmp') as temporary:
     engine = QQmlApplicationEngine(); engine.addImageProvider('dicom',provider)
     engine.addImageProvider('navigation',SvgIconProvider()); engine.rootContext().setContextProperty('appController',app)
     warnings=[]; engine.warnings.connect(lambda items: warnings.extend(i.toString() for i in items))
-    engine.load(QUrl.fromLocalFile(str(ROOT/'src/qt_dicom_viewer/qml/Main.qml')))
+    engine.load(QUrl.fromLocalFile(str(ROOT/'src/voxplane/qml/Main.qml')))
     window=engine.rootObjects()[0]; window.resize(1440,900); window.show()
     ws=app.workspaceController; frames=[]
     def pump(ms=160):

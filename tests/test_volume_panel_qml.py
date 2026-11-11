@@ -8,7 +8,7 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.core.volume_view import VolumeViewState
+from voxplane.core.volume_view import VolumeViewState
 from test_measurement_qml import _visual_children, qt_app
 from test_volume_display import loaded_tab, volume
 from test_volume_edit import draw, wait_edit
@@ -22,7 +22,7 @@ def panel(qt_app, loaded_tab, request):
             series_meta=replace(controller.viewport_config.series_meta, modality="MR"))
         controller.reset_all_view_state()
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(250, 700)
@@ -30,7 +30,7 @@ def panel(qt_app, loaded_tab, request):
     view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
     view.setInitialProperties(dict(toolController=loaded_tab.toolController,
         viewportController=controller, toolVisible=True))
-    path = Path(__file__).resolve().parents[1]/"src/qt_dicom_viewer/qml/sections/RightPanel.qml"
+    path = Path(__file__).resolve().parents[1]/"src/voxplane/qml/sections/RightPanel.qml"
     view.setSource(QUrl.fromLocalFile(str(path)))
     assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
     view.show()

@@ -1,4 +1,4 @@
-"""Collect Voxenra's Qt Quick runtime without unrelated browser/3D QML engines.
+"""Collect VoxPlane's Qt Quick runtime without unrelated browser/3D QML engines.
 
 Filter before PyInstaller analyzes binary dependencies; deleting libraries after
 freezing could leave plugins with missing dependencies. The app explicitly uses

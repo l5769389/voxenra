@@ -21,15 +21,15 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.service.render_serivce import RenderService
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.volume_render_backend import VolumeRenderBackend
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.service.render_serivce import RenderService
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.volume_render_backend import VolumeRenderBackend
 
 
 def main():
@@ -66,7 +66,7 @@ def main():
         view.engine().warnings.connect(lambda es: warnings.extend(e.toString() for e in es))
         view.setResizeMode(QQuickView.SizeRootObjectToView)
         view.resize(1100, 800)
-        qml_dir = files("qt_dicom_viewer").joinpath("qml/sections/center/viewportArea")
+        qml_dir = files("voxplane").joinpath("qml/sections/center/viewportArea")
         scene = folder / "Loading.qml"
         scene.write_text('''import QtQuick
 import "'''+QUrl.fromLocalFile(str(qml_dir)).toString()+'''" as Views

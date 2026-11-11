@@ -4,12 +4,12 @@ from pathlib import Path
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian
 
-from qt_dicom_viewer.core.dicom_scanner import (
+from voxplane.core.dicom_scanner import (
     _build_series_record,
     _iter_visible_files,
     _read_instance,
 )
-from qt_dicom_viewer.model import PixelSpacing
+from voxplane.model import PixelSpacing
 
 #
 # a.txt

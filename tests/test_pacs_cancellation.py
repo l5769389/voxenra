@@ -3,7 +3,7 @@ from threading import Event
 import pytest
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.pacs.client import PacsError
+from voxplane.pacs.client import PacsError
 from test_pacs import controller, pacs_server
 from test_dicom_tags import qt_app, wait_until
 
@@ -27,7 +27,7 @@ def test_cancelled_test_cannot_override_new_query(controller, pacs_server, monke
         if late_error:
             raise PacsError('Old error')
         return 'Old success'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.pacs_controller.DicomWebClient.test_connection', blocked)
+    monkeypatch.setattr('voxplane.ui.controller.pacs_controller.DicomWebClient.test_connection', blocked)
     assert controller.saveProfile({'name': 'PACS', 'url': pacs_server.url})
     try:
         controller.testProfile(controller.selectedProfileId)
@@ -55,7 +55,7 @@ def test_repeated_cancellations_remove_queued_jobs_and_bound_workers(controller,
         entered[int(client.profile.name)].set()
         assert release.wait(5)
         return 'Old success'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.pacs_controller.DicomWebClient.test_connection', blocked)
+    monkeypatch.setattr('voxplane.ui.controller.pacs_controller.DicomWebClient.test_connection', blocked)
     try:
         for index in range(2):
             controller.testDraft({'name': str(index), 'url': pacs_server.url})
@@ -85,7 +85,7 @@ def test_saving_retested_failed_draft_replaces_old_success(controller, pacs_serv
     assert saved['testResult']['state'] == 'success'
     def failed(client):
         raise PacsError('Latest connection failure')
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.pacs_controller.DicomWebClient.test_connection', failed)
+    monkeypatch.setattr('voxplane.ui.controller.pacs_controller.DicomWebClient.test_connection', failed)
     controller.testDraft(saved)
     wait_until(lambda: not controller.busy)
     assert controller.saveProfile(saved)

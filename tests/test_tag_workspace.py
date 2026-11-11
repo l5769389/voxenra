@@ -5,7 +5,7 @@ import pytest
 from PySide6.QtCore import QPointF
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.workspace_document import FORMAT, validate_document
+from voxplane.core.workspace_document import FORMAT, validate_document
 from test_dicom_tags import qt_app, rows, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import click, descendants, find, type_text

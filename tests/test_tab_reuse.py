@@ -12,9 +12,9 @@ from test_tab_windows import open_tabs, detached
 from test_tag_qml import find, click
 from test_workspace_dialog_layout import workspace_dialog
 from test_pet_fusion import paired_series
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 
 
 @pytest.mark.parametrize('kind', ['2d', 'mpr', 'cpr', '3d', 'montage', 'tag'])

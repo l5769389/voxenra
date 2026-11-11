@@ -67,7 +67,7 @@ def test_anonymous_historical_cpr_keeps_saved_technical_context(cpr_app, tmp_pat
 def test_four_d_context_follows_accepted_frame_and_survives_privacy(qt_app, tmp_path, anonymous):
     from test_four_d_qml import _controller
     from test_four_d import _finish_requests
-    from qt_dicom_viewer.model import MprFrame
+    from voxplane.model import MprFrame
     controller = _controller()
     requests = []
     controller.renderRequested.connect(requests.append)
@@ -83,8 +83,8 @@ def test_four_d_context_follows_accepted_frame_and_survives_privacy(qt_app, tmp_
     view = QQuickView()
     view.resize(600, 400)
     view.setResizeMode(QQuickView.SizeRootObjectToView)
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     provider = DicomImageProvider()
     viewport.imageUpdateRequested.connect(provider.set_array)
     view.engine().addImageProvider("dicom", provider)
@@ -92,7 +92,7 @@ def test_four_d_context_follows_accepted_frame_and_survives_privacy(qt_app, tmp_
     viewport.refresh_window_image()
     view.setInitialProperties(dict(viewportController=viewport, hasTabs=True, anonymousExport=anonymous))
     view.setSource(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] /
-        'src/qt_dicom_viewer/qml/sections/center/viewportArea/Viewport.qml')))
+        'src/voxplane/qml/sections/center/viewportArea/Viewport.qml')))
     assert view.status() == QQuickView.Ready, view.errors()
     view.show()
     try:

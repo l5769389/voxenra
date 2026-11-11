@@ -2,7 +2,7 @@ from PySide6.QtCore import QObject
 from PySide6.QtTest import QTest
 import pytest
 
-from qt_dicom_viewer.ui.controller.edit_history_controller import EditHistoryController
+from voxplane.ui.controller.edit_history_controller import EditHistoryController
 from test_mpr_voi_controller import setup_voi, draw
 from test_measurement_qml import qt_app
 from test_mpr_voi_qml import settle
@@ -23,7 +23,7 @@ def test_display_selection_results_and_cancel_do_not_scan_history(setup_voi, his
     c, view, tools = setup_voi
     draw(c, view); settle(c); QTest.qWait(20)
     assert len(history._undo) == 1
-    import qt_dicom_viewer.ui.controller.edit_history_controller as module
+    import voxplane.ui.controller.edit_history_controller as module
     monkeypatch.setattr(module, 'edit_signature', lambda *a: pytest.fail('non-edit scanned history'))
     c.setFillOpacity(51); c.setDisplayMode('outline')
     c.setBrushDiameter(8); c.setBrushRelative(True); c.setBrushPercent(4)
@@ -65,7 +65,7 @@ def test_failed_snapshot_preserves_redo_and_current_history(setup_voi, history, 
     draw(c, view); settle(c); QTest.qWait(20)
     history.undo()
     current, undo, redo = history._current, list(history._undo), list(history._redo)
-    import qt_dicom_viewer.ui.controller.edit_history_controller as module
+    import voxplane.ui.controller.edit_history_controller as module
     def fail(*args):
         raise ValueError('document limit')
     monkeypatch.setattr(module, 'dumps', fail)

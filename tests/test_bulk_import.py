@@ -8,9 +8,9 @@ from PySide6.QtCore import QObject, QPointF, QTimer, QUrl, QMetaObject
 from PySide6.QtGui import QColor
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core import dicom_scanner as scanner
-from qt_dicom_viewer.core.local_import import LocalImportStore, ImportLimits, ImportCancelled, ImportErrorDetail
-from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
+from voxplane.core import dicom_scanner as scanner
+from voxplane.core.local_import import LocalImportStore, ImportLimits, ImportCancelled, ImportErrorDetail
+from voxplane.ui.workers.dicom_scan_worker import DicomScanWorker
 from test_local_import import make_series
 from test_pacs_qml import scene
 from test_dicom_tags import wait_until, qt_app
@@ -176,7 +176,7 @@ def test_progress_task_keeps_gui_alive_and_cancel_is_visible(scene, tmp_path, mo
 
 def test_many_small_archives_do_not_flood_gui_status_events(tmp_path, monkeypatch):
     import zipfile
-    from qt_dicom_viewer.core import local_import
+    from voxplane.core import local_import
     monkeypatch.setattr(local_import.time, "monotonic", lambda: 100.0)
     archives = []
     for index in range(100):

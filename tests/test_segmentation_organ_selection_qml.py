@@ -8,7 +8,7 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtTest import QTest
 from shiboken6 import isValid
 
-from qt_dicom_viewer.i18n.messages import builtin
+from voxplane.i18n.messages import builtin
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_local_segmentation_completion_qml import automatic_scene, open_selection
@@ -57,7 +57,7 @@ def test_mouse_selection_keeps_long_list_position(organ_scene, theme, tmp_path):
     click(window, row)
     assert next(o['selected'] for o in controller.organs if o['name'] == name) == selected
     assert abs(organs.property('contentY') - before) < 1
-    destination = Path(os.environ.get('VOXENRA_ORGAN_CAPTURES', tmp_path))
+    destination = Path(os.environ.get('VOXPLANE_ORGAN_CAPTURES', tmp_path))
     destination.mkdir(parents=True, exist_ok=True)
     assert window.grabWindow().save(str(destination / f'organ-selection-{theme}.png'))
     assert not warnings, warnings

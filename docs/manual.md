@@ -1,6 +1,6 @@
 # 离线操作手册
 
-网站首页：[简体中文](https://l5769389.github.io/voxenra/) · [English](https://l5769389.github.io/voxenra/en-us/)。操作手册：[简体中文](https://l5769389.github.io/voxenra/zh/) · [English](https://l5769389.github.io/voxenra/en/)。手册由下述章节与语言包自动生成；应用内手册继续离线可用。
+网站首页：[简体中文](https://junforge-dev.github.io/voxplane/) · [English](https://junforge-dev.github.io/voxplane/en-us/)。操作手册：[简体中文](https://junforge-dev.github.io/voxplane/zh/) · [English](https://junforge-dev.github.io/voxplane/en/)。手册由下述章节与语言包自动生成；应用内手册继续离线可用。
 
 点击左下角书本图标打开手册，无需导入影像。右侧测量、分割、VOI、QA、导出等面板的帮助入口直接进入对应章节；工作区窗口的「使用说明」也可直达。
 
@@ -42,7 +42,7 @@ MTF 点源允许矩形选区，由程序确定实际积分和背景区域，可�
 
 在 **设置 → 外观与语言** 选择深色、中性深灰或浅色：深色为蓝灰面板，中性深灰为石墨灰面板，浅色为明亮面板。切换立即生效，保留阅片位置和测量结果，重启后仍使用所选主题。主题不调整影像窗宽窗位、色表或测量颜色。
 
-三种主题的完整应用截图见 [主页外观介绍](https://l5769389.github.io/voxenra/#appearance)。具体操作说明与中英文译文由手册的「设置与恢复默认 → 外观与语言」小节统一维护。
+三种主题的完整应用截图见 [主页外观介绍](https://junforge-dev.github.io/voxplane/#appearance)。具体操作说明与中英文译文由手册的「设置与恢复默认 → 外观与语言」小节统一维护。
 
 在语言选项下方的 **按钮说明文字** 中，可分别设置左侧顶部操作按钮和右侧工具按钮的文字，两项默认开启。右侧设置也适用于收起的工具栏和工具选项；悬停仍可查看完整名称与快捷键。两个开关独立、即时生效，重启后保留。
 
@@ -117,7 +117,7 @@ PACS 支持 **DICOMweb** 与 **传统 DICOM（DIMSE）**，在 **设置 → 数�
 
 ## 维护
 
-目录清单及旧入口映射在 `src/qt_dicom_viewer/qml/assets/help/manual.json`，正文按 8 个分类拆分到同级 `chapters/*.json`。页签与工作区、2D/MPR 对比、ROI 与测量样式、分割编辑与范围管理、PET 显示与定量、视口叠加显示已合并，避免细碎章节和重复说明。
+目录清单及旧入口映射在 `src/voxplane/qml/assets/help/manual.json`，正文按 8 个分类拆分到同级 `chapters/*.json`。页签与工作区、2D/MPR 对比、ROI 与测量样式、分割编辑与范围管理、PET 显示与定量、视口叠加显示已合并，避免细碎章节和重复说明。
 
 维护约定：
 
@@ -128,7 +128,7 @@ PACS 支持 **DICOMweb** 与 **传统 DICOM（DIMSE）**，在 **设置 → 数�
 - `example` / `examples` 与 `caption` 绑定实际软件截图或 GIF 操作动画，CT/PET 可切换；不要用设计稿替代已经实现的界面。
 - 几何示意保留在 `figure`，交互光标图例由 `cursorLegend` 控制。
 
-`ui/manual_content.py` 负责分文件加载与富文本，`ManualTabController` 管理搜索、折叠、跳转和阅读位置；`ManualNavigation.qml` 提供目录，`OperationManual.qml` 排版和调整宽度，`ManualScreenshot.qml` 提供原生截图窗口。所有内容、图片和 QML 均列入 `Voxenra.qrc`，随应用离线打包。
+`ui/manual_content.py` 负责分文件加载与富文本，`ManualTabController` 管理搜索、折叠、跳转和阅读位置；`ManualNavigation.qml` 提供目录，`OperationManual.qml` 排版和调整宽度，`ManualScreenshot.qml` 提供原生截图窗口。所有内容、图片和 QML 均列入 `VoxPlane.qrc`，随应用离线打包。
 
 ## 更新截图与验证
 

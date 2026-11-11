@@ -18,7 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    folder = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/theme"
+    folder = Path(__file__).resolve().parents[1] / "src/voxplane/qml/theme"
     expected = generated_text(folder / "palettes.json")
     target = folder / "PaletteData.js"
     if args.check:

@@ -9,8 +9,8 @@ from PySide6.QtCore import QMimeData, Qt
 from PySide6.QtGui import QGuiApplication, QKeySequence
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import PixelSpacing
-from qt_dicom_viewer.ui.annotation_clipboard import MIME_TYPE, read_annotation
+from voxplane.model import PixelSpacing
+from voxplane.ui.annotation_clipboard import MIME_TYPE, read_annotation
 from test_measurement_qml import (
     qt_app as qt_app,
     viewport as viewport,
@@ -199,7 +199,7 @@ def test_untrusted_clipboard_cannot_create_objects(viewport, payload):
 
 def test_focused_text_editor_keeps_standard_text_copy_paste(scene, tmp_path):
     from test_series_sidebar import phantom_series
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     from test_dicom_tags import wait_until
     from test_tag_qml import find
     from PySide6.QtCore import QMetaObject

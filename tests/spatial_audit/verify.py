@@ -6,19 +6,19 @@ import warnings
 
 import numpy as np
 import pydicom
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.pixel_codecs import decode_pixels
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.mpr_reslicer import MprReslicer
-from qt_dicom_viewer.core.measurement_geometry import angle_degrees, roi_metrics
-from qt_dicom_viewer.core.geometry_2d import image_point_distance_mm
-from qt_dicom_viewer.core.segmentation_masks import mask_record
-from qt_dicom_viewer.core.nrrd_exchange import write_nrrd, read_nrrd, write_segmentation, read_segmentation
-from qt_dicom_viewer.core import workspace_state
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind, MprPlane, MprProjectionMode, WindowLevel
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.pixel_codecs import decode_pixels
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.mpr_reslicer import MprReslicer
+from voxplane.core.measurement_geometry import angle_degrees, roi_metrics
+from voxplane.core.geometry_2d import image_point_distance_mm
+from voxplane.core.segmentation_masks import mask_record
+from voxplane.core.nrrd_exchange import write_nrrd, read_nrrd, write_segmentation, read_segmentation
+from voxplane.core import workspace_state
+from voxplane.model import ImagePoint, MeasurementKind, MprPlane, MprProjectionMode, WindowLevel
 from .cases import sample_reference, directions
-from qt_dicom_viewer.model.dicom_core import MprFrame
+from voxplane.model.dicom_core import MprFrame
 
 
 def close(actual, expected, *, rtol=1e-6, atol=1e-4):
@@ -197,12 +197,12 @@ def verify_case(root):
         planes=check_planes(volume,pixels,affine,dest)
         measurements=check_measurements(pixels[len(pixels)//2],spec['spacing'][1:])
         counts=check_exchange(volume,dest)
-        np.savez_compressed(dest/'voxenra.npz',pixels=volume.modality_pixels,
+        np.savez_compressed(dest/'voxplane.npz',pixels=volume.modality_pixels,
             source_pixels=truth[f'pixels{phase}'],affine=volume.geometry.voxel_to_patient)
         (dest/'sources.json').write_text(json.dumps([lookup[(i.path.name,i.frame_index)] for i in ordered]))
         output['volumes'].append(dict(phase=phase,geometry_max_error_mm=geometry_error,planes=planes,
             measurements=measurements,segment_counts=counts,unit=volume.pixel_value_meta.unit))
     assert len(seen)==len(manifest['sources'])
     output.setdefault('status','pass')
-    (root/'voxenra-result.json').write_text(json.dumps(output,indent=2))
+    (root/'voxplane-result.json').write_text(json.dumps(output,indent=2))
     return output

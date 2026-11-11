@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from qt_dicom_viewer.infrastructure import logging_config
+from voxplane.infrastructure import logging_config
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
@@ -67,9 +67,9 @@ def test_onefile_build_keeps_package_resource_layout() -> None:
     assert "--onefile" in command
     assert "--windowed" in command
     assert "--console" not in command
-    assert command[command.index("--name") + 1] == "Voxenra"
+    assert command[command.index("--name") + 1] == "VoxPlane"
     assert command[command.index("--additional-hooks-dir") + 1] == str(PROJECT_ROOT / "packaging/hooks")
-    assert (PROJECT_ROOT / "packaging/hooks/hook-qt_dicom_viewer.py").is_file()
+    assert (PROJECT_ROOT / "packaging/hooks/hook-voxplane.py").is_file()
     assert command[-1] == str(PROJECT_ROOT / "scripts/windows_entry.py")
     assert command[command.index("--icon") + 1] == str(PROJECT_ROOT / "build/installer-assets/app.ico")
     assert {"PySide6.QtQuick", "PySide6.QtQuickControls2", "PySide6.QtSvg"} <= set(command)
@@ -80,7 +80,7 @@ def test_onefile_build_keeps_package_resource_layout() -> None:
     } <= set(command)
     assert (
         PROJECT_ROOT
-        / "src/qt_dicom_viewer/qml/sections/center/viewportArea/MontageViewport.qml"
+        / "src/voxplane/qml/sections/center/viewportArea/MontageViewport.qml"
     ).is_file()
 
 
@@ -89,7 +89,7 @@ def test_console_build_uses_separate_executable() -> None:
 
     assert "--console" in command
     assert "--windowed" not in command
-    assert command[command.index("--name") + 1] == "Voxenra-debug"
+    assert command[command.index("--name") + 1] == "VoxPlane-debug"
 
 
 def test_directory_portable_avoids_startup_extraction_and_installer_output() -> None:
@@ -160,7 +160,7 @@ def test_success_requires_expected_executable(simulated_windows, monkeypatch, tm
 
     def successful_build(*args, **kwargs):
         (tmp_path / "dist").mkdir()
-        (tmp_path / "dist" / "Voxenra.exe").touch()
+        (tmp_path / "dist" / "VoxPlane.exe").touch()
 
     monkeypatch.setattr(build_windows.subprocess, "run", successful_build)
 
@@ -174,7 +174,7 @@ def test_directory_portable_checks_nested_executable(simulated_windows, monkeypa
         return ["packager"]
     monkeypatch.setattr(build_windows, "pyinstaller_command", command)
     def build(*args, **kwargs):
-        target = tmp_path / "dist/portable/Voxenra/Voxenra.exe"
+        target = tmp_path / "dist/portable/VoxPlane/VoxPlane.exe"
         target.parent.mkdir(parents=True)
         target.touch()
     monkeypatch.setattr(build_windows.subprocess, "run", build)

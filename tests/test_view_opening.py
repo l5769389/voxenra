@@ -8,16 +8,16 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, RenderFailure, TabConfig, TabType, MprFrame
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.service.render_serivce import RenderService
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
-from qt_dicom_viewer.ui.controller.tab.tab_controller import TabController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.model import DicomFolderScanSnapshot, RenderFailure, TabConfig, TabType, MprFrame
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.service.render_serivce import RenderService
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.controller.panel_controller import PanelController
+from voxplane.ui.controller.tab.tab_controller import TabController
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
 from test_tag_qml import _App, find, click, descendants
 from test_dicom_tags import qt_app, wait_until
 from test_pet_fusion import paired_series
@@ -28,7 +28,7 @@ from test_linked_ct_window import result_for
 @pytest.fixture
 def opening_scene(qt_app, paired_series, tmp_path, monkeypatch):
     # Native GPU creation has separate coverage; this fixture checks QML loading.
-    from qt_dicom_viewer.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
+    from voxplane.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
     monkeypatch.setattr(VolumeViewportController, "ensureNativeView", lambda self: None)
     catalog, ct, pet = paired_series
     provider = DicomImageProvider()
@@ -43,7 +43,7 @@ def opening_scene(qt_app, paired_series, tmp_path, monkeypatch):
     engine.rootContext().setContextProperty("appController", app)
     warnings = []
     engine.warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
-    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/Main.qml")))
+    engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[1] / "src/voxplane/qml/Main.qml")))
     window = engine.rootObjects()[0]
     QTest.qWait(50)
     requests = []
@@ -212,7 +212,7 @@ def test_slow_reconstruction_keeps_gui_timer_and_tab_actions_responsive(opening_
 
 
 def test_four_d_opening_finishes_after_all_three_planes(qt_app):
-    from qt_dicom_viewer.application.series_catalog import SeriesCatalog
+    from voxplane.application.series_catalog import SeriesCatalog
     workspace = WorkspaceController(SeriesCatalog(), DicomImageProvider())
     tab = TabController(TabConfig("4d-opening", "4D", TabType.FOUR_D, (_four_d_meta(),)), workspace)
     workspace.connect_signal(tab)
@@ -247,7 +247,7 @@ def test_common_tools_keep_their_relative_order_and_reset_is_last(qt_app, tab_ty
 
 
 def test_tag_loading_failure_and_retry_share_the_workspace_status(opening_scene, monkeypatch):
-    from qt_dicom_viewer.model.dicom_tags import TagReadResult
+    from voxplane.model.dicom_tags import TagReadResult
     window, workspace, ct, pet, requests, worker, warnings = opening_scene
     pending = []
     monkeypatch.setattr(workspace._tag_read_service, "submit", pending.append)

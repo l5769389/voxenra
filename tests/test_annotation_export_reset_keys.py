@@ -190,7 +190,7 @@ def test_playback_and_pointer_drag_block_primary_commands(sidebar_scene):
 
 @pytest.mark.parametrize('kind', ['mpr', 'cpr', '3d', 'montage'])
 def test_other_view_types_export_and_reset_only_supported_tools(sidebar_scene, monkeypatch, kind):
-    from qt_dicom_viewer.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
+    from voxplane.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
     monkeypatch.setattr(VolumeViewportController, 'ensureNativeView', lambda self: None)
     monkeypatch.setattr(VolumeViewportController, 'setNativeVisible', lambda self, visible: None)
     window, app, records, warnings = sidebar_scene
@@ -216,7 +216,7 @@ def test_other_view_types_export_and_reset_only_supported_tools(sidebar_scene, m
 
 def test_older_custom_view_binding_wins_over_new_annotation_default(qt_app, tmp_path):
     import json
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     path = tmp_path / 'settings.json'
     path.write_text(json.dumps({'shortcuts': {'bindings': {'open-view-mpr': 'A', 'zoom': 'Q'}}}))
     bindings = SettingsController(path=path).section('shortcuts')['bindings']
@@ -267,7 +267,7 @@ def test_detached_reading_window_resets_only_its_active_view(sidebar_scene):
     assert not sidebar_scene[3], sidebar_scene[3]
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1', reason='Requires a native VTK desktop window')
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1', reason='Requires a native VTK desktop window')
 @pytest.mark.parametrize('kind', ['3d', 'mpr'])
 def test_native_volume_focus_keeps_reset_and_export_keys(sidebar_scene, kind):
     from PySide6.QtCore import QPoint

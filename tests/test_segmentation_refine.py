@@ -1,7 +1,7 @@
 from dataclasses import replace
 import numpy as np
 import pytest
-from qt_dicom_viewer.core.segmentation_refine import brush, connected_component
+from voxplane.core.segmentation_refine import brush, connected_component
 from test_mpr_reslicer import _volume
 from test_mpr_voi_controller import setup_voi, draw
 from test_measurement_qml import qt_app

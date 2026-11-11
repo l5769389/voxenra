@@ -4,11 +4,11 @@ from threading import Event
 import pydicom
 import pytest
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.series_import import merge_import_snapshot
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.series_import import merge_import_snapshot
+from voxplane.model import DicomFolderScanSnapshot
+from voxplane.ui.controller.panel_controller import PanelController
 from test_dicom_tags import qt_app, wait_until
 from test_four_d import _cross_series_four_d
 
@@ -108,7 +108,7 @@ def test_merge_does_not_publish_unchanged_unrelated_series(tmp_path):
     from dataclasses import replace
 
     records = _cross_series_four_d(tmp_path)
-    from qt_dicom_viewer.core.dicom_scanner import _build_series_record
+    from voxplane.core.dicom_scanner import _build_series_record
     unrelated = _build_series_record([
         replace(i, series_instance_uid='unrelated', series_description='Independent')
         for i in records[0].instances])

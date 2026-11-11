@@ -4,9 +4,9 @@ import numpy as np
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian, generate_uid
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.model import (
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.model import (
     DicomFolderScanSnapshot,
     DicomInstanceMeta,
     DicomSeriesRecord,
@@ -15,7 +15,7 @@ from qt_dicom_viewer.model import (
     PixelSpacing,
     WindowLevel,
 )
-from qt_dicom_viewer.ui.workers.dicom_render_worker import DicomRenderWorker
+from voxplane.ui.workers.dicom_render_worker import DicomRenderWorker
 
 
 def _dataset() -> FileDataset:
@@ -105,7 +105,7 @@ def test_montage_worker_reuses_cached_modality_pixels_for_windowing(
     tmp_path,
     monkeypatch,
 ) -> None:
-    from qt_dicom_viewer.core.dicom_loader import DicomLoader
+    from voxplane.core.dicom_loader import DicomLoader
     from pydicom.uid import CTImageStorage
     dataset = _dataset()
     dataset.SOPClassUID = CTImageStorage

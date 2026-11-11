@@ -1,16 +1,16 @@
 """Color-domain boundaries, physical measurements and live derived-CT browsing."""
 import numpy as np
 import pytest
-from qt_dicom_viewer.core.ct_display import palette_lut
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.enhanced_frames import frame_metadata
-from qt_dicom_viewer.core.ct import ct_view_error
-from qt_dicom_viewer.core.export_images import frame_image
-from qt_dicom_viewer.core.series_sidebar import build_sidebar_rows
-from qt_dicom_viewer.model import WindowLevel, TabType
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.ct_display import palette_lut
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.enhanced_frames import frame_metadata
+from voxplane.core.ct import ct_view_error
+from voxplane.core.export_images import frame_image
+from voxplane.core.series_sidebar import build_sidebar_rows
+from voxplane.model import WindowLevel, TabType
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_enhanced_ct import enhanced_ct_dataset, save_and_scan, item
 from test_dicom_tags import qt_app, wait_until
 

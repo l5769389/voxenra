@@ -5,12 +5,12 @@ import zipfile
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.workspace_state import dumps, loads, atomic_write
-from qt_dicom_viewer.core.workspace_document import FORMAT, VERSION, source_manifest, read_document, load_referenced_series
-from qt_dicom_viewer.core.local_import import LocalImportStore
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, MeasurementKind, ImagePoint
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.workspace_state import dumps, loads, atomic_write
+from voxplane.core.workspace_document import FORMAT, VERSION, source_manifest, read_document, load_referenced_series
+from voxplane.core.local_import import LocalImportStore
+from voxplane.model import DicomFolderScanSnapshot, MeasurementKind, ImagePoint
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import phantom_series
 from test_measurement_controller import _create_length, _position, _drag, _context
@@ -133,7 +133,7 @@ def test_archive_manifest_survives_cleanup_and_relocation(qt_app, tmp_path):
     with zipfile.ZipFile(archive, "w") as z:
         for p in original.iterdir(): z.write(p, p.name)
     store = LocalImportStore()
-    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
+    from voxplane.core.dicom_scanner import DicomFolderScanner
     try:
         files = store.prepare([archive])
         snapshots = list(DicomFolderScanner().scan_files(files, folder=tmp_path))
@@ -211,7 +211,7 @@ def test_workspace_replacement_does_not_resurrect_previous_archive_instances(qt_
 @pytest.mark.parametrize('archived', [False, True])
 def test_open_resave_restart_preserves_original_sources(qt_app, tmp_path, archived):
     """Exercise the controller's provenance handoff, not just the manifest codec."""
-    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
+    from voxplane.core.dicom_scanner import DicomFolderScanner
     original = tmp_path / 'dicom'
     original.mkdir()
     phantom_series(original, 1, 'PRIVATE', '1.2.3.1', '20260903')
@@ -356,7 +356,7 @@ def test_pet_workspace_roundtrip(qt_app, tmp_path, paired_series, kind, monkeypa
 
 def test_four_d_phase_and_shared_window_restored(qt_app, tmp_path):
     from test_four_d import _cross_series_four_d
-    from qt_dicom_viewer.model import WindowLevel, WindowLevelChange
+    from voxplane.model import WindowLevel, WindowLevelChange
     records = _cross_series_four_d(tmp_path)
     app = AppController(DicomImageProvider(), settings_path=False)
     try:
@@ -388,7 +388,7 @@ def test_four_d_phase_and_shared_window_restored(qt_app, tmp_path):
 
 
 def test_roi_stats_annotation_delete_paste_and_history(qt_app, tmp_path):
-    from qt_dicom_viewer.model import ImagePoint
+    from voxplane.model import ImagePoint
     app, series = populated_app(tmp_path)
     try:
         view, tab = app.workspaceController.activeViewport, app.workspaceController.activeTab
@@ -490,7 +490,7 @@ def test_invalid_document_preserves_current_tabs_and_recovery_is_not_deleted(qt_
 
 
 def test_csv_formula_guard_and_missing_values():
-    from qt_dicom_viewer.core.measurement_report import csv_bytes
+    from voxplane.core.measurement_report import csv_bytes
     import csv, io
     encoded = csv_bytes([dict(patient='=CMD()', patient_id=' @SUM(1)', length_mm=None, mean=-3.5)])
     rows = list(csv.reader(io.StringIO(encoded.decode('utf-8-sig'))))
@@ -516,8 +516,8 @@ def test_application_quit_respects_unsaved_cancel_and_discard(qt_app, tmp_path, 
 
 def test_recovery_copy_keeps_dirty_state_and_cancelled_load_keeps_workspace(qt_app, tmp_path, monkeypatch):
     from threading import Event
-    import qt_dicom_viewer.ui.controller.workspace_document_controller as module
-    from qt_dicom_viewer.core.local_import import ImportCancelled
+    import voxplane.ui.controller.workspace_document_controller as module
+    from voxplane.core.local_import import ImportCancelled
     app, _ = populated_app(tmp_path, settings_path=tmp_path / 'display-settings.json')
     release, entered = Event(), Event()
     try:
@@ -548,7 +548,7 @@ def test_recovery_copy_keeps_dirty_state_and_cancelled_load_keeps_workspace(qt_a
 
 
 def test_codec_limits_combined_mask_memory(monkeypatch):
-    import qt_dicom_viewer.core.workspace_state as codec
+    import voxplane.core.workspace_state as codec
     payload = codec.dumps([np.zeros((2, 2, 2), dtype=bool), np.ones((2, 2, 2), dtype=bool)])
     monkeypatch.setattr(codec, 'MAX_MASK_VOXELS', 12)
     with pytest.raises(ValueError, match='总量'):
@@ -556,7 +556,7 @@ def test_codec_limits_combined_mask_memory(monkeypatch):
 
 
 def test_codec_rejects_combined_masks_before_writing(monkeypatch):
-    import qt_dicom_viewer.core.workspace_state as codec
+    import voxplane.core.workspace_state as codec
     monkeypatch.setattr(codec, 'MAX_MASK_VOXELS', 12)
     within_limit = {'tabs': [{'mask': np.ones((1, 2, 2), bool)},
                              {'mask': np.zeros((2, 2, 2), bool)}]}
@@ -572,7 +572,7 @@ def test_codec_rejects_combined_masks_before_writing(monkeypatch):
 
 
 def test_oversized_mask_save_preserves_document_and_unsaved_edits(qt_app, tmp_path, monkeypatch):
-    import qt_dicom_viewer.core.workspace_state as codec
+    import voxplane.core.workspace_state as codec
     app, series = populated_app(tmp_path)
     try:
         workspace = app.workspaceController

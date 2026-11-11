@@ -22,13 +22,13 @@ ZIP/RAR 等归档解包与 Pixel Data 解码互不替代。应用固定以下运
 
 ## 打包验证
 
-`hook-qt_dicom_viewer.core.pixel_codecs.py` 收集解码插件、原生扩展和发行包元数据。macOS、Windows 安装版以及便携版构建工作流均调用实际可执行文件的 `--verify-pixel-codecs` 模式；无需启动界面，无需读取用户影像。
+`hook-voxplane.core.pixel_codecs.py` 收集解码插件、原生扩展和发行包元数据。macOS、Windows 安装版以及便携版构建工作流均调用实际可执行文件的 `--verify-pixel-codecs` 模式；无需启动界面，无需读取用户影像。
 
 ```sh
 uv run --locked --group build python scripts/verify_pixel_codecs.py \
-  --executable dist/macos/Voxenra.app/Contents/MacOS/Voxenra
-# Windows 安装版路径：dist/windows/Voxenra/Voxenra.exe
-# Windows 便携版路径：dist/Voxenra.exe
+  --executable dist/macos/VoxPlane.app/Contents/MacOS/VoxPlane
+# Windows 安装版路径：dist/windows/VoxPlane/VoxPlane.exe
+# Windows 便携版路径：dist/VoxPlane.exe
 ```
 
 脚本生成带已知像素值的 RLE、JPEG-LS、JPEG 2000、JPEG Baseline 合成对象，再由冻结程序独立解码、核对形状和像素摘要。同时检查表中全部指定插件可用。结果位于 `build/codec-check/result.json`；失败会阻止工作流继续上传／发布。本地某一平台验证不代表另一平台已完成验收。

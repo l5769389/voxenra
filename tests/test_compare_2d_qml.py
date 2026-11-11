@@ -92,8 +92,8 @@ def test_compare_pair_context_menu_in_collapsed_sidebar(sidebar_scene):
 
 @pytest.mark.parametrize('mode', ['relative', 'spatial'])
 def test_navigation_notice_retranslates_without_changing_comparison(sidebar_scene, tmp_path, mode):
-    from qt_dicom_viewer.i18n import localize, message
-    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
+    from voxplane.i18n import localize, message
+    from voxplane.ui.workspace_snapshot import tab_snapshot
     window, app, records, warnings = sidebar_scene
     workspace = app.workspaceController
     workspace.createCompareTab(*(record.series_instance_uid for record in records[:2]))

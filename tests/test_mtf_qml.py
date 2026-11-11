@@ -10,8 +10,8 @@ from PySide6.QtQuick import QQuickItem, QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import TabType, ToolType
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.model import TabType, ToolType
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_measurement_qml import qt_app, _mouse_drag, _click_points, _scene, _visual_children
 from test_mtf_controller import bead_render, wait_result
 from test_service_panel_qml import _click, _find
@@ -28,7 +28,7 @@ def workspace(qt_app, request):
     controller.handleRenderResult(frame)
     controller._tool_controller.resetRequested.connect(lambda tool: controller.reset_tool_state(ToolType(tool)))
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     size = getattr(request, "param", (1200, 820))
@@ -647,10 +647,10 @@ class _InfoControllerStub(QObject):
 def test_info_button_theme_colors_and_accessible_popup(qt_app):
     """The compact info icon follows light/dark tokens and keeps its a11y contract."""
     from PySide6.QtGui import QAccessible, QAccessibleActionInterface, QColor
-    from qt_dicom_viewer.i18n.messages import builtin
-    from qt_dicom_viewer.ui.controller.appearance_controller import (
+    from voxplane.i18n.messages import builtin
+    from voxplane.ui.controller.appearance_controller import (
         AppearanceController, DARK, LIGHT)
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
 
     settings = SettingsController(path=False)
     appearance = AppearanceController(settings)
@@ -658,7 +658,7 @@ def test_info_button_theme_colors_and_accessible_popup(qt_app):
     notes = ['X：MTF 多次穿越阈值，取首次下降交点。', 'Y：对比度偏低，结果仅供参考。']
     controller = _InfoControllerStub()
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider('navigation', SvgIconProvider())
     view.engine().rootContext().setContextProperty('appController', app_stub)
     view.setResizeMode(QQuickView.SizeRootObjectToView)
@@ -668,7 +668,7 @@ def test_info_button_theme_colors_and_accessible_popup(qt_app):
     view.setInitialProperties({'controller': controller})
     view.setSource(QUrl.fromLocalFile(str(
         Path(__file__).resolve().parents[1]
-        / 'src/qt_dicom_viewer/qml/sections/right/panels/MtfResults.qml')))
+        / 'src/voxplane/qml/sections/right/panels/MtfResults.qml')))
     assert view.status() == QQuickView.Ready, [e.toString() for e in view.errors()]
     view.show()
     QTest.qWait(80)
@@ -733,8 +733,8 @@ def test_info_button_theme_colors_and_accessible_popup(qt_app):
 
 
 def test_mtf_result_shows_plain_values_and_compact_details_for_all_diagnostics(workspace, tmp_path):
-    from qt_dicom_viewer.model import PixelSpacing
-    from qt_dicom_viewer.model.mtf import MtfSensitivitySample
+    from voxplane.model import PixelSpacing
+    from voxplane.model.mtf import MtfSensitivitySample
     view, controller, pixels, warnings = workspace
     frame = bead_render(controller)
     with np.load(Path(__file__).parent/'fixtures/mtf/point_sources.npz') as fixture:

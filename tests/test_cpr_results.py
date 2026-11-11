@@ -46,7 +46,7 @@ def test_done_waits_for_new_result_and_failure_does_not_switch(cpr):
 
 
 def test_result_layout_roundtrip_and_legacy_session(cpr):
-    from qt_dicom_viewer.core.cpr_session import validate_cpr_session
+    from voxplane.core.cpr_session import validate_cpr_session
     draw(cpr)
     cpr.setReferenceBrowsing(False)
     state = cpr.session_state()
@@ -78,8 +78,8 @@ def test_switching_tools_cancels_pending_result_transition(cpr):
 
 
 def test_configurable_creation_and_edit_shortcuts_are_cpr_scoped(cpr, tmp_path):
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-    from qt_dicom_viewer.ui.controller.shortcut_controller import ShortcutController
+    from voxplane.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.shortcut_controller import ShortcutController
     shortcuts = ShortcutController(SettingsController(path=tmp_path/'settings.json'))
     assert shortcuts.hint('cpr-new') == 'N'
     assert shortcuts.assign('cpr-new', 'Shift+N')
@@ -102,8 +102,8 @@ def test_configurable_creation_and_edit_shortcuts_are_cpr_scoped(cpr, tmp_path):
 
 
 def test_existing_shortcut_letters_survive_upgrade(qt_app):
-    from qt_dicom_viewer.settings.preferences import normalize_settings
-    from qt_dicom_viewer.settings.shortcuts import validate_bindings
+    from voxplane.settings.preferences import normalize_settings
+    from voxplane.settings.shortcuts import validate_bindings
     raw = {'pan': 'N', 'zoom': 'R'}
     bindings = normalize_settings({'shortcuts': {'bindings': raw}})['shortcuts']['bindings']
     assert bindings['pan'] == 'N' and bindings['zoom'] == 'R'
@@ -115,7 +115,7 @@ def test_existing_shortcut_letters_survive_upgrade(qt_app):
 
 @pytest.mark.parametrize('results', [False, True])
 def test_workspace_snapshot_preserves_active_and_focused_result(cpr, results):
-    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
+    from voxplane.ui.workspace_snapshot import tab_snapshot, apply_tab_snapshot
     draw(cpr)
     if results:
         cpr.setReferenceBrowsing(False)

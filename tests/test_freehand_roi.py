@@ -4,16 +4,16 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.core.freehand_roi import simple_polygon
-from qt_dicom_viewer.core.measurement_geometry import roi_metrics
-from qt_dicom_viewer.core.measurement_hit_test import (
+from voxplane.core.freehand_roi import simple_polygon
+from voxplane.core.measurement_geometry import roi_metrics
+from voxplane.core.measurement_hit_test import (
     hit_test_interior,
     hit_test_outline,
 )
-from qt_dicom_viewer.core.workspace_state import dumps, loads, encode, decode
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
-from qt_dicom_viewer.model.measure import RoiMeasurement
-from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import (
+from voxplane.core.workspace_state import dumps, loads, encode, decode
+from voxplane.model import ImagePoint, MeasurementKind
+from voxplane.model.measure import RoiMeasurement
+from voxplane.ui.controller.viewport.controller.measure.measure_controller import (
     MeasurementController,
 )
 from test_dicom_tags import wait_until
@@ -153,7 +153,7 @@ def test_real_pointer_freehand_outline_and_metrics(viewport):
     ]
     assert len(cards) == 1
     from PySide6.QtGui import QGuiApplication
-    from qt_dicom_viewer.ui.annotation_clipboard import read_annotation
+    from voxplane.ui.annotation_clipboard import read_annotation
     try:
         assert controller.copySelectedAnnotation()
         assert read_annotation()["smooth"] is True
@@ -215,7 +215,7 @@ def test_freehand_history_workspace_and_csv(qt_app, tmp_path, kind, smooth):
         with csv_path.open(encoding="utf-8-sig") as stream:
             rows = list(csv.reader(stream))
         if kind == MeasurementKind.FREEHAND:
-            from qt_dicom_viewer.core.measurement_report import COLUMNS
+            from voxplane.core.measurement_report import COLUMNS
             column = next(i for i, (key, _) in enumerate(COLUMNS) if key == "perimeter_mm")
             assert float(rows[-1][column]) == pytest.approx(original.metrics.perimeter_mm, abs=0.01)
         else:
@@ -244,7 +244,7 @@ def test_projected_measurement_retains_frame_origin_after_projection_disabled(vi
 
 
 def test_smooth_boundary_area_statistics_picking_and_legacy_workspace():
-    from qt_dicom_viewer.core.freehand_roi import roi_outline
+    from voxplane.core.freehand_roi import roi_outline
     p = points([(5, 5), (15, 5), (15, 15), (5, 15)])
     pixels = np.zeros((21, 21))
     pixels[4, 10] = 100  # Inside the spline, outside the straight control polygon.
@@ -282,8 +282,8 @@ def test_smooth_boundary_area_statistics_picking_and_legacy_workspace():
 
 
 def test_smoothing_tightens_overshoot_before_preview_and_commit():
-    from qt_dicom_viewer.core.freehand_roi import roi_outline
-    from qt_dicom_viewer.core.curve_geometry import sample_closed_curve
+    from voxplane.core.freehand_roi import roi_outline
+    from voxplane.core.curve_geometry import sample_closed_curve
     p = points([(0,0),(10,0),(10,10),(9.9,.1),(0,10)])
     assert simple_polygon(p)  # The clicks alone are a valid polygon.
     assert not simple_polygon(sample_closed_curve(p))  # Previous interpolation crossed.
@@ -304,7 +304,7 @@ def test_smoothing_tightens_overshoot_before_preview_and_commit():
 
 
 def test_freehand_preview_click_and_drag_keep_the_last_valid_contour():
-    from qt_dicom_viewer.core.freehand_roi import roi_outline
+    from voxplane.core.freehand_roi import roi_outline
     c = MeasurementController()
     context = replace(_context(), measurement_kind=MeasurementKind.FREEHAND,
                       endpoint_tolerance=1, line_tolerance=.5)
@@ -344,7 +344,7 @@ def test_freehand_preview_click_and_drag_keep_the_last_valid_contour():
     [(368,410),(616,154),(385,155)],  # Two clicks and a triangular hover preview.
 ])
 def test_safe_freehand_outline_with_uneven_control_spacing(coords):
-    from qt_dicom_viewer.core.freehand_roi import roi_outline
+    from voxplane.core.freehand_roi import roi_outline
     p = points(coords)
     boundary = roi_outline(p,True)
     assert simple_polygon(boundary)

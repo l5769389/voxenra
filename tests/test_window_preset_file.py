@@ -2,8 +2,8 @@ import json
 from copy import deepcopy
 from pathlib import Path
 import pytest
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.preset import CT_WINDOW_PRESETS
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.preset import CT_WINDOW_PRESETS
 from test_dicom_tags import qt_app
 
 
@@ -71,7 +71,7 @@ def test_external_edits_are_not_overwritten_and_failed_save_is_atomic(tmp_path, 
     assert settings.reloadWindowPresets()
     old = settings.windowTemplates
     def fail(*args): raise OSError('read-only folder')
-    monkeypatch.setattr('qt_dicom_viewer.settings.window_presets.write_document', fail)
+    monkeypatch.setattr('voxplane.settings.window_presets.write_document', fail)
     assert not settings.saveWindowTemplate('', 'New', 123, 0)
     assert settings.windowTemplates == old
     assert len(json.loads(path.read_text())['presets']) == len(CT_WINDOW_PRESETS)
@@ -93,14 +93,14 @@ def test_empty_list_is_valid_and_malformed_startup_file_is_not_replaced(tmp_path
 
 def test_open_location_and_reload_notifies_live_tools(qt_app, tmp_path, monkeypatch):
     from PySide6.QtCore import QObject
-    from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+    from voxplane.ui.controller.tab.tool_controller import ToolController
     host = QObject()
     host._settings_controller = SettingsController(host, path=tmp_path / 'settings.json')
     settings = host._settings_controller
     tools = ToolController(host)
     urls, signals = [], []
     tools.windowPresetsChanged.connect(lambda: signals.append(True))
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.settings_controller.QDesktopServices.openUrl', lambda url: urls.append(url.toLocalFile()) or True)
+    monkeypatch.setattr('voxplane.ui.controller.settings_controller.QDesktopServices.openUrl', lambda url: urls.append(url.toLocalFile()) or True)
     assert settings.openWindowPresetsLocation()
     assert [Path(url) for url in urls] == [tmp_path]
     write(Path(settings.windowPresetsPath), [dict(presetId='only', label='Only', width=999, center=33)])
@@ -115,7 +115,7 @@ def test_failed_first_migration_preserves_legacy_when_saving_other_settings(tmp_
     settings_path.write_text(json.dumps(dict(window=dict(hidden=['ct-lung'], custom=[custom]))))
     with monkeypatch.context() as patch:
         def fail(*args): raise OSError('write failed')
-        patch.setattr('qt_dicom_viewer.settings.window_presets.write_document', fail)
+        patch.setattr('voxplane.settings.window_presets.write_document', fail)
         settings = SettingsController(path=settings_path)
         assert settings.message
         assert settings.setValue('appearance', 'theme', 'light')
@@ -167,7 +167,7 @@ def test_failed_catalog_upgrade_retains_existing_entries(tmp_path, monkeypatch):
     write(path, original)
     before = path.read_bytes()
     def fail(*args): raise OSError('write failed')
-    monkeypatch.setattr('qt_dicom_viewer.settings.window_presets.write_document', fail)
+    monkeypatch.setattr('voxplane.settings.window_presets.write_document', fail)
     settings = SettingsController(path=tmp_path / 'settings.json')
     assert settings.message
     assert settings.windowTemplates[0]['width'] == 111

@@ -1,6 +1,6 @@
 """Native CPR acceptance fixture; interactions are performed in the real UI.
 
-VOXENRA_CPR_UI selects an isolated output folder. state.json is observation only.
+VOXPLANE_CPR_UI selects an isolated output folder. state.json is observation only.
 The generated DICOM series contains synthetic anatomy, no patient data.
 """
 import hashlib
@@ -18,12 +18,12 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtGui import QAccessible
 from PySide6.QtWidgets import QApplication
 
-from qt_dicom_viewer.app import configure_application_identity
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.app import configure_application_identity
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 
-base = Path(os.environ['VOXENRA_CPR_UI']).resolve()
+base = Path(os.environ['VOXPLANE_CPR_UI']).resolve()
 source = base/'synthetic-ct'
 source.mkdir(parents=True, exist_ok=True)
 uid = '1.2.826.0.1.3680043.10.999.20261029.88'
@@ -66,10 +66,10 @@ engine = QQmlApplicationEngine()
 engine.addImageProvider('dicom', provider)
 engine.addImageProvider('navigation', SvgIconProvider())
 engine.rootContext().setContextProperty('appController', controller)
-engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[2]/'src/qt_dicom_viewer/qml/Main.qml')))
+engine.load(QUrl.fromLocalFile(str(Path(__file__).resolve().parents[2]/'src/voxplane/qml/Main.qml')))
 window = engine.rootObjects()[0]
-window.setTitle('Voxenra — CPR native validation')
-window.resize(*(int(value) for value in os.environ.get('VOXENRA_CPR_WINDOW', '1280x720').split('x')))
+window.setTitle('VoxPlane — CPR native validation')
+window.resize(*(int(value) for value in os.environ.get('VOXPLANE_CPR_WINDOW', '1280x720').split('x')))
 window.show()
 window.raise_()
 window.requestActivate()

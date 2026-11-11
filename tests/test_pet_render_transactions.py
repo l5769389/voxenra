@@ -6,15 +6,15 @@ import pytest
 from test_pet_2d import _pet_dataset, _write_dataset, _pet_render_result, _pet_viewport
 from test_measurement_qml import qt_app
 from test_dicom_tags import wait_until
-from qt_dicom_viewer.model import StackRenderRequest, RenderFailure, WindowLevel
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.service.render_serivce import RenderService
+from voxplane.model import StackRenderRequest, RenderFailure, WindowLevel
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.service.render_serivce import RenderService
 from test_pet_fusion import paired_series
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.core.pet_reconstruction import PetReconstructor
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.pet_reconstruction import PetReconstructor
 import numpy as np
 
 

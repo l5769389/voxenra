@@ -7,11 +7,11 @@ import math
 import pytest
 from PySide6.QtPdf import QPdfDocument
 
-from qt_dicom_viewer.core.measurement_format import format_measurement
-from qt_dicom_viewer.core.measurement_report import csv_bytes, pdf_bytes, COLUMNS
-from qt_dicom_viewer.settings.preferences import normalize_settings
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
+from voxplane.core.measurement_format import format_measurement
+from voxplane.core.measurement_report import csv_bytes, pdf_bytes, COLUMNS
+from voxplane.settings.preferences import normalize_settings
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.viewport.controller.measure.measure_controller import MeasurementController
 from test_dicom_tags import qt_app
 from test_measurement_controller import _context, _position, _drag
 from test_mpr_voi_controller import setup_voi, draw

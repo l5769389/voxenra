@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.measurement_geometry import roi_metrics
-from qt_dicom_viewer.model import ImagePoint, MeasurementKind
+from voxplane.core.measurement_geometry import roi_metrics
+from voxplane.model import ImagePoint, MeasurementKind
 
 
 @pytest.mark.parametrize('kind,points,expected,area', [

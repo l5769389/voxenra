@@ -10,7 +10,7 @@ services:
       ORTHANC__DICOM_AET: ORTHANC
       ORTHANC__DICOM_CHECK_CALLED_AET: 'true'
       ORTHANC__DEFAULT_ENCODING: Utf8
-      ORTHANC__DICOM_MODALITIES: '{"voxenra":["VOXENRA","host.docker.internal",11113]}'
+      ORTHANC__DICOM_MODALITIES: '{"voxplane":["VOXPLANE","host.docker.internal",11113]}'
     volumes: [orthanc:/var/lib/orthanc/db]
     logging:
       options: {max-size: 10m, max-file: '2'}
@@ -19,8 +19,8 @@ services:
     platform: linux/amd64
     environment:
       STORAGE_DIR: /storage/fs1
-      STORESCP_DEVICE_NAME: voxenra
-      STORESCP_AE_TITLE: VOXENRA
+      STORESCP_DEVICE_NAME: voxplane
+      STORESCP_AE_TITLE: VOXPLANE
       STORESCP_HOST: host.docker.internal
       STORESCP_PORT: '11113'
     volumes:

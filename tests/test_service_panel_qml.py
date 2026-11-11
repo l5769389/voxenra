@@ -8,8 +8,8 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.model import TabType
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.model import TabType
+from voxplane.ui.controller.tab.tool_controller import ToolController
 from test_dicom_tags import wait_until
 from test_measurement_qml import (
     _mouse_drag, _click_points, _scene, _visual_children, qt_app, viewport,
@@ -20,7 +20,7 @@ from test_measurement_qml import (
 def service_panel(qt_app, request):
     controller = ToolController(tab_type=getattr(request, "param", TabType.TWO_D))
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     view.setResizeMode(QQuickView.SizeRootObjectToView)
     view.resize(320, 640)
@@ -33,7 +33,7 @@ def service_panel(qt_app, request):
         "toolVisible": True,
         "viewportController": None,
     })
-    source = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml/sections/RightPanel.qml"
+    source = Path(__file__).resolve().parents[1] / "src/voxplane/qml/sections/RightPanel.qml"
     view.setSource(QUrl.fromLocalFile(str(source)))
     assert view.status() == QQuickView.Ready, [error.toString() for error in view.errors()]
     view.show()

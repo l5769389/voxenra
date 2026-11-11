@@ -1,7 +1,7 @@
 [project]
-name = "qt-dicom-viewer"
+name = "voxplane"
 version = "2.6.0"
-description = "Voxenra — DICOM viewing, MPR, PET/CT fusion and volume rendering."
+description = "VoxPlane — DICOM viewing, MPR, PET/CT fusion and volume rendering."
 readme = "README.md"
 authors = [
     { name = "Jun Liu", email = "5769389@qq.com" }
@@ -23,8 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
-voxenra = "qt_dicom_viewer.app:main"
-qt-dicom-viewer = "qt_dicom_viewer.app:main"
+voxplane = "voxplane.app:main"
 
 [dependency-groups]
 build = [

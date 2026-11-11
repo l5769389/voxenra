@@ -4,14 +4,14 @@ from threading import Event
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.model.cpr import CprPath, CprSettings
-from qt_dicom_viewer.model import MprPlane
+from voxplane.model.cpr import CprPath, CprSettings
+from voxplane.model import MprPlane
 from test_mpr_reslicer import _volume
 from test_dicom_tags import qt_app, wait_until
 
 
 def request(generation=1, **changes):
-    from qt_dicom_viewer.ui.workers.cpr_render_task import CprRenderInput
+    from voxplane.ui.workers.cpr_render_task import CprRenderInput
     z, y, x = np.indices((21, 21, 21))
     volume = _volume(100*z + 10*y + x)
     path = CprPath("p", "Path", ((2, 10, 10), (18, 10, 10)))
@@ -22,7 +22,7 @@ def request(generation=1, **changes):
 
 
 def test_compute_returns_real_reference_and_cross_section_at_requested_distance():
-    from qt_dicom_viewer.ui.workers.cpr_render_task import compute_cpr
+    from voxplane.ui.workers.cpr_render_task import compute_cpr
     result = compute_cpr(request())
     assert len(result.references) == 2
     assert result.curve.modality_pixels.shape == (13, 33)
@@ -32,7 +32,7 @@ def test_compute_returns_real_reference_and_cross_section_at_requested_distance(
 
 
 def test_reference_only_loading_and_preview_are_explicit():
-    from qt_dicom_viewer.ui.workers.cpr_render_task import compute_cpr
+    from voxplane.ui.workers.cpr_render_task import compute_cpr
     empty = compute_cpr(request(path=None))
     assert empty.curve is None and empty.section is None and len(empty.references) == 2
     preview = compute_cpr(request(preview=True))
@@ -42,7 +42,7 @@ def test_reference_only_loading_and_preview_are_explicit():
 
 
 def test_navigation_cache_never_reuses_different_path_at_same_revision_or_other_volume():
-    from qt_dicom_viewer.ui.workers.cpr_render_task import compute_cpr
+    from voxplane.ui.workers.cpr_render_task import compute_cpr
     req = request()
     first = compute_cpr(req)
     second = compute_cpr(replace(req, generation=2, position_mm=6, cache=first.cache))
@@ -56,7 +56,7 @@ def test_navigation_cache_never_reuses_different_path_at_same_revision_or_other_
 
 
 def test_full_result_recomputes_after_preview_and_reference_field_does_not_follow_in_plane():
-    from qt_dicom_viewer.ui.workers.cpr_render_task import compute_cpr
+    from voxplane.ui.workers.cpr_render_task import compute_cpr
     req = request()
     preview = compute_cpr(replace(req, preview=True))
     full = compute_cpr(replace(req, cache=preview.cache))
@@ -69,7 +69,7 @@ def test_full_result_recomputes_after_preview_and_reference_field_does_not_follo
 
 
 def test_queue_discards_cancelled_and_coalesces_to_latest_request(qt_app):
-    from qt_dicom_viewer.ui.workers.cpr_render_task import CprRenderQueue, compute_cpr
+    from voxplane.ui.workers.cpr_render_task import CprRenderQueue, compute_cpr
     entered, release = Event(), Event()
     seen = []
     def slow(req):
@@ -98,7 +98,7 @@ def test_queue_discards_cancelled_and_coalesces_to_latest_request(qt_app):
 
 
 def test_close_during_job_never_publishes_to_closed_queue(qt_app):
-    from qt_dicom_viewer.ui.workers.cpr_render_task import CprRenderQueue, compute_cpr
+    from voxplane.ui.workers.cpr_render_task import CprRenderQueue, compute_cpr
     entered, release = Event(), Event()
     def slow(req):
         entered.set()
@@ -116,7 +116,7 @@ def test_close_during_job_never_publishes_to_closed_queue(qt_app):
 
 
 def test_current_failure_is_reported_and_queue_recovers(qt_app):
-    from qt_dicom_viewer.ui.workers.cpr_render_task import CprRenderQueue, compute_cpr
+    from voxplane.ui.workers.cpr_render_task import CprRenderQueue, compute_cpr
     def fail_once(req):
         if req.generation == 1:
             raise ValueError("Invalid path")

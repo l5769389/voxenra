@@ -1,8 +1,8 @@
-Voxenra 安装说明 / Installation notes
+VoxPlane 安装说明 / Installation notes
 
 本安装包已包含 Python、Qt 和 VTK，无需另外安装运行环境。
 默认仅为当前用户安装，不需要管理员权限。
-升级前请关闭正在运行的 Voxenra。
+升级前请关闭正在运行的 VoxPlane。
 桌面快捷方式可在下一页选择；开始菜单会添加应用入口。
 可通过 Windows 设置中的“已安装的应用”卸载。
 卸载仅移除安装程序管理的文件，不主动清理影像文件、日志或用户设置。
@@ -10,7 +10,7 @@ Voxenra 安装说明 / Installation notes
 
 Python, Qt and VTK are bundled. No separate runtime is required.
 The default installation is per-user and requires no administrator privileges.
-Close Voxenra before upgrading. A desktop shortcut is optional.
+Close VoxPlane before upgrading. A desktop shortcut is optional.
 Uninstall from Windows Settings > Installed apps.
 Keep your DICOM files outside the installation directory.
 The uninstaller does not proactively clean user images, logs or settings.

@@ -6,9 +6,9 @@ import pytest
 from test_dicom_tags import qt_app, wait_until
 from test_cpr_controller import draw
 from test_workspace_persistence import populated_app
-from qt_dicom_viewer.core.workspace_document import read_document, validate_document
-from qt_dicom_viewer.core.workspace_state import dumps, loads
-from qt_dicom_viewer.model.render_models import VolumeLoadResult
+from voxplane.core.workspace_document import read_document, validate_document
+from voxplane.core.workspace_state import dumps, loads
+from voxplane.model.render_models import VolumeLoadResult
 
 
 @pytest.fixture

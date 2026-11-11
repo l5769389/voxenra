@@ -5,10 +5,10 @@ from pathlib import Path
 import subprocess
 import numpy as np
 import pytest
-from qt_dicom_viewer.core.nrrd_exchange import write_nrrd,read_nrrd
+from voxplane.core.nrrd_exchange import write_nrrd,read_nrrd
 
-BRIDGE=Path(__file__).resolve().parents[1]/'src/qt_dicom_viewer/infrastructure/totalsegmentator_bridge.py'
-PYTHON=Path(os.environ.get('VOXENRA_TOTALSEG_PYTHON',str(Path.home()/'Applications/TotalSegmentator-Local/venv/bin/python')))
+BRIDGE=Path(__file__).resolve().parents[1]/'src/voxplane/infrastructure/totalsegmentator_bridge.py'
+PYTHON=Path(os.environ.get('VOXPLANE_TOTALSEG_PYTHON',str(Path.home()/'Applications/TotalSegmentator-Local/venv/bin/python')))
 
 @pytest.mark.skipif(not PYTHON.is_file(),reason='Local TotalSegmentator Python is not installed')
 @pytest.mark.parametrize('axes',[(2,1,0),(0,2,1)])
@@ -26,5 +26,5 @@ def test_external_nifti_roundtrip_preserves_asymmetric_volume(tmp_path,axes,reve
     assert r.returncode==0,r.stderr
     actual,matrix,_=read_nrrd(tmp_path/'roundtrip.nrrd')
     np.testing.assert_array_equal(actual,pixels)
-    from qt_dicom_viewer.core.local_segmentation import same_grid
+    from voxplane.core.local_segmentation import same_grid
     assert same_grid(actual.shape,matrix,pixels.shape,affine)

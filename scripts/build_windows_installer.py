@@ -29,7 +29,7 @@ def find_iscc(explicit: str | None = None) -> Path:
 def installer_command(root: Path, compiler: Path, assets: Path) -> list[str]:
     return [str(compiler), f"/DSourceDir={root / 'dist/windows' / APP_NAME}",
             f"/DAssetsDir={assets}", f"/DOutputDir={root / 'dist/installers'}",
-            f"/DAppVersion={app_version(root)}", str(root / "packaging/windows/Voxenra.iss")]
+            f"/DAppVersion={app_version(root)}", str(root / "packaging/windows/VoxPlane.iss")]
 
 
 def main(argv: list[str] | None = None) -> int:

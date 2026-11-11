@@ -7,9 +7,9 @@ from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
-from qt_dicom_viewer.ui.dialogs.favorite_directories_dialog import FavoriteDirectoriesDialog
+from voxplane.ui.controller.panel_controller import PanelController
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.ui.dialogs.favorite_directories_dialog import FavoriteDirectoriesDialog
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
 from test_tag_qml import find, click
@@ -41,8 +41,8 @@ def drag_row(table, source, target, cancel=False):
 
 
 def test_picker_and_manager_clicks_persist(qt_app, tmp_path, monkeypatch):
-    from qt_dicom_viewer.ui.dialogs import favorite_directories_dialog as module
-    from qt_dicom_viewer.i18n import localize, message
+    from voxplane.ui.dialogs import favorite_directories_dialog as module
+    from voxplane.i18n import localize, message
     directory = tmp_path / '影像目录'
     second, replacement = tmp_path / 'Second', tmp_path / 'Replacement'
     for path in (directory, second, replacement):
@@ -459,7 +459,7 @@ def test_favorites_table_only_repeats_text_when_clipped(qt_app):
     from PySide6.QtCore import QEvent
     from PySide6.QtGui import QHelpEvent
     from PySide6.QtWidgets import QTableWidgetItem, QToolTip
-    from qt_dicom_viewer.ui.dialogs.reorder_table import ReorderTable
+    from voxplane.ui.dialogs.reorder_table import ReorderTable
 
     table = ReorderTable(2)
     table.setWordWrap(False)

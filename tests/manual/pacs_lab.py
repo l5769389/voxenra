@@ -171,10 +171,10 @@ def seed():
 
 def install_profiles():
     from PySide6.QtCore import QCoreApplication, QStandardPaths
-    from qt_dicom_viewer.pacs.config import PacsConfigStore, PacsProfile
+    from voxplane.pacs.config import PacsConfigStore, PacsProfile
     app = QCoreApplication.instance() or QCoreApplication([])
-    app.setOrganizationName("Voxenra")
-    app.setApplicationName("Voxenra")
+    app.setOrganizationName("VoxPlane")
+    app.setApplicationName("VoxPlane")
     path = Path(QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation)) / "pacs.json"
     store = PacsConfigStore(path)
     existing, default, local, pacs = store.load()
@@ -187,8 +187,8 @@ def install_profiles():
 
 
 def check_restart():
-    from qt_dicom_viewer.pacs.client import DicomWebClient, PacsError
-    from qt_dicom_viewer.pacs.config import PacsProfile
+    from voxplane.pacs.client import DicomWebClient, PacsError
+    from voxplane.pacs.config import PacsProfile
     profile = next(p for p in profiles() if p["key"] == "orthanc-basic")
     command = ["docker", "--context", "orbstack", "compose", "-f", str(LAB / "compose.yaml")]
     disconnected = False
@@ -215,16 +215,16 @@ def launch():
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import QCoreApplication
     from importlib.resources import files
-    from qt_dicom_viewer.app import bind_controller
+    from voxplane.app import bind_controller
     app = QApplication(sys.argv)
-    QCoreApplication.setOrganizationName("Voxenra")
-    QCoreApplication.setApplicationName("Voxenra")
+    QCoreApplication.setOrganizationName("VoxPlane")
+    QCoreApplication.setApplicationName("VoxPlane")
     engine = bind_controller()
     # Explicit lab launcher supplies lab credentials to this session only.
     for profile in profiles():
         if not engine.app_controller.pacsController.saveProfile(profile):
             raise RuntimeError(engine.app_controller.pacsController.message)
-    engine.load(files("qt_dicom_viewer").joinpath("qml/Main.qml"))
+    engine.load(files("voxplane").joinpath("qml/Main.qml"))
     if not engine.rootObjects():
         raise RuntimeError("Failed to load application")
     app.aboutToQuit.connect(engine.app_controller.shutdown)

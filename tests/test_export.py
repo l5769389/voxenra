@@ -9,9 +9,9 @@ import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import TabType
-from qt_dicom_viewer.ui.controller.export_controller import copy_dicom_series, ExportController
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
+from voxplane.model import TabType
+from voxplane.ui.controller.export_controller import copy_dicom_series, ExportController
+from voxplane.ui.controller.tab.tool_controller import ToolController
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click, descendants
@@ -91,14 +91,14 @@ def test_real_export_buttons_save_viewport_png_and_original_dicom(sidebar_scene,
     if not anonymous:
         click(window, checkbox)
     png = tmp_path / 'frame.png'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName', lambda *args: (str(png), 'PNG'))
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName', lambda *args: (str(png), 'PNG'))
     wait_until(lambda: find(window, 'exportPng').isEnabled())
     click(window, find(window, 'exportPng'))
     wait_until(lambda: not app.exportController.busy)
     assert not app.exportController.isError, app.exportController.message
     assert app.exportController.resultPath == str(png)
     revealed = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.reveal_path', lambda path: revealed.append(path) or True)
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.reveal_path', lambda path: revealed.append(path) or True)
     QTest.qWait(30)
     click(window, find(window, 'exportResultPath'))
     assert revealed == [str(png)]
@@ -108,7 +108,7 @@ def test_real_export_buttons_save_viewport_png_and_original_dicom(sidebar_scene,
     assert image.height() == round(item.height() * window.devicePixelRatio())
     assert any(image.pixelColor(x, y).lightness() > 20 for x in range(0, image.width(), 10) for y in range(0, image.height(), 10))
     target = tmp_path / 'dicom'; target.mkdir()
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getExistingDirectory', lambda *args: str(target))
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getExistingDirectory', lambda *args: str(target))
     click(window, find(window, 'exportDicom'))
     wait_until(lambda: not app.exportController.busy)
     assert not app.exportController.isError, app.exportController.message
@@ -132,7 +132,7 @@ def test_real_export_buttons_save_viewport_png_and_original_dicom(sidebar_scene,
         assert [p.read_bytes() for p in exported] == [i.path.read_bytes() for i in records[0].instances]
     assert find(window, 'exportMessage').property('text')
     assert window.grabWindow().save(str(tmp_path / f'export-{width}.png'))
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.export_controller.QFileDialog.getSaveFileName', lambda *args: ('', ''))
+    monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName', lambda *args: ('', ''))
     wait_until(lambda: find(window, 'exportPng').isEnabled())
     click(window, find(window, 'exportPng'))
     assert '取消' in app.exportController.message and not app.exportController.busy

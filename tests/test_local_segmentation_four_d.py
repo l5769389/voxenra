@@ -2,13 +2,13 @@
 import numpy as np
 from test_four_d_tools import temporal
 from test_dicom_tags import qt_app
-from qt_dicom_viewer.ui.controller.local_segmentation_controller import LocalSegmentationController
-from qt_dicom_viewer.core.segmentation_masks import mask_record
+from voxplane.ui.controller.local_segmentation_controller import LocalSegmentationController
+from voxplane.core.segmentation_masks import mask_record
 
 
 def test_automatic_masks_wait_for_original_four_d_phase(temporal,tmp_path):
     tab,requests,(_,workspace)=temporal
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     settings=SettingsController(path=False)
     c=LocalSegmentationController(settings,workspace._series_catalog,cache=tmp_path/'jobs')
     try:

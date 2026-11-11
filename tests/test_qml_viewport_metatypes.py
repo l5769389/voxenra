@@ -6,9 +6,9 @@ from uuid import uuid4
 from PySide6.QtQml import QQmlEngine, QJSValue
 from shiboken6 import delete, getCppPointer
 
-from qt_dicom_viewer.model import MprPlane, TwoDViewType
-from qt_dicom_viewer.ui.controller.tab.two_d_tab_controller import PlaneViewportController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.stack_viewport_controller import StackViewportController
+from voxplane.model import MprPlane, TwoDViewType
+from voxplane.ui.controller.tab.two_d_tab_controller import PlaneViewportController
+from voxplane.ui.controller.viewport.image_2d.stack_viewport_controller import StackViewportController
 from test_compare_2d import comparison
 from test_dicom_tags import qt_app
 from test_two_d_layout import open_scene

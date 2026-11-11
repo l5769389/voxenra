@@ -12,12 +12,12 @@ from test_measurement_qml import qt_app
 
 
 def test_tool_svgs_render_and_recolor_when_icon_name_changes(qt_app):
-    qml = Path(__file__).resolve().parents[1] / "src/qt_dicom_viewer/qml"
+    qml = Path(__file__).resolve().parents[1] / "src/voxplane/qml"
     names = ["fusion", "measure", "service", "mtf", "info",
              "remove-bed", "segmentation", "voi", "qa", "mip",
              "tab-detach", "tab-return", "tab-close-others", "tab-close-right", "tab-close-all"]
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     warnings = []
     view.engine().warnings.connect(

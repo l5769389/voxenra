@@ -8,12 +8,12 @@ from PySide6.QtCore import QObject, QCoreApplication
 from PySide6.QtTest import QTest
 import pytest
 
-from qt_dicom_viewer.i18n.messages import builtin, bundled_locales, parameters, message, localize, snapshot
-from qt_dicom_viewer.ui.controller.language_controller import LanguageController
-from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
-from qt_dicom_viewer.ui.controller.appearance_controller import LIGHT, DARK, AppearanceController
-from qt_dicom_viewer.core.measurement_report import csv_bytes, pdf_bytes
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.i18n.messages import builtin, bundled_locales, parameters, message, localize, snapshot
+from voxplane.ui.controller.language_controller import LanguageController
+from voxplane.ui.controller.settings_controller import SettingsController
+from voxplane.ui.controller.appearance_controller import LIGHT, DARK, AppearanceController
+from voxplane.core.measurement_report import csv_bytes, pdf_bytes
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_dicom_tags import qt_app, wait_until
 from test_series_sidebar import sidebar_scene
 from test_tag_qml import find, click
@@ -34,13 +34,13 @@ def test_builtin_languages_are_complete_and_parameters_match():
         for key, value in pack['messages'].items():
             assert key in en and parameters(value) == parameters(en[key]), (locale, key)
     from PySide6.QtCore import QTranslator
-    from qt_dicom_viewer.i18n.qt_catalog import encode_catalog
+    from voxplane.i18n.qt_catalog import encode_catalog
     translator = QTranslator()
     for catalog in (zh, en):
         data = encode_catalog(catalog)
         assert translator.load(data)
         for key, value in catalog.items(): assert translator.translate('', key) == value, key
-    for path in Path('src/qt_dicom_viewer/qml').rglob('*.qml'):
+    for path in Path('src/voxplane/qml').rglob('*.qml'):
         for key in re.findall(r'qsTrId\("([^"]+)"\)', path.read_text()): assert key in zh, (path, key)
 
 
@@ -66,10 +66,10 @@ def test_portuguese_pack_is_selectable_and_workspace_prompt_is_localized(qt_app,
 
 
 def test_new_bundled_json_is_discovered_without_code_registration(qt_app, tmp_path, monkeypatch):
-    from qt_dicom_viewer.i18n import messages as catalog
+    from voxplane.i18n import messages as catalog
     bundled = tmp_path / 'qml/assets/languages'
     bundled.mkdir(parents=True)
-    source = Path('src/qt_dicom_viewer/qml/assets/languages')
+    source = Path('src/voxplane/qml/assets/languages')
     for locale in ('zh-CN', 'en-US'):
         (bundled / f'{locale}.json').write_bytes((source / f'{locale}.json').read_bytes())
     (bundled / 'es-ES.json').write_text(json.dumps(dict(
@@ -94,7 +94,7 @@ def test_new_bundled_json_is_discovered_without_code_registration(qt_app, tmp_pa
 
 def test_language_pack_is_discovered_after_restart(qt_app, tmp_path, monkeypatch):
     folder = tmp_path / 'languages'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.language_controller.reveal_path', lambda path: True)
+    monkeypatch.setattr('voxplane.ui.controller.language_controller.reveal_path', lambda path: True)
     settings = SettingsController(path=tmp_path / 'settings.json')
     language = LanguageController(settings, root=folder)
     try:
@@ -122,9 +122,9 @@ def test_language_pack_is_discovered_after_restart(qt_app, tmp_path, monkeypatch
 
 
 def test_exported_builtin_copy_does_not_mask_updated_bundled_translation(qt_app, tmp_path, monkeypatch):
-    from qt_dicom_viewer.i18n import messages as catalog
+    from voxplane.i18n import messages as catalog
     folder = tmp_path / 'languages'
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.language_controller.reveal_path', lambda path: True)
+    monkeypatch.setattr('voxplane.ui.controller.language_controller.reveal_path', lambda path: True)
     settings = SettingsController(path=tmp_path / 'settings.json')
     language = LanguageController(settings, root=folder)
     try:
@@ -156,7 +156,7 @@ def test_exported_builtin_copy_does_not_mask_updated_bundled_translation(qt_app,
 def test_pack_overrides_new_languages_reload_and_invalid_edits(qt_app, tmp_path, monkeypatch):
     settings = SettingsController(path=tmp_path/'settings.json')
     language = LanguageController(settings, root=tmp_path/'languages')
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.language_controller.reveal_path', lambda path: True)
+    monkeypatch.setattr('voxplane.ui.controller.language_controller.reveal_path', lambda path: True)
     try:
         assert language.locale == 'zh-CN'
         assert language.openDirectory()
@@ -268,7 +268,7 @@ def test_light_palette_text_contrast_and_image_color_independence():
         values=[int(color[i:i+2],16)/255 for i in (1,3,5)]
         linear=[v/12.92 if v<=.04045 else ((v+.055)/1.055)**2.4 for v in values]
         return sum(v*w for v,w in zip(linear,(.2126,.7152,.0722)))
-    from qt_dicom_viewer.ui.theme_palette import palette_for
+    from voxplane.ui.theme_palette import palette_for
     for palette in (DARK, LIGHT, palette_for("graphite")):
         for fg,bg in [('textPrimary','panelBackground'),('textSecondary','controlBackground'),
                       ('textMuted','panelBackgroundStrong'),('textSubtle','panelBackground'),
@@ -283,11 +283,11 @@ def test_light_palette_text_contrast_and_image_color_independence():
 
 @pytest.mark.parametrize('kind', ['montage', 'mpr', '3d', 'pet', 'pet3d', 'fusion'])
 def test_live_switch_keeps_all_view_state_and_history(qt_app, paired_series, tmp_path, kind):
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
-    from qt_dicom_viewer.ui.workspace_snapshot import tab_snapshot
-    from qt_dicom_viewer.core.workspace_state import dumps
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import DicomFolderScanSnapshot
+    from voxplane.ui.workspace_snapshot import tab_snapshot
+    from voxplane.core.workspace_state import dumps
     _, ct, pet = paired_series
     app = AppController(DicomImageProvider(), settings_path=False)
     try:
@@ -320,7 +320,7 @@ def test_live_switch_keeps_all_view_state_and_history(qt_app, paired_series, tmp
 
 
 def test_manual_retranslation_preserves_chapter_scroll_and_search(qt_app, tmp_path):
-    from qt_dicom_viewer.ui.controller.manual_tab_controller import ManualTabController
+    from voxplane.ui.controller.manual_tab_controller import ManualTabController
     language = LanguageController(SettingsController(path=False), root=tmp_path)
     manual = ManualTabController()
     try:
@@ -341,7 +341,7 @@ def test_manual_retranslation_preserves_chapter_scroll_and_search(qt_app, tmp_pa
 def test_in_flight_report_freezes_language_and_status_updates(qt_app, tmp_path, monkeypatch):
     from threading import Event
     from test_workspace_persistence import populated_app
-    from qt_dicom_viewer.ui.controller import measurement_report_controller as reports
+    from voxplane.ui.controller import measurement_report_controller as reports
     app, record = populated_app(tmp_path)
     entered, release = Event(), Event()
     original = reports.csv_bytes
@@ -427,10 +427,10 @@ def test_pack_validation_keeps_active_translation(qt_app, tmp_path, mutation):
 
 def test_manual_images_and_language_resources_are_packaged():
     import runpy
-    from qt_dicom_viewer.ui.controller.manual_tab_controller import manual_content
-    qrc = Path('Voxenra.qrc').read_text()
-    assets = Path('src/qt_dicom_viewer/qml/assets')
-    packaged = {Path(source).resolve() for source, _ in runpy.run_path('packaging/hooks/hook-qt_dicom_viewer.py')['datas']}
+    from voxplane.ui.controller.manual_tab_controller import manual_content
+    qrc = Path('VoxPlane.qrc').read_text()
+    assets = Path('src/voxplane/qml/assets')
+    packaged = {Path(source).resolve() for source, _ in runpy.run_path('packaging/hooks/hook-voxplane.py')['datas']}
     for locale in bundled_locales():
         path = assets/'languages'/(locale+'.json')
         assert path.as_posix() in qrc and path.resolve() in packaged
@@ -446,7 +446,7 @@ def test_manual_images_and_language_resources_are_packaged():
 
 def test_app_confirmation_and_buttons_switch_while_open(qt_app, tmp_path):
     from PySide6.QtCore import QTimer, Qt
-    from qt_dicom_viewer.i18n.widgets import QMessageBox
+    from voxplane.i18n.widgets import QMessageBox
     language = LanguageController(SettingsController(path=False), root=tmp_path)
     language.selectLanguage('en-US')
     checks = []
@@ -472,7 +472,7 @@ def test_app_confirmation_and_buttons_switch_while_open(qt_app, tmp_path):
 
 def test_sidebar_fallback_labels_retranslate_without_rebuilding_rows(sidebar_scene, tmp_path):
     from dataclasses import replace
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     from test_tag_qml import descendants
     window, app, records, warnings = sidebar_scene
     panel = app.panelController
@@ -562,7 +562,7 @@ def test_import_dialog_after_previous_theme_owner_is_destroyed(qt_app, tmp_path)
 def test_child_button_box_language_event_restores_shortcut_captions(qt_app, tmp_path):
     from PySide6.QtCore import QEvent
     from PySide6.QtWidgets import QDialogButtonBox
-    from qt_dicom_viewer.i18n.widgets import QMessageBox
+    from voxplane.i18n.widgets import QMessageBox
     language = LanguageController(SettingsController(path=False), root=tmp_path)
     language.selectLanguage('en-US')
     dialog = QMessageBox(QMessageBox.Question, message('text.0417'), message('text.0418'),

@@ -5,12 +5,12 @@ import math
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.bead_mtf import (
+from voxplane.core.bead_mtf import (
     compute_point_source_mtf, extract_rect_pixels, lsf_fwhm,
     threshold_frequency, edge_taper, has_negative_sidelobes,
     subtract_lsf_baseline, _axis_result,
 )
-from qt_dicom_viewer.model import ImagePoint
+from voxplane.model import ImagePoint
 
 
 def gaussian(rows=128, columns=128, row_spacing=.15, column_spacing=.1,
@@ -457,7 +457,7 @@ def test_windowed_sensitivity_marks_both_sides_of_twenty_percent(noise_scale, se
     pixels = (80 + 1000*np.exp(-.5*((xx/1.6)**2 + (yy/1.8)**2))
               + noise_scale*np.random.default_rng(7).normal(size=(65, 65)))
     result = compute_point_source_mtf(pixels, .1953, .1953, analysis_method='tukey_fft', check_stability=True)
-    from qt_dicom_viewer.core.mtf_quality import metric_quality
+    from voxplane.core.mtf_quality import metric_quality
     assert result.x.mtf10 is not None
     assert not result.x.unreliable_metrics
     assert np.interp(result.x.mtf10, result.x.frequency, result.x.mtf) == pytest.approx(.1)
@@ -519,7 +519,7 @@ def test_real_phantom_roi_changes_keep_support_and_metric_validity(sample):
             assert not result.x.unreliable_metrics
             assert not result.y.unreliable_metrics
             if sample == 'qa_slice151':
-                from qt_dicom_viewer.core.mtf_quality import metric_quality
+                from voxplane.core.mtf_quality import metric_quality
                 assert result.y.mtf50 is not None
                 assert metric_quality(result.y, 'mtf50', result.sensitivity_threshold, 'Y')['status'] == 'sensitive'
             measured.append([result.x.mtf50, result.x.mtf10, result.y.mtf10])
@@ -540,8 +540,8 @@ def test_negative_dc_cannot_be_hidden_by_fft_magnitude():
 
 def test_gaussian_equivalent_uses_mtf10_and_preserves_measured_cache():
     from dataclasses import replace
-    from qt_dicom_viewer.core.bead_mtf import gaussian_equivalent_from_mtf10
-    from qt_dicom_viewer.model.mtf import BeadMtfResult, MtfAxisResult
+    from voxplane.core.bead_mtf import gaussian_equivalent_from_mtf10
+    from voxplane.model.mtf import BeadMtfResult, MtfAxisResult
     # Deliberately inconsistent measured MTF50: it must not influence the model.
     axis = MtfAxisResult((0., 1., 0.), (0., .6, 1.2, 1.8, 2.4), (1., 1.5, .6, .03, .01),
                          1.25, 1.4, .53)
@@ -566,8 +566,8 @@ def test_gaussian_equivalent_uses_mtf10_and_preserves_measured_cache():
 @pytest.mark.parametrize('f10,unreliable', [(None, ()), (float('nan'), ()), (float('inf'), ()),
                                          (0., ()), (-1., ()), (1.4, ('mtf10',))])
 def test_gaussian_equivalent_never_invents_an_anchor(f10, unreliable):
-    from qt_dicom_viewer.core.bead_mtf import gaussian_equivalent_from_mtf10
-    from qt_dicom_viewer.model.mtf import BeadMtfResult, MtfAxisResult
+    from voxplane.core.bead_mtf import gaussian_equivalent_from_mtf10
+    from voxplane.model.mtf import BeadMtfResult, MtfAxisResult
     axis = MtfAxisResult((0., 1., 0.), (0., 1., 2.), (1., .5, .2), .8, f10, .53, unreliable)
     result = gaussian_equivalent_from_mtf10(BeadMtfResult(axis, axis, 0., 1., ()))
     assert result.x.mtf50 is None and result.x.mtf10 is None and result.x.mtf == ()
@@ -578,7 +578,7 @@ def test_gaussian_equivalent_never_invents_an_anchor(f10, unreliable):
 @pytest.mark.parametrize('sample', ['helical_slice11', 'qa_slice151'])
 def test_small_phantom_selections_match_complete_roi_and_preserve_validity(sample):
     from pathlib import Path
-    from qt_dicom_viewer.core.bead_mtf import compute_mtf_with_context
+    from voxplane.core.bead_mtf import compute_mtf_with_context
     with np.load(Path(__file__).parent/'fixtures/mtf/point_sources.npz') as data:
         image = data[sample].astype(float)
     reference = compute_point_source_mtf(image[16:81, 16:81], .1953125, .1953125,
@@ -600,7 +600,7 @@ def test_small_phantom_selections_match_complete_roi_and_preserve_validity(sampl
 
 
 def test_background_expansion_keeps_selected_peak_despite_brighter_neighbor():
-    from qt_dicom_viewer.core.bead_mtf import compute_mtf_with_context
+    from voxplane.core.bead_mtf import compute_mtf_with_context
     image = gaussian(rows=129, columns=129, row_spacing=.1, column_spacing=.1,
                      sigma_x=.2, sigma_y=.2)
     image[64, 89] = 5000  # Brighter outlier in the background ring, not the selected target.
@@ -612,7 +612,7 @@ def test_background_expansion_keeps_selected_peak_despite_brighter_neighbor():
 
 
 def test_background_expansion_rejects_image_edge_instead_of_padding():
-    from qt_dicom_viewer.core.bead_mtf import compute_mtf_with_context
+    from voxplane.core.bead_mtf import compute_mtf_with_context
     image = gaussian(rows=33, columns=33, row_spacing=.1, column_spacing=.1,
                      sigma_x=.3, sigma_y=.3)
     with pytest.raises(ValueError, match='影像边缘'):
@@ -620,7 +620,7 @@ def test_background_expansion_rejects_image_edge_instead_of_padding():
 
 
 def test_complete_selection_does_not_change_when_background_context_is_available():
-    from qt_dicom_viewer.core.bead_mtf import compute_mtf_with_context
+    from voxplane.core.bead_mtf import compute_mtf_with_context
     image = gaussian(rows=129, columns=129, row_spacing=.1, column_spacing=.1,
                      sigma_x=.2, sigma_y=.2)
     roi = image[24:105, 24:105]

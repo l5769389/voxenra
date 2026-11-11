@@ -43,7 +43,7 @@ def assert_stable_tip(window, action, button, tip):
 @pytest.fixture
 def edge_scene(qt_app):
     view = QQuickView()
-    from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+    from voxplane.ui.svg_icon_provider import SvgIconProvider
     view.engine().addImageProvider("navigation", SvgIconProvider())
     errors = []
     view.engine().warnings.connect(lambda es: errors.extend(e.toString() for e in es))

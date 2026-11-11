@@ -8,10 +8,10 @@ import pytest
 from PySide6.QtTest import QTest
 from PySide6.QtCore import QPointF
 
-from qt_dicom_viewer.ui.controller.dicom_results_controller import (
+from voxplane.ui.controller.dicom_results_controller import (
     DicomResultsController,
 )
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.model import DicomFolderScanSnapshot
 from test_dicom_results import source as source, segmentation, freehand
 from test_dicom_tags import qt_app as qt_app, wait_until
 from test_pacs_qml import scene as scene
@@ -22,7 +22,7 @@ from test_tag_qml import find, click
 def temporal_source(source, tmp_path, request):
     """Real scanned phase sources with identical geometry and distinct SOPs."""
     from pydicom.uid import generate_uid
-    from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
+    from voxplane.core.dicom_scanner import DicomFolderScanner
 
     original, _ = source
     folder = tmp_path / "temporal"
@@ -48,7 +48,7 @@ def temporal_source(source, tmp_path, request):
 
 
 def phase_workspace(series, phase_index):
-    from qt_dicom_viewer.core.volume_manager import VolumeManager
+    from voxplane.core.volume_manager import VolumeManager
 
     volume = VolumeManager().get_or_build(series, series.phase_identifiers[phase_index])
     workspace, catalog, result = workspace_for(series, volume)
@@ -67,8 +67,8 @@ def phase_workspace(series, phase_index):
 
 @pytest.mark.parametrize("phase_index", [0, 1, 2])
 def test_four_d_snapshot_preserves_phase_source_and_saved_index(temporal_source, phase_index):
-    from qt_dicom_viewer.core.workspace_state import dumps, loads
-    from qt_dicom_viewer.ui.controller.dicom_results_controller import capture_dicom_results
+    from voxplane.core.workspace_state import dumps, loads
+    from voxplane.ui.controller.dicom_results_controller import capture_dicom_results
 
     workspace, catalog, result = phase_workspace(temporal_source, phase_index)
     restored = loads(dumps(result.record))
@@ -90,7 +90,7 @@ def test_four_d_mask_target_uses_phase_identifier(qt_app, temporal_source, phase
 
 
 def test_mpr_exchange_uses_native_source_in_linked_temporal_series(qt_app, temporal_source):
-    from qt_dicom_viewer.ui.controller.dicom_results_controller import capture_dicom_results
+    from voxplane.ui.controller.dicom_results_controller import capture_dicom_results
 
     native_instances = temporal_source.phases[1].instances
     series = replace(
@@ -113,9 +113,9 @@ def test_mpr_exchange_uses_native_source_in_linked_temporal_series(qt_app, tempo
 
 
 def test_four_d_seg_export_import_roundtrip_keeps_source_phase(qt_app, temporal_source, tmp_path):
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.core.segmentation_masks import mask_record
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.core.segmentation_masks import mask_record
     from test_segmentation_import import full_mask
 
     series = temporal_source
@@ -187,7 +187,7 @@ def test_background_snapshot_survives_edit_tab_close_and_preserves_metrics(
     series, volume = source
     workspace, catalog, r = workspace_for(series, volume)
     controller = DicomResultsController(workspace, catalog)
-    import qt_dicom_viewer.core.dicom_results as module
+    import voxplane.core.dicom_results as module
 
     actual = module.write_results
     entered, release = Event(), Event()
@@ -252,7 +252,7 @@ def test_actual_export_panel_buttons_write_seg_and_linked_sr(
     tab.voiController.records = [r.record]
     tab.voiController.evaluations = {r.record["id"]: r.evaluation}
     monkeypatch.setattr(
-        "qt_dicom_viewer.ui.controller.dicom_results_controller.QFileDialog.getExistingDirectory",
+        "voxplane.ui.controller.dicom_results_controller.QFileDialog.getExistingDirectory",
         lambda *args: str(tmp_path),
     )
     window.resize(1280, 720)
@@ -292,9 +292,9 @@ def test_actual_export_panel_buttons_write_seg_and_linked_sr(
 def test_real_mpr_projection_export_rejected_even_after_disabling(
     qt_app, source, tmp_path
 ):
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.model import ImagePoint, MeasurementKind
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import ImagePoint, MeasurementKind
 
     series, _ = source
     app = AppController(DicomImageProvider(), settings_path=False)
@@ -323,16 +323,16 @@ def test_real_mpr_projection_export_rejected_even_after_disabling(
         assert export.export_to(tmp_path)
         wait_until(lambda: not export.busy)
         assert export.isError and not export.resultPath
-        assert not list(tmp_path.glob("voxenra-results-*"))
+        assert not list(tmp_path.glob("voxplane-results-*"))
     finally:
         app.shutdown()
 
 
 def test_four_d_planar_export_references_recorded_phase_after_switch(qt_app, temporal_source, tmp_path):
-    from qt_dicom_viewer.ui.app_controller import AppController
-    from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-    from qt_dicom_viewer.model import ImagePoint, MeasurementKind
-    from qt_dicom_viewer.ui.controller.dicom_results_controller import capture_dicom_results
+    from voxplane.ui.app_controller import AppController
+    from voxplane.ui.dicom_image_provider import DicomImageProvider
+    from voxplane.model import ImagePoint, MeasurementKind
+    from voxplane.ui.controller.dicom_results_controller import capture_dicom_results
 
     series = temporal_source
     app = AppController(DicomImageProvider(), settings_path=False)
@@ -382,6 +382,6 @@ def test_four_d_planar_export_rejects_unresolved_or_projected_context(qt_app, te
         export.export_to(tmp_path)
         wait_until(lambda: not export.busy)
         assert export.isError and not export.resultPath
-        assert not list(tmp_path.glob('voxenra-results-*'))
+        assert not list(tmp_path.glob('voxplane-results-*'))
     finally:
         export.shutdown()

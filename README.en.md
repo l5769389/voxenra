@@ -1,21 +1,23 @@
 <p align="center">
-  <img src="src/qt_dicom_viewer/qml/assets/brand/voxenra-mark.svg" width="80" alt="Voxenra logo">
+  <img src="src/voxplane/qml/assets/brand/voxplane-mark.svg" width="80" alt="VoxPlane logo">
 </p>
 
-# Voxenra
+# VoxPlane
 
 [简体中文](README.md) | [English](README.en.md)
 
-[Product website](https://l5769389.github.io/voxenra/en-us/) · [Online manual](https://l5769389.github.io/voxenra/en/)
+[Product website](https://junforge-dev.github.io/voxplane/en-us/) · [Online manual](https://junforge-dev.github.io/voxplane/en/)
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/l5769389/voxenra/releases/download/v2.5.0/Voxenra-2.5.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/l5769389/voxenra/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/l5769389/voxenra/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-portable.exe) · [Releases](https://github.com/l5769389/voxenra/releases)
+[macOS · Apple Silicon](https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-portable.exe) · [Releases](https://github.com/junforge-dev/voxplane/releases)
 
+
+VoxPlane is the new name for Voxenra, with the same logo. Version 2.5.0 and earlier require a one-time manual installation. First launch copies existing settings and workspace records while preserving the originals. See [upgrade notes](docs/releases/v2.6.0.md).
 
 ## Contributors and acknowledgments
 
-Thank you to everyone who contributes to and supports Voxenra.
+Thank you to everyone who contributes to and supports VoxPlane.
 
 <table>
 <tr>
@@ -56,7 +58,7 @@ Manage multiple PACS connections in **Settings → Sources**, search by patient,
 - **DICOMweb:** QIDO-RS queries and WADO-RS downloads, with no authentication, Basic, or Bearer.
 - **Traditional DICOM (DIMSE):** C-ECHO testing, Study Root C-FIND queries, C-MOVE retrieval, and a temporary C-STORE receiver during import. Configure the PACS address and remote AE, local receiving AE, listening IPv4 address, and port; register a reachable destination on the PACS as well.
 
-[![Traditional DICOM configuration, query, and series import](docs/screenshots/en/52-dimse-import.gif)](docs/screenshots/en/51-dimse-settings.png)
+[![Traditional DICOM configuration, query, and series import](docs/screenshots/en/52-dimse-import-voxplane-2.6.0.gif)](docs/screenshots/en/51-dimse-settings-voxplane-2.6.0.png)
 
 Native UI demonstration using a real local DIMSE service and synthetic DICOM data. C-ECHO verifies connectivity; query permissions and the return path require an actual series import. Current DIMSE support excludes C-GET, DICOM TLS, upload, and a permanent receiver. See [PACS configuration](docs/pacs.md) and [integration scope](docs/validation/dicom-dimse.md).
 
@@ -68,11 +70,11 @@ Go from CT viewing to editable organ segmentation in the same workspace:
 - **Run locally**: Connect an existing TotalSegmentator environment and process the full CT volume of the current phase using available CUDA, Apple MPS, or CPU devices.
 - **Keep editing**: Review overlays in three planes, refine with paint/erase, toggle visibility, undo, and save a workspace or export SEG / NRRD.
 
-[![Voxenra automatic segmentation workflow: synthetic phantom selection, failure, retry and successful import](docs/screenshots/en/49-ai-workflow-2.1.1.gif)](docs/screenshots/en/48-ai-complete-2.1.1.png)
+[![VoxPlane automatic segmentation workflow: synthetic phantom selection, failure, retry and successful import](docs/screenshots/en/49-ai-workflow-voxplane-2.6.0.gif)](docs/screenshots/en/48-ai-complete-voxplane-2.6.0.png)
 
 Recorded in the current application using a synthetic phantom and simulated inference output to demonstrate selection, failure, retry and successful import; this does not indicate model accuracy or runtime. Install TotalSegmentator and its CT fast model separately, then check the environment in **Settings → AI**. Review and refine automatic results.
 
-[Setup and workflow guide](https://l5769389.github.io/voxenra/en/segmentation.html) · [TotalSegmentator project](https://github.com/wasserth/TotalSegmentator)
+[Setup and workflow guide](https://junforge-dev.github.io/voxplane/en/segmentation.html) · [TotalSegmentator project](https://github.com/wasserth/TotalSegmentator)
 
 ## 2D viewing and comparison
 
@@ -82,14 +84,14 @@ Switch each viewport between original slices and axial/coronal/sagittal reconstr
 
 **Pinch zoom** works across image views without changing tools, anchored at the finger midpoint on touchscreens or the pointer on trackpads. With a series selected, **D / X / T / Y** open 2D / MPR / 3D / CPR; context menus show available shortcuts. **A** opens annotations and **E** export. Active tool menus, text fields, and dialogs take priority. **Q** resets the current view and clears its corresponding measurements and annotations; save results first.
 
-[![Series context menu and view shortcuts](docs/screenshots/en/65-view-shortcuts-2.5.0.png)](https://l5769389.github.io/voxenra/en/workspace.html#step-6)
+[![Series context menu and view shortcuts](docs/screenshots/en/65-view-shortcuts-voxplane-2.6.0.png)](https://junforge-dev.github.io/voxplane/en/workspace.html#step-6)
 
 **Compare 2–4 series** with separate switches for scrolling, windowing, zoom, and other display operations. Re-enabling a sync option uses the selected viewport as its source. Compatible patient spaces support position linking, reference lines, and Alt-click location; relative-progress mode compares series with different slice counts. MR defaults to independent windowing and inversion. Neither linking mode performs automatic registration.
 
 <table>
 <tr>
-<td width="50%"><b>MR viewing</b><br><a href="docs/screenshots/07-mr-reading.png"><img src="docs/screenshots/07-mr-reading.png" alt="MR viewing" width="100%"></a></td>
-<td width="50%"><b>Custom 2D layout</b><br><a href="docs/screenshots/10-2d-layout.png"><img src="docs/screenshots/10-2d-layout.png" alt="Custom 2D layout" width="100%"></a></td>
+<td width="50%"><b>MR viewing</b><br><a href="docs/screenshots/07-mr-reading-voxplane-2.6.0.png"><img src="docs/screenshots/07-mr-reading-voxplane-2.6.0.png" alt="MR viewing" width="100%"></a></td>
+<td width="50%"><b>Custom 2D layout</b><br><a href="docs/screenshots/10-2d-layout-voxplane-2.6.0.png"><img src="docs/screenshots/10-2d-layout-voxplane-2.6.0.png" alt="Custom 2D layout" width="100%"></a></td>
 </tr>
 </table>
 
@@ -97,11 +99,11 @@ Switch each viewport between original slices and axial/coronal/sagittal reconstr
 
 Tabs prioritize the original series description on the first line, with patient and available study information below. Missing fields are omitted; hover for full source details. Identity-hiding settings also cover the new reading labels. Window values consistently use **WW → WL**. Star CT presets to place favorites first; starring does not apply window values, and the preset list scrolls independently.
 
-![CT preset favorites and the independently scrolling list](docs/screenshots/en/55-window-favorites-2.4.0.png)
+![CT preset favorites and the independently scrolling list](docs/screenshots/en/55-window-favorites-voxplane-2.6.0.png)
 
 Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F12 on some Mac keyboards), to hide both side panels and button rails. Repeat to restore their widths and expanded states. This affects only the current window and is independent of single-viewport enlargement and system full screen.
 
-![Maximize and restore the reading area](docs/screenshots/en/54-focus-view.gif)
+![Maximize and restore the reading area](docs/screenshots/en/54-focus-view-voxplane-2.6.0.gif)
 
 ## MPR, CPR, 3D, and 4D
 
@@ -110,39 +112,39 @@ Click **Maximize image area** at the end of the tab bar, or press **F12** (Fn+F1
 - **3D:** CT, MR, and PET volume rendering with presets, windowing, orientation, rotation, and region cropping; 20 CT presets and CT bed removal.
 - **4D:** synchronized multi-phase CT playback, with segmentation and VOI stored by phase; separate slice playback within the current phase. The image and exported PNG identify the displayed phase.
 
-![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/61-cpr-reference-2.4.0.png)
+![CPR: reference planes, curved image, and perpendicular cross-section](docs/screenshots/en/61-cpr-reference-voxplane-2.6.0.png)
 
 **Dual-series MPR comparison** keeps position, rotation, CT windowing, and physical display-scale switches visible. Groups start independently. Enabling window/scale sync uses the selected group; position/rotation linking preserves existing offsets and synchronizes subsequent changes. Double-click to enlarge corresponding planes side by side. Linking does not perform automatic registration.
 
 **MPR layouts:** switch between three-plane and 3D arrangements, maximize a viewport, and remember the layout.
 
-![MPR four-up view and layout switching](docs/screenshots/11-mpr-layouts.gif)
+![MPR four-up view and layout switching](docs/screenshots/11-mpr-layouts-voxplane-2.6.0.gif)
 
 <table>
 <tr>
-<td width="50%"><b>Oblique MPR</b><br><a href="docs/screenshots/14-oblique-mpr.png"><img src="docs/screenshots/14-oblique-mpr.png" alt="Rotated oblique planes" width="100%"></a></td>
-<td width="50%"><b>Dual-series MPR</b><br><a href="docs/screenshots/09-mpr-compare.png"><img src="docs/screenshots/09-mpr-compare.png" alt="Linked three-plane comparison" width="100%"></a></td>
+<td width="50%"><b>Oblique MPR</b><br><a href="docs/screenshots/14-oblique-mpr-voxplane-2.6.0.png"><img src="docs/screenshots/14-oblique-mpr-voxplane-2.6.0.png" alt="Rotated oblique planes" width="100%"></a></td>
+<td width="50%"><b>Dual-series MPR</b><br><a href="docs/screenshots/09-mpr-compare-voxplane-2.6.0.png"><img src="docs/screenshots/09-mpr-compare-voxplane-2.6.0.png" alt="Linked three-plane comparison" width="100%"></a></td>
 </tr>
 </table>
 
 **3D presets and rotation**
 
-![CT volume presets and rotation](docs/screenshots/04-volume-presets.gif)
+![CT volume presets and rotation](docs/screenshots/04-volume-presets-voxplane-2.6.0.gif)
 
 **4D playback**
 
-![Synchronized multi-phase CT playback](docs/screenshots/03-4d-playback.gif)
+![Synchronized multi-phase CT playback](docs/screenshots/03-4d-playback-voxplane-2.6.0.gif)
 
 ## PET/CT fusion
 
 View CT, PET, fused planes, and whole-volume MIP together. Adjust orientation, color maps, and blending; perform manual rigid registration. PET provides SUV or source activity units when metadata allows, with VOI/threshold statistics computed from quantitative source data in the slice views. Fused 3D has separate CT and PET display controls.
 
-![PET/CT plane and blend controls](docs/screenshots/05-pet-ct-fusion.gif)
+![PET/CT plane and blend controls](docs/screenshots/05-pet-ct-fusion-voxplane-2.6.0.gif)
 
 <table>
 <tr>
-<td width="50%"><b>2D fusion</b><br><a href="docs/screenshots/05-pet-ct-fusion.png"><img src="docs/screenshots/05-pet-ct-fusion.png" alt="CT, PET, fused, and MIP views" width="100%"></a></td>
-<td width="50%"><b>3D fusion</b><br><a href="docs/screenshots/06-fusion-3d.png"><img src="docs/screenshots/06-fusion-3d.png" alt="CT anatomy and PET signal in 3D" width="100%"></a></td>
+<td width="50%"><b>2D fusion</b><br><a href="docs/screenshots/05-pet-ct-fusion-voxplane-2.6.0.png"><img src="docs/screenshots/05-pet-ct-fusion-voxplane-2.6.0.png" alt="CT, PET, fused, and MIP views" width="100%"></a></td>
+<td width="50%"><b>3D fusion</b><br><a href="docs/screenshots/06-fusion-3d-voxplane-2.6.0.png"><img src="docs/screenshots/06-fusion-3d-voxplane-2.6.0.png" alt="CT anatomy and PET signal in 3D" width="100%"></a></td>
 </tr>
 </table>
 
@@ -158,20 +160,20 @@ Copy and paste completed measurements or annotations with **⌘C / ⌘V (Windows
 
 Unselected ROIs use compact labels and expand their statistics when selected. Metrics wait for enough valid points. Partly out-of-image ROIs use valid pixels for intensity statistics while retaining their full drawn area and dimensions.
 
-![Measurement tools and grouped results](docs/screenshots/en/63-measurement-2.5.0.png)
+![Measurement tools and grouped results](docs/screenshots/en/63-measurement-voxplane-2.6.0.png)
 
 **Curve measurement.** Click at least three control points, then press Enter or double-click to measure the physical arc length of the smooth path.
 
-![Curve measurement and control points](docs/screenshots/33-curve-measurement.gif)
+![Curve measurement and control points](docs/screenshots/33-curve-measurement-voxplane-2.6.0.gif)
 
 **Segmentation refinement:** paint and erase with millimeter or view-relative diameters, on the current slice or with a 3D spherical brush.
 
-![MR segmentation painting, erasing, undo and redo](docs/screenshots/38-segmentation-refinement.gif)
+![MR segmentation painting, erasing, undo and redo](docs/screenshots/38-segmentation-refinement-voxplane-2.6.0.gif)
 
 <table>
 <tr>
-<td width="50%"><b>Associated results import</b><br><a href="docs/screenshots/33-associated-import.png"><img src="docs/screenshots/33-associated-import.png" alt="Import SEG / NRRD associated with the current image" width="100%"></a></td>
-<td width="50%"><b>Segmentation and report export</b><br><a href="docs/screenshots/32-structured-report.png"><img src="docs/screenshots/32-structured-report.png" alt="SEG, SR and NRRD export controls" width="100%"></a></td>
+<td width="50%"><b>Associated results import</b><br><a href="docs/screenshots/33-associated-import-voxplane-2.6.0.png"><img src="docs/screenshots/33-associated-import-voxplane-2.6.0.png" alt="Import SEG / NRRD associated with the current image" width="100%"></a></td>
+<td width="50%"><b>Segmentation and report export</b><br><a href="docs/screenshots/32-structured-report-voxplane-2.6.0.png"><img src="docs/screenshots/32-structured-report-voxplane-2.6.0.png" alt="SEG, SR and NRRD export controls" width="100%"></a></td>
 </tr>
 </table>
 
@@ -182,8 +184,8 @@ Unselected ROIs use compact labels and expand their statistics when selected. Me
 
 <table>
 <tr>
-<td width="50%"><b>CT water phantom QA</b><br><a href="docs/screenshots/en/68-water-qa-2.6.0.png"><img src="docs/screenshots/en/68-water-qa-2.6.0.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
-<td width="50%"><b>Point-source MTF</b><br><a href="docs/screenshots/en/67-mtf-analysis-2.5.0.png"><img src="docs/screenshots/en/67-mtf-analysis-2.5.0.png" alt="Independent MTF curve and spatial resolution analysis" width="100%"></a></td>
+<td width="50%"><b>CT water phantom QA</b><br><a href="docs/screenshots/en/68-water-qa-voxplane-2.6.0.png"><img src="docs/screenshots/en/68-water-qa-voxplane-2.6.0.png" alt="CT number, noise, and uniformity" width="100%"></a></td>
+<td width="50%"><b>Point-source MTF</b><br><a href="docs/screenshots/en/67-mtf-analysis-voxplane-2.6.0.png"><img src="docs/screenshots/en/67-mtf-analysis-voxplane-2.6.0.png" alt="Independent MTF curve and spatial resolution analysis" width="100%"></a></td>
 </tr>
 </table>
 
@@ -193,38 +195,38 @@ Import source DICOM images on the left and associated SEG / NRRD masks through *
 
 Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Opening a series activates an existing tab of the same view type and preserves its reading state, or creates a tab if none matches. If you close a tab accidentally, choose **Reopen closed tab** from the tab-bar context menu, or press Ctrl+Shift+T / ⇧⌘T. The session remembers the last 20 closed, fully loaded reading tabs without edits. Workspace files retain completed editing results from closed tabs. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
 
-![Offline manual and workflow demos](docs/screenshots/en/74-offline-manual-2.6.0.png)
+![Offline manual and workflow demos](docs/screenshots/en/74-offline-manual-voxplane-2.6.0.png)
 
 <table>
 <tr>
-<td width="50%"><b>Imported workspace</b><br><a href="docs/screenshots/en/69-workspace-home-2.6.0.png"><img src="docs/screenshots/en/69-workspace-home-2.6.0.png" alt="Open selected series or import more images" width="100%"></a></td>
-<td width="50%"><b>PACS browser</b><br><a href="docs/screenshots/16-pacs-browser.png"><img src="docs/screenshots/16-pacs-browser.png" alt="PACS study query and series download" width="100%"></a></td>
+<td width="50%"><b>Imported workspace</b><br><a href="docs/screenshots/en/69-workspace-home-voxplane-2.6.0.png"><img src="docs/screenshots/en/69-workspace-home-voxplane-2.6.0.png" alt="Open selected series or import more images" width="100%"></a></td>
+<td width="50%"><b>PACS browser</b><br><a href="docs/screenshots/16-pacs-browser-voxplane-2.6.0.png"><img src="docs/screenshots/16-pacs-browser-voxplane-2.6.0.png" alt="PACS study query and series download" width="100%"></a></td>
 </tr>
 <tr>
-<td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs.png"><img src="docs/screenshots/13-detached-tabs.png" alt="Detach a tab into another window" width="100%"></a></td>
-<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/72-workspace-2.6.0.png"><img src="docs/screenshots/en/72-workspace-2.6.0.png" alt="Create, open, and save a workspace" width="100%"></a></td>
+<td><b>Detached window</b><br><a href="docs/screenshots/13-detached-tabs-voxplane-2.6.0.png"><img src="docs/screenshots/13-detached-tabs-voxplane-2.6.0.png" alt="Detach a tab into another window" width="100%"></a></td>
+<td><b>Workspace recovery</b><br><a href="docs/screenshots/en/72-workspace-voxplane-2.6.0.png"><img src="docs/screenshots/en/72-workspace-voxplane-2.6.0.png" alt="Create, open, and save a workspace" width="100%"></a></td>
 </tr>
 </table>
 
 The image-source dialog separates **Favorite folders** and **Recent** on the left from file browsing on the right. The star beside the path saves a folder. Click a recent record to open it, clear the selected row, or choose **Clear all**; source files and favorites remain intact. The **⋯** beside Favorites manages names, paths, and ordering, with changes retained after restart.
 
-![Quick access to favorite folders](docs/screenshots/en/66-image-sources-2.5.0.png)
+![Quick access to favorite folders](docs/screenshots/en/66-image-sources-voxplane-2.6.0.png)
 
 ## Appearance and controls
 
 Choose **Follow system** in **Settings → Theme & language** to follow the operating system’s light or dark appearance. You can also select a fixed dark, neutral gray, or light theme. Neutral gray combines graphite panels with restrained cyan accents. Theme changes apply immediately and persist after restart; image windowing and color maps remain independent.
 
-![MR viewing in the neutral gray theme](docs/screenshots/37-theme-graphite.png)
+![MR viewing in the neutral gray theme](docs/screenshots/37-theme-graphite-voxplane-2.6.0.png)
 
-[Dark theme](docs/screenshots/25-theme-dark.png) · [Light theme](docs/screenshots/26-theme-light.png)
+[Dark theme](docs/screenshots/25-theme-dark-voxplane-2.6.0.png) · [Light theme](docs/screenshots/26-theme-light-voxplane-2.6.0.png)
 
 Adjust interface size, mouse bindings, wheel direction, and tool shortcuts in Settings. Button labels show the current shortcuts. Number keys select items in supported menus. Conflicting or reserved shortcuts are rejected. Edit corner information directly with sample values, drag within or between corners, and add or remove fields; changes save on release. Crosshairs, scales, measurement styles, and ROI metrics remain configurable. Chinese, English, and Brazilian Portuguese are built in, with support for additional local JSON language packs. Independent switches show labels for sidebar actions and right-side tools. Privacy options control identity overlays in new views and let you clear recent workspace entries.
 
-![Theme, language and independent button labels](docs/screenshots/en/62-appearance-2.4.0.png)
+![Theme, language and independent button labels](docs/screenshots/en/62-appearance-voxplane-2.6.0.png)
 
-![Direct corner editing and moves between corners](docs/screenshots/en/58-corner-editor-2.1.5.gif)
+![Direct corner editing and moves between corners](docs/screenshots/en/58-corner-editor-voxplane-2.6.0.gif)
 
-[Mouse bindings and tool shortcuts](docs/screenshots/40-input-settings.png)
+[Mouse bindings and tool shortcuts](docs/screenshots/40-input-settings-voxplane-2.6.0.png)
 
 ### Arrange tools for each viewing task
 
@@ -232,11 +234,11 @@ In **Settings → Toolbars**, arrange left-side view shortcuts and right-side **
 
 Drag icon tiles to reorder or move between groups, or select a tile and use move/transfer controls. Common tools are limited to seven. Changes remain a draft until **Save** applies them to all windows and persists them; **Cancel** discards the draft, and **Restore current default** affects only the current configuration. File, PACS, and bottom system entries stay fixed.
 
-![Choose a view category, drag tools between Common and More, and save](docs/screenshots/en/53-toolbar-customization.gif)
+![Choose a view category, drag tools between Common and More, and save](docs/screenshots/en/53-toolbar-customization-voxplane-2.6.0.gif)
 
-Published packages support verified downloads and in-app updates. Update prompts show a concise summary in the selected interface language, with access to full release notes. [Update dialog](docs/screenshots/en/43-update-summary.png)
+Published packages support verified downloads and in-app updates. Update prompts show a concise summary in the selected interface language, with access to full release notes. [Update settings](docs/screenshots/en/43-update-settings-voxplane-2.6.0.png)
 
-[Series export completion](docs/screenshots/en/46-export-complete-2.1.1.png) · [Automatic segmentation retry](docs/screenshots/en/47-ai-error-2.1.1.png)
+[Series export completion](docs/screenshots/en/46-export-complete-voxplane-2.6.0.png) · [Automatic segmentation retry](docs/screenshots/en/47-ai-error-voxplane-2.6.0.png)
 
 [View the interface gallery](docs/screenshots/README.md)
 
@@ -250,8 +252,8 @@ Published packages support verified downloads and in-app updates. Update prompts
 
 ## Documentation and running from source
 
-[Online manual](https://l5769389.github.io/voxenra/en/) · [Image support](docs/image-support.md) · [Local import](docs/local-import.md) · [PACS](docs/pacs.md) · [PET and fusion](docs/pet-mpr-fusion.md) · [Segmentation and VOI](docs/mpr-segmentation-voi.md) · [Export](docs/export.md) · [Offline manual notes](docs/manual.md) · [Development and packaging](docs/packaging.md)
+[Online manual](https://junforge-dev.github.io/voxplane/en/) · [Image support](docs/image-support.md) · [Local import](docs/local-import.md) · [PACS](docs/pacs.md) · [PET and fusion](docs/pet-mpr-fusion.md) · [Segmentation and VOI](docs/mpr-segmentation-voi.md) · [Export](docs/export.md) · [Offline manual notes](docs/manual.md) · [Development and packaging](docs/packaging.md)
 
 ```bash
-uv run voxenra
+uv run voxplane
 ```

@@ -4,7 +4,7 @@ import pydicom
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtTest import QTest
 
-from qt_dicom_viewer.model import DicomFolderScanSnapshot
+from voxplane.model import DicomFolderScanSnapshot
 from test_dicom_tags import qt_app, make_series, wait_until
 from test_pacs_qml import scene
 from test_series_sidebar import right_click
@@ -36,7 +36,7 @@ def test_export_dialog_defaults_formats_and_right_click_whole_series(scene, tmp_
     output = Path(app.seriesExportController.outputDirectory)
     assert len(list(output.glob("*.dcm"))) == 2
     revealed = []
-    monkeypatch.setattr('qt_dicom_viewer.ui.controller.series_export_controller.reveal_path', lambda path: revealed.append(path) or True)
+    monkeypatch.setattr('voxplane.ui.controller.series_export_controller.reveal_path', lambda path: revealed.append(path) or True)
     QTest.qWait(30)
     link = find(window, 'exportOutputDirectory')
     assert link.property('text') == str(output)

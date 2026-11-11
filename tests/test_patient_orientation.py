@@ -1,6 +1,6 @@
 import pytest
 
-from qt_dicom_viewer.core.patient_orientation import (
+from voxplane.core.patient_orientation import (
     ImageEdgeDirectionLabels,
     displayed_image_edge_labels,
     patient_direction_to_label,

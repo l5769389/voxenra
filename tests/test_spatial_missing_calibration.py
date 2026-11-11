@@ -1,8 +1,8 @@
 """Display-only fallback grids must never become fabricated millimetres."""
 import pytest
 from PySide6.QtTest import QTest
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.model import MeasurementKind
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.model import MeasurementKind
 from spatial_audit.cases import CASES, generate
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
@@ -39,7 +39,7 @@ def test_uncalibrated_grayscale_cannot_create_physical_measurement(scene,tmp_pat
             note=find(window,'measurementCalibrationWarning')
             assert note.isVisible() and note.width()>120
             assert ('pixel spacing' if language=='en-US' else '像素间距') in note.property('text')
-            output=os.environ.get('VOXENRA_SPATIAL_QML_OUTPUT')
+            output=os.environ.get('VOXPLANE_SPATIAL_QML_OUTPUT')
             if output:
                 dest=Path(output);dest.mkdir(parents=True,exist_ok=True)
                 assert window.grabWindow().save(str(dest/f'calibration-{language}-{theme}.png'))

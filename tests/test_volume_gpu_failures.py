@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import pytest
 from vtkmodules.vtkCommonCore import vtkOutputWindow
 
-from qt_dicom_viewer.ui.volume_render_backend import VolumeRenderBackend
+from voxplane.ui.volume_render_backend import VolumeRenderBackend
 
 
 def backend():

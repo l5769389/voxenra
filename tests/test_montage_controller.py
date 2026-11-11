@@ -5,8 +5,8 @@ from pathlib import Path
 
 import numpy as np
 
-from qt_dicom_viewer.application.series_catalog import SeriesCatalog
-from qt_dicom_viewer.model import (
+from voxplane.application.series_catalog import SeriesCatalog
+from voxplane.model import (
     DicomFolderScanSnapshot,
     DicomInstanceMeta,
     DicomSeriesRecord,
@@ -23,12 +23,12 @@ from qt_dicom_viewer.model import (
     ViewportConfig,
     WindowLevel,
 )
-from qt_dicom_viewer.ui.controller.tab.tool_controller import ToolController
-from qt_dicom_viewer.ui.controller.viewport.image_2d.montage_viewport_controller import (
+from voxplane.ui.controller.tab.tool_controller import ToolController
+from voxplane.ui.controller.viewport.image_2d.montage_viewport_controller import (
     MontageViewportController,
 )
-from qt_dicom_viewer.ui.controller.workspace_controller import WorkspaceController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.controller.workspace_controller import WorkspaceController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 
 
 def _series_meta(slice_count: int = 16) -> SeriesDisplayMeta:

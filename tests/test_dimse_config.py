@@ -1,14 +1,14 @@
 """Protocol profile validation, migration and connection-feedback isolation."""
 import json
 import pytest
-from qt_dicom_viewer.pacs.config import PacsProfile, PacsConfigStore
-from qt_dicom_viewer.ui.controller.pacs_controller import PacsController
+from voxplane.pacs.config import PacsProfile, PacsConfigStore
+from voxplane.ui.controller.pacs_controller import PacsController
 from test_dicom_tags import qt_app
 
 
 def dimse_profile(**overrides):
     return dict(name="Local DIMSE", protocol="dimse", host="127.0.0.1", port=4242,
-                called_ae="ORTHANC", calling_ae="VOXENRA", listen_host="127.0.0.1",
+                called_ae="ORTHANC", calling_ae="VOXPLANE", listen_host="127.0.0.1",
                 listen_port=11112, **overrides)
 
 

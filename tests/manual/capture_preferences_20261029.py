@@ -7,11 +7,11 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtTest import QTest
 from PySide6.QtQml import QQmlApplicationEngine
 from shiboken6 import delete
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.controller.panel_controller import PanelController
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
-from qt_dicom_viewer.ui.svg_icon_provider import SvgIconProvider
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.controller.panel_controller import PanelController
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.ui.dicom_image_provider import DicomImageProvider
+from voxplane.ui.svg_icon_provider import SvgIconProvider
 from test_dicom_tags import wait_until
 from test_tag_qml import find
 from test_corner_transfer import drag_between
@@ -22,7 +22,7 @@ qt.setQuitOnLastWindowClosed(False)
 locale=sys.argv[1]
 output=Path('docs/screenshots') / ('en' if locale=='en-US' else '')
 output.mkdir(parents=True,exist_ok=True)
-with TemporaryDirectory(prefix='Voxenra-demo-',dir='/tmp') as temp:
+with TemporaryDirectory(prefix='VoxPlane-demo-',dir='/tmp') as temp:
     folder=Path(temp).resolve()
     provider=DicomImageProvider()
     app=AppController(provider,settings_path=folder/'settings.json',pacs_config_path=folder/'pacs.json',pacs_import_root=folder/'imports')
@@ -50,7 +50,7 @@ with TemporaryDirectory(prefix='Voxenra-demo-',dir='/tmp') as temp:
     engine=QQmlApplicationEngine()
     engine.addImageProvider('dicom',provider);engine.addImageProvider('navigation',SvgIconProvider())
     engine.rootContext().setContextProperty('appController',app)
-    engine.load(QUrl.fromLocalFile(str(Path('src/qt_dicom_viewer/qml/Main.qml').resolve())))
+    engine.load(QUrl.fromLocalFile(str(Path('src/voxplane/qml/Main.qml').resolve())))
     window=engine.rootObjects()[0];window.resize(1280,900);window.show();window.requestActivate();QTest.qWaitForWindowActive(window)
     app.workspaceController.openSettings();app.settingsController.selectCategory('corners')
     source=find(window,'cornerDrag-topLeft-0');reveal_setting(window,source)

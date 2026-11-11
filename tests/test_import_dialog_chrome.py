@@ -9,7 +9,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QDialog, QPushButton
 from shiboken6 import delete
 
-from qt_dicom_viewer.ui.dialogs.local_import_dialog import LocalImportDialog
+from voxplane.ui.dialogs.local_import_dialog import LocalImportDialog
 from test_bulk_import import task_dialog
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
@@ -88,7 +88,7 @@ def caption_close(window):
     return lambda: user32.SendMessageW(hwnd, 0x112, 0xF060, 0)  # WM_SYSCOMMAND / SC_CLOSE
 
 
-@pytest.mark.skipif(os.environ.get("VOXENRA_NATIVE_QA") != "1"
+@pytest.mark.skipif(os.environ.get("VOXPLANE_NATIVE_QA") != "1"
                     or sys.platform not in ("darwin", "win32"),
                     reason="Requires a native macOS or Windows desktop")
 def test_native_import_caption_controls_and_result_close(scene, tmp_path):

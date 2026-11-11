@@ -14,10 +14,10 @@ import pytest
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian
 
-from qt_dicom_viewer.pacs.client import Cancelled, DicomWebClient, PacsError, study_filters
-from qt_dicom_viewer.pacs.config import PacsConfigStore, PacsProfile
-from qt_dicom_viewer.pacs.importer import import_series
-from qt_dicom_viewer.ui.controller.pacs_controller import PacsController
+from voxplane.pacs.client import Cancelled, DicomWebClient, PacsError, study_filters
+from voxplane.pacs.config import PacsConfigStore, PacsProfile
+from voxplane.pacs.importer import import_series
+from voxplane.ui.controller.pacs_controller import PacsController
 from test_dicom_tags import qt_app, wait_until
 
 STUDY = "1.2.826.0.1.3680043.10.999.10"
@@ -342,7 +342,7 @@ def test_multipart_preserves_binary_boundary_prefixes_and_chunk_edges(tmp_path):
 
 def test_redirect_does_not_forward_credentials_to_other_origin():
     from urllib.request import Request
-    from qt_dicom_viewer.pacs.client import _SameOriginRedirect
+    from voxplane.pacs.client import _SameOriginRedirect
     redirect = _SameOriginRedirect()
     request = Request("https://pacs.example/dicomweb", headers={"Authorization": "Bearer private"})
     for target in ("http://pacs.example/dicomweb", "https://other.example/", "https://pacs.example:8443/"):

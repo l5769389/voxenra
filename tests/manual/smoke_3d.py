@@ -23,12 +23,12 @@ from PySide6.QtCore import QPoint, QPointF, QTimer, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from qt_dicom_viewer.app import bind_controller
-from qt_dicom_viewer.core.dicom_scanner import _read_instance, _build_series_record
-from qt_dicom_viewer.core.volume_view import VolumeViewState
-from qt_dicom_viewer.model.volume_models import VolumeDisplayState
-from qt_dicom_viewer.volume_presets import VOLUME_PRESETS, VOLUME_PRESET_BY_ID
-from qt_dicom_viewer.model import DicomFolderScanSnapshot, TabType
+from voxplane.app import bind_controller
+from voxplane.core.dicom_scanner import _read_instance, _build_series_record
+from voxplane.core.volume_view import VolumeViewState
+from voxplane.model.volume_models import VolumeDisplayState
+from voxplane.volume_presets import VOLUME_PRESETS, VOLUME_PRESET_BY_ID
+from voxplane.model import DicomFolderScanSnapshot, TabType
 
 
 def make_series(folder):
@@ -81,7 +81,7 @@ def main():
         Path(temp.name), 48, 48, 0, [series, second]))
     warnings = []
     engine.warnings.connect(lambda messages: warnings.extend(m.toString() for m in messages))
-    engine.load(files("qt_dicom_viewer").joinpath("qml/Main.qml"))
+    engine.load(files("voxplane").joinpath("qml/Main.qml"))
     assert engine.rootObjects(), "QML root failed to load"
     root = engine.rootObjects()[0]
     workspace = controller.workspaceController

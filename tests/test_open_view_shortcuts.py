@@ -13,7 +13,7 @@ from test_tag_qml import click, find
 @pytest.fixture
 def scene(sidebar_scene, monkeypatch):
     # Offscreen cannot embed the native VTK child; real data loading still runs.
-    from qt_dicom_viewer.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
+    from voxplane.ui.controller.viewport.volume_viewport_controller import VolumeViewportController
     monkeypatch.setattr(VolumeViewportController, 'ensureNativeView', lambda self: None)
     monkeypatch.setattr(VolumeViewportController, 'setNativeVisible', lambda self, visible: None)
     window, app, records, warnings = sidebar_scene
@@ -118,7 +118,7 @@ def test_remapping_updates_hints_and_active_menu_owns_colliding_key(scene):
 
 def test_four_d_key_keeps_temporal_series_and_loads_phase(scene, tmp_path):
     from test_four_d import _cross_series_four_d
-    from qt_dicom_viewer.model import DicomFolderScanSnapshot
+    from voxplane.model import DicomFolderScanSnapshot
     window, app, _, _ = scene
     source = tmp_path / 'temporal'
     source.mkdir()
@@ -158,7 +158,7 @@ def test_compact_sidebar_and_remapped_context_key(scene):
 
 def test_old_custom_binding_survives_new_view_defaults(qt_app, tmp_path):
     import json
-    from qt_dicom_viewer.ui.controller.settings_controller import SettingsController
+    from voxplane.ui.controller.settings_controller import SettingsController
     path = tmp_path / 'settings.json'
     path.write_text(json.dumps({'shortcuts': {'bindings': {'pan': 'D', 'measure:angle': 'X'}}}))
     values = SettingsController(path=path).section('shortcuts')['bindings']
@@ -214,7 +214,7 @@ def test_view_labels_show_bindings_and_settings_can_clear_them(scene, tmp_path):
     assert len(app.workspaceController.tabs) == count
 
 
-@pytest.mark.skipif(os.environ.get('VOXENRA_NATIVE_QA') != '1', reason='Requires a native VTK desktop window')
+@pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1', reason='Requires a native VTK desktop window')
 def test_native_volume_focus_can_open_selected_series(sidebar_scene):
     from PySide6.QtCore import QPoint
     window, app, records, warnings = sidebar_scene

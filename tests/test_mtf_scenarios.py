@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.bead_mtf import compute_mtf_with_context, compute_point_source_mtf
+from voxplane.core.bead_mtf import compute_mtf_with_context, compute_point_source_mtf
 
 
 def gaussian_source(size=257, *, center=None):

@@ -4,7 +4,7 @@ import math
 import numpy as np
 import pytest
 
-from qt_dicom_viewer.core.ramp_fwhm import compute_ramp_fwhm, ramp_slice_thickness
+from voxplane.core.ramp_fwhm import compute_ramp_fwhm, ramp_slice_thickness
 
 
 @pytest.mark.parametrize('angle', [23, 45])

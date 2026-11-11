@@ -8,19 +8,19 @@ from pydicom.dataset import Dataset
 from pydicom.uid import EnhancedMRImageStorage, LegacyConvertedEnhancedMRImageStorage, RLELossless
 from PySide6.QtGui import QImage
 
-from qt_dicom_viewer.core.dicom_loader import DicomLoader
-from qt_dicom_viewer.core.dicom_scanner import DicomFolderScanner
-from qt_dicom_viewer.core.mr import mr_series_error, mr_view_error
-from qt_dicom_viewer.core.mr_frames import frame_metadata
-from qt_dicom_viewer.core.volume_manager import VolumeManager
-from qt_dicom_viewer.core.compare import plane_center, nearest_patient_slice, reference_line, compatible_patient_space
-from qt_dicom_viewer.core.series_export import ExportRequest, export_series
-from qt_dicom_viewer.core.export_images import frame_image
-from qt_dicom_viewer.core.workspace_document import read_document
-from qt_dicom_viewer.model import PixelSpacing, SeriesDisplayMeta, WindowLevel
-from qt_dicom_viewer.ui.workers.dicom_scan_worker import DicomScanWorker
-from qt_dicom_viewer.ui.app_controller import AppController
-from qt_dicom_viewer.ui.dicom_image_provider import DicomImageProvider
+from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_scanner import DicomFolderScanner
+from voxplane.core.mr import mr_series_error, mr_view_error
+from voxplane.core.mr_frames import frame_metadata
+from voxplane.core.volume_manager import VolumeManager
+from voxplane.core.compare import plane_center, nearest_patient_slice, reference_line, compatible_patient_space
+from voxplane.core.series_export import ExportRequest, export_series
+from voxplane.core.export_images import frame_image
+from voxplane.core.workspace_document import read_document
+from voxplane.model import PixelSpacing, SeriesDisplayMeta, WindowLevel
+from voxplane.ui.workers.dicom_scan_worker import DicomScanWorker
+from voxplane.ui.app_controller import AppController
+from voxplane.ui.dicom_image_provider import DicomImageProvider
 from test_mr import mr_dataset
 from test_dicom_tags import qt_app, wait_until
 
@@ -208,8 +208,8 @@ def test_mr_volume_uses_relative_presets_float_windows_and_shared_mpr_volume(qt_
         assert view.display_state.window == expected
         view.applyWindowPreset(.1,.02); view.autoWindow()
         assert view.display_state.window == expected
-        from qt_dicom_viewer.ui.volume_render_backend import create_transfer_functions
-        from qt_dicom_viewer.volume_presets import VOLUME_PRESET_BY_ID
+        from voxplane.ui.volume_render_backend import create_transfer_functions
+        from voxplane.volume_presets import VOLUME_PRESET_BY_ID
         colors,opacity=create_transfer_functions(VOLUME_PRESET_BY_ID['mr-general'],WindowLevel(.1,.02))
         assert colors.GetRange()==pytest.approx((.09,.11))
         app.workspaceController.createTab(r.series_instance_uid,'MR MPR','mpr')
@@ -223,8 +223,8 @@ def test_mr_volume_uses_relative_presets_float_windows_and_shared_mpr_volume(qt_
 
 def test_legacy_classic_workspace_keeps_saved_sources_and_uid(tmp_path):
     from test_mr import write_mr_series
-    from qt_dicom_viewer.core.local_import import LocalImportStore
-    from qt_dicom_viewer.core.workspace_document import source_manifest, load_referenced_series
+    from voxplane.core.local_import import LocalImportStore
+    from voxplane.core.workspace_document import source_manifest, load_referenced_series
     series = write_mr_series(tmp_path / 'classic')
     original_uid = series.instances[0].series_instance_uid
     saved = replace(series, series_instance_uid=original_uid, instances=series.instances[:3])
@@ -240,8 +240,8 @@ def test_legacy_classic_workspace_keeps_saved_sources_and_uid(tmp_path):
 
 
 def test_group_identity_does_not_depend_on_translated_error(tmp_path):
-    from qt_dicom_viewer.core.mr import split_mr_series
-    from qt_dicom_viewer.core.dicom_scanner import _build_series_record
+    from voxplane.core.mr import split_mr_series
+    from voxplane.core.dicom_scanner import _build_series_record
     _, snapshot = save_and_scan(tmp_path)
     first = snapshot.series[0].instances[0]
     groups = [split_mr_series([replace(first, mr_support_error=error)], _build_series_record)
@@ -256,8 +256,8 @@ def test_mr_3d_padding_mask_survives_cropping_and_mip_reset(tmp_path, polarity):
     from vtkmodules.vtkRenderingOpenGL2 import vtkGenericOpenGLRenderWindow
     from vtkmodules.vtkRenderingUI import vtkGenericRenderWindowInteractor
     from vtkmodules.util.numpy_support import vtk_to_numpy
-    from qt_dicom_viewer.ui.volume_render_backend import VolumeRenderBackend
-    from qt_dicom_viewer.model.volume_models import VolumeDisplayState
+    from voxplane.ui.volume_render_backend import VolumeRenderBackend
+    from voxplane.model.volume_models import VolumeDisplayState
     d = enhanced_dataset()
     raw = d.pixel_array.copy()
     raw[:, :2, :2] = -30000
