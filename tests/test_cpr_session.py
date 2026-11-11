@@ -11,6 +11,19 @@ def api():
     return default_cpr_session, path_record, unpack_path, validate_cpr_session
 
 
+def test_source_fingerprint_keeps_published_2_5_identity_after_product_rename():
+    from test_mpr_reslicer import _volume
+    from voxplane.core.cpr_session import volume_content_fingerprint
+
+    volume = _volume(np.arange(24).reshape(2, 3, 4), origin=(10., 20., 30.),
+                     slice_spacing=2.5, row_spacing=.8, column_spacing=.6)
+    # Golden value produced by the released v2.5.0 implementation, not this code.
+    expected = "6896e1783fcb87666a74b7b9dcb9bba4b3f9fea4a7ed406cfeeda7188f9ffb8c"
+    assert volume_content_fingerprint(volume) == expected
+    volume.modality_pixels[0, 0, 0] += 1
+    assert volume_content_fingerprint(volume) != expected
+
+
 def test_session_roundtrip_retains_paths_settings_source_and_incomplete_draft():
     from voxplane.core.workspace_state import dumps, loads
     default, pack, unpack, validate = api()

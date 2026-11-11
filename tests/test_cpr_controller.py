@@ -38,6 +38,18 @@ def draw(tab, points=((5, 10), (15, 10), (25, 20))):
     return view
 
 
+def test_published_2_5_cpr_source_identity_restores_without_false_mismatch(cpr):
+    draw(cpr)
+    original = cpr.current_path
+    saved = cpr.session_state()
+    # v2.5.0 fingerprint of the fixture's 41-cubed ramp volume.
+    saved["source"]["fingerprint"] = "cbce126eedccf7cbecfffe3ce5f21e2d095a103369c3628e3cbb3b20a7b663fe"
+    cpr.restore_session(saved)
+    wait_until(lambda: not cpr.busy)
+    assert cpr.ready and cpr.referencesReady
+    assert cpr.current_path == original
+
+
 def test_position_markers_wait_for_new_path_or_sampling_grid(cpr):
     draw(cpr)
     first = cpr.selectedPathId

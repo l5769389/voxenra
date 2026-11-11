@@ -14,7 +14,9 @@ def volume_content_fingerprint(volume) -> str:
     """Stable across moves/extraction; bounded temporary storage for strided data."""
     from voxplane.core.render_cancellation import check_render_cancelled
     digest = blake2b(digest_size=32)
-    digest.update(b"VoxPlane-CPR-source-1\0")
+    # Persisted source identity in released workspaces, not a display brand.
+    # Changing this domain would falsely reject unchanged pre-rename volumes.
+    digest.update(b"Voxenra-CPR-source-1\0")
     values = volume.pixel_value_meta
     digest.update(repr((volume.series_uid, volume.modality_pixels.shape,
                        volume.modality_pixels.dtype.str, values.unit_id, values.unit,
