@@ -29,9 +29,10 @@ def test_icon_footer_history_shortcuts_text_and_dialog_isolation(sidebar_scene, 
         assert shortcut in button.parentItem().property('tooltipText')
         assert not button.parentItem().property('showLabel')
         move_pointer(window, settled_point(button))
-        wait_until(lambda: button.property('hovered'))
-        # The tooltip itself has a 500 ms delay; waiting exactly 500 ms races
-        # the native timer. Observe its visible state before checking history.
+        # Disabled Redo still exposes its explanation through the enabled
+        # wrapper's HoverHandler, rather than the disabled inner button.
+        wait_until(lambda: button.parentItem().property('hovered'))
+        # Observe the delayed tooltip's actual state before checking history.
         wait_until(lambda: button.parentItem().property('tooltipVisible'))
     click(window, buttons[0]); assert qa.currentResult == before
     click(window, find(window, 'qaRedo')); assert qa.currentResult == edited

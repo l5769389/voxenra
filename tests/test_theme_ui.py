@@ -32,7 +32,7 @@ def test_follow_system_theme_updates_open_windows_and_preserves_selection(sideba
     # Native small desktops collapse the series list. Select the fixture's
     # series without requiring a delegate that the compact sidebar omits.
     app.panelController.selectSeries(records[0].series_instance_uid)
-    click(window, find(window, 'openView-2d'))
+    app.panelController.openSeriesView(records[0].series_instance_uid, '2d')
     wait_until(lambda: ws.activeLoadState.status == 'ready')
     view = ws.activeViewport
     wait_until(lambda: view._state.width > 100 and view._state.height > 100)
