@@ -123,6 +123,17 @@ jobs:
         shell: pwsh
         run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
 
+      - name: Prepare software OpenGL for native acceptance
+        shell: pwsh
+        run: ./scripts/prepare_windows_test_graphics.ps1
+
+      - name: Verify native 3D rendering and unavailable-driver recovery
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_QUICK_BACKEND: software
+          VOXPLANE_NATIVE_QA: "1"
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_windows_volume_fallback.py tests/test_reading_menu_shortcuts.py --timeout 300 --fail-on-skip --output build/test-results/windows-native-volume
+
       - name: Verify native Windows caption
         env:
           QT_QPA_PLATFORM: windows

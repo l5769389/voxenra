@@ -106,6 +106,9 @@ jobs:
           python-version: "3.13"
           enable-cache: true
           cache-dependency-glob: uv.lock
+      - name: Prepare software OpenGL for native acceptance
+        shell: pwsh
+        run: ./scripts/prepare_windows_test_graphics.ps1
       - name: Diagnose native volume initialization
         shell: pwsh
         run: |

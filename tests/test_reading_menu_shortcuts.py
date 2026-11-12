@@ -342,6 +342,7 @@ def test_native_volume_canvas_keeps_active_menu_shortcut(sidebar_scene):
     wait_until(lambda: ws.activeLoadState.status == 'ready')
     vp = ws.activeViewport
     wait_until(lambda: vp._host is not None and vp._host.surface_ready())
+    wait_until(lambda: vp._host.frame_ready, timeout=15000)
     window.requestActivate()
     click(window, find(window, 'primaryTool-zoom'))
     QTest.keyClick(window, Qt.Key_2)

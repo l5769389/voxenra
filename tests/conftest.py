@@ -5,6 +5,15 @@ from pathlib import Path
 
 import pytest
 
+# Hosted Windows runners have no native OpenGL 3.2 driver. Preload the pinned
+# test-only Mesa DLL before Qt/VTK imports, without changing installed apps or
+# the dependencies seen by PyInstaller. Missing/incompatible DLLs fail loudly.
+if sys.platform == "win32" and os.environ.get("VOXPLANE_TEST_OPENGL_DIR"):
+    import ctypes
+    _mesa_directory = Path(os.environ["VOXPLANE_TEST_OPENGL_DIR"])
+    _mesa_search = os.add_dll_directory(str(_mesa_directory))
+    _mesa_gl = ctypes.WinDLL(str(_mesa_directory / "opengl32.dll"))
+
 
 @pytest.fixture(scope="session", autouse=True)
 def offscreen_desktop():

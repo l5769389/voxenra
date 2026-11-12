@@ -33,6 +33,20 @@ def test_unsupported_opengl_stops_before_drawing():
     assert not b._initialized
 
 
+@pytest.mark.parametrize('kind', ['vtkOSOpenGLRenderWindow', 'vtkEGLRenderWindow'])
+def test_headless_fallback_is_rejected_before_native_initialization(kind):
+    b = backend()
+    b.window.GetClassName.return_value = kind
+    # OSMesa reports support even when its dynamically loaded DLL is missing.
+    b.window.SupportsOpenGL.return_value = True
+    with pytest.raises(RuntimeError, match='OpenGL'):
+        b.render(None)
+    b.window.SupportsOpenGL.assert_not_called()
+    b.widget.Initialize.assert_not_called()
+    b.window.Render.assert_not_called()
+    assert not b._initialized
+
+
 def test_nested_shader_error_is_not_reported_as_a_successful_frame():
     b = backend()
     output = vtkOutputWindow.GetInstance()

@@ -340,6 +340,13 @@ class VolumeRenderBackend:
         self.apply_display(display_state or VolumeDisplayState())
         self.apply_mask(mask)
         if not self._initialized:
+            # VTK may fall back to a headless window when native OpenGL fails.
+            # It cannot present into QVTK's native child; OSMesa can even claim
+            # support with no runtime DLL and crash on the first GL call.
+            if self.window.GetClassName() in {"vtkOSOpenGLRenderWindow", "vtkEGLRenderWindow"}:
+                logger.error("Native 3D requires a window-backed OpenGL context; got %s",
+                             self.window.GetClassName())
+                raise RuntimeError(_msg('volume.openGLUnavailable'))
             if not self.window.SupportsOpenGL():
                 logger.error("3D OpenGL unavailable: %s", self.window.GetOpenGLSupportMessage())
                 raise RuntimeError(_msg('volume.openGLUnavailable'))
