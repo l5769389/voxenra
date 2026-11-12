@@ -12,12 +12,18 @@ on:
         description: "Fresh-process repetitions per configuration"
         type: number
         default: 5
+      scenario:
+        description: "Diagnostic scenario"
+        type: choice
+        options: [reports, volume]
+        default: reports
 
 permissions:
   contents: read
 
 jobs:
   diagnose:
+    if: inputs.scenario != 'volume'
     runs-on: windows-2022
     timeout-minutes: 20
     strategy:
@@ -76,4 +82,42 @@ jobs:
         with:
           name: report-${{ matrix.platform }}-${{ matrix.preload_pdf }}
           path: build/report-diagnostics/
+          retention-days: 14
+
+  volume:
+    if: inputs.scenario == 'volume'
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      QT_QPA_PLATFORM: windows
+      QT_QUICK_BACKEND: software
+      PYTHONUTF8: "1"
+      PYTHONUNBUFFERED: "1"
+      VOXPLANE_NATIVE_QA: "1"
+      UV_PROJECT_ENVIRONMENT: .venv-build-windows
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          version: "0.11.26"
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Diagnose native volume initialization
+        shell: pwsh
+        run: |
+          Set-DisplayResolution -Width 1920 -Height 1080 -Force
+          New-Item -ItemType Directory -Force build/volume-diagnostics | Out-Null
+          uv run --locked --python 3.13 --group dev --group build python scripts/diagnose_windows_volume.py *> build/volume-diagnostics/native.log
+          $code = $LASTEXITCODE
+          Get-Content build/volume-diagnostics/native.log
+          exit $code
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: windows-volume-diagnostics
+          path: build/volume-diagnostics/
           retention-days: 14
