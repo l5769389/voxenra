@@ -1,6 +1,7 @@
 from pathlib import Path
 import pytest
 from PySide6.QtPdf import QPdfDocument
+from PySide6.QtCore import QUrl
 from voxplane.core.report_options import DEFAULTS, validate_options
 from voxplane.core.measurement_report import pdf_bytes
 from voxplane.ui.controller.report_preview_controller import ReportPreviewController
@@ -30,12 +31,28 @@ def test_pdf_frozen_preview_and_layout(qt_app, tmp_path):
     assert '23.45' in text and '999' not in text and 'HU' in text
     assert 'VoxPlane' not in text and 'Frozen report' in text and 'Example note' in text
     assert doc.pagePointSize(0).width() > doc.pagePointSize(0).height()
-    image_paths = [Path(p.removeprefix('file://')) for p in preview.pages]
+    image_paths = [Path(QUrl(p).toLocalFile()) for p in preview.pages]
     assert image_paths and all(p.exists() for p in image_paths)
     preview.clear()
     assert not any(p.exists() for p in image_paths)
     assert not preview.save_to(tmp_path/'cancel.pdf')
     doc.close()
+
+
+def test_preview_releases_pdf_reader_before_notifying_or_cleanup(qt_app):
+    preview = ReportPreviewController()
+    readers_at_notification = []
+    preview.changed.connect(lambda: readers_at_notification.append(
+        len(preview.findChildren(QPdfDocument))))
+    try:
+        assert preview.set_pdf(pdf_bytes([]))
+        assert not preview.findChildren(QPdfDocument)
+        assert readers_at_notification and not any(readers_at_notification)
+        assert not preview.set_pdf(b'not a PDF')
+        assert not preview.findChildren(QPdfDocument)
+        assert not any(readers_at_notification)
+    finally:
+        preview.clear()
 
 @pytest.mark.parametrize('kind', ['measurement', 'qa'])
 def test_long_report_content_wraps_without_truncation(qt_app, tmp_path, kind):

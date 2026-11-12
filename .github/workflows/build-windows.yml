@@ -42,7 +42,7 @@ jobs:
     name: Test and package Windows x64
     if: inputs.artifact_run_id == ''
     runs-on: windows-2022
-    timeout-minutes: 90
+    timeout-minutes: 120
     outputs:
       release_tag: ${{ steps.version.outputs.release_tag }}
       app_name: ${{ steps.version.outputs.app_name }}

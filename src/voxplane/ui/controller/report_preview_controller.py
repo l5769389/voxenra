@@ -1,6 +1,7 @@
 """Own one frozen PDF and its raster preview; saving never recaptures results."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from shiboken6 import delete
 from PySide6.QtCore import QObject, Property, Signal, Slot, QSize, QUrl
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtGui import QImage, QPainter, QColor
@@ -46,27 +47,33 @@ class ReportPreviewController(QObject):
         self._suggested_path = str(suggested_path or localize(_msg('text.0396', value1='pdf')))
         document = QPdfDocument(self)
         try:
-            self._temporary = TemporaryDirectory(prefix='report-preview-')
-            directory = Path(self._temporary.name)
-            pdf = directory/'frozen.pdf'
-            pdf.write_bytes(data)
-            if document.load(str(pdf)) != QPdfDocument.Error.None_:
-                raise ValueError('Cannot render PDF preview')
-            for page in range(document.pageCount()):
-                size = document.pagePointSize(page)
-                target = QSize(round(size.width()*1.5), round(size.height()*1.5))
-                image = document.render(page, target)
-                if not image.isNull():
-                    opaque = QImage(image.size(), QImage.Format_RGB32)
-                    opaque.fill(QColor('white'))
-                    painter = QPainter(opaque)
-                    painter.drawImage(0, 0, image)
-                    painter.end()
-                    image = opaque
-                path = directory/f'page-{page}.png'
-                if image.isNull() or not image.save(str(path)):
+            try:
+                self._temporary = TemporaryDirectory(prefix='report-preview-')
+                directory = Path(self._temporary.name)
+                pdf = directory/'frozen.pdf'
+                pdf.write_bytes(data)
+                if document.load(str(pdf)) != QPdfDocument.Error.None_:
                     raise ValueError('Cannot render PDF preview')
-                self._pages.append(QUrl.fromLocalFile(str(path)).toString())
+                for page in range(document.pageCount()):
+                    size = document.pagePointSize(page)
+                    target = QSize(round(size.width()*1.5), round(size.height()*1.5))
+                    image = document.render(page, target)
+                    if not image.isNull():
+                        opaque = QImage(image.size(), QImage.Format_RGB32)
+                        opaque.fill(QColor('white'))
+                        painter = QPainter(opaque)
+                        painter.drawImage(0, 0, image)
+                        painter.end()
+                        image = opaque
+                    path = directory/f'page-{page}.png'
+                    if image.isNull() or not image.save(str(path)):
+                        raise ValueError('Cannot render PDF preview')
+                    self._pages.append(QUrl.fromLocalFile(str(path)).toString())
+            finally:
+                # QPdfDocument can retain the file handle until destruction on
+                # Windows. Release it before cleanup or a reentrant changed slot.
+                document.close()
+                delete(document)
             self._data = bytes(data)
             self.changed.emit()
             return True
@@ -75,9 +82,6 @@ class ReportPreviewController(QObject):
             self._error = str(exc)
             self.changed.emit()
             return False
-        finally:
-            document.close()
-            document.deleteLater()
 
     def save_to(self, path):
         if not self._data: return False
