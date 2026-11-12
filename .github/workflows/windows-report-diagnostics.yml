@@ -15,13 +15,66 @@ on:
       scenario:
         description: "Diagnostic scenario"
         type: choice
-        options: [reports, volume, release]
+        options: [reports, volume, release, presets]
         default: reports
 
 permissions:
   contents: read
 
 jobs:
+  presets:
+    if: inputs.scenario == 'presets'
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: windows
+      QT_QUICK_BACKEND: software
+      PYTHONUTF8: "1"
+      PYTHONUNBUFFERED: "1"
+      VOXPLANE_NATIVE_QA: "1"
+      UV_PROJECT_ENVIRONMENT: .venv-build-windows
+      VOXPLANE_QA_ITERATIONS: ${{ inputs.iterations }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          version: "0.11.26"
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Prepare matching native graphics environment
+        shell: pwsh
+        run: |
+          ./scripts/prepare_windows_test_graphics.ps1
+          Set-DisplayResolution -Width 1920 -Height 1080 -Force
+          New-Item -ItemType Directory -Force build/preset-diagnostics/dumps | Out-Null
+          $key = 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\python.exe'
+          New-Item -Path $key -Force | Out-Null
+          New-ItemProperty -Path $key -Name DumpFolder -PropertyType ExpandString -Value "$pwd\build\preset-diagnostics\dumps" -Force | Out-Null
+          New-ItemProperty -Path $key -Name DumpType -PropertyType DWord -Value 1 -Force | Out-Null
+      - name: Repeat native settings transitions with exact case names
+        shell: pwsh
+        run: |
+          $failed = $false
+          for ($iteration = 1; $iteration -le [int]$env:VOXPLANE_QA_ITERATIONS; $iteration++) {
+            uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_presets_settings_qml.py -vv --tb=short -o faulthandler_timeout=90 "--junitxml=build/preset-diagnostics/round-$iteration.xml" *> "build/preset-diagnostics/round-$iteration.log"
+            $code = $LASTEXITCODE
+            Get-Content "build/preset-diagnostics/round-$iteration.log"
+            "round=$iteration exit=$code" | Add-Content build/preset-diagnostics/exits.txt
+            if ($code -ne 0) { $failed = $true }
+          }
+          Get-WinEvent -FilterHashtable @{LogName='Application'; Id=1000,1001; StartTime=(Get-Date).AddMinutes(-30)} -ErrorAction SilentlyContinue | Format-List * | Out-File build/preset-diagnostics/events.txt
+          if ($failed) { exit 1 }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: windows-preset-diagnostics
+          path: build/preset-diagnostics/
+          retention-days: 14
+
   diagnose:
     if: inputs.scenario == 'reports'
     runs-on: windows-2022
