@@ -2,8 +2,10 @@
 $ErrorActionPreference = 'Stop'
 $destination = Join-Path $env:RUNNER_TEMP 'voxplane-mesa-26.2.6'
 $archive = "$destination.7z"
-Invoke-WebRequest 'https://github.com/pal1000/mesa-dist-win/releases/download/26.2.6/mesa3d-26.2.6-release-msvc.7z' -OutFile $archive
-$expected = 'b2e00615feaba45942343c265cc8c5f576142ca682c1ac6661922d4b72492877'
+# 26.2.6 MSVC omits OpenGL due to its documented d3d12 build regression.
+# The same release's MinGW x64 package includes the llvmpipe runtime.
+Invoke-WebRequest 'https://github.com/pal1000/mesa-dist-win/releases/download/26.2.6/mesa3d-26.2.6-release-mingw.7z' -OutFile $archive
+$expected = 'da0f71d9181b672c1918f3c342f11118c687f6059a46b16502845160733cc388'
 if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLower() -ne $expected) {
     throw 'Mesa test runtime checksum mismatch'
 }
