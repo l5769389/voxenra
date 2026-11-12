@@ -235,7 +235,9 @@ jobs:
           PYTHONUNBUFFERED: "1"
           OMP_NUM_THREADS: "1"
           OPENBLAS_NUM_THREADS: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py --workers 2 --timeout 300
+        # The bilingual manual tests encode the complete responsive media set.
+        # Keep all checks, but allow slower hosted CPUs to finish that file.
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py --workers 2 --timeout 900
 
       - name: Upload regression diagnostics
         if: always()
