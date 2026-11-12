@@ -107,10 +107,12 @@ jobs:
           python-version: "3.13"
           enable-cache: true
           cache-dependency-glob: uv.lock
-      - name: Check frozen report lifetime and detached pages
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_report_presets.py tests/test_tab_windows.py --timeout 300 --output build/release-diagnostics/ui
-      - name: Check complete responsive manual assets
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_manual_site.py --timeout 900 --output build/release-diagnostics/manual
+      - name: Prepare matching Windows graphics environment
+        shell: pwsh
+        run: |
+          ./scripts/prepare_windows_test_graphics.ps1
+      - name: Reproduce parallel window lifetime checks
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_tab_windows.py tests/test_tag_qml.py tests/test_manual.py tests/test_pacs_qml.py tests/test_report_presets.py --workers 2 --timeout 900 --output build/release-diagnostics/parallel
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

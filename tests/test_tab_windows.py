@@ -407,7 +407,9 @@ def test_other_page_types_move_without_rebuilding_controller(sidebar_scene, kind
         wait_until(lambda: registry.activeLoadState.status == 'ready')
     tab = registry.activeTab
     views = dict(tab.viewports_by_id)
+    assert not warnings, ('opening utility page', warnings)
     session, other = detached(app, tab)
+    assert not warnings, ('detaching utility page', warnings)
     assert session.activeTab is tab and dict(tab.viewports_by_id) == views
     assert not manager.mainWorkspace.tabs
     # Empty main window has a usable drop zone while dragging.
@@ -417,6 +419,7 @@ def test_other_page_types_move_without_rebuilding_controller(sidebar_scene, kind
     manager.beginDrag(session.windowId, tab.tab_config.tab_id, pump_point.x(), pump_point.y())
     end = manager.bars['main'].mapToGlobal(QPointF(30, 15))
     manager.finishDrag(end.x(), end.y())
+    assert not warnings, ('returning utility page', warnings)
     wait_until(lambda: len(manager.sessions) == 1)
     assert manager.mainWorkspace.activeTab is tab
     assert not warnings, warnings
