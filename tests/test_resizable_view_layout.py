@@ -53,8 +53,8 @@ def test_right_and_settings_widths_clamp_persist_and_restore(scene, paired_serie
     app.workspaceController.openSettings()
     wait_until(lambda: any(i.objectName() == "settingsNavigation" for i in descendants(window.contentItem())))
     navigation = find(window, "settingsNavigation")
-    assert navigation.width() == 180
-    drag(window, "settingsNavigationResizeHandle", 150)
+    assert navigation.width() == 144
+    drag(window, "settingsNavigationResizeHandle", 200)
     assert navigation.width() == 300
     app.workspaceController.openManual("water-qa")
     app.workspaceController.openSettings()
@@ -64,7 +64,7 @@ def test_right_and_settings_widths_clamp_persist_and_restore(scene, paired_serie
     assert restored.values["layout"] == {"rightPanelCollapsed": False, "rightPanelWidth": 240, "settingsNavigationWidth": 300, "manualNavigationWidth": 260,
                                          "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []}
     drag(window, "settingsNavigationResizeHandle", -250)
-    assert find(window, "settingsNavigation").width() == 156
+    assert find(window, "settingsNavigation").width() == 132
     assert not warnings, warnings
 
 

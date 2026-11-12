@@ -26,7 +26,7 @@ ColumnLayout {
         captureItem: root.exportItem
     }
     signal manualRequested()
-    ScreenshotPreviewDialog { preview: root.exportController.screenshotPreview }
+    ScreenshotPreviewDialog { preview: root.exportController?.screenshotPreview ?? null }
     spacing: 10
     Components.DelayedActivity { id: imageFeedback; active: root.visible && (root.exportController?.busy ?? false) }
     Components.DelayedActivity { id: reportFeedback; active: root.visible && (root.report?.busy ?? false) }

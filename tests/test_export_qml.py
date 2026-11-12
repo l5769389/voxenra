@@ -82,7 +82,7 @@ def test_export_dialog_defaults_formats_and_right_click_whole_series(scene, tmp_
     assert not warnings, warnings
 
 
-def test_export_settings_ui_saves_destination_and_restores_default(scene, tmp_path):
+def test_export_settings_reset_preserves_shared_destination(scene, tmp_path):
     window, app, warnings = scene
     app.workspaceController.openSettings()
     QTest.qWait(50)
@@ -96,7 +96,10 @@ def test_export_settings_ui_saves_destination_and_restores_default(scene, tmp_pa
     window.resize(1000, 600)
     QTest.qWait(50)
     assert window.grabWindow().save(str(tmp_path / "dicom-export-settings.png"))
+    app.settingsController.setExportOptions("screenshot", {"format": "jpeg"})
     click(window, find(window, "resetDisplaySettings"))
     click(window, find(window, 'confirmSettingsReset'))
-    assert field.property("text") == app.settingsController.defaultExportDirectory
+    assert field.property("text") == path
+    assert app.settingsController.exportDirectory == path
+    assert app.settingsController.section("screenshot")["format"] == "png"
     assert not warnings, warnings

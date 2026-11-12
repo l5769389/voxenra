@@ -420,5 +420,44 @@
     <file>src/voxplane/qml/assets/help/water-qa-voxplane-2.6.0.png</file>
     <file>src/voxplane/qml/assets/help/window-favorites-voxplane-2.6.0.png</file>
     <file>src/voxplane/qml/assets/help/workspace-voxplane-2.6.0.png</file>
+        <file>src/voxplane/qml/assets/cursors/measure-curve.svg</file>
+        <file>src/voxplane/qml/assets/cursors/measure-freehand.svg</file>
+        <file>src/voxplane/qml/assets/cursors/segmentation-erase.svg</file>
+        <file>src/voxplane/qml/assets/cursors/segmentation-paint.svg</file>
+        <file>src/voxplane/qml/assets/help/en/report-presets-voxplane-2.7.0.png</file>
+        <file>src/voxplane/qml/assets/help/report-presets-voxplane-2.7.0.png</file>
+        <file>src/voxplane/qml/assets/icons/add.svg</file>
+        <file>src/voxplane/qml/assets/icons/auto-segmentation.svg</file>
+        <file>src/voxplane/qml/assets/icons/fwhm.svg</file>
+        <file>src/voxplane/qml/assets/icons/github.svg</file>
+        <file>src/voxplane/qml/assets/icons/measure-curve.svg</file>
+        <file>src/voxplane/qml/assets/icons/measure-freehand.svg</file>
+        <file>src/voxplane/qml/assets/icons/more.svg</file>
+        <file>src/voxplane/qml/assets/icons/redo.svg</file>
+        <file>src/voxplane/qml/assets/icons/undo.svg</file>
+        <file>src/voxplane/qml/components/HelpButton.qml</file>
+        <file>src/voxplane/qml/components/PanelHeading.qml</file>
+        <file>src/voxplane/qml/components/ScreenshotOptions.qml</file>
+        <file>src/voxplane/qml/components/ToolFlyout.qml</file>
+        <file>src/voxplane/qml/sections/center/viewportArea/SegmentationMaskImage.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/AnalysisInfoPopup.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/AutomaticSegmentationDialog.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/FwhmResults.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/MeasurementResults.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/RampProfileChart.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/ReportDialog.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/RoiGeometryEditor.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/ScreenshotPreviewDialog.qml</file>
+        <file>src/voxplane/qml/sections/right/panels/SegmentationDisplaySettings.qml</file>
+        <file>src/voxplane/qml/sections/settings/AiSettingsPage.qml</file>
+        <file>src/voxplane/qml/sections/settings/ExportPresetPicker.qml</file>
+        <file>src/voxplane/qml/sections/settings/InitialDisplaySettings.qml</file>
+        <file>src/voxplane/qml/sections/settings/LocalSegmentationSettings.qml</file>
+        <file>src/voxplane/qml/sections/settings/MeasurementCardPreview.qml</file>
+        <file>src/voxplane/qml/sections/settings/PresetPreview.qml</file>
+        <file>src/voxplane/qml/sections/settings/ReportSettingsContent.qml</file>
+        <file>src/voxplane/qml/sections/settings/ReportSettingsPage.qml</file>
+        <file>src/voxplane/qml/sections/settings/ScreenshotSettingsPage.qml</file>
+        <file>src/voxplane/qml/sections/settings/ServiceToolsSettingsPage.qml</file>
 </qresource>
 </RCC>

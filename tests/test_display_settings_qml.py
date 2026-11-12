@@ -91,7 +91,7 @@ def test_real_settings_edits_and_reload(scene, tmp_path):
     window, app, warnings = scene
     app.workspaceController.openSettings()
     QTest.qWait(50)
-    click(window, find(window, 'settingsCategory-scale'))
+    select_category(window, 'scale')
     click(window, find(window, 'setting-scale-enabled'))
     type_text(window, find(window, 'setting-scale-color'), '#aabbcc')
     QTest.keyClick(window, Qt.Key_Tab)

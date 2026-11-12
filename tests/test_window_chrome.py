@@ -43,7 +43,9 @@ def test_title_brand_replaces_sidebar_brand_and_compact_collapse(scene, tmp_path
     assert find(window, "sidebarToggle").isVisible()
     assert window.grabWindow().save(str(tmp_path / "voxplane-collapsed.png"))
     click(window, find(window, "sidebarToggle"))
-    assert sidebar.width() == 300 and sidebar.isVisible()
+    assert not sidebar.property('collapsed') and sidebar.isVisible()
+    expected = 52 if sidebar.property('compactRequired') else min(300, max(200, sidebar.property('availableExpandedWidth')))
+    assert sidebar.width() == expected
     assert window.grabWindow().save(str(tmp_path / "voxplane-titlebar.png"))
     assert not warnings, warnings
 

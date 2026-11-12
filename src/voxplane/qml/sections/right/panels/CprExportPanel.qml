@@ -16,7 +16,7 @@ ColumnLayout {
     property var settingsController: null
     property var screenshotDraft: ({})
     Component.onCompleted: screenshotDraft = Object.assign({}, settingsController?.values?.screenshot ?? {})
-    ScreenshotPreviewDialog { preview: panel.exportController.screenshotPreview }
+    ScreenshotPreviewDialog { preview: panel.exportController?.screenshotPreview ?? null }
     spacing: 10
     Components.DelayedActivity { id: feedback; active: panel.visible && (panel.exportController?.busy ?? false) }
     Components.PanelHeading { title: qsTrId("cpr.exportTitle"); explanation: qsTrId("cpr.exportHint") }

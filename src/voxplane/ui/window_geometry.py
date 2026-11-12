@@ -38,9 +38,14 @@ class WindowGeometry(QObject):
         self.fit()
 
     def client_area(self):
+        if self.window.visibility() == QWindow.FullScreen:
+            return self._screen.geometry()
         area = self._screen.availableGeometry()
         margins = self.window.frameMargins()
-        return area.adjusted(margins.left(), margins.top(), -margins.right(), -margins.bottom())
+        # Windows may report negative invisible borders when maximized or
+        # transitioning to full screen; they must never enlarge the desktop.
+        return area.adjusted(max(0, margins.left()), max(0, margins.top()),
+                             -max(0, margins.right()), -max(0, margins.bottom()))
 
     def fit(self, *_):
         if self._screen is None:

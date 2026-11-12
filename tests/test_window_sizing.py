@@ -157,3 +157,15 @@ def fit_desktop(window, app, monkeypatch, size):
     QTest.qWait(80)
     assert (window.width(), window.height()) == size
     assert desktop.contains(window.geometry())
+
+
+@pytest.mark.parametrize('fullscreen', [False, True])
+def test_negative_native_borders_never_expand_available_desktop(fullscreen):
+    from types import SimpleNamespace
+    from PySide6.QtCore import QMargins
+    screen = SimpleNamespace(availableGeometry=lambda: QRect(0, 0, 1024, 728),
+                             geometry=lambda: QRect(0, 0, 1024, 768))
+    window = SimpleNamespace(visibility=lambda: QWindow.FullScreen if fullscreen else QWindow.Maximized,
+                             frameMargins=lambda: QMargins(-8, -8, -8, -8))
+    area = WindowGeometry.client_area(SimpleNamespace(_screen=screen, window=window))
+    assert area == (screen.geometry() if fullscreen else screen.availableGeometry())

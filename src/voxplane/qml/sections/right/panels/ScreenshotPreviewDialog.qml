@@ -18,10 +18,10 @@ Components.AppDialog {
     defaultButton: saveButton
     escapeButton: cancelButton
     Connections {
-        target: root.preview
+        target: root.preview ?? null
         function onChanged() { if (root.preview.ready && !root.visible) root.open() }
     }
-    onClosed: preview.clear()
+    onClosed: preview?.clear()
     contentItem: ColumnLayout {
         Image {
             id: previewImage
@@ -29,12 +29,12 @@ Components.AppDialog {
             objectName: "actualScreenshotPreview"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            source: root.preview.source
+            source: root.preview?.source ?? ""
             fillMode: Image.PreserveAspectFit
             cache: false
         }
-        Text { text: root.preview.dimensions; color: Theme.textPrimary }
-        Text { Layout.fillWidth: true; text: root.preview.error; visible: text.length>0; color: Theme.dangerColor; wrapMode: Text.Wrap }
+        Text { text: root.preview?.dimensions ?? ""; color: Theme.textPrimary }
+        Text { Layout.fillWidth: true; text: root.preview?.error ?? ""; visible: text.length>0; color: Theme.dangerColor; wrapMode: Text.Wrap }
     }
     footer: Components.AppDialogFooter {
         Components.AppButton { id: cancelButton; text: qsTrId("text.0539"); onClicked: root.reject() }
@@ -42,7 +42,7 @@ Components.AppDialog {
             id: saveButton
             objectName: "saveScreenshotPreview"
             text: qsTrId("screenshot.save")
-            enabled: root.preview.ready && previewImage.ready
+            enabled: !!root.preview?.ready && previewImage.ready
             onClicked: if (root.preview.save()) root.accept()
         }
     }

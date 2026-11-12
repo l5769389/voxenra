@@ -119,6 +119,10 @@ jobs:
       - name: Verify native update helper handoff
         run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_update_installer.py --junitxml=build/test-results/windows-update-helper.xml
 
+      - name: Set desktop size for native UI acceptance
+        shell: pwsh
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+
       - name: Verify native Windows caption
         env:
           QT_QPA_PLATFORM: windows
