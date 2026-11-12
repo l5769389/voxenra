@@ -145,12 +145,12 @@ Rectangle {
                         return
                     loadedTab = centerPanel.workspaceController.activeTab
                     const type = centerPanel.workspaceController.activeTabType
-                    // Tag controls, the six-cell MPR grid, and the manual's text
-                    // selection menus cannot safely abandon partially constructed
-                    // popup scopes during incubation. Build
+                    // Tag controls, settings dialogs, the six-cell MPR grid, and
+                    // the manual's text selection menus cannot safely abandon
+                    // partially constructed popup scopes during incubation. Build
                     // their shells atomically; DICOM reading and reslicing still
                     // run asynchronously in the existing workers.
-                    asynchronous = !["tag", "comparempr", "manual"].includes(type)
+                    asynchronous = !["tag", "settings", "comparempr", "manual"].includes(type)
                     // URL sources defer compilation of utility pages and their
                     // dependencies until that page is actually opened.
                     if (type === "settings") {

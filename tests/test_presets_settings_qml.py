@@ -112,6 +112,7 @@ def test_preset_settings_render_and_change_only_defaults(scene, theme, width, tm
     app.workspaceController.openSettings()
     app.settingsController.selectCategory('initialDisplay')
     combo=find(window,'setting-initialDisplay-zoom')
+    assert not warnings, ('opening initial display settings', warnings)
     from test_settings_redesign import reveal_setting
     reveal_setting(window,combo)
     open_combo(window,combo);QTest.keyClick(window,Qt.Key_End);QTest.keyClick(window,Qt.Key_Return)
@@ -126,6 +127,29 @@ def test_preset_settings_render_and_change_only_defaults(scene, theme, width, tm
         assert item.width()>0 and 0<=left<right<=window.width(), (name,left,right,width)
     assert window.grabWindow().save(str(tmp_path/f'presets-{theme}-{width}.png'))
     assert not warnings,warnings
+
+
+def test_settings_reopen_and_category_switch_while_page_is_pending(scene):
+    """A pending settings shell can be replaced without orphaning popup scopes."""
+    from PySide6.QtQml import qmlEngine
+    window, app, warnings = scene
+    workspace, settings = app.workspaceController, app.settingsController
+    for category, name in [('initialDisplay', 'setting-initialDisplay-zoom'),
+                           ('export', 'screenshot-output-size'),
+                           ('report', 'reportOption_orientation')]:
+        workspace.openSettings()
+        settings.selectCategory(category)
+        # Close before the Loader's deferred page construction starts, then
+        # reopen the same settings page and let the real popup tree initialize.
+        workspace.closeTab('workspace-settings')
+        workspace.openSettings()
+        qmlEngine(window).collectGarbage()
+        field = find(window, name)
+        assert field.isEnabled()
+        assert not warnings, (category, warnings)
+        workspace.closeTab('workspace-settings')
+        QTest.qWait(20)
+    assert not warnings, warnings
 
 @pytest.mark.parametrize('theme', ['dark','graphite','light'])
 @pytest.mark.parametrize('width', [1280,1800])
