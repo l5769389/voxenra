@@ -15,7 +15,8 @@ $candidates = @(Get-ChildItem $destination -Filter opengl32.dll -Recurse | Where
     [BitConverter]::ToUInt16($bytes, $pe + 4) -eq 0x8664
 })
 if ($candidates.Count -ne 1) {
-    Get-ChildItem $destination -Recurse | Select-Object -First 80 FullName
+    & 7z l $archive
+    Get-ChildItem $destination -Recurse -Force | ForEach-Object { Write-Host $_.FullName }
     Write-Host "x64 OpenGL candidates: $($candidates.FullName -join ', ')"
     throw 'Expected exactly one x64 Mesa OpenGL runtime'
 }

@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 import pytest
 from PySide6.QtCore import Qt, QPointF, QObject
 from PySide6.QtTest import QTest
@@ -8,11 +9,20 @@ from test_tag_qml import find, click, descendants
 
 
 def visible_viewport(window):
-    def candidates():
-        return [i for i in descendants(window.contentItem())
-                if i.objectName() == 'viewportInteractionLayer' and i.isVisible()]
-    wait_until(lambda: bool(candidates()))
-    return candidates()[0]
+    candidate = None
+    stable_since = 0.0
+    def settled():
+        nonlocal candidate, stable_since
+        visible = next((i for i in descendants(window.contentItem())
+                        if i.objectName() == 'viewportInteractionLayer' and i.isVisible()
+                        and i.width() > 0 and i.height() > 0), None)
+        if visible is not candidate:
+            candidate, stable_since = visible, time.monotonic()
+        return candidate is not None and time.monotonic() - stable_since >= .05
+    # Active-tab signals can replace an initial Loader item on the next turn.
+    # Resolve its current child until stable, before retaining it for a click.
+    wait_until(settled)
+    return candidate
 
 
 def reading_scene(scene):
@@ -20,8 +30,9 @@ def reading_scene(scene):
     ws = app.workspaceController
     ws.createTab(records[0].series_instance_uid, 'CT', '2d')
     wait_until(lambda: ws.activeLoadState.status == 'ready')
+    from qt_pointer import activate_window
     window.requestActivate()
-    QTest.qWait(100)
+    activate_window(window)
     viewport = visible_viewport(window)
     click(window, viewport)
     return window, app, ws.activeTab
