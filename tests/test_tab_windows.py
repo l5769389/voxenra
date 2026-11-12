@@ -580,3 +580,20 @@ def test_tab_identity_fields_do_not_paint_over_each_other(sidebar_scene):
             assert bounds(primary).bottom() <= bounds(secondary).top()
             assert bounds(secondary).right() <= bounds(close).left()
     assert not warnings, warnings
+
+@pytest.mark.parametrize('kind', ['settings', 'pacs'])
+def test_hidden_reading_tools_release_utility_export_targets(sidebar_scene, kind):
+    window, app, records, warnings = sidebar_scene
+    registry = app.workspaceController
+    first, = open_tabs(app, records[:1])
+    panel = window.findChild(QObject, 'rightPanel')
+    wait_until(lambda: panel.property('tabExportItem') is not None)
+    (registry.openSettings if kind == 'settings' else registry.openPacs)()
+    loader = window.findChild(QObject, 'workspaceLoader')
+    wait_until(lambda: loader.property('item') is not None and loader.isVisible())
+    assert not panel.isVisible()
+    assert panel.property('exportItem') is None
+    assert panel.property('tabExportItem') is None
+    app.windowManager.activate_tab(first.tab_config.tab_id)
+    wait_until(lambda: panel.isVisible() and panel.property('tabExportItem') is not None)
+    assert not warnings, warnings

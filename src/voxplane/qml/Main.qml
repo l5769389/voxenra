@@ -477,8 +477,10 @@ ApplicationWindow {
             enabled: !["loading", "error"].includes(window.workspaceController.activeLoadState?.status ?? "")
             onManualRequested: chapter => window.workspaceController.openManual(chapter)
             exportController: window.exportController
-            exportItem: centerView.exportItem
-            tabExportItem: centerView.tabExportItem
+            // Utility pages are not screenshot targets for the reading tools.
+            // Release these references before a hidden page's Loader retires it.
+            exportItem: visible ? centerView.exportItem : null
+            tabExportItem: visible ? centerView.tabExportItem : null
             visible: window.hasTabs && !window.maximizedReadingArea
                 && ["tag", "settings", "pacs", "manual"].indexOf(window.workspaceController.activeTabType) < 0
             Layout.minimumWidth: visible ? actualWidth : 0
