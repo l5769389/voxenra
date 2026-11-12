@@ -9,7 +9,13 @@ if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLower() -ne $expected) {
 }
 & 7z x $archive "-o$destination" -y | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Could not extract Mesa test runtime' }
-$runtime = Join-Path $destination 'x64'
+$candidates = @(Get-ChildItem $destination -Filter opengl32.dll -Recurse | Where-Object {
+    $bytes = [System.IO.File]::ReadAllBytes($_.FullName)
+    $pe = [BitConverter]::ToInt32($bytes, 0x3c)
+    [BitConverter]::ToUInt16($bytes, $pe + 4) -eq 0x8664
+})
+if ($candidates.Count -ne 1) { throw 'Expected exactly one x64 Mesa OpenGL runtime' }
+$runtime = $candidates[0].DirectoryName
 foreach ($dll in @('opengl32.dll', 'libgallium_wgl.dll')) {
     if (-not (Test-Path (Join-Path $runtime $dll))) { throw "Missing Mesa runtime: $dll" }
 }
