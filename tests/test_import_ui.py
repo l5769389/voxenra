@@ -45,9 +45,14 @@ def test_single_click_opens_mixed_picker(scene, entry, tmp_path):
         else:
             assert caption.property("text") == title
     errors, opened = [], []
+    inspector = QTimer()
+    inspector.setInterval(10)
 
     def inspect():
         dialog = QApplication.activeModalWidget()
+        if dialog is None:
+            return
+        inspector.stop()
         try:
             assert isinstance(dialog, LocalImportDialog) and dialog.isVisible()
             opened.append(True)
@@ -61,11 +66,15 @@ def test_single_click_opens_mixed_picker(scene, entry, tmp_path):
     if entry == "shortcut":
         window.requestActivate()
         QTest.qWaitForWindowActive(window)
-    QTimer.singleShot(100, inspect)
-    if entry == "shortcut":
-        QTest.keySequence(window, QKeySequence(QKeySequence.StandardKey.Open))
-    else:
-        click(window, target)
+    inspector.timeout.connect(inspect)
+    inspector.start()
+    try:
+        if entry == "shortcut":
+            QTest.keySequence(window, QKeySequence(QKeySequence.StandardKey.Open))
+        else:
+            click(window, target)
+    finally:
+        inspector.stop()
     assert opened == [True] and not errors, errors
     assert not app.panelController.scanning
     assert not any(
@@ -227,9 +236,14 @@ def test_mixed_picker_imports_folder_file_and_rar_together(scene, tmp_path):
     window, app, warnings = scene
     app.panelController._last_import_directory = str(tmp_path)
     errors = []
+    chooser = QTimer()
+    chooser.setInterval(10)
 
     def choose():
         dialog = QApplication.activeModalWidget()
+        if dialog is None:
+            return
+        chooser.stop()
         try:
             assert isinstance(dialog, LocalImportDialog)
             wait_until(lambda: dialog.model.rowCount(dialog.view.rootIndex()) >= 4)
@@ -245,8 +259,13 @@ def test_mixed_picker_imports_folder_file_and_rar_together(scene, tmp_path):
             if dialog:
                 dialog.reject()
 
-    QTimer.singleShot(100, choose)
-    click(window, find(window, "homeOpenImport"))
+    target = find(window, "homeOpenImport")
+    chooser.timeout.connect(choose)
+    chooser.start()
+    try:
+        click(window, target)
+    finally:
+        chooser.stop()
     assert not errors, errors
     wait_until(lambda: not app.panelController.scanning)
     assert not app.panelController.importError

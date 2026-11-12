@@ -54,19 +54,8 @@ def find(window, name):
         return next((item for item in descendants(window.contentItem())
                      if item.objectName() == name and item.isVisible()
                      and item.width() > 0 and item.height() > 0), None)
-    current = None
-    stable_since = 0.0
-    def stable_target():
-        nonlocal current, stable_since
-        candidate = target()
-        if candidate is not current:
-            current, stable_since = candidate, time.monotonic()
-        return current is not None and time.monotonic() - stable_since >= .05
-    # Page/category changes can briefly expose a Loader's outgoing controls.
-    # Re-resolve by name until the item survives an event-loop turn, before
-    # retaining it for geometry checks and pointer delivery.
-    wait_until(stable_target)
-    return current
+    wait_until(lambda: target() is not None)
+    return target()
 
 
 def settled_point(item, local_point=None, *, ready=None):

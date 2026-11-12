@@ -1,13 +1,29 @@
 """Display/export settings remain usable at narrow widths and across themes."""
 from pathlib import Path
+import time
 import pytest
 from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtQml import QQmlEngine, QQmlExpression
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
-from test_tag_qml import find, click, descendants, settled_point
+from test_tag_qml import find as find_control, click, descendants, settled_point
 from qt_pointer import activate_window, move_pointer
+
+
+def find(window, name):
+    # Preset category changes can briefly expose the outgoing Loader's controls.
+    # Keep this stability wait local: modal tests arm callbacks before clicks.
+    current = None
+    stable_since = 0.0
+    def stable():
+        nonlocal current, stable_since
+        item = find_control(window, name)
+        if item is not current:
+            current, stable_since = item, time.monotonic()
+        return time.monotonic() - stable_since >= .05
+    wait_until(stable)
+    return current
 
 
 def open_combo(window, control):
