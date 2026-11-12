@@ -589,6 +589,7 @@ def test_hidden_reading_tools_release_utility_export_targets(sidebar_scene, kind
     panel = window.findChild(QObject, 'rightPanel')
     wait_until(lambda: panel.property('tabExportItem') is not None)
     (registry.openSettings if kind == 'settings' else registry.openPacs)()
+    utility = registry.activeTab
     loader = window.findChild(QObject, 'workspaceLoader')
     wait_until(lambda: loader.property('item') is not None and loader.isVisible())
     assert not panel.isVisible()
@@ -596,4 +597,14 @@ def test_hidden_reading_tools_release_utility_export_targets(sidebar_scene, kind
     assert panel.property('tabExportItem') is None
     app.windowManager.activate_tab(first.tab_config.tab_id)
     wait_until(lambda: panel.isVisible() and panel.property('tabExportItem') is not None)
+    # A window initially containing only a utility page must still construct
+    # working reading tools when an image is opened there afterward.
+    session, other = detached(app, utility)
+    session.createTab(records[1].series_instance_uid, 'Synthetic CT', '2d')
+    wait_until(lambda: session.activeLoadState.status == 'ready')
+    click(other, find(other, 'primaryTool-zoom'))
+    slider = find(other, 'zoomSlider')
+    session.activeViewport.setZoom(3)
+    wait_until(lambda: slider.property('value') == 3)
+    assert session.activeTab.toolController.activeTool == 'zoom'
     assert not warnings, warnings
