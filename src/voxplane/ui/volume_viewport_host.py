@@ -58,6 +58,8 @@ class VolumeInteractor(QVTKRenderWindowInteractor):
             self.host.native_paint()
 
     def resizeEvent(self, event):
+        if self.host._disposed:
+            return
         super().resizeEvent(event)
         self.host.controller.viewport_resized()
         self.host.request_render()
@@ -111,8 +113,11 @@ class VolumeInteractor(QVTKRenderWindowInteractor):
         # Focus loss must never commit an unfinished stroke. A crop already
         # dispatched on mouse release continues independently of keyboard focus.
         self._drag_button = Qt.NoButton
-        self.host.controller.cancel_drag()
-        self.host._update_cursor()
+        # Windows may deliver this after controller destruction but before the
+        # native child's deleteLater event has run.
+        if not self.host._disposed:
+            self.host.controller.cancel_drag()
+            self.host._update_cursor()
         super().focusOutEvent(event)
 
 

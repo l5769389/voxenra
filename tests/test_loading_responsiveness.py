@@ -74,6 +74,35 @@ def host(qt_app, loaded_tab, headless_volume_interactor, monkeypatch):
     loaded_tab.dispose()
 
 
+def test_disposed_native_canvas_ignores_late_focus_and_resize(qt_app, loaded_tab):
+    from PySide6.QtCore import QEvent, QSize, Qt
+    from PySide6.QtGui import QFocusEvent, QResizeEvent
+    from PySide6.QtWidgets import QWidget
+    from shiboken6 import delete
+    from voxplane.ui.volume_viewport_host import VolumeInteractor
+    h = QWidget()
+    h.controller = loaded_tab.activeViewport
+    h._disposed = False
+    h._update_cursor = Mock()
+    class EventOnlyInteractor(VolumeInteractor):
+        def __init__(self, parent):
+            self.host = parent
+            self._drag_button = Qt.NoButton
+            QWidget.__init__(self, parent)
+    canvas = EventOnlyInteractor(h)
+    try:
+        loaded_tab.dispose()
+        h._disposed = True
+        delete(h.controller)
+        # Windows delivers focus loss before QWidget's deferred deletion, after
+        # its QML/controller is gone. No controller signals may be emitted.
+        canvas.focusOutEvent(QFocusEvent(QEvent.FocusOut))
+        canvas.resizeEvent(QResizeEvent(QSize(320, 240), QSize(640, 480)))
+        h._update_cursor.assert_not_called()
+    finally:
+        delete(h)
+
+
 def test_background_preparation_leaves_gui_timer_running(host, monkeypatch):
     h, c = host
     entered, release = Event(), Event()
