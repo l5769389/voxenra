@@ -6,7 +6,15 @@ from PySide6.QtTest import QTest
 from PySide6.QtQml import QQmlEngine, QQmlExpression
 from test_dicom_tags import qt_app, wait_until
 from test_pacs_qml import scene
-from test_tag_qml import find, click, descendants
+from test_tag_qml import find, click, descendants, settled_point
+from qt_pointer import activate_window, move_pointer
+
+
+def open_combo(window, control):
+    activate_window(window)
+    move_pointer(window, settled_point(control))
+    click(window, control)
+    wait_until(lambda: QQmlExpression(QQmlEngine.contextForObject(control), control, "popup.opened").evaluate()[0])
 
 
 @pytest.mark.parametrize('locale', ['zh-CN', 'en-US'])
@@ -25,7 +33,7 @@ def test_initial_window_values_and_responsive_order(scene, locale, width, tmp_pa
     settings.selectCategory('initialDisplay')
     mode = find(window, 'setting-initialDisplay-windowMode')
     reveal_setting(window, mode)
-    click(window, mode)
+    open_combo(window, mode)
     QTest.keyClick(window, Qt.Key_End)
     QTest.keyClick(window, Qt.Key_Return)
     assert settings.section('initialDisplay')['windowMode'] == 'preset'
@@ -33,7 +41,7 @@ def test_initial_window_values_and_responsive_order(scene, locale, width, tmp_pa
     templates = [p for p in settings.windowTemplates if p['enabled']]
     index = next(i for i, p in enumerate(templates, 1) if p['presetId'] == 'ct-lung')
     reveal_setting(window, selector)
-    click(window, selector)
+    open_combo(window, selector)
     wait_until(lambda: QQmlExpression(QQmlEngine.contextForObject(selector), selector, "popup.opened").evaluate()[0])
     QTest.keyClick(window, Qt.Key_Home)
     for _ in range(index):
@@ -90,7 +98,7 @@ def test_preset_settings_render_and_change_only_defaults(scene, theme, width, tm
     combo=find(window,'setting-initialDisplay-zoom')
     from test_settings_redesign import reveal_setting
     reveal_setting(window,combo)
-    click(window,combo);QTest.keyClick(window,Qt.Key_End);QTest.keyClick(window,Qt.Key_Return)
+    open_combo(window,combo);QTest.keyClick(window,Qt.Key_End);QTest.keyClick(window,Qt.Key_Return)
     assert app.settingsController.section('initialDisplay')['zoom']=='pixel'
     app.settingsController.selectCategory('export')
     QTest.qWait(80)
@@ -151,13 +159,13 @@ def test_familiar_screenshot_sizes_keep_existing_storage(scene, tmp_path):
     app.workspaceController.openSettings();app.settingsController.selectCategory('export')
     combo=find(window,'screenshot-output-size')
     for index,edge in [(1,1920),(2,2560),(3,3840)]:
-        reveal_setting(window,combo);click(window,combo)
+        reveal_setting(window,combo);open_combo(window,combo)
         QTest.keyClick(window,Qt.Key_Home)
         for _ in range(index):QTest.keyClick(window,Qt.Key_Down)
         QTest.keyClick(window,Qt.Key_Return)
         options=app.settingsController.section('screenshot')
         assert options['size']=='longEdge' and options['longEdge']==edge
-    reveal_setting(window,combo);click(window,combo)
+    reveal_setting(window,combo);open_combo(window,combo)
     QTest.keyClick(window,Qt.Key_End);QTest.keyClick(window,Qt.Key_Return)
     field=find(window,'screenshot-option-longEdge');reveal_setting(window,field)
     assert field.isVisible()
@@ -239,12 +247,12 @@ def test_preset_picker_only_appears_after_saving_and_hides_after_last_delete(sce
         assert name.property('text')==''
         assert not save.isEnabled()
         assert settings.section(kind)==options
-    reveal_setting(window,chooser);click(window,chooser)
+    reveal_setting(window,chooser);open_combo(window,chooser)
     QTest.keyClick(window,Qt.Key_Home);QTest.keyClick(window,Qt.Key_Down);QTest.keyClick(window,Qt.Key_Return)
     assert chooser.property('currentText')=='First'
     click(window,delete)
     assert chooser.isVisible() and not delete.isEnabled()
-    click(window,chooser);QTest.keyClick(window,Qt.Key_End);QTest.keyClick(window,Qt.Key_Return)
+    open_combo(window,chooser);QTest.keyClick(window,Qt.Key_End);QTest.keyClick(window,Qt.Key_Return)
     assert chooser.property('currentText')=='Second'
     click(window,delete)
     wait_until(lambda: not chooser.isVisible() and not delete.isVisible())
