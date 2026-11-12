@@ -25,6 +25,7 @@ Rectangle {
         }
     }
     property bool petExample: false
+    property bool outlineExpanded: false
     color: Theme.panelBackgroundStrong
 
     property real dragWidth: -1
@@ -149,6 +150,73 @@ Rectangle {
                     color: Theme.textMuted
                     font.pixelSize: 14
                     wrapMode: TextEdit.Wrap
+                }
+                Repeater {
+                    model: manual.controller?.showTasks ? manual.controller.taskRoutes : []
+                    delegate: ColumnLayout {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Components.SelectableText {
+                            Layout.fillWidth: true
+                            text: modelData.title + " — " + modelData.summary
+                            wrapMode: TextEdit.Wrap
+                            color: Theme.textPrimary
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                        }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Repeater {
+                                model: modelData.chapters
+                                delegate: Components.AppButton {
+                                    required property var modelData
+                                    text: modelData.title + " →"
+                                    width: Math.min(implicitWidth, readingContent.width)
+                                    onClicked: manual.controller.selectChapter(modelData.id)
+                                }
+                            }
+                        }
+                    }
+                }
+                Components.SelectableText {
+                    Layout.fillWidth: true
+                    visible: !!manual.article.prerequisites
+                    text: qsTrId("manual.reader.prerequisites") + " · " + (manual.article.prerequisites ?? "")
+                    textFormat: TextEdit.PlainText
+                    color: Theme.textSecondary
+                    font.pixelSize: 14
+                    wrapMode: TextEdit.Wrap
+                }
+                Components.SelectableText {
+                    Layout.fillWidth: true
+                    visible: !!manual.article.outcome
+                    text: qsTrId("manual.reader.outcome") + " · " + (manual.article.outcome ?? "")
+                    textFormat: TextEdit.PlainText
+                    color: Theme.textSecondary
+                    font.pixelSize: 14
+                    wrapMode: TextEdit.Wrap
+                }
+                Components.AppButton {
+                    visible: !manual.controller?.showTasks
+                    text: qsTrId("manual.reader.outline") + (manual.outlineExpanded ? " −" : " +")
+                    onClicked: manual.outlineExpanded = !manual.outlineExpanded
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    visible: manual.outlineExpanded && !manual.controller?.showTasks
+                    Repeater {
+                        model: manual.article.sections ?? []
+                        delegate: Components.AppButton {
+                            required property var modelData
+                            required property int index
+                            text: modelData.title
+                            width: Math.min(implicitWidth, readingContent.width)
+                            onClicked: manual.controller.selectSection(manual.controller.chapterId, index)
+                        }
+                    }
                 }
                 Flow {
                     objectName: "manualShortcuts"
@@ -312,6 +380,35 @@ Rectangle {
                                 Components.SelectableText { Layout.fillWidth: true; text: legend.modelData.label; color: Theme.textSecondary; font.pixelSize: 12; wrapMode: TextEdit.Wrap }
                             }
                         }
+                    }
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Repeater {
+                        model: manual.article.references ?? []
+                        delegate: Components.AppButton {
+                            required property var modelData
+                            text: modelData.title + " ↗"
+                            width: Math.min(implicitWidth, readingContent.width)
+                            onClicked: Qt.openUrlExternally(modelData.url)
+                        }
+                    }
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Components.AppButton {
+                        width: Math.min(implicitWidth, readingContent.width)
+                        visible: !!manual.article.previous?.id
+                        text: qsTrId("manual.reader.previous") + " · " + (manual.article.previous?.title ?? "")
+                        onClicked: manual.controller.selectChapter(manual.article.previous.id)
+                    }
+                    Components.AppButton {
+                        width: Math.min(implicitWidth, readingContent.width)
+                        visible: !!manual.article.next?.id
+                        text: qsTrId("manual.reader.next") + " · " + (manual.article.next?.title ?? "")
+                        onClicked: manual.controller.selectChapter(manual.article.next.id)
                     }
                 }
                 Flow {

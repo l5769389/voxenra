@@ -1,0 +1,23 @@
+{
+  "source_tag": "v2.5.0",
+  "tag_object": "d130436d4925fccdccf0f13976370612da97612c",
+  "source_commit": "94672e137e9087943b30f5f3084d407bae96923a",
+  "source_package": "qt_dicom_viewer",
+  "generation": "git archive v2.5.0 extracted to build/test-audit-fixes-20261112/legacy-v2.5.0, then QT_QPA_PLATFORM=offscreen PYTHONPATH=build/test-audit-fixes-20261112/legacy-v2.5.0/src .venv/bin/python tests/fixtures/upgrades/v2.5.0/generate.py",
+  "privacy": "Procedural constant 7 HU water disk in -1000 HU background. All DICOM identities are explicitly synthetic; no patient images or imported clinical data.",
+  "coverage": "Old AppController created real 2D measurement, completed QA worker, CPR path and completed reslicing; old WorkspaceDocumentController.save_to wrote this workspace. Current diagnostic verifies restored controllers and rendered pixel values, not native window or Windows installation behavior.",
+  "limits": "Only 2D length, water QA and thin CPR in this small fixture. No segmentation, PET, 4D, native GUI, updater button, download or installed Windows execution is claimed.",
+  "files": {
+    "expected.json": "4f5b8eb9f9fcbef177c57e32bf647fde6ba75c93cd754aa7aa84247775e38661",
+    "generate.py": "ea987757d1926f257be47aca01258193341fb46fcdbed1263d92820de9be3782",
+    "images/1.dcm": "003e957060b8bce1c20be883a61696da55f8d3802f8ae31b63272103ed8b0710",
+    "images/2.dcm": "b40c27995eaeb715eeaccec628f23b98771e9d63b51f9f6a93a45dbc66b409bb",
+    "images/3.dcm": "31bf0df4ae8002c16103a3b827ccc89dcdf9d6e0a5a5e7998adb868d8dca8437",
+    "workspace.voxworkspace": "e788e249bf5bba1f19c2925c40592d6230f737bf22d33e781aa0b6b7ac95907d"
+  },
+  "writer_sources": {
+    "src/qt_dicom_viewer/ui/controller/workspace_document_controller.py": "6ea0f6cf972858d6f61c2e7cb3473277cf2b463374f176434b4471f5b0e7f2a6",
+    "src/qt_dicom_viewer/ui/workspace_snapshot.py": "34f22647adc7ec47ab55347f5e536bd680414d646b6941a74303032291eeac4c",
+    "src/qt_dicom_viewer/core/workspace_state.py": "533760f93a886711a8c0d09d4613ec8755b32995b227cc8b2b25fac28774a9d4"
+  }
+}

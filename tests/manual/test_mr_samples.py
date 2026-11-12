@@ -270,6 +270,8 @@ def test_real_mouse_roi_and_current_view_export(scene,sample_root,tmp_path,monke
     click(window,find(window,'exportPng'))
     wait_until(lambda:not app.exportController.busy)
     assert not app.exportController.isError,app.exportController.message
+    wait_until(lambda:app.exportController.screenshotPreview.ready)
+    click(window,find(window,'saveScreenshotPreview'))
     exported = QImage(str(destination))
     item = find(window, 'rightPanel').property('exportItem')
     assert not exported.isNull()

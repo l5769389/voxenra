@@ -1,6 +1,7 @@
 .pragma library
 // Searchable translated settings labels, including controls in nested pages.
 var labels = {
+    "initialDisplay": ["initialDisplay.title", "initialDisplay.zoom", "initialDisplay.pixel", "initialDisplay.fit", "initialDisplay.windowMode", "initialDisplay.ctPreset", "initialDisplay.mrPreset"],
     "appearance": [
         "appearance.dark",
         "appearance.graphite",
@@ -147,9 +148,7 @@ var labels = {
         "text.0893"
     ],
     "export": [
-        "qa.reportSettings",
-        "qa.reportSoftwareName",
-        "qa.reportNameHint",
+        "screenshot.settingsTitle", "preset.choose", "preset.saveAs", "preset.defaultsHint",
         "export.defaultLocation",
         "text.0653",
         "text.0846",
@@ -158,6 +157,7 @@ var labels = {
         "text.0850",
         "text.0851"
     ],
+    "report": ["report.settingsTitle", "preset.choose", "preset.saveAs", "qa.reportSoftwareName", "report.orientation", "report.includeImages", "report.tableDetail", "report.fontSize", "report.pageNumbers", "report.imageColumns", "report.organization", "report.department", "report.softwareName", "report.anonymous", "settings.sharedExportDirectory"],
     "colormap": [
         "text.0774",
         "text.0775",

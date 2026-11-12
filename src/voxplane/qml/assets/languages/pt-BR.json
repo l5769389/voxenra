@@ -1473,9 +1473,7 @@
         "manual.mtf.title": "Análise de MTF e FWHM",
         "manual.mtf.summary": "MTF de fonte pontual independente e FWHM da rampa de fio / espessura da fatia.",
         "manual.mtf.section0.title": "1. Escolha um método",
-        "manual.mtf.section0.body": "**Serviços → MTF** analisa a resolução no plano usando uma esfera ou seção de fio perpendicular. O ajuste gaussiano é o padrão; lóbulos laterais negativos significativos acionam a FFT ponderada pelas bordas. A ferramenta adjacente **FWHM** mede a largura da rampa de fio e a espessura da fatia usando ajuste gaussiano ou cruzamentos a meia altura. Cada ferramenta retém sua própria ROI, configurações de análise, resultados e estado de redefinição ao alternar.",
         "manual.mtf.section1.title": "2. Selecione e ajuste",
-        "manual.mtf.section1.body": "Para uma esfera ou seção de fio, desenhe uma ROI quadrada de pelo menos 8×8 pixels em torno de um alvo brilhante e do fundo circundante. Para uma rampa, escolha **X horizontal / Y vertical** e desenhe um retângulo estreito ao longo de um fio, incluindo o fundo em ambas as extremidades e pelo menos 8 pixels ao longo da rampa. A ROI controla a média transversal; rampas rotacionadas ou múltiplas não são suportadas. Arraste o interior para mover ou um canto para redimensionar; solte para calcular.",
         "manual.mtf.section2.title": "3. Leia os resultados",
         "manual.mtf.section2.body": "O MTF mostra as curvas X/Y e MTF50 / MTF10. O FWHM mostra a largura a meia altura e **Espessura da fatia = FWHM × tan θ**. Expanda **Análise e perfil** para escolher o ajuste gaussiano / cruzamentos a meia altura e inspecionar o perfil. O ângulo padrão é 23°; escolha 45° em **Configurações → Medições → Espessura da fatia em rampa**. Os resultados de rampa única não corrigem a inclinação do fantoma nem substituem a espessura nominal do DICOM, e não medem o espaçamento entre fatias. Clique em **!** para notas de método e qualidade. As unidades do MTF são lp/mm ou lp/cm; FWHM e espessura usam mm.",
         "manual.mtf.section3.title": "Limites",
@@ -1557,7 +1555,7 @@
         "manual.faq.section1.title": "ROI versus VOI",
         "manual.faq.section1.body": "As ROIs comuns retangulares / elípticas fornecem **estatísticas da fatia 2D**. A segmentação MPR e o VOI fornecem **estatísticas 3D com profundidade**. O corte 3D altera apenas a exibição. O MIP de PET é uma projeção e não é usado para desenhar regiões 3D.",
         "manual.faq.section2.title": "Onde estão meus resultados?",
-        "manual.faq.section2.body": "Clique na aba original se ela ainda estiver aberta. Se já foi fechada, escolha **Espaço de trabalho → Reabrir aba fechada** e confira o corte, a grade de amostragem e a visibilidade das regiões. Abrir a série pela lista cria uma aba de leitura independente.\n\nO salvamento do espaço de trabalho e as cópias de recuperação automática incluem resultados de abas fechadas; rascunhos e histórico de desfazer não são salvos. **A recuperação automática não substitui o salvamento manual**: alterações após o último salvamento ou cópia de recuperação podem ser perdidas. O espaço de trabalho não contém os pixels originais das imagens; mantenha os arquivos de origem.",
+        "manual.faq.section2.body": "Clique na aba original se ela ainda estiver aberta; abrir a mesma série e o mesmo tipo de vista pela lista também ativa essa aba. Se ela foi fechada, clique com o botão direito na barra de abas e escolha **Reabrir aba fechada**, ou pressione **Ctrl+Shift+T (Windows) / ⇧⌘T (macOS)**, e confira o corte, a grade de amostragem e a visibilidade das regiões. Abrir pela lista após fechar cria uma nova aba sem recuperar os resultados anteriores.\n\nO salvamento do espaço de trabalho e as cópias de recuperação automática incluem resultados de abas fechadas; rascunhos e histórico de desfazer não são salvos. **A recuperação automática não substitui o salvamento manual**: alterações após o último salvamento ou cópia de recuperação podem ser perdidas. O espaço de trabalho não contém os pixels originais das imagens; mantenha os arquivos de origem.",
         "manual.faq.section3.title": "Ainda não suportado",
         "manual.faq.section3.body": "Importação de SR, troca de RTSTRUCT, SEG fracionário ou de LABELMAP, edição com pincel de voxel, interpolação de contornos e superfícies de segmentação não são suportados. A importação/exportação binária de SEG, a exportação de SR e a conversão de desenho livre em camada única são suportadas. A visualização genérica de múltiplos quadros/cores, PET Aprimorado, Mosaico e a análise quantitativa de RM permanecem indisponíveis. RM Aprimorada em tons de cinza é suportada; a reconstrução requer volumes regulares.",
         "appearance.title": "Aparência e idioma",
@@ -2255,7 +2253,7 @@
         "manual.cpr.section4.title": "Geometria das medições",
         "manual.cpr.section4.body": "Comprimento, ângulo e ROI usam os planos de referência e a seção transversal. A imagem curva não é um plano físico único e não permite medições quantitativas comuns. Os comprimentos da linha central usam o caminho 3D. Após editar ou excluir o caminho, medições salvas retornam ao plano físico original com versão e posição registradas.",
         "manual.cpr.section5.title": "Salvar, restaurar e exportar",
-        "manual.cpr.section5.body": "O espaço de trabalho salva caminhos, medições, parâmetros e locais dos arquivos, sem incorporar imagens. Sempre que abrir CPR pela lista de séries, você começará com um caminho vazio. Para continuar um caminho existente, clique na aba original. Se ela foi fechada, escolha **Espaço de trabalho → Reabrir aba fechada**. Fontes ausentes ou alteradas preservam registros e exibem uma mensagem. **Mais → Exportar** salva PNG da imagem curva, seção transversal ou quatro vistas, anonimamente por padrão. Rascunhos, prévias e reconstruções pendentes não são exportados. A exportação anônima mantém o tipo, estado histórico/atual, número gerado do caminho, revisão e posição, ocultando identificadores, nomes personalizados e anotações de texto.",
+        "manual.cpr.section5.body": "O espaço de trabalho salva caminhos, medições, parâmetros e locais dos arquivos, sem incorporar imagens. Abrir CPR pela lista de séries ativa a aba CPR existente da mesma série, preservando caminhos e estado de exibição. Abrir novamente após fechar a aba cria um caminho vazio. Para recuperar os caminhos anteriores, clique com o botão direito na barra de abas e escolha **Reabrir aba fechada**, ou pressione **Ctrl+Shift+T (Windows) / ⇧⌘T (macOS)**. Fontes ausentes ou alteradas preservam registros e exibem uma mensagem. **Mais → Exportar** salva PNG da imagem curva, seção transversal ou quatro vistas, anonimamente por padrão. Rascunhos, prévias e reconstruções pendentes não são exportados. A exportação anônima mantém o tipo, estado histórico/atual, número gerado do caminho, revisão e posição, ocultando identificadores, nomes personalizados e anotações de texto.",
         "manual.cpr.summary": "Desdobre imagens em caminhos 3D manuais, vincule referências e seções e preserve medições físicas.",
         "cpr.currentParameters": "Parâmetros de reconstrução do caminho atual",
         "cpr.returnCurrent": "Voltar ao resultado atual",
@@ -2275,6 +2273,12 @@
         "registration.invalidParameter": "Insira um número entre -10000 e 10000 (até duas casas decimais).",
         "updates.cachedResult": "Versão em cache {version} (última verificação bem-sucedida: {time}). Esta verificação falhou; você pode tentar verificar as atualizações novamente.",
         "measurement.endpointHint": "Pressione para definir o ponto final · Esc cancela",
-        "measurement.cornerHint": "Pressione para definir o canto oposto · Esc cancela"
-}
+        "measurement.cornerHint": "Pressione para definir o canto oposto · Esc cancela",
+        "initialDisplay.sourceHint": "Usa a largura e o nível de janela da imagem. Sem valores válidos, usa o ajuste automático. Os valores podem variar entre imagens.",
+        "initialDisplay.windowValues": "Largura WW: %1 · Nível WL: %2",
+        "export.directoryHint": "As caixas de salvar capturas e relatórios abrem nesta pasta. O local pode ser alterado ao salvar.",
+        "screenshot.privacyAndSave": "Privacidade e salvamento",
+        "initialDisplay.previewHint": "Imagem de exemplo; a visualização atual não é alterada. Os valores vêm da imagem aberta ou da predefinição escolhida.",
+        "screenshot.overlays": "Conteúdo da imagem"
+    }
 }

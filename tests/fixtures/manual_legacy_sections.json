@@ -1,0 +1,265 @@
+{
+  "2d": [
+    "manual.2d.section0",
+    "manual.2d.section1",
+    "manual.2d.section2",
+    "manual.2d.section3",
+    "manual.2d.section4",
+    "manual.2d.section5",
+    "manual.2d.section6",
+    "manual.2d.section7",
+    "manual.reading.maximize",
+    "manual.window.favorites"
+  ],
+  "mr": [
+    "manual.mr.section0",
+    "manual.mr.section1",
+    "manual.mr.section2",
+    "manual.mr.section3",
+    "manual.mr.section4"
+  ],
+  "compare2d": [
+    "manual.compare2d.section0",
+    "manual.compare2d.section1",
+    "manual.compare2d.section2",
+    "manual.compare2d.section3",
+    "manual.comparempr.section0",
+    "manual.comparempr.section1",
+    "manual.comparempr.section2",
+    "manual.comparempr.section3",
+    "manual.comparempr.section4",
+    "manual.comparempr.section5"
+  ],
+  "mpr": [
+    "manual.mpr.section0",
+    "manual.mpr.section1",
+    "manual.mpr.section2",
+    "manual.mpr.section3",
+    "manual.mpr.section4",
+    "manual.mpr.section5",
+    "manual.mpr.section6"
+  ],
+  "montage": [
+    "manual.montage.section0",
+    "manual.montage.section1",
+    "manual.montage.section2"
+  ],
+  "4d": [
+    "manual.4d.section0",
+    "manual.4d.section1",
+    "manual.4d.section2"
+  ],
+  "volume": [
+    "manual.volume.section0",
+    "manual.volume.section1",
+    "manual.volume.section2",
+    "manual.volume.section3",
+    "manual.volume.section4",
+    "manual.volume.section5",
+    "manual.volume.section6"
+  ],
+  "cpr": [
+    "manual.cpr.section0",
+    "manual.cpr.section1",
+    "manual.cpr.section2",
+    "manual.cpr.section3",
+    "manual.cpr.section4",
+    "manual.cpr.section5"
+  ],
+  "segmentation": [
+    "manual.segmentation.section0",
+    "manual.segmentation.section1",
+    "manual.segmentation.section2",
+    "manual.segmentation.section3",
+    "manual.segmentation.section4",
+    "manual.segmentation.section5",
+    "manual.segmentation.section6",
+    "manual.segmentation.section7",
+    "manual.segmentation.section9",
+    "manual.segmentation.section8",
+    "manual.segmentation.auto0",
+    "manual.segmentation.auto1",
+    "manual.segmentation.auto2"
+  ],
+  "voi": [
+    "manual.voi.section0",
+    "manual.voi.section1",
+    "manual.voi.section2"
+  ],
+  "interaction": [
+    "manual.interaction.section0",
+    "manual.interaction.section1",
+    "manual.interaction.section2",
+    "manual.management.section0",
+    "manual.management.section1",
+    "manual.management.section2"
+  ],
+  "settings": [
+    "manual.settings.section0",
+    "manual.settings.section1",
+    "manual.settings.section2",
+    "manual.settings.section3",
+    "manual.settings.section4",
+    "manual.settings.updates",
+    "manual.settings.feedback",
+    "manual.settings.input",
+    "manual.settings.interface-size",
+    "manual.settings.privacy",
+    "manual.toolbar.customize"
+  ],
+  "language-packs": [
+    "manual.language-packs.section0",
+    "manual.language-packs.section1",
+    "manual.language-packs.section2",
+    "manual.language-packs.section3",
+    "manual.language-packs.section4",
+    "manual.language-packs.section5"
+  ],
+  "colormap": [
+    "manual.colormap.section0",
+    "manual.colormap.section1",
+    "manual.colormap.section2",
+    "manual.colormap.advanced"
+  ],
+  "corners": [
+    "manual.corners.section0",
+    "manual.corners.section1",
+    "manual.corners.section2",
+    "manual.crosshair.section0",
+    "manual.crosshair.section1",
+    "manual.scale.section0"
+  ],
+  "export": [
+    "manual.export.section0",
+    "manual.export.section1",
+    "manual.export.section2",
+    "manual.export.section3",
+    "manual.export.section4",
+    "manual.export.section5"
+  ],
+  "measurement-report": [
+    "manual.measurement-report.section0",
+    "manual.measurement-report.section1",
+    "manual.measurement-report.section2",
+    "manual.measurement-report.section3",
+    "manual.measurement-report.section4",
+    "manual.measurement-report.p0"
+  ],
+  "faq": [
+    "manual.faq.section0",
+    "manual.faq.section1",
+    "manual.faq.section2",
+    "manual.faq.section3",
+    "manual.faq.section4",
+    "manual.faq.section5",
+    "manual.faq.section6"
+  ],
+  "measurement": [
+    "manual.measurement.section0",
+    "manual.measurement.section1",
+    "manual.measurement.section2",
+    "manual.measurement.section3",
+    "manual.measurement.section4",
+    "manual.measurement.section5",
+    "manual.measurement.section6"
+  ],
+  "measurement-edit": [
+    "manual.measurement-edit.section0",
+    "manual.measurement-edit.section1",
+    "manual.measurement-edit.section2",
+    "manual.measurement-edit.section3",
+    "manual.measurement-edit.p0"
+  ],
+  "measurement-roi": [
+    "manual.measurement-roi.section0",
+    "manual.measurement-roi.section1",
+    "manual.measurement-roi.section2",
+    "manual.measurement-roi.section3",
+    "manual.measurement-style.section0",
+    "manual.measurement-style.section1"
+  ],
+  "annotation": [
+    "manual.annotation.section0",
+    "manual.annotation.section1",
+    "manual.annotation.section2"
+  ],
+  "mtf": [
+    "manual.mtf.section0",
+    "manual.mtf.section1",
+    "manual.mtf.section2",
+    "manual.mtf.section3",
+    "manual.mtf.p0"
+  ],
+  "water-qa": [
+    "manual.water-qa.section0",
+    "manual.water-qa.section1",
+    "manual.water-qa.section2",
+    "manual.water-qa.section3",
+    "manual.water-qa.section4",
+    "manual.water-qa.section5",
+    "manual.water-qa.p0",
+    "manual.water-qa.history"
+  ],
+  "quick-start": [
+    "manual.quick-start.section0",
+    "manual.quick-start.section1",
+    "manual.quick-start.section2",
+    "manual.quick-start.section3",
+    "manual.quick-start.section4",
+    "manual.quick-start.section5"
+  ],
+  "supported-images": [
+    "manual.supported-images.section0",
+    "manual.supported-images.section1",
+    "manual.supported-images.section2",
+    "manual.supported-images.section3",
+    "manual.supported-images.section4",
+    "manual.supported-images.section5"
+  ],
+  "workspace": [
+    "manual.workspace.section0",
+    "manual.workspace.section1",
+    "manual.workspace.section2",
+    "manual.workspace.section3",
+    "manual.workspace.section4",
+    "manual.tabs.section0",
+    "manual.tabs.section1",
+    "manual.tabs.section2",
+    "manual.reading.identity"
+  ],
+  "local-import": [
+    "manual.local-import.section0",
+    "manual.local-import.section5",
+    "manual.local-import.section1",
+    "manual.local-import.section2",
+    "manual.local-import.section3",
+    "manual.local-import.section4"
+  ],
+  "pacs": [
+    "manual.pacs.section0",
+    "manual.pacs.receive",
+    "manual.pacs.section1",
+    "manual.pacs.section2",
+    "manual.pacs.section3"
+  ],
+  "pet-units": [
+    "manual.pet-units.section0",
+    "manual.pet-units.section1",
+    "manual.pet-units.section2",
+    "manual.quantification.section0",
+    "manual.quantification.section1",
+    "manual.quantification.section2",
+    "manual.quantification.section3"
+  ],
+  "fusion": [
+    "manual.fusion.section0",
+    "manual.fusion.section1",
+    "manual.fusion.section2",
+    "manual.fusion.section3"
+  ],
+  "registration": [
+    "manual.registration.section0",
+    "manual.registration.section1",
+    "manual.registration.section2"
+  ]
+}

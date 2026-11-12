@@ -11,6 +11,17 @@ Rectangle {
     required property var controller
     color: Theme.panelBackground
 
+    function revealSearchResult(button) {
+        const top = button.mapToItem(taskSearch.contentItem, 0, 0).y
+        const bottom = top + button.height
+        const offset = button.height > taskSearch.height || top < taskSearch.contentY
+            ? top : bottom > taskSearch.contentY + taskSearch.height
+                ? bottom - taskSearch.height : taskSearch.contentY
+        taskSearch.cancelFlick()
+        taskSearch.contentY = Math.max(0, Math.min(offset,
+            Math.max(0, taskSearch.contentHeight - taskSearch.height)))
+    }
+
     function revealChapter(button) {
         revealTimer.restart()
     }
@@ -49,11 +60,90 @@ Rectangle {
             objectName: "manualSearch"
             Layout.fillWidth: true
             font.pixelSize: 14
-            placeholderText: qsTrId("text.0949")
+            placeholderText: qsTrId("manual.reader.searchHint")
             text: navigation.controller?.search ?? ""
             onTextEdited: navigation.controller?.setSearch(text)
         }
+        Components.AppButton {
+            objectName: "manualTasksHome"
+            Layout.fillWidth: true
+            text: qsTrId("manual.reader.tasks")
+            checked: navigation.controller?.showTasks ?? false
+            iconName: "manual"
+            onClicked: navigation.controller.selectTasks()
+        }
+        Flickable {
+            id: taskSearch
+            objectName: "manualTaskSearchScroll"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: (navigation.controller?.search.trim().length ?? 0) > 0
+            contentWidth: width
+            contentHeight: searchColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            Basic.ScrollBar.vertical: Components.AppScrollBar {}
+            Connections {
+                target: navigation.controller
+                function onNavigationChanged() { taskSearch.contentY = 0 }
+            }
+            ColumnLayout {
+                id: searchColumn
+                width: taskSearch.width - 12
+                spacing: 8
+                Repeater {
+                    id: searchResultsRepeater
+                    model: (navigation.controller?.searchResults ?? []).slice(0, 30)
+                    delegate: Components.AppButton {
+                        id: hit
+                        required property int index
+                        required property var modelData
+                        KeyNavigation.tab: index + 1 < searchResultsRepeater.count ? searchResultsRepeater.itemAt(index + 1) : null
+                        KeyNavigation.backtab: index > 0 ? searchResultsRepeater.itemAt(index - 1) : null
+                        objectName: "manualTaskSearch-" + modelData.chapterId + "-" + modelData.sectionIndex
+                        Layout.fillWidth: true
+                        implicitHeight: hitText.implicitHeight + 20
+                        minimumButtonWidth: 0
+                        normalColor: "transparent"
+                        Accessible.name: modelData.chapterTitle + " · " + modelData.title
+                        onActiveFocusChanged: if (activeFocus) navigation.revealSearchResult(hit)
+                        Keys.onReturnPressed: event => { hit.click(); event.accepted = true }
+                        Keys.onEnterPressed: event => { hit.click(); event.accepted = true }
+                        onClicked: navigation.controller.selectSection(modelData.chapterId, modelData.sectionIndex)
+                        contentItem: Text {
+                            id: hitText
+                            text: hit.modelData.chapterTitle + " · " + hit.modelData.title + "\n" + hit.modelData.snippet
+                            textFormat: Text.PlainText
+                            wrapMode: Text.Wrap
+                            color: Theme.textSecondary
+                            font.pixelSize: 13
+                        }
+                    }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    visible: (navigation.controller?.searchResults.length ?? 0) === 0
+                    text: qsTrId("manual.reader.noResults")
+                    color: Theme.textMuted
+                    wrapMode: Text.Wrap
+                }
+                Components.AppButton {
+                    Layout.fillWidth: true
+                    visible: (navigation.controller?.searchResults.length ?? 0) === 0
+                    text: qsTrId("manual.faq.title")
+                    onClicked: { navigation.controller.setSearch(""); navigation.controller.selectChapter("faq") }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    visible: (navigation.controller?.searchResults.length ?? 0) > 30
+                    text: qsTrId("manual.reader.moreResults")
+                    color: Theme.textMuted
+                    wrapMode: Text.Wrap
+                }
+            }
+        }
         Basic.ScrollView {
+            visible: (navigation.controller?.search.trim().length ?? 0) === 0
             id: navigationScroll
             objectName: "manualNavigationScroll"
             Layout.fillWidth: true
@@ -135,7 +225,7 @@ Rectangle {
                                     momentary: true
                                     normalColor: "transparent"
                                     activeBorderColor: "transparent"
-                                    checked: navigation.controller?.chapterId === modelData.id
+                                    checked: !navigation.controller?.showTasks && navigation.controller?.chapterId === modelData.id
                                     onCheckedChanged: if (checked) navigation.revealChapter(chapterButton)
                                     onVisibleChanged: if (visible && checked) navigation.revealChapter(chapterButton)
                                     Component.onCompleted: if (checked) navigation.revealChapter(chapterButton)

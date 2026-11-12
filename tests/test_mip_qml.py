@@ -173,10 +173,9 @@ def test_mpr_slab_guide_layer_tracks_image_transforms(qt_app, tmp_path) -> None:
             modality_pixel=pixels.astype(np.float32),
             frame_meta=frame_meta,
             mpr_frame=frame,
-            plane_geometry=_mpr_geometry_for_plane(
-                frame,
-                MprPlane.CORONAL,
-            ),
+            plane_geometry=replace(_mpr_geometry_for_plane(
+                frame, MprPlane.CORONAL,
+            ), image_origin_mpr=(-150.0, 0.0, 80.0)),
         )
     )
     controller.apply_mpr_state(MprState(frame))
@@ -217,15 +216,40 @@ def test_mpr_slab_guide_layer_tracks_image_transforms(qt_app, tmp_path) -> None:
         assert layer is not None and layer.isVisible()
         assert len(controller.mprSlabGuides) == 2
 
-        controller.apply_zoom(1.4)
-        controller.applyTransformAction("rotate:cw90")
-        controller.applyTransformAction("rotate:mirror-h")
-        QTest.qWait(80)
+        pixel_layer = _find(view, "dicomPixelLayer")
 
+        def assert_guide_pixels():
+            QTest.qWait(100)
+            image = view.grabWindow()
+            assert not image.isNull()
+            sx, sy = image.width() / view.width(), image.height() / view.height()
+            # Coronal origin z=80, row spacing=2: the axial slab at +/-5 mm
+            # intersects rows 37.5 and 42.5, asymmetrically around image center
+            # so mirroring must move them. Sample its dashed lines well away
+            # from the central localizer, using the actual image layer transform.
+            for row in (37.5, 42.5):
+                hits = 0
+                for column in range(20, 40):
+                    point = pixel_layer.mapToScene(QPointF(column + .5, row + .5))
+                    x, y = round(point.x() * sx), round(point.y() * sy)
+                    hits += any(
+                        image.pixelColor(x + dx, y + dy).red() > 80
+                        and image.pixelColor(x + dx, y + dy).green() < 60
+                        and image.pixelColor(x + dx, y + dy).blue() < 60
+                        for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                    )
+                assert hits >= 6, (row, hits)
+            return image
+
+        assert_guide_pixels()
+        controller.apply_zoom(1.4)
+        assert_guide_pixels()
+        controller.applyTransformAction("rotate:cw90")
+        assert_guide_pixels()
+        controller.applyTransformAction("rotate:mirror-h")
+        screenshot = assert_guide_pixels()
         assert layer.isVisible()
         assert not warnings, warnings
-        screenshot = view.grabWindow()
-        assert not screenshot.isNull()
         assert screenshot.save(str(tmp_path / "mpr-slab-guides.png"))
 
         tools.setMprProjectionEnabled(False)

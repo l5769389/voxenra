@@ -10,13 +10,14 @@ import tempfile
 from threading import Event
 from uuid import uuid4
 
-from PySide6.QtCore import QObject, Property, Signal, Slot, QRunnable, QThreadPool, QSaveFile, QIODevice
+from PySide6.QtCore import QObject, Property, Signal, Slot, QRunnable, QThreadPool, QSaveFile, QIODevice, Qt, QPointF, QRectF
 from PySide6.QtGui import QImage, QPainter
 import pydicom
 from shiboken6 import isValid
 from voxplane.core.dicom_anonymizer import Anonymizer, check_pixel_identity
 from PySide6.QtQuick import QQuickItem
 from voxplane.ui.file_location import reveal_path
+from voxplane.settings.screenshot_presets import DEFAULTS, validate_options
 from voxplane.i18n.widgets import QFileDialog
 
 
@@ -138,6 +139,13 @@ class ExportController(QObject):
         self._capture_properties = []
         self._png_anonymous = True
         self._png_revision = None
+        self._screenshot_options = dict(DEFAULTS)
+        self._preview_capture = False
+        from .screenshot_preview_controller import ScreenshotPreviewController
+        self._screenshot_preview = ScreenshotPreviewController(self)
+        self._screenshot_preview.saved.connect(lambda path: self._finish(_msg("text.0471"), path=path))
+        self._capture_revisions = []
+        self._native_captures = []
         from .measurement_report_controller import MeasurementReportController
         self._measurement_report = MeasurementReportController(workspace, catalog, self)
         from .dicom_results_controller import DicomResultsController
@@ -227,6 +235,9 @@ class ExportController(QObject):
         self._grab_id = self._grab_callback = None
         self._grab = self._job = None
         self._png_context = None
+        self._preview_capture = False
+        self._native_captures = []
+        self._capture_revisions = []
         self.changed.emit()
 
     @Slot(float)
@@ -270,23 +281,67 @@ class ExportController(QObject):
     @Slot(QObject, float)
     @Slot(QObject, float, bool)
     def exportPng(self, item, pixel_ratio=1.0, anonymous=True):
+        self.exportScreenshot(item, item, {**DEFAULTS, 'anonymous': anonymous})
+
+    @Property(QObject, constant=True)
+    def screenshotPreview(self): return self._screenshot_preview
+
+    def screenshot_path(self, options):
+        from voxplane.ui.controller.settings_controller import resolve_settings
+        settings = resolve_settings(self)
+        directory = Path(settings.exportDirectory) if settings else Path.cwd()
+        extension = 'jpg' if options['format'] == 'jpeg' else 'png'
+        return str(directory / (options['filenamePrefix']+'.'+extension))
+
+    @Slot(QObject, QObject, 'QVariantMap')
+    def previewScreenshot(self, item, tab_item, options):
+        self._export_screenshot(item, tab_item, options, preview=True)
+
+    @Slot(QObject, QObject, 'QVariantMap')
+    def exportScreenshot(self, item, tab_item, options):
+        self._export_screenshot(item, tab_item, options)
+
+    def _export_screenshot(self, item, tab_item, options, *, preview=False):
         if self._busy:
             return
+        self._preview_capture = preview
+        self._screenshot_preview.clear()
+        try:
+            self._screenshot_options = validate_options(dict(options))
+        except (ValueError, TypeError) as exc:
+            self._finish(str(exc), True)
+            return
+        options = self._screenshot_options
+        anonymous = options['anonymous']
+        pixel_ratio = 1.0
+        if options['scope'] == 'tab':
+            item = tab_item
         viewport = self.workspace.activeViewport
         if not self._png_ready_to_capture():
             self._finish(_msg('text.0460'), True)
             return
-        path, _ = QFileDialog.getSaveFileName(None, _msg('text.0461'), "viewport.png", _msg('text.0462'))
+        extension = 'jpg' if options['format'] == 'jpeg' else 'png'
+        path = self.screenshot_path(options)
+        if not preview:
+            path, _ = QFileDialog.getSaveFileName(None, _msg('text.0461'), path,
+                                                 'JPEG (*.jpg *.jpeg)' if extension == 'jpg' else _msg('text.0462'))
         if not path:
             self._finish(_msg('text.0458'))
             return
         if not Path(path).suffix:
-            path += ".png"
+            path += "." + extension
         self._start(_msg('text.0463'))
         self._cancel = Event()
         self._png_anonymous = anonymous
         self._png_context = (viewport, item, pixel_ratio, path)
-        self._png_revision = getattr(viewport, "exportRevision", None)
+        self._png_revision = self._capture_revision(viewport)
+        self._capture_revisions = []
+        self._native_captures = []
+        if isinstance(item, QQuickItem):
+            for child in self._capture_items(item):
+                controller = child.property('viewportController')
+                if controller is not None and isinstance(controller, QObject):
+                    self._capture_revisions.append((controller, self._capture_revision(controller)))
         if anonymous:
             self._job = _PixelCheckJob(tuple(self.current_series()), self._cancel)
             self._job.signals.finished.connect(self._pixel_check_finished)
@@ -307,21 +362,15 @@ class ExportController(QObject):
         try:
             if (not isValid(viewport) or self.workspace.activeViewport is not viewport
                     or not self._png_ready_to_capture()
-                    or getattr(viewport, "exportRevision", None) != self._png_revision):
+                    or not self._capture_sources_ready()
+                    or self._capture_revision(viewport) != self._png_revision):
                 raise ValueError(_msg('text.0464'))
-            if viewport.viewportType == "volume":
-                self._save_png(viewport.snapshot_image(), path)
+            if viewport.viewportType == "volume" and self._screenshot_options["scope"] == "viewport":
+                self._save_png(viewport.snapshot_image(directions=self._screenshot_options["directions"]), path)
             elif isinstance(item, QQuickItem) and isValid(item) and item.isVisible() and item.width() > 0 and item.height() > 0:
                 # Qt captures at the window's native DPR. Do not multiply the
                 # target size by DPR again or reparent its PySide window wrapper.
-                if self._png_anonymous:
-                    if item.metaObject().indexOfProperty("anonymousExport") < 0:
-                        raise ValueError(_msg('text.0465'))
-                    self._capture_properties.append((item, "anonymousExport", item.property("anonymousExport")))
-                    item.setProperty("anonymousExport", True)
-                if item.metaObject().indexOfProperty("capturingPng") >= 0:
-                    self._capture_properties.append((item, "capturingPng", item.property("capturingPng")))
-                    item.setProperty("capturingPng", True)
+                self._prepare_capture(item)
                 self._grab = item.grabToImage()
                 if self._grab is None:
                     raise ValueError(_msg('text.0466'))
@@ -339,12 +388,71 @@ class ExportController(QObject):
             if (self._png_context is None
                     or self.workspace.activeViewport is not self._png_context[0]
                     or not self._png_ready_to_capture()
-                    or getattr(self._png_context[0], "exportRevision", None) != self._png_revision):
+                    or not self._capture_sources_ready()
+                    or self._capture_revision(self._png_context[0]) != self._png_revision):
                 self._finish(_msg('text.0464'), True)
                 return
             image = self._grab.image()
+            if self._native_captures:
+                item = self._png_context[1]
+                painter = QPainter(image)
+                # Painter coordinates are logical pixels at the image DPR.
+                sx = image.width() / image.devicePixelRatio() / item.width()
+                sy = image.height() / image.devicePixelRatio() / item.height()
+                for snapshot, bounds in self._native_captures:
+                    painter.drawImage(QRectF(bounds.x()*sx, bounds.y()*sy, bounds.width()*sx, bounds.height()*sy), snapshot)
+                painter.end()
             self._restore_capture()
             self._save_png(image, self._png_path)
+
+    def _capture_items(self, item):
+        yield item
+        for child in item.childItems():
+            if child.isVisible():
+                yield from self._capture_items(child)
+
+    @staticmethod
+    def _capture_revision(view):
+        # Most 2D controllers predate exportRevision; include their rendered
+        # frame identity and transforms so queued grabs cannot mix states.
+        names = ('exportRevision', 'imageSource', 'sliceIndex', 'windowWidth', 'windowCenter',
+                 'zoom', 'rotationDegrees', 'horizontalFlip', 'verticalFlip', 'centerX', 'centerY')
+        return tuple(getattr(view, name, None) for name in names)
+
+    def _capture_sources_ready(self):
+        return all(isValid(view) and self._capture_revision(view) == revision
+                   and getattr(view, 'loadState', 'ready') == 'ready'
+                   and getattr(view, 'exportReady', True)
+                   for view, revision in self._capture_revisions)
+
+    def _prepare_capture(self, item):
+        supported = False
+        changes = []
+        for child in self._capture_items(item):
+            if child.objectName() == 'volumeViewport':
+                supported = True
+                controller = child.property('viewportController')
+                container = next((node for node in child.childItems() if node.objectName() == 'volumeWindowContainer'), None)
+                if container is None or controller is None:
+                    raise ValueError(_msg('screenshot.nativeUnsupported'))
+                snapshot = controller.snapshot_image(directions=self._screenshot_options["directions"])
+                if snapshot.isNull():
+                    raise ValueError(_msg('screenshot.nativeUnsupported'))
+                origin = container.mapToItem(item, QPointF(0, 0))
+                self._native_captures.append((snapshot, QRectF(origin.x(), origin.y(), container.width(), container.height())))
+            props = child.metaObject()
+            if props.indexOfProperty('anonymousExport') >= 0:
+                supported = True
+            for name, value in [('anonymousExport', self._png_anonymous), ('capturingPng', True),
+                                *[("capture" + key.title(), self._screenshot_options[key])
+                                  for key in ('measurements','directions','scale','parameters')]]:
+                if props.indexOfProperty(name) >= 0:
+                    self._capture_properties.append((child, name, child.property(name)))
+                    changes.append((child, name, value))
+        if not supported:
+            raise ValueError(_msg('text.0465'))
+        for child, name, value in changes:
+            child.setProperty(name, value)
 
     def _restore_capture(self):
         for item, name, previous in self._capture_properties:
@@ -363,15 +471,29 @@ class ExportController(QObject):
             painter.drawImage(clean.rect(), image)
             painter.end()
             image = clean
+        options = self._screenshot_options
+        if options['size'] == 'longEdge' and not image.isNull():
+            edge = options['longEdge']
+            image = image.scaled(edge, edge, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        if self._preview_capture:
+            try:
+                if image.isNull(): raise ValueError('Empty capture')
+                self._screenshot_preview.set_image(image, options, path)
+                self._finish('')
+            except ValueError:
+                self._finish(_msg('text.0470'), True)
+            return
         output = QSaveFile(str(path))
         if image.isNull() or not output.open(QIODevice.WriteOnly):
             self._finish(_msg('text.0469'), True)
             return
-        if not image.save(output, "PNG") or not output.commit():
+        if not image.save(output, options["format"].upper(), options["jpegQuality"] if options["format"] == "jpeg" else -1) or not output.commit():
             output.cancelWriting()
             self._finish(_msg('text.0470'), True)
             return
         self._finish(_msg('text.0471'), path=str(Path(path).resolve()))
+        if options['revealAfter']:
+            self.openResultLocation()
 
     @Slot()
     def cancel(self):

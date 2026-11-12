@@ -5,6 +5,7 @@ from voxplane.i18n.qt import translated_property as _TextProperty
 import json
 import math
 from voxplane.ui.manual_content import manual_content, manual_rich_text
+from voxplane.core.manual_index import search_sections, chapter_neighbors, section_id
 
 from PySide6.QtCore import Property, Signal, Slot
 
@@ -15,6 +16,8 @@ from voxplane.ui.controller.utility_tab_controller import UtilityTabController
 class ManualTabController(UtilityTabController):
     _i18n_currentChapter = Signal()
     _i18n_navigation = Signal()
+    _i18n_searchResults = Signal()
+    _i18n_taskRoutes = Signal()
 
     chapterChanged = Signal()
     navigationChanged = Signal()
@@ -25,6 +28,7 @@ class ManualTabController(UtilityTabController):
         self._content = manual_content()
         self._chapters = {c["id"]: c for c in self._content["chapters"]}
         self._chapter = "quick-start"
+        self._show_tasks = False
         self._search = ""
         self._positions = {}
         self._aliases = self._content.get("aliases", {})
@@ -70,6 +74,9 @@ class ManualTabController(UtilityTabController):
 
     @_TextProperty('QVariantMap', notify=_i18n_currentChapter, notify_name='_i18n_currentChapter', source_notify='chapterChanged')
     def currentChapter(self):
+        if self._show_tasks:
+            return dict(title=_msg('manual.reader.tasks'), summary=_msg('manual.reader.routeHelp'),
+                        categoryTitle='', icon='manual', sections=[], relatedChapters=[])
         chapter = dict(self._chapters[self._chapter])
         from voxplane.i18n import messages
         code = 'en' if messages._active is not None and messages._active.locale != 'zh-CN' else 'zh'
@@ -80,16 +87,53 @@ class ManualTabController(UtilityTabController):
             if chapter.get('example'): chapter['example'] = 'en/' + chapter['example']
             if chapter.get('examples'): chapter['examples'] = ['en/' + name for name in chapter['examples']]
         category = next(c for c in self._content["categories"] if c["id"] == chapter["category"])
-        return dict(chapter, categoryTitle=category["title"],
-                    sections=[dict(section, bodyHtml=manual_rich_text(section["body"]),
+        previous, following = chapter_neighbors(self._content['chapters'], self._chapter)
+        def neighbor(key):
+            return dict(id=key, title=self._chapters[key]['title']) if key else {}
+        return dict(chapter, categoryTitle=category["title"], previous=neighbor(previous), next=neighbor(following),
+                    sections=[dict(section, sectionId=section_id(section, index), bodyHtml=manual_rich_text(section["body"]),
                                    tutorials=[dict(id=item['name'], file=item['sources'][code],
                                                    poster=item['posters'][code],
                                                    caption=_msg('manual.tutorial.' + item['name'] + '.caption'))
                                               for item in section.get('tutorials', [])])
-                              for section in chapter["sections"]],
+                              for index, section in enumerate(chapter["sections"])],
                     relatedChapters=[dict(id=key, title=_msg("manual." + key + ".title"))
                                      for key in chapter.get("related", [])
                                      if key in self._chapters or key in self._aliases])
+
+    @Property(bool, notify=chapterChanged)
+    def showTasks(self):
+        return self._show_tasks
+
+    @Slot()
+    def selectTasks(self):
+        self._show_tasks = True
+        self._section_index = -1
+        self.chapterChanged.emit()
+
+    @_TextProperty('QVariantList', notify=_i18n_taskRoutes, notify_name='_i18n_taskRoutes', source_notify='chapterChanged')
+    def taskRoutes(self):
+        return [dict(id=route['id'], title=_msg('manual.route.' + route['id'] + '.title'),
+                     summary=_msg('manual.route.' + route['id'] + '.summary'),
+                     chapters=[dict(id=key, title=self._chapters[key]['title']) for key in route['chapters']])
+                for route in self._content.get('routes', [])]
+
+    @_TextProperty('QVariantList', notify=_i18n_searchResults, notify_name='_i18n_searchResults', source_notify='navigationChanged')
+    def searchResults(self):
+        return search_sections(localize(self._content['chapters']), self._search, limit=31)
+
+    @Slot(str, int)
+    def selectSection(self, chapter_id, index):
+        chapter = self._chapters.get(chapter_id)
+        if chapter is None or not 0 <= index < len(chapter['sections']):
+            return
+        self._show_tasks = False
+        self._chapter = chapter_id
+        self._section_index = index
+        self._positions[chapter_id] = 0.0
+        self._expanded.add(chapter['category'])
+        self.navigationChanged.emit()
+        self.chapterChanged.emit()
 
     @Property(str, notify=navigationChanged)
     def search(self):
@@ -116,6 +160,7 @@ class ManualTabController(UtilityTabController):
 
     @Slot(str)
     def selectChapter(self, chapter_id):
+        self._show_tasks = False
         alias = self._aliases.get(chapter_id)
         self._section_index = alias["section"] if alias else -1
         if alias: chapter_id = alias["chapter"]
@@ -130,10 +175,10 @@ class ManualTabController(UtilityTabController):
 
     @Property(float, notify=chapterChanged)
     def scrollPosition(self):
-        return self._positions.get(self._chapter, 0.0)
+        return 0.0 if self._show_tasks else self._positions.get(self._chapter, 0.0)
 
     @Slot(float)
     def setScrollPosition(self, value):
-        if math.isfinite(value):
+        if not self._show_tasks and math.isfinite(value):
             self._positions[self._chapter] = max(0.0, value)
             self._section_index = -1

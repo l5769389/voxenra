@@ -169,12 +169,12 @@ def test_real_point_placement_renders_roi_metrics_and_keeps_card_upright(viewpor
 
 
 @pytest.mark.parametrize("kind", ["rect", "ellipse"])
-@pytest.mark.parametrize("font_size, precision", [(13, 2), (18, 4), (13, 0)])
+@pytest.mark.parametrize("font_size, precision", [(13, 2), (18, 3), (13, 0)])
 def test_roi_card_width_and_columns_stay_stable_during_draw_and_resize(
         viewport, kind, font_size, precision):
     view, controller, pixel_layer, warnings = viewport
     controller.settingsController.setValue("measurement", "fontSize", font_size)
-    controller.settingsController.setValue("measurement", "decimalPlaces", precision)
+    assert controller.settingsController.setValue("measurement", "decimalPlaces", precision)
     controller._tool_controller.selectInteraction(f"measure:{kind}")
     start = _scene(pixel_layer, 30, 35)
 
@@ -817,3 +817,60 @@ def test_fixed_points_confirm_on_press_and_complete_without_release(viewport, tm
     if not screenshot.isNull():
         assert screenshot.save(str(tmp_path / (tool.replace(':', '-') + '-pressed.png')))
     assert not warnings, warnings
+
+
+@pytest.mark.parametrize('kind', ['length','angle','rect','ellipse','curve','freehand','arrow'])
+def test_completed_measurement_tracks_each_mirror_and_rotation(viewport,kind,tmp_path):
+    from voxplane.model import MeasurementKind, ToolType
+    view,controller,pixels,warnings=viewport
+    controller._tool_controller.selectInteraction(('annotate:' if kind=='arrow' else 'measure:')+kind)
+    if kind in ('curve','freehand'):
+        context=controller._measurement_context(3,2,kind=MeasurementKind(kind))
+        controller.measurementController.paste_points([ImagePoint(45,60),ImagePoint(105,90),ImagePoint(70,140)],context)
+        QTest.qWait(40)
+    else:
+        _click_points(view,_scene(pixels,45,60),_scene(pixels,105,90))
+        if kind=='angle': _click_points(view,_scene(pixels,150,140))
+    original=controller.measurementController.measurementItems[0]
+    item=next(i for i in _visual_children(view.rootObject()) if i.objectName()=='measurementItem' and not i.property('isDraft'))
+    transforms=[('mirror-h',lambda:controller.applyTransformAction('rotate:mirror-h')),
+                ('cw90',lambda:controller.applyTransformAction('rotate:cw90')),
+                ('mirror-v',lambda:controller.applyTransformAction('rotate:mirror-v')),
+                ('rotate37',lambda:controller.apply_rotation(37)),
+                ('zoom',lambda:controller.apply_zoom(1.2)),
+                ('pan',lambda:controller.apply_pan(20,-17)),
+                ('reset-rotate',lambda:controller.reset_tool_state(ToolType.ROTATE)),
+                ('mirror-again',lambda:controller.applyTransformAction('rotate:mirror-h')),
+                ('reset-zoom',lambda:controller.reset_tool_state(ToolType.ZOOM)),
+                ('reset-pan',lambda:controller.reset_tool_state(ToolType.PAN)),
+                ('reset-transforms',lambda:controller.reset_tool_state(ToolType.ROTATE))]
+    for action,apply in transforms:
+        apply();QTest.qWait(40)
+        item=next(i for i in _visual_children(view.rootObject()) if i.objectName()=='measurementItem' and not i.property('isDraft'))
+        for prop,source in [('mappedPoints','points'),('renderPoints','renderPoints')]:
+            points=item.property(prop).toVariant()
+            source_points=original.get(source,original['points'])
+            assert len(points)==len(source_points)
+            for actual,p in zip(points,source_points):
+                expected=pixels.mapToItem(item,QPointF(p['column']+.5,p['row']+.5))
+                assert actual.x()==pytest.approx(expected.x(),abs=.01),(action,actual,expected)
+                assert actual.y()==pytest.approx(expected.y(),abs=.01),(action,actual,expected)
+        current=controller.measurementController.measurementItems[0]
+        assert {k:v for k,v in current.items() if k not in ('selected','hovered')}=={k:v for k,v in original.items() if k not in ('selected','hovered')}
+        label=item.property('labelItem')
+        if label and label.isVisible():
+            vector=label.mapToScene(QPointF(label.width(),0))-label.mapToScene(QPointF())
+            assert vector==QPointF(label.width(),0)
+        if action in ('mirror-h','reset-transforms'):
+            assert view.grabWindow().save(str(tmp_path/f'{kind}-{action}.png'))
+    # Editing after the reset must hit the displayed control point.
+    before=controller.measurementController.measurementItems[0]['points']
+    p=before[0]
+    _mouse_drag(view,_scene(pixels,p['column'],p['row']),_scene(pixels,p['column']+8,p['row']+6))
+    after=controller.measurementController.measurementItems[0]['points']
+    assert any(a['column']==pytest.approx(p['column']+8,abs=.6) and a['row']==pytest.approx(p['row']+6,abs=.6) for a in after), after
+    # The separate global reset intentionally clears drawing results.
+    controller.reset_all_view_state(reset_slice=False);QTest.qWait(40)
+    assert not controller.measurementController.measurementItems
+    assert not any(i.objectName()=='measurementItem' and i.isVisible() for i in _visual_children(view.rootObject()))
+    assert not warnings,warnings

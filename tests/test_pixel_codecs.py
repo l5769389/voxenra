@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import numpy as np
 import pydicom
 import pytest
+from PySide6.QtGui import QImage
 from pydicom.uid import CTImageStorage, RLELossless, JPEGLSLossless, JPEG2000Lossless
 
 from voxplane.core import pixel_codecs as codecs
@@ -30,7 +31,8 @@ def test_lossless_view_thumbnail_volume_export(qt_app, tmp_path, syntax, modalit
     if modality == 'CT':
         original.SOPClassUID = original.file_meta.MediaStorageSOPClassUID = CTImageStorage
     original.RescaleSlope, original.RescaleIntercept = .5, -1024
-    expected = DicomLoader.to_modality_pixels(original)
+    original.WindowCenter, original.WindowWidth = -1024, 2048
+    expected = (np.arange(4096, dtype=np.float32).reshape(64, 64) - 2048) * .5 - 1024
     paths = []
     for z in range(2):
         ds = deepcopy(original)
@@ -48,6 +50,17 @@ def test_lossless_view_thumbnail_volume_export(qt_app, tmp_path, syntax, modalit
     np.testing.assert_array_equal(volume.modality_pixels, np.stack([expected, expected]))
     result = export_series(ExportRequest(tuple(paths), tmp_path / 'export', format='png'))
     assert result.file_count == 2
+    # Hand-selected intensities after slope .5/intercept -1024 and [-2048, 0] window.
+    # Include interior levels so ignoring rescale/window cannot pass.
+    expected_pixels = [(0, 0, 0), (0, 16, 63), (0, 32, 127),
+                       (0, 48, 191), (63, 63, 254)]
+    outputs = sorted(result.directory.glob('*.png'))
+    assert len(outputs) == 2
+    for path in outputs:
+        image = QImage(str(path))
+        assert (image.width(), image.height()) == (64, 64)
+        for x, y, value in expected_pixels:
+            assert image.pixelColor(x, y).getRgb() == (value, value, value, 255)
 
 
 @pytest.mark.parametrize('syntax', LOSSLESS)

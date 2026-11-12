@@ -218,6 +218,15 @@ def test_every_preference_survives_process_restart(tmp_path):
                      'segmentationDevice': 'cpu', 'segmentationOrgans': ['liver']},
         'roi': {key: False for key in DEFAULTS['roi']},
     }
+    expected['initialDisplay'] = dict(zoom='pixel', windowMode='preset', ctPreset='ct-lung', mrPreset='custom-mr')
+    expected['screenshot'] = dict(scope='tab', format='jpeg', size='longEdge', longEdge=3000,
+        jpegQuality=80, measurements=False, directions=False, scale=False, parameters=False,
+        anonymous=False, filenamePrefix='lecture', revealAfter=True)
+    expected['report'] = dict(orientation='landscape', fontSize='large', pageNumbers=False,
+        organization='Imaging Lab', department='Physics', softwareName='QA Workstation',
+        tableDetail='detailed', imageColumns=2, anonymous=False, includeImages=False)
+    expected['exportPresets'] = {kind:[dict(id='restart',name='Restart',options=expected[kind])]
+                                  for kind in ('screenshot','report')}
     expected['toolbar'] = {'leftViews': ['3d', 'mpr', '2d'],
                            'rightProfiles': {'mpr:ct': {'common': ['zoom', 'window'], 'more': ['import', 'export']}}}
     assert expected.keys() == DEFAULTS.keys()

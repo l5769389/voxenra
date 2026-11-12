@@ -11,6 +11,7 @@ Item {
     required property var transformState
     property var preferences: ({})
     property bool showRoiMetrics: true
+    property bool capturingPng: false
     property var roiLabels: ({})
     property var avoidanceRegions: []
     property var reservedRegions: []
@@ -82,7 +83,7 @@ Item {
             roiLabel: measurementLayer.roiLabels[modelData.measurementId] ?? ""
             reservedRegions: measurementLayer.reservedRegions.concat(measurementLayer.instructionRegions)
             avoidanceRegions: measurementLayer.labelObstacles(modelData.measurementId, index)
-            isSelected: measurementLayer.measurementController
+            isSelected: !measurementLayer.capturingPng && measurementLayer.measurementController
                 ? modelData?.measurementId
                     === measurementLayer.measurementController.selectedMeasurementId
                 : false
@@ -98,7 +99,7 @@ Item {
         width: measurementLayer.width
         height: measurementLayer.height
 
-        visible: measurementLayer.measurementController
+        visible: !measurementLayer.capturingPng && measurementLayer.measurementController
                  && Object.keys(
                      measurementLayer.measurementController.activeTransaction ?? ({})
                  ).length > 0
@@ -128,7 +129,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: measurementLayer.instructionBottomMargin
         text: measurementLayer.measurementController?.instruction ?? ""
-        visible: text.length > 0
+        visible: !measurementLayer.capturingPng && text.length > 0
         color: Theme.drawingLineColor(measurementLayer.preferences.measurement ?? ({}), true)
         font.pixelSize: 13
         style: Text.Outline

@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../components" as Components
 import "components" as Controls
+import "panels" as Panels
 import "../../theme"
 Rectangle {
     id: root
@@ -35,6 +36,13 @@ Rectangle {
     implicitHeight: root.voiActions && voiRow.columns === 1 ? 80 : 44
     color: Theme.panelBackgroundStrong
 
+    Panels.ReportDialog {
+        id: qaReportDialog
+        reportController: root.qaController
+        settingsController: root.toolController?.settingsController ?? null
+        captureItem: root.exportItem
+        qa: true
+    }
     Rectangle {
         anchors.top: parent.top
         width: parent.width
@@ -100,7 +108,7 @@ Rectangle {
             label: qsTrId("qa.exportReport")
             iconName: "export"
             actionEnabled: root.qaReady && !root.qaEditing && !!root.exportItem && !root.qaController?.reportBusy
-            onTriggered: root.qaController.exportReport(root.exportItem)
+            onTriggered: qaReportDialog.open()
         }
         QaAction {
             buttonObjectName: visible && root.qaActions ? root.resetObjectName : ""

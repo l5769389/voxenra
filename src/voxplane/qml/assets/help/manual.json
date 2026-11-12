@@ -78,5 +78,53 @@
       "chapter": "corners",
       "section": 5
     }
-  }
+  },
+  "routes": [
+    {
+      "id": "first",
+      "chapters": [
+        "quick-start",
+        "local-import",
+        "2d",
+        "workspace"
+      ]
+    },
+    {
+      "id": "measure",
+      "chapters": [
+        "measurement",
+        "measurement-edit",
+        "measurement-report"
+      ]
+    },
+    {
+      "id": "reconstruct",
+      "chapters": [
+        "mpr",
+        "segmentation",
+        "ai-setup",
+        "voi",
+        "export"
+      ]
+    },
+    {
+      "id": "quality",
+      "chapters": [
+        "qa-water",
+        "qa-noise",
+        "qa-air",
+        "point-mtf",
+        "ramp-fwhm"
+      ]
+    },
+    {
+      "id": "help",
+      "chapters": [
+        "faq",
+        "supported-images",
+        "workspace",
+        "settings"
+      ]
+    }
+  ]
 }

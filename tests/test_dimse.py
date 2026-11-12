@@ -283,3 +283,117 @@ def test_cancel_during_association_release_is_bounded(peer):
         assert time.monotonic() - started < 1.5
     finally:
         worker.join(3)
+
+
+@pytest.mark.parametrize('terminal', ['success', 'eof', 'abort', 'warning', 'failed_suboperation', 'warning_suboperation'])
+def test_complete_stores_require_successful_move_terminal(peer, tmp_path, monkeypatch, terminal):
+    """Real C-STORE transport plus controlled remote C-MOVE terminal responses.
+
+    All objects arrive before the response is altered: file-count validation
+    alone must never make an incomplete/failed exchange publish an import.
+    """
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+    c = client(peer)
+    original_association = c.association
+    connections = []
+    stores_before_terminal = []
+    pending_seen = []
+
+    @contextmanager
+    def association(model):
+        with original_association(model) as connection:
+            connections.append(connection)
+            if model != MOVE:
+                yield connection
+                return
+            def responses(*args, **kwargs):
+                for status, response in connection.send_c_move(*args, **kwargs):
+                    if status.Status != 0:
+                        pending_seen.append(int(status.Status))
+                        yield status, response
+                        continue
+                    files = list(tmp_path.glob('import-*/*.dcm'))
+                    stores_before_terminal.extend(str(pydicom.dcmread(p).SOPInstanceUID) for p in files)
+                    if terminal == 'eof':
+                        return
+                    if terminal == 'abort':
+                        connection.abort()
+                        yield Dataset(), None  # pynetdicom's aborted-response sentinel
+                        return
+                    status = deepcopy(status)
+                    if terminal == 'warning':
+                        status.Status = 0xB000
+                    elif terminal == 'failed_suboperation':
+                        status.NumberOfFailedSuboperations = 1
+                    elif terminal == 'warning_suboperation':
+                        status.NumberOfWarningSuboperations = 1
+                    yield status, response
+            yield SimpleNamespace(send_c_move=responses)
+
+    monkeypatch.setattr(c, 'association', association)
+    selections = c.series(STUDY, 0, 20)
+    if terminal == 'success':
+        result = import_series(c, selections, tmp_path, lambda *a: None)
+        assert result.snapshot.dicom_file_count == 3
+    else:
+        with pytest.raises(PacsError):
+            import_series(c, selections, tmp_path, lambda *a: None)
+        assert list(tmp_path.iterdir()) == []
+    assert pending_seen and all(status == 0xFF00 for status in pending_seen)
+    assert set(stores_before_terminal) == {str(ds.SOPInstanceUID) for ds in peer.datasets}
+    assert not c.cancel.is_set()
+    assert all(not connection.is_established and (connection.is_released or connection.is_aborted)
+               for connection in connections)
+    with socket.socket() as listener:
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listener.bind(('127.0.0.1', peer.destination))
+
+
+@pytest.mark.parametrize('termination', ['eof', 'abort'])
+def test_query_pending_without_final_success_is_not_published(peer, monkeypatch, termination):
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+    c = client(peer)
+    original_association = c.association
+    connections = []
+    pending = []
+
+    @contextmanager
+    def association(model):
+        with original_association(model) as connection:
+            connections.append(connection)
+            def responses(*args, **kwargs):
+                for status, response in connection.send_c_find(*args, **kwargs):
+                    if status.Status == 0:
+                        if termination == 'abort':
+                            connection.abort()
+                            yield Dataset(), None
+                        return
+                    pending.append(str(response.StudyInstanceUID))
+                    yield status, response
+            yield SimpleNamespace(send_c_find=responses)
+    monkeypatch.setattr(c, 'association', association)
+    with pytest.raises(PacsError):
+        c.studies({}, 0, 20)
+    assert pending == [STUDY]
+    assert not c.cancel.is_set()
+    assert all(not connection.is_established and (connection.is_released or connection.is_aborted)
+               for connection in connections)
+
+
+def test_peer_abort_after_valid_pending_query_is_not_success(peer):
+    # Abort on the remote peer, rather than modelling a client cancellation.
+    original_find = peer.find
+    def abort_after_pending(event):
+        for status, row in original_find(event):
+            if status == 0:
+                event.assoc.abort()
+                return
+            yield status, row
+    peer.server.bind(evt.EVT_C_FIND, abort_after_pending)
+    c = client(peer)
+    with pytest.raises(PacsError):
+        c.studies({}, 0, 20)
+    assert peer.entered.is_set()
+    assert not c.cancel.is_set()

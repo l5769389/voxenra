@@ -1,4 +1,7 @@
-"""Native PDF exports preserve Chinese glyphs and each phase's data."""
+"""Native PDF semantic checks and visible/distinct Chinese glyph smoke guard.
+
+This catches blank/tofu glyphs; typography still needs native visual review.
+"""
 import os
 from pathlib import Path
 import sys
@@ -11,6 +14,34 @@ from PySide6.QtPdf import QPdfDocument
 from voxplane.core.measurement_report import pdf_bytes
 from voxplane.i18n.messages import builtin
 from test_dicom_tags import qt_app
+
+
+def _assert_visible_distinct_glyphs(crops):
+    """Reject blank rendering and a repeated missing-glyph box."""
+    masks = []
+    for crop in crops:
+        assert not crop.isNull()
+        normalized = crop.scaled(24, 24)
+        mask = tuple(normalized.pixelColor(x, y).lightness() < 180
+                     for y in range(24) for x in range(24))
+        assert sum(mask) >= 15, "Chinese glyph has no visible ink"
+        masks.append(mask)
+    assert len(masks) == 4
+    # Four different title characters must not all render as the same tofu box.
+    assert all(sum(a != b for a, b in zip(masks[0], mask)) >= 15
+               for mask in masks[1:]), "Chinese glyphs render as repeated boxes"
+
+
+@pytest.mark.parametrize("blank", [True, False])
+def test_glyph_guard_rejects_blank_or_repeated_boxes(blank):
+    image = QImage(24, 24, QImage.Format_RGB32)
+    image.fill(QColor('white'))
+    if not blank:
+        painter = QPainter(image)
+        painter.drawRect(3, 3, 17, 17)
+        painter.end()
+    with pytest.raises(AssertionError, match="no visible ink|repeated boxes"):
+        _assert_visible_distinct_glyphs([image] * 4)
 
 
 @pytest.mark.skipif(os.environ.get('VOXPLANE_NATIVE_QA') != '1'
@@ -46,7 +77,24 @@ def test_native_chinese_pdf_preserves_glyphs_and_phase_data(qt_app):
             painter.drawImage(0, 0, rendered)
             painter.end()
             assert image.save(str(output / f'chinese-phases-{page + 1}.png'))
-            texts.append(document.getAllText(page).text())
+            page_text = document.getAllText(page).text()
+            texts.append(page_text)
+            if page == 0:
+                start = page_text.index('测量结果')
+                page_size = document.pagePointSize(page)
+                crops = []
+                for offset in range(4):
+                    selection = document.getSelectionAtIndex(page, start + offset, 1)
+                    assert selection.isValid()
+                    assert selection.text() == '测量结果'[offset]
+                    rect = selection.boundingRectangle()
+                    from PySide6.QtCore import QRectF
+                    raster_rect = QRectF(rect.x() * image.width() / page_size.width(),
+                                         rect.y() * image.height() / page_size.height(),
+                                         rect.width() * image.width() / page_size.width(),
+                                         rect.height() * image.height() / page_size.height())
+                    crops.append(image.copy(raster_rect.toAlignedRect()))
+                _assert_visible_distinct_glyphs(crops)
         text = '\n'.join(texts)
         (output / 'chinese-phases.txt').write_text(text, encoding='utf-8')
         for label in ('测量结果', '患者 1', '序列 1', '体积 cm³', '均值', '强度单位'):

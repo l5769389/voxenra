@@ -25,7 +25,9 @@ def report(root):
                       slicer_status=c.get('status','blocked'),
                       geometry_max_error_mm=max((g.get('geometry_max_error_mm',0.) for g in groups),default=0.),
                       intensity_max_error=max((g.get('intensity_max_error',0.) for g in groups),default=0.),
-                      slicer_roundtrip_groups=len(c.get('exchange',[])))
+                      slicer_image_status=c.get('image_status','blocked'),
+                      slicer_exchange_status=c.get('exchange_status','not_verified'),
+                      slicer_roundtrip_groups=sum(x.get('status')=='pass' for x in c.get('exchange',[])))
             if 'reason' in r:item['reason']=r['reason']
             item['volume_limits']=[dict(group=g['index'],reason=g['reason']) for g in groups if g.get('volume')=='unsupported']
             if category=='synthetic':

@@ -13,38 +13,44 @@ from test_measurement_qml import qt_app
 from test_mpr_voi_qml import settle
 
 
-def legacy_full_plane(evaluation, geometry):
-    """Frozen pre-refactor vectorized oracle, including half-voxel rounding."""
-    rows, cols = np.indices((geometry.rows, geometry.columns), dtype=np.float32)
-    inverse = evaluation.geometry.patient_to_voxel
-    origin = inverse[:3, :3] @ geometry.image_origin_patient + inverse[:3, 3]
-    u = inverse[:3, :3] @ np.asarray(geometry.column_direction_patient) * geometry.column_spacing
-    v = inverse[:3, :3] @ np.asarray(geometry.row_direction_patient) * geometry.row_spacing
-    index = np.floor(origin[:, None, None] + u[:, None, None] * cols
-                     + v[:, None, None] * rows + .5).astype(int) - evaluation.offset[:, None, None]
-    inside = np.all((index >= 0) & (index < np.asarray(evaluation.mask.shape)[:, None, None]), axis=0)
-    result = np.zeros(rows.shape, dtype=bool)
-    result[inside] = evaluation.mask[tuple(index[:, inside])]
-    return result
-
-
-@pytest.mark.parametrize('origin', [(0., 0., 0.), (.5, -.5, .5), (-7.11, 5.27, 2.6)])
+@pytest.mark.parametrize('half_offset', [-1e-6, 0., 1e-6])
 @pytest.mark.parametrize('oblique', [False, True])
-def test_blocked_sampling_is_pixel_identical_across_boundaries_and_oblique_planes(setup_voi, origin, oblique):
-    _, view, _ = setup_voi
-    rng = np.random.default_rng(42)
-    result = VoiEvaluation(rng.random((4, 5, 6)) > .3, np.array([2, 3, 1]),
-                           view._voi_volume.geometry, {}, None, (0, 1))
-    # Subvoxel spacing and a large plane exercise multiple row blocks.
-    axes = np.linalg.qr(rng.normal(size=(3, 3)))[0] if oblique else np.eye(3)
-    plane = SimpleNamespace(rows=701, columns=419, row_spacing=.021, column_spacing=.017,
-                            image_origin_patient=origin,
-                            row_direction_patient=axes[:, 1], column_direction_patient=axes[:, 0])
+def test_blocked_sampling_is_pixel_identical_across_boundaries_and_oblique_planes(half_offset, oblique):
+    # Native voxel coordinates equal patient coordinates in this independent
+    # phantom. An asymmetric periodic mask supplies foreground AND background
+    # along every block seam; the z origin straddles the nearest-neighbor tie.
+    z, y, x = np.indices((4, 8, 8))
+    mask = (z + 2*y + 3*x) % 5 < 2
+    result = VoiEvaluation(mask, np.array([2, 3, 1]),
+                           SimpleNamespace(patient_to_voxel=np.eye(4)), {}, None, (0, 1))
+    tilt = .1 if oblique else 0.
+    row_y = np.sqrt(1 - tilt**2)
+    plane = SimpleNamespace(rows=701, columns=419, row_spacing=.01, column_spacing=.02,
+                            image_origin_patient=(3.5 + half_offset, 3., 1.),
+                            row_direction_patient=(tilt, row_y, 0.), column_direction_patient=(0., 0., 1.))
+    rows, cols = np.indices((701, 419))
+    # Analytic lattice oracle: no production transform or sampling helper.
+    iz = np.floor(3.5 + half_offset + rows*.01*tilt + .5).astype(int) - 2
+    iy = np.floor(rows*.01*row_y + .5).astype(int)
+    ix = np.floor(cols*.02 + .5).astype(int)
+    expected = ((iz + 2*iy + 3*ix) % 5 < 2) & (ix < 8) & (iy < 8) & (iz < 4)
+    for seam in (156, 312, 468, 624):
+        for row in (seam - 1, seam):
+            assert expected[row].any() and (~expected[row]).any(), 'Fixture must exercise each side of every seam'
     before = result.mask.copy()
-    np.testing.assert_array_equal(plane_mask(result, plane), legacy_full_plane(result, plane))
+    np.testing.assert_array_equal(plane_mask(result, plane), expected)
     np.testing.assert_array_equal(result.mask, before)
-    result.mask = np.zeros((0, 0, 0), bool)
-    assert not plane_mask(result, plane).any()
+
+
+def test_empty_cropped_mask_has_no_plane_foreground():
+    result = VoiEvaluation(np.zeros((0, 0, 0), bool), np.array([2, 3, 1]),
+                           SimpleNamespace(patient_to_voxel=np.eye(4)), {}, None, (0, 1))
+    plane = SimpleNamespace(rows=701, columns=419, row_spacing=.01, column_spacing=.02,
+                            image_origin_patient=(3.5, 3., 1.),
+                            row_direction_patient=(0., 1., 0.), column_direction_patient=(0., 0., 1.))
+    actual = plane_mask(result, plane)
+    assert actual.shape == (701, 419)
+    assert not actual.any()
 
 
 def test_cache_validates_pixels_offset_geometry_style_and_keeps_bound(setup_voi, monkeypatch):

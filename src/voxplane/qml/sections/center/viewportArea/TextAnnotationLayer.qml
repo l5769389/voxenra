@@ -15,6 +15,7 @@ Item {
     required property var transformState
     property var preferences: ({})
     property bool hideText: false
+    property bool capturingPng: false
     readonly property var styleSettings: preferences.measurement ?? ({})
 
     Repeater {
@@ -132,7 +133,7 @@ Item {
                 radius: width / 2
                 x: annotationItem.tailPoint.x - width / 2
                 y: annotationItem.tailPoint.y - height / 2
-                visible: annotationItem.modelData.selected
+                visible: !annotationLayer.capturingPng && annotationItem.modelData.selected
                     && annotationItem.arrowLength > 1
                 color: annotationItem.arrowColor
                 border.color: Theme.annotationHandle
@@ -145,7 +146,7 @@ Item {
                 radius: width / 2
                 x: annotationItem.headPoint.x - width / 2
                 y: annotationItem.headPoint.y - height / 2
-                visible: annotationItem.modelData.selected
+                visible: !annotationLayer.capturingPng && annotationItem.modelData.selected
                     && annotationItem.arrowLength > 1
                 color: annotationItem.arrowColor
                 border.color: Theme.annotationHandle
@@ -166,9 +167,9 @@ Item {
                 visible: !annotationLayer.hideText && annotationItem.modelData.text.length > 0
                 color: annotationItem.modelData.draft
                     ? Theme.annotationArrowBackground
-                    : annotationItem.modelData.selected
+                    : !annotationLayer.capturingPng && annotationItem.modelData.selected
                     ? Theme.annotationSelectedBackground : Theme.annotationBackground
-                border.color: annotationItem.modelData.selected
+                border.color: !annotationLayer.capturingPng && annotationItem.modelData.selected
                     ? annotationItem.arrowColor : Theme.annotationBorder
                 border.width: 1
 

@@ -12,6 +12,10 @@ on:
       - "src/voxplane/qml/assets/icons/**"
       - "src/voxplane/qml/assets/brand/voxplane-mark.svg"
       - "docs/screenshots/**"
+      - "tests/test_manual_site.py"
+      - "tests/test_manual_tasks_site.py"
+      - "tests/test_home_performance.py"
+      - "tests/browser/**"
   workflow_dispatch:
 
 permissions:
@@ -38,8 +42,25 @@ jobs:
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Build bilingual website and manual
         run: |
-          python3 -m pip install "pillow==12.3.0"
+          python3 -m pip install "pillow==12.3.0" "pytest==9.1.1"
           python3 scripts/build_manual_site.py /tmp/voxplane-manual-site
+      - name: Verify generated website contracts
+        run: python3 -m pytest -q tests/test_manual_site.py tests/test_manual_tasks_site.py tests/test_home_performance.py --junitxml=/tmp/voxplane-manual-browser-evidence/static-tests.xml
+      - name: Install pinned browser acceptance dependencies
+        run: |
+          npm install --prefix tests/browser --ignore-scripts --no-audit --no-fund
+          tests/browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify bilingual responsive layout and interactions
+        run: |
+          node tests/browser/manual_layout.cjs /tmp/voxplane-manual-site /tmp/voxplane-manual-browser-evidence
+          node tests/browser/manual_tasks.cjs /tmp/voxplane-manual-site /tmp/voxplane-manual-browser-evidence/tasks
+      - name: Retain browser acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: manual-browser-acceptance
+          path: /tmp/voxplane-manual-browser-evidence
+          if-no-files-found: warn
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:

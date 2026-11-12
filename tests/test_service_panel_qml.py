@@ -135,7 +135,7 @@ def test_service_menu_has_no_title_or_explanation_and_only_selects_entries(servi
         image = images[0]
         assert str(image.property("source")).find(icon_name) >= 0
         assert image.width() > 0
-        assert image.parentItem().property("iconColor") == image.parentItem().property("iconColor")
+        assert image.parentItem().property("iconColor").name() == "#66d0ff"
     assert not warnings, warnings
     assert commands == []
 

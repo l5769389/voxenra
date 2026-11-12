@@ -194,9 +194,11 @@ def test_montage_anonymous_png_hides_details_without_changing_expanded_state(sid
     assert controller.detailsExpanded and details.property('opacity') == 1
     identified = capture(item)
     item.setProperty('anonymousExport', True)
+    item.setProperty('capturingPng', True)
     expected = capture(item)
     assert details.property('opacity') == 0
     item.setProperty('anonymousExport', False)
+    item.setProperty('capturingPng', False)
     assert pixels(identified) != pixels(expected)
     target = tmp_path / 'montage-anonymous.png'
     monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName',
@@ -204,6 +206,8 @@ def test_montage_anonymous_png_hides_details_without_changing_expanded_state(sid
     click(window, find(window, 'exportPng'))
     wait_until(lambda: not app.exportController.busy)
     assert not app.exportController.isError, app.exportController.message
+    wait_until(lambda: app.exportController.screenshotPreview.ready)
+    click(window, find(window, 'saveScreenshotPreview'))
     assert pixels(QImage(str(target))) == pixels(expected)
     assert controller.detailsExpanded and details.property('opacity') == 1
     assert not warnings, warnings

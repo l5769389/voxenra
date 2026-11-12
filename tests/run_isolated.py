@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 COUNT_KEYS = ("tests", "failures", "errors", "skipped")
 
 
-def run_file(indexed_path, *, root, output, env, timeout, parallel):
+def run_file(indexed_path, *, root, output, env, timeout, parallel, fail_on_skip=False):
     index, path = indexed_path
     name = str(path.relative_to(root))
     prefix = output / f"{index:03d}-{path.stem}"
@@ -50,6 +50,12 @@ def run_file(indexed_path, *, root, output, env, timeout, parallel):
             code = code or 1
             counts = {}
             log += f"\nCould not read JUnit report for {name}: {error}\n"
+    if code == 0 and (not counts.get("tests") or counts.get("failures") or counts.get("errors")):
+        code = 1
+        log += f"\nSuccessful exit without successful test evidence: {name}\n"
+    if fail_on_skip and counts.get("skipped"):
+        code = code or 1
+        log += f"\nRequired stage skipped tests: {name} ({counts['skipped']} skipped)\n"
     prefix.with_suffix(".log").write_text(log, encoding="utf-8")
     if parallel and code == 0:
         shutil.rmtree(temp_directory, ignore_errors=True)
@@ -63,6 +69,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("build/test-results"))
     parser.add_argument("--workers", type=int, default=1,
                         help="Maximum simultaneous pytest processes (default: 1)")
+    parser.add_argument("--fail-on-skip", action="store_true",
+                        help="Reject any skipped test in an explicitly required stage")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     files = [path.resolve() for path in
@@ -77,7 +85,7 @@ def main() -> int:
     results = []
     totals = dict.fromkeys(COUNT_KEYS, 0)
     run = partial(run_file, root=root, output=output, env=env,
-                  timeout=args.timeout, parallel=args.workers > 1)
+                  timeout=args.timeout, parallel=args.workers > 1, fail_on_skip=args.fail_on_skip)
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         completed = executor.map(run, enumerate(files, 1))
         for index, path in enumerate(files, 1):

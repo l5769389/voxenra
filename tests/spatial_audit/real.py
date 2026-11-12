@@ -2,6 +2,7 @@
 Manifest is a local JSON list of {name, paths, provenance?, expected_groups?}.
 No sample discovery, download, or patient metadata is committed by this adapter.
 """
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -45,9 +46,33 @@ def verify(config,root):
         provenance=config.get('provenance','User-local original; not redistributed'),
         files=[dict(path=str(p),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in paths])
     (root/'case.json').write_text(json.dumps(manifest,indent=2))
-    scanned=list(DicomFolderScanner().scan_files(paths,folder=paths[0].parent))[-1]
+    # Inventory comes from source headers, independently of scanner grouping.
+    expected=[];rejected=[]
+    for path in paths:
+        try:
+            ds=pydicom.dcmread(path,stop_before_pixels=True)
+            if not all(getattr(ds,k,None) for k in ('SOPInstanceUID','Rows','Columns')):
+                raise ValueError('Not an image with a SOP identity')
+            count=int(getattr(ds,'NumberOfFrames',1))
+            if count < 1: raise ValueError('No frames')
+            frames=range(count) if count>1 or 'PerFrameFunctionalGroupsSequence' in ds else [None]
+            expected.extend((str(path.resolve()),str(ds.SOPInstanceUID),f) for f in frames)
+        except Exception as error:
+            rejected.append(dict(path=str(path),reason=str(error)))
+    snapshots=list(DicomFolderScanner().scan_files(paths,folder=paths[0].parent)) if paths else []
+    scanned=snapshots[-1] if snapshots else None
+    actual=[(str(i.path.resolve()),i.sop_instance_uid,i.frame_index)
+            for series in scanned.series for i in series.instances] if scanned else []
+    missing=list((Counter(expected)-Counter(actual)).elements())
+    unexpected=list((Counter(actual)-Counter(expected)).elements())
+    result=dict(case=config['name'],groups=[],status='pass',files=len(paths),
+                source_frames_expected=len(expected),source_frames_scanned=len(actual),
+                missing_frames=missing,unexpected_frames=unexpected,rejected_files=rejected)
+    if not expected or rejected or missing or unexpected:
+        result.update(status='failure',reason='Source frame inventory incomplete or rejected')
+        (root/'voxplane-result.json').write_text(json.dumps(result,indent=2))
+        return result
     if 'expected_groups' in config: assert len(scanned.series)==config['expected_groups']
-    result=dict(case=config['name'],groups=[],status='pass',files=len(paths))
     loader=DicomLoader();cache={};seen=set()
     for n,series in enumerate(scanned.series):
         data=[];positions=[];maximum=0.;gerror=0.;stored_checked=0;unit=None

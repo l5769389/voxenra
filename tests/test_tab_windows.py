@@ -515,6 +515,14 @@ def test_active_tab_remains_visible_after_tool_panel_and_resize(sidebar_scene):
         return point.x() >= -1 and point.x() + button.width() <= bar.width() + 1
 
     wait_until(fully_visible)
+    panel = find(window, "rightPanel")
+    expanded_width = panel.width()
+    assert app.settingsController.setValue("layout", "rightPanelCollapsed", True)
+    wait_until(lambda: panel.width() < expanded_width)
+    wait_until(fully_visible)
+    assert app.settingsController.setValue("layout", "rightPanelCollapsed", False)
+    wait_until(lambda: panel.width() == expanded_width)
+    wait_until(fully_visible)
     window.resize(1560, 820)
     QTest.qWait(40)
     window.resize(1280, 820)
@@ -532,9 +540,40 @@ def test_tab_identity_fields_do_not_paint_over_each_other(sidebar_scene):
     workspace.createCompareTab(*(r.series_instance_uid for r in records[:2]))
     wait_until(lambda: workspace.activeLoadState.status == 'ready')
     QTest.qWait(100)
-    patients = [item for item in descendants(window.contentItem())
-                if item.objectName().startswith('tabPatient-')]
-    assert patients
-    for patient in patients:
-        assert patient.width() > 0 or not patient.isVisible()
+    # Long text must elide within its allocated field, even at the narrow size.
+    for width in (1280, 1000):
+        window.resize(width, 820)
+        QTest.qWait(100)
+        patients = [item for item in descendants(window.contentItem())
+                    if item.objectName().startswith('tabPatient-')]
+        assert len(patients) == 3
+        for patient in patients:
+            tab_id = patient.objectName().removeprefix('tabPatient-')
+            button = find(window, 'workspaceTab-' + tab_id)
+            primary = find(window, 'tabPrimary-' + tab_id)
+            secondary = find(window, 'tabSecondary-' + tab_id)
+            badge = find(window, 'tabType-' + tab_id).parentItem()
+            close = find(window, 'tabClose-' + tab_id)
+            assert primary.setProperty('text', 'Long series description ' * 12)
+            assert patient.setProperty('text', 'Long patient name ' * 12)
+            QTest.qWait(20)
+            def bounds(item):
+                from PySide6.QtCore import QRectF
+                return QRectF(item.mapToItem(button, QPointF()),
+                              item.mapToItem(button, QPointF(item.width(), item.height())))
+            for item in (primary, secondary, badge, close):
+                assert item.isVisible() and item.width() > 0
+                assert bounds(item).left() >= 0
+                assert bounds(item).right() <= button.width()
+            assert primary.property('truncated')
+            assert patient.isVisible() == (patient.width() > 0)
+            # Patient may intentionally disappear if context needs all the room.
+            if patient.isVisible():
+                assert patient.width() > 0
+                assert bounds(patient).right() <= bounds(secondary).left()
+                assert bounds(patient).bottom() <= button.height()
+            assert bounds(badge).right() <= bounds(primary).left()
+            assert bounds(primary).right() <= bounds(close).left()
+            assert bounds(primary).bottom() <= bounds(secondary).top()
+            assert bounds(secondary).right() <= bounds(close).left()
     assert not warnings, warnings

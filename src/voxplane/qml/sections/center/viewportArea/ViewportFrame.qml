@@ -6,6 +6,8 @@ Item {
     id: frame
     required property bool active
     property bool hovered: false
+    property bool capturingPng: false
+    opacity: capturingPng ? 0 : 1
     // Reserve the same space in every state so selection never resizes images.
     readonly property int contentInset: 5
 

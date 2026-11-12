@@ -20,6 +20,8 @@ Item {
     }
     function resetImpact(section) {
         const summaries = {
+            initialDisplay: qsTrId("initialDisplay.reset"),
+            screenshot: qsTrId("settings.reset.screenshot"), report: qsTrId("settings.reset.report"),
             appearance: qsTrId("settings.reset.appearance"), input: qsTrId("settings.reset.input"),
             shortcuts: qsTrId("settings.reset.shortcuts"),
             privacy: qsTrId("settings.reset.privacy"), workspace: qsTrId("settings.reset.workspace"),
@@ -86,7 +88,7 @@ Item {
                 shortcutTitle: qsTrId("text.0843")
                 captionKey: page.resetButton === categoryReset ? page.resetHint : ""
                 compact: true; normalColor: "transparent"; baseBorderWidth: 1
-                onClicked: page.requestReset(page.category, page.title)
+                onClicked: page.requestReset(page.category === "export" ? "screenshot" : page.category, page.title)
             }
         }
         Item { Layout.fillWidth: true; Layout.preferredHeight: 2 }
@@ -111,10 +113,10 @@ Item {
             Loader {
                 id: content
                 objectName: "settingsCategoryContent"
-                width: Math.min(scroll.availableWidth, ["window", "services", "ai"].includes(page.category) ? 760 : 1000)
-                sourceComponent: ({input: inputPage, privacy: privacyPage, colormap: colorsPage, window: windowsPage, crosshair: crosshairPage,
+                width: Math.min(scroll.availableWidth, ["export", "report", "initialDisplay"].includes(page.category) ? 1500 : ["window", "services", "ai"].includes(page.category) ? 760 : 1000)
+                sourceComponent: ({initialDisplay: initialDisplayPage, input: inputPage, privacy: privacyPage, colormap: colorsPage, window: windowsPage, crosshair: crosshairPage,
                     corners: cornersPage, scale: scalePage, measurement: measurementPage, roi: roiPage,
-                    export: exportPage, workspace: workspacePage, appearance: appearancePage, services: servicesPage, ai: aiPage, updates: updatesPage})[page.category]
+                    export: exportPage, report: reportPage, workspace: workspacePage, appearance: appearancePage, services: servicesPage, ai: aiPage, updates: updatesPage})[page.category]
             }
         }
     }
@@ -126,6 +128,7 @@ Item {
             onResetShortcutsRequested: page.requestReset("shortcuts", qsTrId("input.shortcuts"))
         }
     }
+    Component { id: initialDisplayPage; InitialDisplaySettings { settingsController: page.settingsController } }
     Component { id: privacyPage; PrivacySettingsPage { settingsController: page.settingsController } }
     Component { id: colorsPage; ColorMapsPage { settingsController: page.settingsController } }
     Component {
@@ -146,6 +149,7 @@ Item {
     Component { id: servicesPage; ServiceToolsSettingsPage { settingsController: page.settingsController } }
     Component { id: aiPage; AiSettingsPage { settingsController: page.settingsController } }
     Component { id: roiPage; RoiSettingsPage { settingsController: page.settingsController } }
+    Component { id: reportPage; ReportSettingsPage { settingsController: page.settingsController } }
     Component { id: exportPage; ExportSettingsPage { settingsController: page.settingsController } }
     Component { id: workspacePage; WorkspaceSettingsPage { settingsController: page.settingsController } }
     Component { id: appearancePage; AppearanceSettingsPage { settingsController: page.settingsController } }

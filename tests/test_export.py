@@ -96,6 +96,8 @@ def test_real_export_buttons_save_viewport_png_and_original_dicom(sidebar_scene,
     click(window, find(window, 'exportPng'))
     wait_until(lambda: not app.exportController.busy)
     assert not app.exportController.isError, app.exportController.message
+    wait_until(lambda: app.exportController.screenshotPreview.ready)
+    click(window, find(window, 'saveScreenshotPreview'))
     assert app.exportController.resultPath == str(png)
     revealed = []
     monkeypatch.setattr('voxplane.ui.controller.export_controller.reveal_path', lambda path: revealed.append(path) or True)
@@ -135,7 +137,11 @@ def test_real_export_buttons_save_viewport_png_and_original_dicom(sidebar_scene,
     monkeypatch.setattr('voxplane.ui.controller.export_controller.QFileDialog.getSaveFileName', lambda *args: ('', ''))
     wait_until(lambda: find(window, 'exportPng').isEnabled())
     click(window, find(window, 'exportPng'))
-    assert '取消' in app.exportController.message and not app.exportController.busy
+    wait_until(lambda: app.exportController.screenshotPreview.ready)
+    click(window, find(window, 'saveScreenshotPreview'))
+    assert app.exportController.screenshotPreview.ready  # cancelling Save keeps preview available
+    QTest.keyClick(window, Qt.Key_Escape)
+    assert not app.exportController.screenshotPreview.ready and not app.exportController.busy
     assert app.exportController.resultPath == ''
     assert not warnings, warnings
     # Releasing the captured item must not invalidate its owning window.

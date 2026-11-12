@@ -24,11 +24,16 @@ class _Signals(QObject):
 
 
 class _QaTask(QRunnable):
-    def __init__(self, token, key, pixels, spacing, settings, previous=None, regenerate_group=None):
+    def __init__(self, token, key, pixels, spacing, settings, previous=None, regenerate_group=None, diameter_groups=()):
         super().__init__()
         self.token, self.key = token, key
         self.pixels, self.spacing, self.settings = pixels, spacing, settings
-        self.previous = previous
+        # Explicit diameter input applies even when it equals saved settings.
+        fields = {"uniformity": "roi_diameter_mm", "noise": "noise_diameter_mm", "air": "air_diameter_mm"}
+        self.previous = (replace(previous, rois=tuple(
+            replace(r, radius_mm=getattr(settings, fields[r.group])/2)
+            if r.group in diameter_groups else r for r in previous.rois))
+            if previous is not None and diameter_groups else previous)
         self.regenerate_group = regenerate_group
         self.signals = _Signals()
 
@@ -87,6 +92,9 @@ class WaterQaController(QObject):
         super().__init__(parent)
         self._settings_controller = resolve_settings(parent)
         self._modality = modality.strip().upper()
+        from voxplane.ui.controller.report_preview_controller import ReportPreviewController
+        self._preview = ReportPreviewController(self)
+        self._preview_request = None
         self._report_message = ""
         self._report_error = False
         self._report_path = ""
@@ -116,6 +124,8 @@ class WaterQaController(QObject):
         self._fresh_request_token = None
         self._regenerate_group = None
         self._restored = False
+        self._history_restored_baseline = False
+        self._diameter_groups = set()
         self._token = 0
         self._closed = False
         self._enabled = False
@@ -149,7 +159,7 @@ class WaterQaController(QObject):
         if not self._history_overrides and self._history_settings is None:
             return {}
         return dict(records=dict(self._history_overrides), settings=self._history_settings,
-                    enabled=self._history_enabled)
+                    enabled=self._history_enabled, restored=self._restored)
 
     def restore_history_state(self, state):
         if state == self.history_state() and self._edit_request_token is None:
@@ -167,8 +177,9 @@ class WaterQaController(QObject):
                 self._records[key] = record
         self._enabled = (bool(self._records) if self._history_enabled is None else self._history_enabled)
         self._settings = self._history_settings or WaterQaSettings()
-        self._restored = bool(self._records) or self._enabled
-        self._restore_current_record()
+        self._restored = state.get("restored", self._history_restored_baseline)
+        if not self._restore_current_record() and self._enabled:
+            self._analyze()
         self.settingsChanged.emit()
         self.recordsChanged.emit()
         self.stateChanged.emit()
@@ -190,6 +201,7 @@ class WaterQaController(QObject):
         self._invalidate()
         self._cache.clear()
         self._restored = bool(state.get("records") or state.get("enabled", False))
+        self._history_restored_baseline = self._restored
         self._enabled = state.get("enabled", False)
         self._air_attempted = set(state.get("airAttempted", []))
         self._air_unavailable.clear()
@@ -302,8 +314,20 @@ class WaterQaController(QObject):
     def placingAir(self):
         return self._placing_air
 
-    @Property(float, notify=settingsChanged)
+    def _active_diameters(self):
+        result = self._result or self._display_result
+        return [r.radius_mm*2 for r in result.rois if r.group == self._active_group] if result else []
+
+    @Property(bool, notify=stateChanged)
+    def activeDiameterMixed(self):
+        values = self._active_diameters()
+        return bool(values) and any(not math.isclose(v, values[0], abs_tol=1e-6) for v in values[1:])
+
+    @Property(float, notify=stateChanged)
     def activeDiameterMm(self):
+        values = self._active_diameters()
+        if values and not self.activeDiameterMixed:
+            return values[0]
         return {"uniformity": self.roiDiameterMm, "noise": self._settings.noise_diameter_mm or 80.,
                 "air": self._settings.air_diameter_mm}[self._active_group]
 
@@ -658,6 +682,8 @@ class WaterQaController(QObject):
         self.stateChanged.emit()
 
     def _invalidate(self, preserve_display=False):
+        if not preserve_display:
+            self._diameter_groups.clear()
         self._display_result = (self._result or self._display_result) if preserve_display else None
         if self._report_capture is not None:
             self._report_capture_failed(_msg('qa.reportSourceChanged'))
@@ -738,7 +764,8 @@ class WaterQaController(QObject):
             return
         task = _QaTask(token, key, pixels, spacing, settings,
                        self._records.get(repr(key[0]), {}).get("result"),
-                       self._regenerate_group if token == self._fresh_request_token else None)
+                       self._regenerate_group if token == self._fresh_request_token else None,
+                       tuple(self._diameter_groups))
         self._tasks[token] = task
         task.signals.completed.connect(self._receive_result, Qt.QueuedConnection)
         self._pool.start(task)
@@ -761,6 +788,7 @@ class WaterQaController(QObject):
             # no candidate) and explicit user deletion remain once-per-frame.
             self._air_attempted.discard(repr(self._key))
         if result is not None and not error:
+            self._diameter_groups.clear()
             self._settings = result.settings
             self.settingsChanged.emit()
             self._cache[self._cache_key()] = (result, error)
@@ -788,8 +816,16 @@ class WaterQaController(QObject):
         if self._closed or not math.isfinite(value) or not low <= value <= high:
             return
         settings = replace(self._settings, **{name: float(value)})
-        if settings == self._settings:
+        group = {"roi_diameter_mm": "uniformity", "noise_diameter_mm": "noise",
+                 "air_diameter_mm": "air"}.get(name)
+        previous = self._result or self._records.get(repr(self._key), {}).get("result")
+        geometry_changed = (group is not None and previous is not None and any(
+            r.group == group and not math.isclose(r.radius_mm*2, value, abs_tol=1e-6)
+            for r in previous.rois))
+        if settings == self._settings and not geometry_changed:
             return
+        if group is not None:
+            self._diameter_groups.add(group)
         self._settings = settings
         self.recordsChanged.emit()
         self._cache.clear()
@@ -847,6 +883,25 @@ class WaterQaController(QObject):
                     decimal_places=self._settings_controller.section("measurement")["decimalPlaces"],
                     translations=snapshot())
 
+    @Property(QObject, constant=True)
+    def previewController(self): return self._preview
+
+    @Slot(QObject, 'QVariantMap', 'QVariantMap')
+    def previewReport(self, item, options, content):
+        if self._report_busy or self._closed: return
+        from voxplane.core.report_options import validate_options, validate_content
+        self._preview.clear()
+        self._preview_request = (validate_options(options), validate_content(content))
+        self.exportReport(item)
+
+    @Slot()
+    def cancelPreview(self):
+        self._preview_request = None
+        self._restore_report_capture()
+        self._report_busy = False
+        self._preview.clear()
+        self.reportChanged.emit()
+
     @Slot(QObject)
     def exportReport(self, item):
         if self._report_busy or self._closed:
@@ -854,6 +909,12 @@ class WaterQaController(QObject):
         frozen = self._report_snapshot()
         if frozen is None:
             return
+        if self._preview_request is not None:
+            frozen["options"], frozen["content"] = self._preview_request
+            if not frozen["options"]["includeImages"]:
+                self._show_report_preview(frozen)
+                self._preview_request = None
+                return
         view = self.parent()
         if (not isinstance(item, QQuickItem) or not isValid(item) or not item.isVisible()
                 or item.width() <= 0 or item.height() <= 0
@@ -872,7 +933,7 @@ class WaterQaController(QObject):
                 if item.metaObject().indexOfProperty(name) < 0:
                     raise ValueError(_msg('qa.reportCaptureFailed'))
                 self._report_capture['properties'].append((name, item.property(name)))
-                item.setProperty(name, True)
+                item.setProperty(name, frozen.get("options", {}).get("anonymous", True) if name == "anonymousExport" else True)
             self._report_grab = item.grabToImage()
             if self._report_grab is None:
                 raise ValueError(_msg('qa.reportCaptureFailed'))
@@ -893,6 +954,7 @@ class WaterQaController(QObject):
         self._report_capture = self._report_grab = None
 
     def _report_capture_failed(self, message):
+        self._preview_request = None
         self._restore_report_capture()
         self._report_busy, self._report_error, self._report_message = False, True, message
         self.reportChanged.emit()
@@ -916,10 +978,22 @@ class WaterQaController(QObject):
             self._report_capture_failed(_msg('qa.reportCaptureFailed'))
             return
         try:
-            self._save_report_snapshot(frozen)
+            if self._preview_request is not None:
+                self._show_report_preview(frozen)
+                self._preview_request = None
+            else:
+                self._save_report_snapshot(frozen)
         finally:
             self._report_busy = False
             self.reportChanged.emit()
+
+    def _show_report_preview(self, frozen):
+        from pathlib import Path
+        from voxplane.core.water_qa_report import pdf_bytes
+        category = "Air-QA" if frozen["report_kind"] == "air" else "Water-QA"
+        filename = f"{category}-slice-{frozen['slice_number']:03d}.pdf"
+        path = Path(self._settings_controller.exportDirectory) / filename
+        return self._preview.set_pdf(pdf_bytes(**frozen), suggested_path=path)
 
     def _save_report_snapshot(self, frozen):
         from voxplane.i18n.widgets import QFileDialog
@@ -934,13 +1008,16 @@ class WaterQaController(QObject):
             self._report_message, self._report_error = "", False
             self.reportChanged.emit()
 
-    def export_to(self, path, *, frozen=None, screenshot=None):
+    def export_to(self, path, *, frozen=None, screenshot=None, options=None, content=None):
         from voxplane.core.water_qa_report import pdf_bytes
         from voxplane.core.workspace_state import atomic_write
         from pathlib import Path
         frozen = self._report_snapshot(screenshot) if frozen is None else frozen
         if frozen is None:
             return False
+        frozen = dict(frozen)
+        if options is not None: frozen["options"] = options
+        if content is not None: frozen["content"] = content
         try:
             atomic_write(Path(path), pdf_bytes(**frozen))
         except Exception as exc:
@@ -959,6 +1036,7 @@ class WaterQaController(QObject):
             reveal_path(self._report_path)
 
     def shutdown(self):
+        self._preview.clear()
         if self._closed:
             return
         self._closed = True

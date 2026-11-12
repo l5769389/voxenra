@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic as Basic
 import "../../../components" as Components
 import "../../../theme"
+import "../../settings" as Settings
 import "../components" as PanelComponents
 
 ColumnLayout {
@@ -11,9 +12,21 @@ ColumnLayout {
     objectName: "exportPanel"
     property var exportController: null
     property Item exportItem: null
+    property Item tabExportItem: null
+    property var settingsController: null
+    property var screenshotDraft: ({})
+    Component.onCompleted: screenshotDraft = Object.assign({}, settingsController?.values?.screenshot ?? {})
     readonly property var report: exportController?.measurementReport ?? null
     readonly property var dicomResults: exportController?.dicomResults ?? null
+    ReportDialog {
+        id: reportDialog
+        parent: Basic.Overlay.overlay
+        reportController: root.report
+        settingsController: root.settingsController
+        captureItem: root.exportItem
+    }
     signal manualRequested()
+    ScreenshotPreviewDialog { preview: root.exportController.screenshotPreview }
     spacing: 10
     Components.DelayedActivity { id: imageFeedback; active: root.visible && (root.exportController?.busy ?? false) }
     Components.DelayedActivity { id: reportFeedback; active: root.visible && (root.report?.busy ?? false) }
@@ -55,8 +68,39 @@ ColumnLayout {
         id: anonymous
         objectName: "viewportExportAnonymous"
         text: qsTrId("text.0141")
-        checked: true
-        enabled: !!root.exportController && !root.exportController.busy
+        checked: root.screenshotDraft.anonymous ?? true
+        onToggled: root.screenshotDraft = Object.assign({}, root.screenshotDraft, {anonymous: checked})
+    }
+    Text {
+        Layout.fillWidth: true
+        visible: anonymous.checked && !screenshotOptionsToggle.checked
+        text: qsTrId("screenshot.anonymousHint")
+        color: Theme.textMuted
+        wrapMode: Text.Wrap
+        font.pixelSize: 12
+    }
+    Components.AppButton {
+        id: screenshotOptionsToggle
+        Layout.fillWidth: true
+        text: qsTrId("screenshot.options")
+        checkable: true
+        compact: true
+    }
+    Components.ScreenshotOptions {
+        visible: screenshotOptionsToggle.checked
+        showAnonymous: false
+        Layout.fillWidth: true
+        options: root.screenshotDraft
+        enabled: !root.exportController?.busy
+        onEdited: options => root.screenshotDraft = options
+    }
+    Settings.ExportPresetPicker {
+        Layout.fillWidth: true
+        visible: screenshotOptionsToggle.checked && !!root.settingsController
+        settingsController: root.settingsController
+        kind: "screenshot"
+        options: root.screenshotDraft
+        onSelected: options => root.screenshotDraft = options
     }
     GridLayout {
         Layout.fillWidth: true
@@ -66,7 +110,7 @@ ColumnLayout {
         Components.AppButton {
             objectName: "exportPng"
             Layout.fillWidth: true
-            text: qsTrId("text.0461")
+            text: qsTrId("screenshot.export")
             normalColor: Theme.primaryButtonBackground
             hoverColor: Theme.primaryButtonHover
             pressedColor: Theme.primaryButtonPressed
@@ -74,7 +118,7 @@ ColumnLayout {
             textColor: Theme.textOnPrimary
             compact: true
             enabled: root.exportController?.canExportPng ?? false
-            onClicked: root.exportController.exportPng(root.exportItem, Screen.devicePixelRatio, anonymous.checked)
+            onClicked: root.exportController.previewScreenshot(root.exportItem, root.tabExportItem, root.screenshotDraft)
         }
         Components.AppButton {
             objectName: "exportDicom"
@@ -164,7 +208,7 @@ ColumnLayout {
             baseBorderWidth: 1
             baseBorderColor: Theme.primaryButtonBorder
             enabled: !!root.report && !root.report.busy
-            onClicked: root.report.exportReport("pdf", allTabs.checked, anonymous.checked, reportImages.checked)
+            onClicked: reportDialog.open()
         }
     }
     Basic.ProgressBar { Layout.fillWidth: true; visible: reportFeedback.showing; value: root.report?.progress ?? 0; indeterminate: value === 0 }

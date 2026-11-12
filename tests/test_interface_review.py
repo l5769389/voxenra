@@ -1,46 +1,25 @@
-"""真实 QML 界面：占位不可执行、禁用提示可达、窄窗口文字与按钮不裁切。"""
+"""真实 QML 界面：窄窗口文字、按钮与工具提示的布局契约。"""
 
 from PySide6.QtCore import QPoint, QPointF
 from PySide6.QtTest import QTest
 import pytest
 
 from voxplane.model import TabType
-from voxplane.ui.controller.tab.tool_controller import ToolController
 from test_series_sidebar import sidebar_scene
 from test_dicom_tags import qt_app, wait_until
 from test_tag_qml import click, descendants, find
-from test_service_panel_qml import service_panel, _find, _click
+from test_service_panel_qml import service_panel, _find
 from test_measurement_qml import _visual_children
-
-
-@pytest.mark.parametrize("tab_type, expected", [
-    (TabType.TWO_D, set()),
-    (TabType.MPR, set()),
-    (TabType.THREE_D, set()),
-    (TabType.FOUR_D, set()),
-])
-def test_placeholder_catalog_is_view_specific(tab_type, expected):
-    controller = ToolController(tab_type=tab_type)
-    assert {item["toolType"] for item in controller.tools if not item["available"]} == expected
-    assert controller.tools[-1]["toolType"] == "reset"
-    state = (controller.activeTool, controller.activeInteraction, controller.activePanel)
-    commands = []
-    controller.commandRequested.connect(commands.append)
-    for name in expected - {"annotate"}:
-        controller.activateTool(name)
-    assert (controller.activeTool, controller.activeInteraction, controller.activePanel) == state
-    assert commands == []
 
 
 @pytest.mark.parametrize("service_panel", [TabType.TWO_D, TabType.MPR, TabType.THREE_D, TabType.FOUR_D], indirect=True)
 @pytest.mark.parametrize("show_labels", [False, True])
-def test_toolbar_placeholders_hover_but_cannot_activate(service_panel, show_labels, tmp_path):
+def test_toolbar_buttons_and_labels_fit_narrow_panels(service_panel, show_labels, tmp_path):
     view, controller, warnings = service_panel
     controller.settingsController.setValue("appearance", "toolLabels", show_labels)
     for width in [220, 250, 280]:
         view.resize(width, 580)
         QTest.qWait(80)
-        state = (controller.activeTool, controller.activePanel, controller.activeInteraction)
         for definition in controller.tools:
             button = _find(view, "primaryTool-" + definition["toolType"])
             assert button.width() >= 36 and button.height() >= 36
@@ -56,17 +35,6 @@ def test_toolbar_placeholders_hover_but_cannot_activate(service_panel, show_labe
                 assert 0 <= label.mapToItem(button, QPointF()).y()
                 assert label.mapToItem(button, QPointF(0, label.height())).y() <= button.height()
             assert button.parentItem().property("tooltipText")
-            if not definition["available"]:
-                assert not button.isEnabled()
-                _click(view, button)
-                assert (controller.activeTool, controller.activePanel, controller.activeInteraction) == state
-                hover_point = button.mapToScene(QPointF(button.width() / 2, button.height() / 2)).toPoint()
-                QTest.mouseMove(view, hover_point)
-                QTest.qWait(500)
-                action = button.parentItem()
-                assert action.property("tooltipVisible")
-                assert "待实现" in action.property("tooltipText")
-                QTest.mouseMove(view, QPoint(width - 2, view.height() - 2))
         assert view.grabWindow().save(str(tmp_path / f"toolbar-{controller._tab_type.value}-{width}.png"))
     assert not warnings, warnings
 

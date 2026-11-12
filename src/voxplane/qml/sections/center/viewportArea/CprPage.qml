@@ -149,7 +149,7 @@ Item {
                             objectName: "cprPlane-" + cell.index
                             readonly property var overlay: viewport.cornerOverlay
                             x: 10; y: 10; z: 40
-                            visible: cell.index < 2 && !cell.modelData.historicalPlane && !page.anonymousExport
+                            visible: cell.index < 2 && !cell.modelData.historicalPlane && !page.anonymousExport && !page.capturingPng
                             width: Math.min(overlay?.selectorWidth ?? 70, Math.max(0, parent.width - x - 4))
                             height: overlay?.selectorHeight ?? 24
                             font.pixelSize: overlay?.textPixelSize ?? 12
@@ -169,7 +169,7 @@ Item {
     }
     Components.WidthResizeHandle {
         objectName: "cprResultSplitHandle"
-        visible: page.splitResults && !page.anonymousExport
+        visible: page.splitResults && !page.anonymousExport && !page.capturingPng
         enabled: page.splitResults
         verticalDrag: page.stackedResults
         showGrip: true

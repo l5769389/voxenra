@@ -9,6 +9,7 @@ import json
 import re
 import shutil
 import struct
+import sys
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
@@ -18,6 +19,9 @@ from PIL import Image, ImageSequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from voxplane.core.manual_index import chapter_neighbors, section_id, section_records
+
 ASSETS = ROOT / "src/voxplane/qml/assets"
 HELP = ASSETS / "help"
 SITE = ROOT / "docs/manual-site"
@@ -59,7 +63,7 @@ for media, source in {
 for media, source in list(PRODUCT_SCREENSHOTS.items()):
     if not media.startswith('en-') and (ROOT / 'docs/screenshots/en' / source).is_file():
         PRODUCT_SCREENSHOTS['en-' + media] = 'en/' + source
-PRODUCT_IMAGE_WIDTHS = (640, 960, 1600)
+PRODUCT_IMAGE_WIDTHS = (320, 480, 640, 960, 1600)
 PRODUCT_IMAGE_SIZES = {
     "hero": "(max-width: 940px) calc(100vw - 48px), (max-width: 1536px) 54vw, 800px",
     "half": "(max-width: 620px) calc(100vw - 48px), (max-width: 1536px) 44vw, 700px",
@@ -95,6 +99,8 @@ def encode_webp(source: Path, source_digest: str, width: int) -> bytes:
     """Cache by source content, preserving GIF timing and composited frames.
 
     These are website previews only; full-resolution source files stay unchanged.
+    Animated previews minimize redundant keyframes and allow lossless regions
+    at the same quality setting; frame durations and loop count stay intact.
     """
     with Image.open(source) as image:
         color_profile = image.info.get("icc_profile")
@@ -106,7 +112,8 @@ def encode_webp(source: Path, source_digest: str, width: int) -> bytes:
             durations.append(frame.info.get("duration", 100))
         output = BytesIO()
         animation = dict(save_all=True, append_images=frames[1:], duration=durations,
-                         loop=image.info.get("loop", 0)) if len(frames) > 1 else {}
+                         loop=image.info.get("loop", 0), minimize_size=True,
+                         allow_mixed=True) if len(frames) > 1 else {}
         color_options = {"icc_profile": color_profile} if color_profile else {}
         frames[0].save(output, format="WEBP", quality=82, method=6, **animation, **color_options)
         return output.getvalue()
@@ -180,6 +187,29 @@ def chapter_search(chapter: dict, messages: dict[str, str]) -> str:
     return " ".join(parts).lower()
 
 
+def search_payload(chapters: list[dict], messages: dict[str, str]) -> str:
+    localized = []
+    for chapter in chapters:
+        prefix = f'manual.{chapter["id"]}.'
+        sections = []
+        for index, section in enumerate(chapter['sections']):
+            key = section.get('messageId', prefix + f'section{index}')
+            sections.append(dict(section, title=messages[key + '.title'], body=messages[key + '.body']))
+        localized.append(dict(chapter, title=messages[prefix + 'title'], sections=sections))
+    data = json.dumps(section_records(localized), ensure_ascii=False)
+    for char in '<>&':
+        data = data.replace(char, f'\\u{ord(char):04x}')
+    return '<script id="manual-index" type="application/json">' + data + '</script>'
+
+
+def search_results(messages: dict[str, str]) -> str:
+    return (f'<div id="search-results" hidden><p class="search-status" role="status" aria-live="polite" '
+            f'data-empty="{escape(messages["manual.reader.noResults"])}" '
+            f'data-more="{escape(messages["manual.reader.moreResults"])}"></p>'
+            '<div class="search-matches"></div><a class="search-help" href="faq.html" hidden>'
+            + escape(messages['manual.faq.title']) + '</a></div>')
+
+
 def tutorial(item: dict, code: str) -> str:
     name = f'{code}-{item["name"]}'
     caption = item["captions"][code]
@@ -234,7 +264,7 @@ def site_header(code: str, section: str, chapter_id: str | None = None) -> str:
 
 
 def figure(kind: str, messages: dict[str, str], language: dict[str, str]) -> str:
-    """Portable diagram for the two QML canvas illustrations."""
+    """Portable manual diagrams matching the offline illustrations."""
     if kind == "segmentation":
         labels = [messages[f"text.{n}"] for n in ("0928", "0929", "0930", "0931", "0932", "0933", "0934")]
         drawing = '<path d="M80 86h180v100H80zM130 40h180v100H130zM80 86l50-46m130 46 50-46m-50 146 50-46" fill="none" stroke="#ef77e3" stroke-width="2"/>'
@@ -243,6 +273,13 @@ def figure(kind: str, messages: dict[str, str], language: dict[str, str]) -> str
         labels = [messages[f"text.{n}"] for n in ("0935", "0936", "0937", "0938", "0939")]
         drawing = '<circle cx="130" cy="110" r="65" fill="none" stroke="#ef77e3" stroke-width="2"/><path d="M130 110h65" stroke="#61d7eb" stroke-width="2"/><ellipse cx="385" cy="110" rx="70" ry="40" fill="none" stroke="#61d7eb" stroke-width="2"/><circle cx="625" cy="95" r="62" fill="none" stroke="#ef77e3" stroke-width="2"/><circle cx="625" cy="95" r="32" fill="none" stroke="#61d7eb" stroke-width="2"/>'
         coordinates = [(75, 25), (140, 102), (50, 203), (310, 203), (520, 203)]
+    elif kind == "point-mtf":
+        labels = [messages[f'manual.point-mtf.diagram{i}'] for i in range(5)]
+        drawing = '<rect x="46" y="30" width="225" height="160" fill="none" stroke="#c4d2de" stroke-dasharray="6 4"/><rect x="68" y="45" width="180" height="130" fill="#53677a"/><rect x="98" y="67" width="120" height="86" fill="#111c26"/><rect x="92" y="63" width="132" height="94" fill="#61d7eb" fill-opacity=".15" stroke="#61d7eb"/><rect x="114" y="79" width="88" height="62" fill="#61d7eb" fill-opacity=".3"/><path d="M150 110h16m-8-8v16" stroke="#fff" stroke-width="2"/>'
+        legend = ''.join(f'<li>{escape(label)}</li>' for label in labels)
+        return (f'<div class="figure mtf-figure" role="img" aria-label="{escape(language["figure"])}">'
+                f'<svg viewBox="0 0 300 220" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">{drawing}</svg>'
+                f'<ul>{legend}</ul></div>')
     else:
         raise ValueError(f"Unknown manual diagram: {kind}")
     text = "".join(f'<text x="{x}" y="{y}">{escape(label)}</text>' for label, (x, y) in zip(labels, coordinates))
@@ -260,6 +297,12 @@ def render_chapter(chapter: dict, messages: dict[str, str], language: dict[str, 
     content = [f'<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="index.html">{escape(language["home"])}</a>{breadcrumb_middle}<span aria-hidden="true">/</span><span>{escape(title)}</span></nav>',
                f'<h1>{escape(title)}</h1>',
                f'<p class="summary">{escape(summary)}</p>']
+    context = []
+    for field in ('prerequisites', 'outcome'):
+        if chapter.get(field):
+            context.append(f'<div><h2>{escape(messages["manual.reader." + field])}</h2>{paragraphs(messages[prefix + field])}</div>')
+    if context:
+        content.append('<div class="chapter-context">' + ''.join(context) + '</div>')
     if chapter.get("shortcuts"):
         chips = []
         for index, item in enumerate(chapter["shortcuts"]):
@@ -286,7 +329,10 @@ def render_chapter(chapter: dict, messages: dict[str, str], language: dict[str, 
         notice = ('<p class="notice-label">' + ("重要提示" if code == "zh" else "Important") + '</p>'
                   if section.get("important") else "")
         demos = "".join(tutorial(item, code) for item in chapter_tutorials if item["section"] == key)
-        content.append(f'<section class="{css}" id="step-{index + 1}">{notice}<h2>{escape(messages[key + ".title"])}</h2>{paragraphs(messages[key + ".body"])}{demos}</section>')
+        content.append(f'<section class="{css}" id="{escape(section_id(section, index))}">{notice}<h2>{escape(messages[key + ".title"])}</h2>{paragraphs(messages[key + ".body"])}{demos}</section>')
+    if chapter.get('references'):
+        links = ''.join(f'<li><a href="{escape(item["url"])}" target="_blank" rel="noopener">{escape(item["title"])}</a></li>' for item in chapter['references'])
+        content.append(f'<nav class="references"><h2>{escape(messages["manual.reader.references"])}</h2><ul>{links}</ul></nav>')
     if chapter.get("related"):
         links = []
         for related in chapter["related"]:
@@ -315,11 +361,15 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
     title = titles[chapter["id"]]
     nav = "\n".join(groups)
     article = render_chapter(chapter, messages, language, titles, aliases)
+    neighbors = chapter_neighbors(chapters, chapter['id'])
+    links = ''.join(f'<a href="{target}.html" rel="{rel}"><span>{escape(messages["manual.reader." + label])}</span><strong>{escape(titles[target])}</strong></a>'
+                    for target, rel, label in zip(neighbors, ('prev','next'), ('previous','next')) if target)
+    article += '<nav class="chapter-pagination">' + links + '</nav>'
     header = site_header(code, "manual", chapter["id"])
     outline_links = []
     for index, section in enumerate(chapter["sections"]):
         key = section.get("messageId", f'manual.{chapter["id"]}.section{index}')
-        outline_links.append(f'<a href="#step-{index + 1}">{escape(messages[key + ".title"])}</a>')
+        outline_links.append(f'<a href="#{escape(section_id(section, index))}">{escape(messages[key + ".title"])}</a>')
     outline = "".join(outline_links)
     compact_outline = f'<details class="compact-outline"><summary>{"本页内容 · 点击展开" if code == "zh" else "On this page"}</summary><nav>{outline}</nav></details>'
     summary_html = '<p class="summary">' + escape(messages[f'manual.{chapter["id"]}.summary']) + '</p>'
@@ -331,9 +381,9 @@ def render_page(chapter: dict, categories: list[dict], chapters: list[dict], mes
 <link rel="icon" href="../assets/voxplane-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
 <link rel="alternate" hreflang="zh-CN" href="../zh/{escape(chapter["id"])}.html"><link rel="alternate" hreflang="en-US" href="../en/{escape(chapter["id"])}.html">
 </head><body>{header}
-<div class="layout"><aside id="sidebar" class="sidebar"><div class="search"><label class="sr-only" for="manual-search">{escape(language["search"])}</label><input id="manual-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><a class="sidebar-home" href="index.html">{escape(language["home"])}</a><nav aria-label="{escape(language["menu"])}">{nav}</nav><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p></aside>
+<div class="layout"><aside id="sidebar" class="sidebar"><div class="search"><label class="sr-only" for="manual-search">{escape(language["search"])}</label><input id="manual-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div><a class="sidebar-home" href="index.html">{escape(language["home"])}</a>{search_results(messages)}<nav aria-label="{escape(language["menu"])}">{nav}</nav><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p></aside>
 <main id="content"><div class="reading-layout"><article>{article}</article><aside class="page-outline"><h2>{'本页内容' if code == 'zh' else 'On this page'}</h2><nav>{outline}</nav></aside></div><footer>VoxPlane · <a href="https://github.com/junforge-dev/voxplane">GitHub</a></footer></main></div>
-<script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
+{search_payload(chapters, messages)}<script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
 
 
 def render_landing(categories: list[dict], chapters: list[dict], messages: dict[str, str], code: str) -> str:
@@ -342,19 +392,13 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
     description = ("从导入影像到测量、分割与导出，按任务查找操作步骤。" if code == "zh"
                    else "Find practical steps for importing, viewing, measuring, segmenting, and exporting medical images.")
     header = site_header(code, "manual")
-    routes = (
-        (("第一次使用", "打开影像、浏览并保存", "quick-start.html#step-1"),
-         ("测量与标注", "看演示，跟着完成一次测量", "measurement.html#step-1"),
-         ("自动分割", "配置环境、运行并检查结果", "segmentation.html#step-11"),
-         ("遇到问题", "加载、恢复与失败处理", "faq.html#step-1"))
-        if code == "zh" else
-        (("First use", "Open, browse, and save", "quick-start.html#step-1"),
-         ("Measure & annotate", "Follow the steps and demos", "measurement.html#step-1"),
-         ("AI segmentation", "Set up, run, and review", "segmentation.html#step-11"),
-         ("Get help", "Loading, recovery, and errors", "faq.html#step-1"))
-    )
-    start_links = ''.join(f'<a href="{url}"><strong>{title}</strong><span>{body}</span></a>' for title, body, url in routes)
-    start = f'<nav class="start-routes" aria-label="{"按任务开始" if code == "zh" else "Start with a task"}">{start_links}</nav>'
+    routes = load_json(HELP / 'manual.json')['routes']
+    cards = []
+    for route in routes:
+        key = 'manual.route.' + route['id']
+        links = ''.join(f'<li><a href="{chapter}.html#step-1">{escape(messages["manual." + chapter + ".title"])}<span aria-hidden="true"> →</span></a></li>' for chapter in route['chapters'])
+        cards.append(f'<article class="task-route"><h2>{escape(messages[key + ".title"])}</h2><p>{escape(messages[key + ".summary"])}</p><ol>{links}</ol></article>')
+    start = f'<nav class="start-routes" aria-label="{escape(messages["manual.reader.tasks"])}">{"".join(cards)}</nav>'
     groups = []
     for category in categories:
         links = []
@@ -370,9 +414,9 @@ def render_landing(categories: list[dict], chapters: list[dict], messages: dict[
 <link rel="icon" href="../assets/voxplane-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="{site_asset('../', 'site-shell.css')}"><link rel="stylesheet" href="{site_asset('../', 'manual.css')}">
 <link rel="alternate" hreflang="zh-CN" href="../zh/index.html"><link rel="alternate" hreflang="en-US" href="../en/index.html"></head>
 <body class="home">{header}
-<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img {product_image_attributes('../', 'hero-mpr.png', 'hero')} {product_image_size('hero-mpr.png')} fetchpriority="high" alt="{'VoxPlane 多平面重建与三维视图' if code == 'zh' else 'VoxPlane multiplanar and 3D views'}" loading="eager"></figure></div>
-{start}<div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
-<footer>VoxPlane · <a href="https://github.com/junforge-dev/voxplane">GitHub</a></footer></main><script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
+<main class="home-main"><div class="home-hero"><div class="home-copy"><span class="home-eyebrow">{'使用指南' if code == 'zh' else 'Documentation'}</span><h1>{escape(heading)}</h1><p>{escape(description)}</p><div class="home-search"><label class="sr-only" for="landing-search">{escape(language["search"])}</label><input id="landing-search" type="search" placeholder="{escape(language["search"])}" autocomplete="off"></div></div><figure class="home-visual"><img {product_image_attributes('../', ('en-' if code == 'en' else '') + 'hero-mpr.png', 'hero')} {product_image_size('hero-mpr.png')} fetchpriority="high" alt="{'VoxPlane 多平面重建与三维视图' if code == 'zh' else 'VoxPlane multiplanar and 3D views'}" loading="eager"></figure></div>
+{search_results(messages)}{start}<div class="home-directory" aria-label="{escape(language["menu"])}">{"".join(groups)}</div><p class="no-results" hidden>{'没有匹配的章节' if code == 'zh' else 'No matching chapters'}</p>
+<footer>VoxPlane · <a href="https://github.com/junforge-dev/voxplane">GitHub</a></footer></main>{search_payload(chapters, messages)}<script src="{site_asset('../', 'manual.js')}" defer></script></body></html>'''
 
 
 PRODUCT_COPY = {
@@ -416,7 +460,7 @@ PRODUCT_COPY = {
         "ai_title": "本地 AI 自动分割 · TotalSegmentator",
         "ai_body": "连接独立安装的 TotalSegmentator，在 CT 的 MPR / 4D 中选择器官，快速分割当前时相。结果可继续精修、撤销并随工作区保存；环境与模型在设置中的 AI 页面配置。",
         "ai_link": "配置与使用教程",
-        "analysis_body": "复制粘贴选中的测量与标注，在列表中管理和定位长度、角度、曲线与 ROI 测量，导出附对应参考图的 PDF；支持阈值分割、画笔／橡皮精修、连通区域处理、轮廓与不透明度调节及 VOI 分析，通过 DICOM SEG 或 NRRD 与 Slicer 交换分割，并可导出 DICOM SR。",
+        "analysis_body": "通过可见预览设置截图与报告预设，选择图像大小、叠加、匿名及报告版式；截图保存前核对实际输出。复制粘贴选中的测量与标注，在列表中管理和定位长度、角度、曲线与 ROI 测量，导出附对应参考图的 PDF；支持阈值分割、画笔／橡皮精修、连通区域处理、轮廓与不透明度调节及 VOI 分析，通过 DICOM SEG 或 NRRD 与 Slicer 交换分割，并可导出 DICOM SR。",
         "viewing_caption": "MR 原始切片阅片", "viewing_4d_caption": "CT 多时相 4D 播放",
         "fusion_caption": "PET/CT 联动融合", "analysis_caption": "画笔、橡皮与撤销重做",
         "quality_title": "CT 图像质量分析",
@@ -475,7 +519,7 @@ PRODUCT_COPY = {
         "ai_title": "Local AI segmentation · TotalSegmentator",
         "ai_body": "Connect a separately installed TotalSegmentator environment, select organs in CT MPR / 4D, and segment the current phase in fast mode. Refine, undo, and save results in a workspace. Configure the environment and models under Settings → AI.",
         "ai_link": "Setup and workflow guide",
-        "analysis_body": "Copy and paste selected measurements or annotations; manage and locate length, angle, curve, and ROI measurements in a list, then export PDF reports with matching reference images. Refine segments with paint, erase, and connected-region tools; adjust outlines and fill opacity. Use thresholding and VOI analysis, exchange segments with Slicer through NRRD or DICOM SEG, and export DICOM SR.",
+        "analysis_body": "Configure screenshot and report presets with visible previews for image size, overlays, privacy, and page layout; review actual screenshots before saving. Copy and paste selected measurements or annotations; manage and locate length, angle, curve, and ROI measurements in a list, then export PDF reports with matching reference images. Refine segments with paint, erase, and connected-region tools; adjust outlines and fill opacity. Use thresholding and VOI analysis, exchange segments with Slicer through NRRD or DICOM SEG, and export DICOM SR.",
         "viewing_caption": "MR original-slice viewing", "viewing_4d_caption": "Multi-phase CT 4D playback",
         "fusion_caption": "Linked PET/CT fusion", "analysis_caption": "Paint, erase, undo and redo",
         "quality_title": "CT image-quality analysis",
@@ -531,7 +575,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
     feature_rows = [f'''<section class="product-feature product-feature-wide" id="ai">
 <div class="product-feature-copy"><h2>{escape(copy["ai_title"])}</h2><p>{escape(copy["ai_body"])}</p></div>
 <figure><a href="{ai_image}" target="_blank" rel="noopener"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{ai_still}" sizes="{PRODUCT_IMAGE_SIZES["wide"]}"><img {localized_image_attributes(prefix, "feature-ai-segmentation.gif", "wide")} {localized_image_size("feature-ai-segmentation.gif")} alt="{escape(copy["ai_caption"])}" loading="lazy"></picture></a><figcaption>{escape(copy["ai_caption"])}</figcaption></figure>
-<div class="ai-details"><p>{escape(copy["ai_scope"])}</p><a href="{prefix}{code}/segmentation.html#step-11">{escape(copy["ai_link"])}</a></div></section>''']
+<div class="ai-details"><p>{escape(copy["ai_scope"])}</p><a href="{prefix}{code}/ai-setup.html">{escape(copy["ai_link"])}</a></div></section>''']
     # New workflow captures have real, separately recorded English interfaces.
     media_prefix = 'en-' if code == 'en' else ''
     workflow_features = {}
@@ -594,6 +638,18 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
             f'<img {localized_image_attributes(prefix, image, "third")} {localized_image_size(image)} alt="{escape(caption)}" loading="lazy"></span></a>'
             f'<figcaption>{escape(caption)}</figcaption></figure></article>'
         )
+    guide_names = {'qa-water': ('水模 CT 值与均匀性', 'Water CT number & uniformity'),
+                   'qa-noise': ('水中噪声', 'Water noise'), 'qa-air': ('模体外空气', 'External air'),
+                   'point-mtf': ('点源 MTF', 'Point-source MTF'), 'ramp-fwhm': ('斜坡线 FWHM', 'Ramp FWHM'),
+                   'mpr': ('MPR 重建', 'MPR reconstruction'), 'measurement': ('完成一次测量', 'Make a measurement'),
+                   'voi': ('VOI 统计', 'VOI statistics'), 'export': ('导出结果', 'Export results')}
+    def guide_links(ids):
+        return '<nav class="tutorial-links">' + ''.join(f'<a href="{prefix}{code}/{key}.html">{escape(guide_names[key][code == "en"])} →</a>' for key in ids) + '</nav>'
+    for i, row in enumerate(feature_rows):
+        for key, ids in [('viewing', ['mpr']), ('analysis', ['measurement','voi','export'])]:
+            if f'id="{key}"' in row:
+                feature_rows[i] = row.replace('</section>', guide_links(ids) + '</section>')
+    quality_links = guide_links(['qa-water','qa-noise','qa-air','point-mtf','ramp-fwhm'])
     quality_images = []
     for caption, image in zip(copy["quality_captions"], ("feature-water-qa.png", "feature-mtf.png"), strict=True):
         if code == "en" and "en-" + image in PRODUCT_SCREENSHOTS:
@@ -627,7 +683,7 @@ def render_product_home(code: str, release: dict[str, str]) -> str:
 {development_notice}
 <div id="features"><section class="product-workflow product-container" id="workflow"><div class="workflow-heading"><h2>{escape(copy["workflow_title"])}</h2><p>{escape(copy["workflow_intro"])}</p></div><div class="workflow-grid">{"".join(workflow_cards)}</div></section>
 <div class="product-features product-container">{"".join(feature_rows)}</div>
-<section class="product-quality product-container" id="quality"><div class="product-feature-copy"><h2>{escape(copy["quality_title"])}</h2><p>{escape(copy["quality_body"])}</p></div><div class="feature-media-grid">{"".join(quality_images)}</div></section>
+<section class="product-quality product-container" id="quality"><div class="product-feature-copy"><h2>{escape(copy["quality_title"])}</h2><p>{escape(copy["quality_body"])}</p></div><div class="feature-media-grid">{"".join(quality_images)}</div>{quality_links}</section>
 <section class="product-appearance product-container" id="appearance"><div class="product-feature-copy"><h2>{escape(copy["appearance_title"])}</h2><p>{escape(copy["appearance_body"])}</p></div>
 <div class="theme-media-grid">{"".join(theme_images)}</div></section></div>
 <section class="product-closing product-container" id="download"><h2>{escape(copy["closing_title"])}</h2><p>{escape(copy["closing_body"])}</p>

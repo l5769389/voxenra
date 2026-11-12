@@ -102,8 +102,8 @@ def test_png_exports_every_frame_at_original_resolution(tmp_path, kind, anonymou
     path = tmp_path / "input.dcm"
     ds = make_dicom(path)
     ds.Rows, ds.Columns = 16, 32
-    ds.RescaleIntercept = 0
-    ds.WindowCenter, ds.WindowWidth = 128, 256
+    ds.RescaleSlope, ds.RescaleIntercept = 2, -64
+    ds.WindowCenter, ds.WindowWidth = 192, 512
     ramp = np.tile(np.arange(32, dtype=np.uint16) * 8, (16, 1))
     if kind == "rgb":
         ds.SamplesPerPixel, ds.PlanarConfiguration = 3, 0
@@ -138,12 +138,26 @@ def test_png_exports_every_frame_at_original_resolution(tmp_path, kind, anonymou
     for image in images:
         assert (image.width(), image.height()) == (32, 16)
         assert ("PatientName" not in image.textKeys()) if anonymous else image.text("PatientName") == str(ds.PatientName)
-    if kind == "rgb":
-        assert images[0].pixelColor(5, 5).red() == 255
-        assert images[1].pixelColor(5, 5).green() == 255
-    else:
-        left, right = (images[0].pixelColor(x, 5).red() for x in (0, 31))
-        assert left > right if kind == "inverted" else left < right
+    # Literal window reference: (2 * stored - 64 - (-64)) / 512 * 255.
+    # Checking each channel of every pixel catches replayed/blank later frames.
+    gray_row = [0, 7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87, 95, 103,
+                111, 119, 127, 135, 143, 151, 159, 167, 175, 183, 191, 199,
+                207, 215, 223, 231, 239, 247]
+    inverted_row = [255, 247, 239, 231, 223, 215, 207, 199, 191, 183, 175,
+                    167, 159, 151, 143, 135, 127, 119, 111, 103, 95, 87,
+                    79, 71, 63, 55, 47, 39, 31, 23, 15, 7]
+    for frame, image in enumerate(images):
+        for y in range(16):
+            for x in range(32):
+                if kind == "rgb":
+                    expected = (255, 0, 0, 255) if frame == 0 else (0, 255, 0, 255)
+                elif kind == "palette":
+                    expected = (x * 8 if frame == 0 else 128, 0, 0, 255)
+                else:
+                    row = inverted_row if kind == "inverted" else gray_row
+                    value = row[x] if frame == 0 else 127
+                    expected = (value, value, value, 255)
+                assert image.pixelColor(x, y).getRgb() == expected, (kind, frame, x, y)
     assert path.read_bytes() == original
 
 

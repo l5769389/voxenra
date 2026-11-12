@@ -51,6 +51,12 @@ Thank you to everyone who contributes to and supports VoxPlane.
 | Analysis and export | CT water phantom QA/circular ROIs, point-source MTF, ramp FWHM and slice thickness; PNG, DICOM, CSV/PDF, SEG/SR, and NRRD. |
 | Workspaces and preferences | Tabs, detached windows, create/save/recover, retained results from closed tabs, themes, languages, input/display settings, and an offline manual. Supports toolbar ordering, preset favorites, and reading-area maximization. |
 
+## Display and export presets
+
+Configure **initial display, screenshots, and reports** with live previews. Source window values are the default, and templates show exact WW / WL values. Review screenshot size, overlays, and privacy before saving the actual output. Configure report paper, orientation, content, and attribution with enlarged page previews. Presets apply to subsequent operations without overwriting current viewports.
+
+![Report presets and enlarged page preview](docs/screenshots/en/76-report-presets-voxplane-2.7.0.png)
+
 ## From PACS query to viewing
 
 Manage multiple PACS connections in **Settings → Sources**, search by patient, accession number, modality, or date, then select series to import in the background and open in 2D. Continue into MPR, 3D, or Tag views. Imports provide progress, cancellation, and duplicate-series merging; results enter the workspace only after complete validation.
@@ -195,7 +201,7 @@ Import source DICOM images on the left and associated SEG / NRRD masks through *
 
 Drag tabs into detached windows or move them between windows. Workspaces preserve image references, layouts, measurements, segmentation masks, analysis results, selected tools, and refinement settings, with automatic recovery. Opening a series activates an existing tab of the same view type and preserves its reading state, or creates a tab if none matches. If you close a tab accidentally, choose **Reopen closed tab** from the tab-bar context menu, or press Ctrl+Shift+T / ⇧⌘T. The session remembers the last 20 closed, fully loaded reading tabs without edits. Workspace files retain completed editing results from closed tabs. Exiting prompts to save workspace changes. Keep source files available: workspaces store references and results, not source pixels, unfinished drafts, or undo history. Choose a fixed theme or follow the system appearance. Use local JSON language packs and window presets, an offline manual with playable, pausable, and zoomable workflow demos, feedback, and optional startup update checks.
 
-![Offline manual and workflow demos](docs/screenshots/en/74-offline-manual-voxplane-2.6.0.png)
+![Offline manual and workflow demos](docs/screenshots/en/78-manual-tasks-voxplane-2.7.0.png)
 
 <table>
 <tr>

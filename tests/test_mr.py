@@ -144,6 +144,16 @@ def test_oblique_mr_builds_volume_and_all_mpr_planes(tmp_path):
         assert np.isfinite(result.modality_pixels).any()
 
 
+@pytest.mark.parametrize('valid_frame', [0, 2, None])
+def test_mr_mpr_preserves_valid_source_window(tmp_path, valid_frame):
+    def source_window(ds, i):
+        ds.WindowCenter, ds.WindowWidth = 123, 456 if i == valid_frame else 0
+    series = write_mr_series(tmp_path, change=source_window)
+    volume = VolumeManager().get_or_build(series)
+    expected = WindowLevel(123, 456) if valid_frame is not None else automatic_mr_window(volume.modality_pixels)
+    assert volume.default_window == expected
+
+
 @pytest.mark.parametrize('kind', ['echo','bvalue','time','component','position','orientation','spacing','localizer','frames','enhanced','color','mosaic'])
 def test_mr_eligibility_rejects_ambiguous_volumes_and_unsupported_formats(tmp_path,kind):
     def change(ds,i):

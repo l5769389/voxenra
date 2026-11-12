@@ -68,6 +68,17 @@ Rectangle {
                 explanation: [root.description, root.helpText].filter((t, i, all) => t && all.indexOf(t) === i).join("\n\n")
             }
         }
+        Text {
+            Layout.fillWidth: true
+            visible: !root.collapsed && root.description.length > 0
+            text: root.description.split("\n")[0]
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
+            color: Theme.textSecondary
+            font.pixelSize: 12
+        }
         ColumnLayout {
             id: body
             visible: !root.collapsed

@@ -8,6 +8,7 @@ Rectangle {
     property var reservedRegions: []
     property real instructionBottomMargin: 32
     property bool capturingPng: false
+    property bool captureMeasurements: true
     readonly property var measurementLabelRegions: measurementOverlay.labelHitRegions(imageCanvasRoot).concat(mtfOverlay.labelHitRegions(imageCanvasRoot))
     readonly property var instructionRegions: measurementOverlay.instructionRegions.concat(mtfOverlay.instructionRegions)
     anchors.fill: parent
@@ -101,17 +102,9 @@ Rectangle {
         return Qt.point(-1, -1)
 
     // 显式读取变换属性，让绑定在变换后重新计算
-    const transformDependency =
-        imageScene.x
-        + imageScene.y
-        + imageScene.scale
-        + imageScene.rotation
-        + pixelLayer.width
-        + pixelLayer.height
-        + (controller.horizontalFlip ? 1 : 0)
-        + (controller.verticalFlip ? 1 : 0)
+    const transformDependency = imageCanvasRoot.measurementTransformState
 
-    if (!Number.isFinite(transformDependency))
+    if (!transformDependency)
         return Qt.point(-1, -1)
 
     return pixelLayer.mapToItem(
@@ -211,7 +204,14 @@ Rectangle {
     }
 
     // 将测量轮廓映射到屏幕层，文字、线宽和控制点不随缩放/翻转变形。
-    readonly property var measurementTransformState: [
+    property int mappingRevision: 0
+    function refreshCoordinateMapping() { mappingRevision += 1 }
+    // Controller notifications can precede the child Scale bindings. Publish a
+    // second mapping invalidation after Qt has applied the entire transform,
+    // shared by measurements, annotations, CPR guides and analysis overlays.
+    onImageTransformStateChanged: Qt.callLater(refreshCoordinateMapping)
+    readonly property var measurementTransformState: imageTransformState.concat([mappingRevision])
+    readonly property var imageTransformState: [
         imageScene.x, imageScene.y, imageScene.scale, imageScene.rotation,
         imageScene.rowSpacing, imageScene.columnSpacing, pixelLayer.width, pixelLayer.height,
         imageScene.controller ? imageScene.controller.horizontalFlip : false,
@@ -335,6 +335,7 @@ Rectangle {
     }
 
     MprVoiOverlay {
+        visible: imageCanvasRoot.captureMeasurements
         anchors.fill: parent
         items: imageCanvasRoot.viewportController?.voiOverlays ?? []
         coordinateMapper: imageCanvasRoot
@@ -342,6 +343,7 @@ Rectangle {
     }
 
     WaterQaOverlay {
+        visible: imageCanvasRoot.captureMeasurements
         anchors.fill: parent
         showHandles: !imageCanvasRoot.capturingPng
         controller: imageCanvasRoot.viewportController?.qaController ?? null
@@ -350,6 +352,8 @@ Rectangle {
     }
 
     MeasurementLayer.MeasurementLayer {
+        capturingPng: imageCanvasRoot.capturingPng
+        visible: imageCanvasRoot.captureMeasurements
         id: measurementOverlay
         reservedRegions: imageCanvasRoot.reservedRegions
         instructionBottomMargin: imageCanvasRoot.instructionBottomMargin
@@ -369,7 +373,7 @@ Rectangle {
         readonly property var geometry: analysis?.samplingGeometry ?? ({})
         readonly property var transforms: imageCanvasRoot.measurementTransformState
         property int mappingRevision: 0
-        visible: (analysis?.showSampling ?? false) && Object.keys(geometry).length > 0
+        visible: imageCanvasRoot.captureMeasurements && (analysis?.showSampling ?? false) && Object.keys(geometry).length > 0
         function remap() { mappingRevision += 1 }
         onTransformsChanged: Qt.callLater(remap)
         readonly property var mappedBounds: {
@@ -408,6 +412,8 @@ Rectangle {
     }
 
     MeasurementLayer.MeasurementLayer {
+        capturingPng: imageCanvasRoot.capturingPng
+        visible: imageCanvasRoot.captureMeasurements
         id: mtfOverlay
         reservedRegions: imageCanvasRoot.reservedRegions
         instructionBottomMargin: imageCanvasRoot.instructionBottomMargin

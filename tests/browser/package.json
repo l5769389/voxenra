@@ -1,0 +1,6 @@
+{
+  "name": "voxplane-manual-browser-checks",
+  "private": true,
+  "scripts": {"test": "node manual_layout.cjs"},
+  "devDependencies": {"playwright": "1.62.1"}
+}

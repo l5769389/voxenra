@@ -9,6 +9,10 @@ Item {
     property bool multiViewport: false
     property bool capturingPng: false
     property bool anonymousExport: false
+    property bool captureMeasurements: true
+    property bool captureDirections: true
+    property bool captureScale: true
+    property bool captureParameters: true
     property string overlayStatusText: ""
     // Only independent 2D cells supply a mode; other workspaces retain their overlay.
     property string twoDViewMode: ""
@@ -133,6 +137,7 @@ Item {
     // 显示影像
     ImageCanvas {
         capturingPng: viewportRoot.capturingPng
+        captureMeasurements: viewportRoot.captureMeasurements
         reservedRegions: viewportRoot.labelReservedRegions
         instructionBottomMargin: viewportRoot.drawingInstructionInset
         id: imageCanvas
@@ -231,7 +236,7 @@ Item {
         anchors.margins: 8
         viewportController: viewportRoot.viewportController
         technicalOnly: viewportRoot.anonymousExport || !viewportRoot.viewportController?.showWindowAnnotations
-        visible: (technicalContext.length > 0 || !technicalOnly)
+        visible: viewportRoot.captureParameters && (technicalContext.length > 0 || !technicalOnly)
             && (viewportRoot.viewportController?.isCprViewport !== true
                 || viewportRoot.viewportController.imageRows > 0)
 
@@ -249,7 +254,7 @@ Item {
             ? Math.max(32, metadataOverlay.bottomTextHeight + 20) : 32
         z: 11
         pixelsPerMm: imageCanvas.pixelsPerMillimeter
-        visible: viewportRoot.viewportController?.showScaleBar === true && lengthMm > 0
+        visible: viewportRoot.captureScale && viewportRoot.viewportController?.showScaleBar === true && lengthMm > 0
         calibrated: viewportRoot.viewportController?.hasPhysicalSpacing ?? false
         options: viewportRoot.viewportController?.settingsController?.values?.scale ?? ({})
     }
@@ -258,8 +263,8 @@ Item {
         id: directionOverlay
         anchors.fill: parent
         z: 11
-        visible: viewportRoot.viewportController
-            ? viewportRoot.viewportController.showDicomOverlay : false
+        visible: viewportRoot.captureDirections && (viewportRoot.viewportController
+            ? viewportRoot.viewportController.showDicomOverlay : false)
 
         directionLabels:
             viewportRoot.viewportController
@@ -299,9 +304,10 @@ Item {
     }
 
     TextAnnotationLayer {
+        capturingPng: viewportRoot.capturingPng
         avoidanceRegions: imageCanvas.measurementLabelRegions
         reservedRegions: viewportRoot.labelReservedRegions.concat(imageCanvas.instructionRegions)
-        hideText: viewportRoot.anonymousExport
+        hideText: viewportRoot.anonymousExport || !viewportRoot.captureMeasurements
         preferences: viewportRoot.viewportController?.settingsController.values ?? ({})
         anchors.fill: parent
         z: 14
@@ -334,7 +340,7 @@ Item {
         id: cprPathOverlay
         anchors.fill: parent
         z: 16
-        visible: viewportRoot.viewportController?.isCprViewport === true
+        visible: !viewportRoot.capturingPng && viewportRoot.viewportController?.isCprViewport === true
         controller: visible ? viewportRoot.viewportController : null
         coordinateMapper: imageCanvas
         transformState: imageCanvas.measurementTransformState

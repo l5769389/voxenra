@@ -23,9 +23,13 @@
 
 - **macOS：本地 Mac 打包**，使用 `bash scripts/build_macos.sh`。校验 `.app`、DMG、架构、版本、签名及启动和核心阅片流程；生成 SHA-256，将 DMG 与校验文件上传到对应 Release。
 - macOS 正式签名分发使用 `bash scripts/build_macos.sh --release`，提前配置 `MACOS_SIGN_IDENTITY` 和 `MACOS_NOTARY_PROFILE`（见[配置说明](macos-signing.md)）。核对应用及 DMG 公证状态均为 Accepted、票据验证和 Gatekeeper 检查通过；票据装订后再生成 SHA-256。缺少证书或公证失败不得当作正式签名包发布；历史版本的 ad-hoc 验证记录不代表新包通过。首次启用签名后，在另一台 Mac 上下载、断网安装并启动，抽查 QML、2D、3D、文件访问及更新替换。
-- **Windows：GitHub Actions 构建与发布**，使用 `.github/workflows/build-windows.yml` 的标签或 `release_tag` 流程。确认该运行检出的提交与标签一致、测试通过，再核对安装版、便携版及两份 SHA-256 附件。不要用本地 Mac 包代替 Windows 产物。
+- **Windows：GitHub Actions 构建与发布**，使用 `.github/workflows/build-windows.yml` 的标签或 `release_tag` 流程。确认该运行检出的提交与标签一致、测试通过，再核对安装版、便携版及两份 SHA-256 附件。不要用本地 Mac 包代替 Windows 产物。构建附件内的 `windows-provenance.json` 记录实际检出 SHA、版本、运行 ID 和包哈希；归档时必须与标签提交及下载文件一致，旧构建缺少清单时应重新构建。公开 Release 仅允许核验同名文件大小和 SHA-256 完全一致后无操作结束，缺失或不同则失败；上传及替换只允许对草稿执行。上传期间不要同时手动公开草稿（GitHub 的状态读取和附件上传不是原子操作）。
 - 使用 `docs/packaging.md` 的平台说明核对安装、启动和更新；无法在目标系统验证的项目要如实写在发布说明中。
+- 不要通过重跑旧运行来绕过上述发布校验：历史运行保留当时的工作流定义。归档旧版本应从包含这些保护的新工作流发起 `release_tag`，并按清单重新构建、核验；不能继续使用缺少保护的历史上传步骤。
 - 自动更新验收：在已安装的上一版中验证启动检查、更新内容、取消同一版本后不再弹窗及版本号更新标识；关闭自动检查并重启应不联网检查。测试下载中断、校验失败、工作区保存/取消退出。macOS 验证 DMG 替换和重新启动；Windows 安装版与单文件便携版分别验证更新、启动和失败恢复，用户设置及工作区不得丢失。
+
+- 升级包验收基线由 `tests/fixtures/upgrades/windows-baseline-v2.5.0.json` 固定旧标签、附件大小和 SHA-256；更换基线需显式审核，不能读取 mutable latest 后因版本相同而跳过。候选版本必须高于基线。Windows 安装版与便携版都需生成 `package-upgrade.json` 和各自 `workspace-restored.json`，用实际新包恢复旧版本保存的非空合成工作区，核对图像像素、测量、QA、CPR 及迁移设置。
+- 安装迁移、当前更新辅助程序、旧客户端“更新”按钮是不同验收范围，分别记录。2.5.0→2.6.0 更名走手动安装迁移；自动脚本明确记录旧客户端按钮 `not_exercised`，不能把包启动/辅助程序成功写成旧客户端更新通过。原生及外部数据验收的跳过项需列出原因；必测阶段不得以跳过算通过。
 
 ## 4. 发布后核验
 

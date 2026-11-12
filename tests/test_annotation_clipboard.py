@@ -102,9 +102,11 @@ def test_copy_paste_selected_geometry_with_real_keyboard(viewport, kind):
 
 
 def test_paste_to_other_view_uses_target_slice_spacing_and_can_survive_source_close(
-    viewport,
+    qt_app,
 ):
-    view, source, pixels, warnings = viewport
+    from shiboken6 import delete, isValid
+    source_scene = viewport.__wrapped__(qt_app)
+    view, source, pixels, warnings = next(source_scene)
     draw(view, source, pixels, "length")
     assert source.copySelectedAnnotation()
     payload = read_annotation()
@@ -120,7 +122,10 @@ def test_paste_to_other_view_uses_target_slice_spacing_and_can_survive_source_cl
     )
     target._state = replace(target._state, slice_index=4, slice_count=6)
     target.handleRenderResult(replace(result, frame_meta=frame))
-    source.measurementController.clear_all()
+    # Close the real source view and destroy its controller before pasting.
+    source_scene.close()
+    delete(source)
+    assert not isValid(view) and not isValid(source)
     try:
         assert target.pasteAnnotation()
         copied = target.measurementController.committed_measurements[0]
@@ -281,4 +286,18 @@ def test_copy_paste_from_panel_focus_with_history_and_modal_isolation(sidebar_sc
     assert not sidebar_scene[3], sidebar_scene[3]
     # The offscreen platform owns its QMimeData until static destruction, after
     # Python has exited. Release the Python wrapper while the interpreter lives.
+    QGuiApplication.clipboard().clear()
+
+
+def test_oversized_clipboard_paste_preserves_existing_objects(viewport):
+    view, controller, pixels, _ = viewport
+    draw(view, controller, pixels, "length")
+    before = controller.measurementController.measurementItems
+    raw = json.dumps({"version": 1, "kind": "length", "points": [[1, 2], [3, 4]]}).encode()
+    mime = QMimeData()
+    mime.setData(MIME_TYPE, raw + b" " * (256 * 1024 + 1 - len(raw)))
+    QGuiApplication.clipboard().setMimeData(mime)
+    assert not controller.pasteAnnotation()
+    assert controller.measurementController.measurementItems == before
+    assert not controller.textAnnotationController.annotationItems
     QGuiApplication.clipboard().clear()

@@ -8,7 +8,7 @@ from hashlib import sha256
 
 import numpy as np
 
-from voxplane.core.dicom_loader import DicomLoader
+from voxplane.core.dicom_loader import DicomLoader, _optional_float
 from voxplane.core.render_cancellation import check_render_cancelled
 from voxplane.model import (
     DicomInstanceMeta,
@@ -386,6 +386,7 @@ def _read_volume_frames(instances: tuple[DicomInstanceMeta, ...], modality: str)
     # Sequential loading revisits no frames; retain only the current decode.
     loader = DicomLoader(maximum_cache_frames=1)
     default_window: WindowLevel | None = None
+    mr_source_window: WindowLevel | None = None
     pet_windows: list[WindowLevel] = []
     pet_source_windows: list[WindowLevel] = []
     representative_meta: InstanceDisplayMeta | None = None
@@ -393,6 +394,13 @@ def _read_volume_frames(instances: tuple[DicomInstanceMeta, ...], modality: str)
     for index, instance in enumerate(instances):
         check_render_cancelled()
         dataset, modality_pixels = loader.read_frame(instance.path, instance.frame_index)
+
+        if modality == "MR" and mr_source_window is None:
+            center = _optional_float(getattr(dataset, "WindowCenter", None))
+            width = _optional_float(getattr(dataset, "WindowWidth", None))
+            if (center is not None and width is not None
+                    and np.isfinite(center) and np.isfinite(width) and width >= .001):
+                mr_source_window = WindowLevel(center, width)
 
         if modality_pixels.ndim != 2:
             raise VolumeBuildError(
@@ -474,10 +482,10 @@ def _read_volume_frames(instances: tuple[DicomInstanceMeta, ...], modality: str)
     check_render_cancelled()
 
     if modality == "MR":
-        # Source VOI values describe individual acquired frames, not a
-        # reconstructed plane. A peripheral slice can have a tiny range.
+        # Prefer the first valid source VOI. Only absent/invalid source windows
+        # need a volume-wide fallback, which avoids sampling an empty edge slice.
         from voxplane.core.mr import automatic_mr_window
-        default_window = automatic_mr_window(volume_pixels)
+        default_window = mr_source_window or automatic_mr_window(volume_pixels)
 
     if default_window is None or representative_meta is None:
         raise VolumeBuildError("Could not determine the volume display metadata")

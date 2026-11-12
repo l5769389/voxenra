@@ -50,8 +50,12 @@ def csv_bytes(rows, *, translations=None, decimal_places=DEFAULT_DECIMAL_PLACES)
     return output.getvalue().encode("utf-8-sig")
 
 
-def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=None, decimal_places=DEFAULT_DECIMAL_PLACES):
+def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=None, decimal_places=DEFAULT_DECIMAL_PLACES, options=None, content=None):
     """Use the Qt runtime already shipped with VoxPlane; no extra packaging cost."""
+    from voxplane.core.report_options import validate_options, validate_content, fitting_prefix
+    options, content = validate_options(options if options is not None else {"anonymous": anonymous}), validate_content(content)
+    anonymous = options["anonymous"] if options else anonymous
+    images = images if options["includeImages"] else ()
     translations = snapshot() if translations is None else translations
     rows = localize(rows, translations)
     from PySide6.QtCore import QBuffer, QIODevice, QRectF, Qt, QMarginsF
@@ -62,8 +66,10 @@ def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=Non
     writer.setResolution(144)
     writer.setPageSize(QPageSize(QPageSize.A4))
     writer.setPageMargins(QMarginsF(16, 16, 16, 16), QPageLayout.Millimeter)
-    writer.setTitle(localize(_msg('text.0181'), translations))
-    writer.setCreator("VoxPlane")
+    writer.setTitle(localize(_msg('text.0181'), translations).replace('VoxPlane', '').strip(' /'))
+    writer.setCreator(options["softwareName"])
+    writer.setPageOrientation(QPageLayout.Landscape if options["orientation"] == "landscape" else QPageLayout.Portrait)
+    writer.setTitle(content.get("title") or localize(_msg('text.0181'), translations).replace('VoxPlane', '').strip(' /'))
     painter = QPainter(writer)
     if not painter.isActive():
         raise OSError(_msg('text.0182'))
@@ -77,7 +83,7 @@ def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=Non
     def text(value, x, yy, w, h, size=10, bold=False, color="#213443", single=False):
         value = localize(value, translations)
         font = QFont()
-        font.setPointSizeF(size)
+        font.setPointSizeF(size * (1.2 if options["fontSize"] == "large" else 1))
         font.setBold(bold)
         painter.setFont(font)
         painter.setPen(QColor(color))
@@ -89,16 +95,32 @@ def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=Non
         if page:
             writer.newPage()
         page += 1
-        text(_msg('text.0183'), 0, 0, width, 46, 17, True)
+        title = content.get('title') or localize(_msg('text.0183'), translations).replace('VoxPlane', '').strip(' /')
+        font = QFont(); font.setPointSizeF(17 * (1.2 if options['fontSize'] == 'large' else 1))
+        title_height = max(46, QFontMetricsF(font, writer).boundingRect(QRectF(0, 0, width, 10000), Qt.TextWordWrap, title).height()+8)
+        text(title, 0, 0, width, title_height, 17, True)
         text(_msg('text.0184', value1=stamp, value2=_msg('text.0185') if anonymous else _msg('text.0186'), value3=len(rows)),
-             0, 50, width, 35, 9, color="#596f7e")
+             0, title_height+4, width, 35, 9, color="#596f7e")
         painter.setPen(QColor("#c8d4db"))
-        painter.drawLine(0, 96, width, 96)
-        text(f"VoxPlane  ·  {page}", 0, height - 28, width, 28, 9, color="#596f7e")
-        y = 116
+        painter.drawLine(0, int(title_height+50), width, int(title_height+50))
+        text(" · ".join(v for v in (options["softwareName"], str(page) if options["pageNumbers"] else "") if v), 0, height - 28, width, 28, 9, color="#596f7e")
+        y = title_height+70
 
     try:
         new_page()
+        entries = [options['organization'], options['department']] + [localize(_msg('report.'+key), translations)+': '+content[key] for key in ('operator', 'reviewer', 'notes', 'conclusion') if content.get(key)]
+        for label in entries:
+            if not label: continue
+            # Wrap user content into measured lines and paginate each paragraph.
+            for paragraph in str(label).splitlines():
+                font = QFont(); font.setPointSizeF(12 if options['fontSize'] == 'large' else 10)
+                metrics = QFontMetricsF(font, writer)
+                while paragraph:
+                    count = fitting_prefix(paragraph, metrics, width-24)
+                    if y+38 > height-55: new_page()
+                    text(paragraph[:count], 12, y, width-24, 38)
+                    y += 38
+                    paragraph = paragraph[count:]
         for row in rows:
             metrics = [(localize(label, translations), cell(row.get(key), decimal_places=decimal_places if key in MEASUREMENT_COLUMNS else None)) for key, label in (*COLUMNS[9:22], COLUMNS[-3])
                        if row.get(key) is not None and row.get(key) != ""]
@@ -108,7 +130,10 @@ def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=Non
                 lines.append(row["reference_status"])
             if row.get("text"):
                 lines.append(_msg('text.0187') + row["text"][:180])
-            block = 96 + len(lines) * 34
+            if options['tableDetail'] == 'detailed':
+                for key in ('origin', 'orientation'):
+                    if row.get(key): lines.append(key+': '+str(row[key]))
+            block = 96 + len(lines) * 38
             if y + block > height - 55:
                 new_page()
             painter.fillRect(QRectF(0, y, width, 40), QColor("#edf3f6"))
@@ -119,17 +144,21 @@ def pdf_bytes(rows, *, anonymous=True, images=(), created=None, translations=Non
             if row.get("phase"): location += _msg('text.0189', value1=row['phase'])
             text(location, 12, y + 44, width - 24, 34, 9, color="#596f7e")
             for i, line in enumerate(lines):
-                text(line, 12, y + 78 + i * 34, width - 24, 34, 10, single=True)
+                text(line, 12, y + 78 + i * 38, width - 24, 38, 10, single=True)
             y += block + 14
         if not rows:
             text(_msg('text.0190'), 0, y, width, 40)
-        for caption, image in images:
-            new_page()
-            text(caption, 0, y, width, 64, 11, True, single=True)
-            y += 80
-            target = image.size().scaled(int(width), int(height-y-70), Qt.KeepAspectRatio)
-            painter.drawImage(QRectF((width-target.width())/2, y, target.width(), target.height()), image)
+        columns = options['imageColumns']
+        for index, (caption, image) in enumerate(images):
+            if index % columns == 0:
+                new_page()
+            column_width = width / columns
+            left = (index % columns) * column_width
+            text(caption, left, y, column_width-12, 80, 10, True)
+            target = image.size().scaled(int(column_width-12), int(height-y-150), Qt.KeepAspectRatio)
+            painter.drawImage(QRectF(left+(column_width-target.width())/2, y+90, target.width(), target.height()), image)
             text(_msg('text.0191'), 0, height-64, width, 30, 9)
+
     finally:
         painter.end()
     result = bytes(buffer.data())

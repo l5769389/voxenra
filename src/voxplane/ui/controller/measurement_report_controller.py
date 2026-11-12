@@ -42,7 +42,7 @@ def capture_results(workspace, catalog, *, all_tabs=False, anonymous=True, inclu
         label = series_names.setdefault(uid, _msg('text.0382', value1=len(series_names) + 1))
         phase = next((i+1 for i, p in enumerate(series.phases)
                       if any(instance.sop_instance_uid == sop for instance in p.instances)), None)
-        row = dict(patient=patient if anonymous else series.patient_name,
+        row = dict(_study_uid=series.study_instance_uid, _patient_key=patient_key, _source=(uid, sop, repr(frame)), patient=patient if anonymous else series.patient_name,
                    patient_id="" if anonymous else series.patient_id,
                    series=label if anonymous else series.series_description,
                    modality=series.modality, view=view, id=f"M{len(rows)+1:03}",
@@ -93,7 +93,8 @@ def capture_results(workspace, catalog, *, all_tabs=False, anonymous=True, inclu
                     picture["rows"].append(row)
                     picture["measurements"].append((row["id"], item))
                     series = catalog.get_series(item.series_uid)
-                    sources.update(i.path for group in (series, *series.phases) for i in group.instances)
+                    picture.setdefault("source_paths", set()).update(i.path for group in (series, *series.phases) for i in group.instances)
+                    sources.update(picture["source_paths"])
             for item in view._text_annotation_controller._annotations.values():
                 row = base(view.viewport_config.series_uid, role, "text", item.slice_index, item.frame_key)
                 row["text"] = "" if anonymous else item.text
@@ -225,10 +226,15 @@ class MeasurementReportController(QObject):
     _i18n_message = Signal()
     changed = Signal()
     completed = Signal(object, bool, str)
+    previewReady = Signal(bytes)
     progressChanged = Signal(float)
 
     def __init__(self, workspace, catalog, parent=None):
         super().__init__(parent)
+        from voxplane.ui.controller.report_preview_controller import ReportPreviewController
+        self._preview = ReportPreviewController(self)
+        self.previewReady.connect(self._accept_preview)
+        self._selection_rows = None
         self.workspace, self.catalog = workspace, catalog
         self._settings_controller = resolve_settings(parent)
         self._busy = self._error = self._closed = False
@@ -241,6 +247,43 @@ class MeasurementReportController(QObject):
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="measurement-report")
         self.completed.connect(self._finish)
 
+    @Slot(bytes)
+    def _accept_preview(self, data):
+        if not self._closed and not self._cancel.is_set():
+            from voxplane.i18n.messages import localize
+            path = Path(self._settings_controller.exportDirectory) / localize(_msg('text.0396', value1='pdf'))
+            self._preview.set_pdf(data, suggested_path=path)
+
+    def _current_study_rows(self, rows):
+        view = self.workspace.activeViewport
+        uid = view.viewport_config.series_uid if view is not None else None
+        series = self.catalog.get_series(uid) if uid else None
+        if series is None: raise ValueError('No current study')
+        return [r for r in rows if r['_study_uid'] == series.study_instance_uid]
+
+    @Slot(bool, result='QVariantList')
+    @Slot(bool, bool, result='QVariantList')
+    def availableResults(self, all_tabs, current_study=False):
+        try:
+            rows, _, _ = capture_results(self.workspace, self.catalog, all_tabs=all_tabs,
+                                         anonymous=True, region_jobs=[])
+            if current_study: rows = self._current_study_rows(rows)
+            self._selection_rows = deepcopy(rows)
+            return [dict(id=r['id'], label=f"{r['id']} · {r['kind']} · {r['patient']} / {r['series']} · {r['view']}") for r in rows]
+        except ValueError:
+            self._selection_rows = None
+            return []
+
+    @Property(QObject, constant=True)
+    def previewController(self): return self._preview
+
+    @Slot(bool, 'QVariantMap', 'QVariantMap', 'QVariantList', result=bool)
+    @Slot(bool, 'QVariantMap', 'QVariantMap', 'QVariantList', bool, result=bool)
+    def previewReport(self, all_tabs, options, content, selected_ids, current_study=False):
+        self._preview.clear()
+        return self.export_to(None, format='pdf', all_tabs=all_tabs,
+                              options=options, content=content, selected_ids=selected_ids, current_study=current_study)
+
     @Property(float, notify=changed)
     def progress(self):
         return self._progress
@@ -249,6 +292,11 @@ class MeasurementReportController(QObject):
     def _set_progress(self, value):
         self._progress = value
         self.changed.emit()
+
+    @Slot()
+    def cancelPreview(self):
+        self.cancel()
+        self._preview.clear()
 
     @Slot()
     def cancel(self):
@@ -284,13 +332,41 @@ class MeasurementReportController(QObject):
             if not path.lower().endswith("."+suffix): path += "."+suffix
             self.export_to(path, format=suffix, all_tabs=all_tabs, anonymous=anonymous, include_images=include_images)
 
-    def export_to(self, path, *, format="csv", all_tabs=False, anonymous=True, include_images=False):
+    def export_to(self, path, *, format="csv", all_tabs=False, anonymous=True, include_images=False, options=None, content=None, selected_ids=None, current_study=False):
         if self._busy or self._closed: return False
         try:
+            from voxplane.core.report_options import validate_options, validate_content
+            options = validate_options(options if options is not None else dict(anonymous=anonymous, includeImages=include_images))
+            content = validate_content(content)
+            anonymous, include_images = options['anonymous'], options['includeImages']
             if format not in ("csv", "pdf"): raise ValueError(_msg('text.0397'))
             region_jobs = []
             rows, pictures, sources = capture_results(self.workspace, self.catalog, all_tabs=all_tabs,
                 anonymous=anonymous, include_images=include_images and format == "pdf", region_jobs=region_jobs)
+            if current_study:
+                study_rows = self._current_study_rows(rows)
+                if not study_rows: raise ValueError("No results in the current study")
+                study_ids = {r["id"] for r in study_rows}
+            else:
+                study_ids = {r["id"] for r in rows}
+            if selected_ids:
+                current, _, _ = capture_results(self.workspace, self.catalog, all_tabs=all_tabs, anonymous=True, region_jobs=[])
+                if current_study: current = self._current_study_rows(current)
+                if self._selection_rows is None or current != self._selection_rows:
+                    raise ValueError('Results changed; refresh the result selection')
+            if selected_ids or current_study:
+                selected = set(selected_ids) if selected_ids else study_ids
+                if selected - study_ids:
+                    raise ValueError('Selected results are no longer available')
+                rows = [row for row in rows if row['id'] in selected]
+                for picture in pictures:
+                    picture['rows'] = [r for r in picture['rows'] if r['id'] in selected]
+                    picture['measurements'] = [m for m in picture['measurements'] if m[0] in selected]
+                pictures = [p for p in pictures if p['rows']]
+                sources = {path for p in pictures for path in p.get('source_paths', ())}
+                region_jobs = [j for j in region_jobs if j[0]['id'] in selected]
+            if format == 'pdf' and len({row['_patient_key'] for row in rows}) > 1:
+                raise ValueError('Select results from a single patient for each report')
         except ValueError as error:
             self._finish(error_message(error), True)
             return False
@@ -323,17 +399,20 @@ class MeasurementReportController(QObject):
                 rendered, warnings = render_references(pictures, catalog, self._cancel, self.progressChanged.emit)
             if self._cancel.is_set():
                 raise InterruptedError()
-            data = csv_bytes(rows, translations=translations, decimal_places=decimal_places) if format == "csv" else pdf_bytes(rows, anonymous=anonymous, images=report_images(rendered), translations=translations, decimal_places=decimal_places)
+            data = csv_bytes(rows, translations=translations, decimal_places=decimal_places) if format == "csv" else pdf_bytes(rows, anonymous=anonymous, images=report_images(rendered), translations=translations, decimal_places=decimal_places, options=options, content=content)
             with self._write_lock:
                 if self._cancel.is_set():
                     raise InterruptedError()
-                atomic_write(path, data)
+                if path is None:
+                    self.previewReady.emit(data)
+                else:
+                    atomic_write(path, data)
             return _msg('text.0399', value1=len(rows)) + ("\n" + _msg("report.missingImages", value1=len(warnings)) if warnings else "")
         def done(future):
             try: message, error = future.result(), False
             except InterruptedError: message, error = _msg("report.cancelled"), False
             except Exception as exc: message, error = _msg('text.0400', value1=exc), True
-            if not self._closed: self.completed.emit(message, error, str(Path(path).resolve()) if not error and not self._cancel.is_set() else "")
+            if not self._closed: self.completed.emit(message, error, str(Path(path).resolve()) if path is not None and not error and not self._cancel.is_set() else "")
         self._executor.submit(write).add_done_callback(done)
         return True
 
@@ -346,4 +425,5 @@ class MeasurementReportController(QObject):
     def shutdown(self):
         self._closed = True
         self.cancel()
+        self._preview.clear()
         self._executor.shutdown(wait=True, cancel_futures=True)

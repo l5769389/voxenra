@@ -188,6 +188,7 @@ class Image2DViewportController(ViewportController):
         self._tool_controller = tool_controller
         self._settings_controller = tool_controller.settingsController
         self._state = replace(self._state, display_settings=self._default_display_settings())
+        self._configure_initial_display()
         self._measure_controller = MeasurementController(self)
         self._text_annotation_controller = TextAnnotationController(self)
         self._mtf_controller = None
@@ -221,6 +222,35 @@ class Image2DViewportController(ViewportController):
         self._clipboard_payload = None
         self._clipboard_pastes = 0
         self.transformChanged.connect(self._measure_controller.clearHover)
+        if self._initial_pixel_state is not None:
+            self._initial_pixel_state = self._state
+
+    def _configure_initial_display(self):
+        # Snapshot settings once. Live preference changes must not move existing views.
+        from voxplane.settings.display_defaults import DEFAULTS, validate_options
+        from voxplane.model import MprPlane, TwoDViewType
+        self._initial_pixel_state = None
+        if not (self.viewport_config.viewport_type == TwoDViewType.STACK
+                or isinstance(self.viewport_config.viewport_type, MprPlane)):
+            return
+        try:
+            options = validate_options(self._settings_controller.section("initialDisplay"))
+        except (KeyError, ValueError):
+            options = DEFAULTS
+        window = None
+        modality = self.viewport_config.series_meta.modality.upper()
+        if options["windowMode"] == "preset" and modality in ("CT", "MR"):
+            identifier = options["ctPreset" if modality == "CT" else "mrPreset"]
+            entry = next((entry for entry in self._settings_controller.windowTemplates
+                          if entry["presetId"] == identifier and entry["enabled"]), None)
+            if entry is not None:
+                window = WindowLevel(center=entry["center"], width=entry["width"])
+        self._state = replace(self._state, window=window, display_settings=replace(
+            self._state.display_settings, fit_to_window=options["zoom"] == "fit"))
+        if options["zoom"] == "pixel":
+            # The canvas uses physical mm, so 1:1 columns needs inverse spacing.
+            # Identity also makes restored or explicitly edited state take precedence.
+            self._initial_pixel_state = self._state
 
     def _default_display_settings(self):
         return ViewportDisplaySettings(hide_sensitive_info=self._settings_controller.section("privacy")["hideIdentity"])
@@ -398,11 +428,14 @@ class Image2DViewportController(ViewportController):
         ):
             return
 
+        initial_pixel = self._initial_pixel_state is self._state
         self._state = replace(
             self._state,
             width=width,
             height=height,
         )
+        if initial_pixel:
+            self._initial_pixel_state = self._state
 
     @Slot(object)
     def handleRenderResult(self, result: RenderResult) -> None:
@@ -461,6 +494,12 @@ class Image2DViewportController(ViewportController):
             self._state.slice_index != result.frame_meta.slice_index
             or self._state.slice_count != result.frame_meta.slice_count
         )
+        if self._initial_pixel_state is self._state:
+            spacing = self.imageColumnSpacing
+            if isfinite(spacing) and spacing > 0:
+                self._state = replace(self._state, zoom=1.0 / spacing)
+                self.transformChanged.emit()
+        self._initial_pixel_state = None
         self._state = replace(
             self._state,
             slice_index=result.frame_meta.slice_index,

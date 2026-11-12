@@ -407,7 +407,9 @@ def test_manual_search_scroll_restore_and_context_jump(scene):
     assert find(window, 'manualReadingArea').property('contentY') == 0
     type_text(window, find(window, 'manualSearch'), 'ROI')
     assert ws.manualController.search == 'ROI'
-    selected = find(window, 'manualChapter-measurement-roi')
+    selected = find(window, 'manualTaskSearch-measurement-roi-0')
+    results = find(window, 'manualTaskSearchScroll')
+    results.setProperty('contentY', max(0, selected.mapToItem(results.property('contentItem'), QPointF()).y() - 10))
     click(window, selected)
     assert ws.manualController.chapterId == 'measurement-roi'
     ws.openManual('quick-start')

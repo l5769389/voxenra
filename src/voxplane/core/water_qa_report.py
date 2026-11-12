@@ -15,14 +15,18 @@ METRICS = (("water_ct_hu", "text.1079"), ("noise_hu", "qa.noiseSd"), ("noise_per
 
 
 def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
-              calculated_at="", decimal_places=2, translations=None, report_kind="water"):
+              calculated_at="", decimal_places=2, translations=None, report_kind="water", options=None, content=None):
     """Never silently create a report without its image or add a default brand."""
+    from voxplane.core.report_options import validate_options, validate_content, fitting_prefix
+    options = validate_options(options if options is not None else {'softwareName': software_name, 'tableDetail': 'detailed'})
+    content = validate_content(content)
+    software_name = options['softwareName']
     translations = snapshot() if translations is None else translations
     def tr(key):
         return localize(_msg(key), translations)
     def fmt(value):
         return format_measurement(value, decimal_places, missing="—")
-    if screenshot is None or screenshot.isNull():
+    if options["includeImages"] and (screenshot is None or screenshot.isNull()):
         raise ValueError(tr("qa.reportCaptureFailed"))
     if report_kind not in ("water", "air"):
         raise ValueError("Unknown QA report category")
@@ -31,6 +35,7 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
     if not rois:
         raise ValueError("No ROI in the requested QA report category")
     title = tr("qa.airReportTitle" if air_report else "qa.waterReportTitle")
+    title = content.get("title") or title
     buffer = QBuffer()
     buffer.open(QIODevice.WriteOnly)
     writer = QPdfWriter(buffer)
@@ -39,6 +44,7 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
     writer.setPageMargins(QMarginsF(16, 16, 16, 16), QPageLayout.Millimeter)
     writer.setTitle(title)
     writer.setCreator(software_name)
+    writer.setPageOrientation(QPageLayout.Landscape if options["orientation"] == "landscape" else QPageLayout.Portrait)
     painter = QPainter(writer)
     if not painter.isActive():
         raise OSError(tr("text.0182"))
@@ -50,7 +56,7 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
 
     def font(size=9, bold=False):
         f = QFont()
-        f.setPointSizeF(size)
+        f.setPointSizeF(size * (1.2 if options["fontSize"] == "large" else 1))
         f.setBold(bold)
         painter.setFont(f)
         return QFontMetricsF(f, writer)
@@ -69,7 +75,7 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
         painter.setPen(QColor("#d5dfe5"))
         painter.drawLine(0, height-72, width, height-72)
         text(software_name, QRectF(0, height-66, width-70, 60), size=8, color="#596f7e")
-        text(str(page), QRectF(width-60, height-66, 60, 60), size=8, align=Qt.AlignRight)
+        text(str(page) if options["pageNumbers"] else "", QRectF(width-60, height-66, 60, 60), size=8, align=Qt.AlignRight)
 
     def heading(value, minimum_following=40):
         nonlocal y
@@ -111,8 +117,9 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
 
     try:
         new_page()
-        text(title, QRectF(0, y, width, 60), size=18, bold=True)
-        y += 66
+        title_height = max(60, font(18, True).boundingRect(QRectF(0, 0, width, 10000), Qt.TextWordWrap, title).height()+8)
+        text(title, QRectF(0, y, width, title_height), size=18, bold=True)
+        y += title_height+6
         stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         if calculated_at:
             stamp = datetime.fromisoformat(calculated_at).astimezone().strftime("%Y-%m-%d %H:%M")
@@ -126,9 +133,11 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
         # Fit the whole screenshot without stretching or cropping its ROI overlays.
         image_height, image_width = 460, width*.49
         section_top = y
-        scale = min(image_width/screenshot.width(), image_height/screenshot.height())
-        iw, ih = screenshot.width()*scale, screenshot.height()*scale
-        painter.drawImage(QRectF((image_width-iw)/2, y, iw, ih), screenshot)
+        ih = 0
+        if options['includeImages']:
+            scale = min(image_width/screenshot.width(), image_height/screenshot.height(), (bottom-y-100)/screenshot.height())
+            iw, ih = screenshot.width()*scale, screenshot.height()*scale
+            painter.drawImage(QRectF((image_width-iw)/2, y, iw, ih), screenshot)
         available = [] if air_report else [
             (tr(label), fmt(getattr(result, key)), "%" if key == "noise_percent" else "HU")
             for key, label in METRICS if getattr(result, key) is not None]
@@ -136,7 +145,7 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
             available = [(tr('text.0173'), fmt(rois[0].mean_hu), 'HU'),
                          ('SD', fmt(rois[0].std_hu), 'HU')]
         if available:
-            left = width*.53
+            left = width*.53 if options["includeImages"] else 0
             text(tr('qa.reportSummary'), QRectF(left, y, width-left, 40), size=11, bold=True)
             y += 44
             table([tr('qa.reportMetric'), tr('qa.reportValue'), tr('qa.reportUnit')], available,
@@ -150,12 +159,27 @@ def pdf_bytes(result, *, slice_number, spacing, screenshot, software_name="",
               [[localize(r.label, translations), fmt(r.mean_hu), fmt(r.std_hu), fmt(r.minimum_hu),
                 fmt(r.maximum_hu), str(r.pixel_count)] + ([] if air_report else [fmt(r.delta_center_hu)]) for r in rois],
               [1.3, 1, 1, 1, 1, 1] + ([] if air_report else [1]))
-        heading(tr('qa.reportGeometry'), 90)
-        table(["ROI / "+tr("qa.reportGroup"), "X\npx", "Y\npx", tr('qa.reportDiameter')+"\nmm", tr('qa.reportArea')+"\nmm²"],
-              [[localize(r.label, translations)+" / "+tr({"uniformity":"qa.uniformityGroup", "noise":"qa.noiseGroup", "air":"qa.airTab"}[r.group]), fmt(r.column), fmt(r.row), fmt(r.radius_mm*2),
-                fmt(r.area_mm2)] for r in rois], [2.3, 1, 1, 1, 1.5])
+        if options['tableDetail'] == 'detailed':
+            heading(tr('qa.reportGeometry'), 90)
+            table(["ROI / "+tr("qa.reportGroup"), "X\npx", "Y\npx", tr('qa.reportDiameter')+"\nmm", tr('qa.reportArea')+"\nmm²"],
+                  [[localize(r.label, translations)+" / "+tr({"uniformity":"qa.uniformityGroup", "noise":"qa.noiseGroup", "air":"qa.airTab"}[r.group]), fmt(r.column), fmt(r.row), fmt(r.radius_mm*2),
+                    fmt(r.area_mm2)] for r in rois], [2.3, 1, 1, 1, 1.5])
         if y+54 > bottom:
             new_page()
+        entries = [options['organization'], options['department']] + [tr('report.'+key)+': '+content[key] for key in ('operator', 'reviewer', 'notes', 'conclusion') if content.get(key)]
+        for label in entries:
+            if not label: continue
+            metrics = font(9)
+            line_height = metrics.height()+10
+            for paragraph in str(label).splitlines():
+                while paragraph:
+                    count = fitting_prefix(paragraph, metrics, width)
+                    if y+line_height > bottom: new_page()
+                    text(paragraph[:count], QRectF(0, y, width, line_height))
+                    y += line_height
+                    paragraph = paragraph[count:]
+            y += 10
+        if y+54 > bottom: new_page()
         text(tr('qa.reportFootnote'), QRectF(0, y, width, 54), size=8, color="#596f7e")
     finally:
         painter.end()

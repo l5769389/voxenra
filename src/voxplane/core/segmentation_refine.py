@@ -36,9 +36,18 @@ def brush(mask, offset, geometry, shape, start, end, diameter, *, erase=False, n
     vector = end - start
     length2 = float(vector @ vector)
     if normal is not None:
-        normal = np.asarray(normal, float)
+        normal = np.array(normal, dtype=float, copy=True)
         normal /= np.linalg.norm(normal)
-        thickness = 1 / np.linalg.norm(inverse[:3, :3] @ normal)
+        voxel_normal = inverse[:3, :3] @ normal
+        # A plane and its reversed normal must edit the same native voxels.
+        # Orient toward increasing indices. Native-axis planes use the upper
+        # half-voxel boundary, matching plane_mask's floor(index + .5).
+        # Oblique slab depth is not an index coordinate; preserve its existing
+        # boundary convention instead of applying componentwise rounding to it.
+        if voxel_normal[np.argmax(np.abs(voxel_normal))] < 0:
+            normal = -normal
+        thickness = 1 / np.linalg.norm(voxel_normal)
+        native_axis = np.count_nonzero(np.abs(voxel_normal) > np.linalg.norm(voxel_normal) * 1e-10) == 1
     for z in range(int(low[0]), int(high[0])):
         indices = np.indices((1, *(high - low)[1:]), dtype=float).reshape(3, -1).T
         indices += [z, low[1], low[2]]
@@ -50,7 +59,12 @@ def brush(mask, offset, geometry, shape, start, end, diameter, *, erase=False, n
             selected = distance2 <= radius**2 + 1e-10
         else:
             depth = (points - end) @ normal
-            selected = (distance2 - depth**2 <= radius**2 + 1e-10) & (depth >= -thickness / 2) & (depth < thickness / 2)
+            if native_axis:
+                tolerance = thickness * 1e-10
+                in_slice = (depth > -thickness / 2 + tolerance) & (depth <= thickness / 2 + tolerance)
+            else:
+                in_slice = (depth >= -thickness / 2) & (depth < thickness / 2)
+            selected = (distance2 - depth**2 <= radius**2 + 1e-10) & in_slice
         if result is None:
             chosen = indices[selected].astype(int) - offset
             inside = np.all((chosen >= 0) & (chosen < mask.shape), axis=1)

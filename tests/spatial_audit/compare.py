@@ -23,7 +23,9 @@ def compare(root):
     root=Path(root);results=[]
     for manifest_path in sorted(root.glob('*/case.json')):
         case=manifest_path.parent;manifest=json.loads(manifest_path.read_text())
-        result=dict(case=case.name,comparisons=[],exchange=[])
+        required={g.name for g in case.glob('group-*') if (g/'segmentation.seg.nrrd').exists()}
+        result=dict(case=case.name,comparisons=[],exchange=[],image_status='blocked',
+                    exchange_status='blocked' if required else 'not_requested')
         source=case/'slicer-result.json'
         if not source.exists():
             result.update(status='blocked',reason='Slicer result missing');results.append(result);continue
@@ -66,29 +68,40 @@ def compare(root):
                     if case.name.startswith('pet-') or case.name=='petct-2':
                         item['suv_slicer']='not_verified: scalar DICOM plugin provides source values only'
             result['comparisons'].append(item)
+        recorded={x['group'] for x in slicer.get('exchange',[]) if x.get('status')=='pass'}
         # Slicer rewrites the segmentation. Reload through the product importer.
         for group in sorted(case.glob('group-*')):
             path=group/'slicer-return.seg.nrrd'
-            if not path.exists():continue
-            paths=[case/f['path'] for f in manifest['files']]
-            scan=list(DicomFolderScanner().scan_files(paths,folder=case))[-1]
-            sources=json.loads((group/'sources.json').read_text())
-            identities={(Path(s['path']).name,s['frame']) for s in sources}
-            matches=[(s,None) for s in scan.series if {(i.path.name,i.frame_index) for i in s.instances}==identities]
-            if not matches:
-                matches=[(s,p.phase_identifier) for s in scan.series for p in s.phases if {(i.path.name,i.frame_index) for i in p.instances}==identities]
-            series,phase=matches[0]
-            volume=VolumeManager().get_or_build(series,phase);records,evaluations=read_segmentation(path,volume)
-            masks=np.load(group/'masks.npz')
-            assert len(records)==len(masks.files)
-            for i,record in enumerate(records):
-                dense=np.zeros(volume.modality_pixels.shape,bool)
-                dense[tuple(slice(int(a),int(a)+n) for a,n in zip(record['mask_offset'],record['mask'].shape))]=record['mask']
-                np.testing.assert_array_equal(dense,masks[f'mask{i}'])
-            result['exchange'].append(dict(group=group.name,status='pass',masks=len(records)))
+            if group.name not in required:continue
+            if not path.exists() or group.name not in recorded:
+                result['exchange'].append(dict(group=group.name,status='blocked',reason='Required Slicer return or success record missing'))
+                continue
+            try:
+                paths=[case/f['path'] for f in manifest['files']]
+                scan=list(DicomFolderScanner().scan_files(paths,folder=case))[-1]
+                sources=json.loads((group/'sources.json').read_text())
+                identities={(Path(s['path']).name,s['frame']) for s in sources}
+                matches=[(s,None) for s in scan.series if {(i.path.name,i.frame_index) for i in s.instances}==identities]
+                if not matches:
+                    matches=[(s,p.phase_identifier) for s in scan.series for p in s.phases if {(i.path.name,i.frame_index) for i in p.instances}==identities]
+                series,phase=matches[0]
+                volume=VolumeManager().get_or_build(series,phase);records,evaluations=read_segmentation(path,volume)
+                masks=np.load(group/'masks.npz')
+                assert len(records)==len(masks.files)
+                for i,record in enumerate(records):
+                    dense=np.zeros(volume.modality_pixels.shape,bool)
+                    dense[tuple(slice(int(a),int(a)+n) for a,n in zip(record['mask_offset'],record['mask'].shape))]=record['mask']
+                    np.testing.assert_array_equal(dense,masks[f'mask{i}'])
+                result['exchange'].append(dict(group=group.name,status='pass',masks=len(records)))
+            except Exception as error:
+                result['exchange'].append(dict(group=group.name,status='blocked',reason=f'Segmentation return validation failed: {error}'))
         if slicer.get('exchange_error'):result['exchange_error']=slicer['exchange_error']
         states={x['status'] for x in result['comparisons']}
-        result['status']='pass' if states=={'pass'} else 'definition_difference' if 'definition_difference' in states else 'blocked'
+        result['image_status']='pass' if states=={'pass'} else 'definition_difference' if 'definition_difference' in states else 'blocked'
+        passed={x['group'] for x in result['exchange'] if x['status']=='pass'}
+        result['exchange_status']=('blocked' if slicer.get('exchange_error') or required != passed
+                                   else 'pass' if required else 'not_requested')
+        result['status']='blocked' if result['exchange_status']=='blocked' else result['image_status']
         results.append(result)
     (root/'comparison.json').write_text(json.dumps(results,indent=2))
     for result in results:print(result['case'],result['status'],len(result['exchange']))

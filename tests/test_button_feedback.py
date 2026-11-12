@@ -44,6 +44,9 @@ def test_hover_fade_has_no_intermediate_flash(sidebar_scene, theme):
             QTest.qWait(8)
             samples.append(pixel())
         hovered = samples[-1]
+        assert button.property("hovered")
+        if not selected:
+            assert idle != hovered, (theme, name, idle, hovered)
         move_pointer(window, outside)
         for _ in range(16):
             QTest.qWait(8)

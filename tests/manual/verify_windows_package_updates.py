@@ -1,9 +1,11 @@
-"""Upgrade the latest stable packages to the local build on a disposable Windows runner."""
+"""Upgrade explicitly pinned baseline packages to the local build on a disposable Windows runner."""
+import argparse
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import replace
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -33,9 +35,59 @@ def previous_release(metadata, kind):
             asset['name'] = name.replace('Voxenra-', 'VoxPlane-', 1)
             asset['browser_download_url'] = base + asset['name']
     result = parse_release(migrated, '0.0.0', kind)
+    if result is None:
+        return None
     return replace(result, name=result.name.replace('VoxPlane-', 'Voxenra-', 1),
                    url=result.url.replace('/VoxPlane-', '/Voxenra-'),
                    checksum_url=result.checksum_url.replace('/VoxPlane-', '/Voxenra-'))
+
+
+
+FIXTURES = Path(__file__).resolve().parents[1] / 'fixtures' / 'upgrades'
+
+
+def load_baseline(path, candidate_version):
+    """A missing/invalid baseline is a failed prerequisite, never a green skip."""
+    metadata = json.loads(Path(path).read_text(encoding='utf-8'))
+    if version_tuple(metadata['tag_name']) >= version_tuple(candidate_version):
+        raise ValueError('Upgrade baseline must be older than candidate')
+    releases = {kind: previous_release(metadata, kind)
+                for kind in ('windows_portable', 'windows_installer')}
+    if any(release is None or not release.digest for release in releases.values()):
+        raise ValueError('Pinned baseline requires complete assets and SHA-256 digests')
+    return metadata, releases
+
+
+def matches_expected(actual, expected):
+    if isinstance(expected, dict):
+        return isinstance(actual, dict) and all(
+            key in actual and matches_expected(actual[key], value) for key, value in expected.items())
+    if isinstance(expected, list):
+        return (isinstance(actual, list) and len(actual) == len(expected)
+                and all(matches_expected(a, e) for a, e in zip(actual, expected)))
+    if isinstance(expected, (int, float)) and not isinstance(expected, bool):
+        return (type(actual) in (int, float)
+                and math.isclose(actual, expected, rel_tol=1e-7, abs_tol=1e-7))
+    return type(actual) is type(expected) and actual == expected
+
+
+def check_restored_workspace(executable, fixture, reports):
+    """Exercise the installed runtime, including image values and saved results."""
+    expected = json.loads((fixture / 'expected.json').read_text(encoding='utf-8'))
+    expected.update(version=__version__, settings={
+        'appearance': {'theme': 'graphite'}, 'updates': {'enabled': False}})
+    expected_path = reports / 'workspace-expected.json'
+    expected_path.write_text(json.dumps(expected), encoding='utf-8')
+    report_path = reports / 'workspace-restored.json'
+    report_path.unlink(missing_ok=True)
+    subprocess.run([str(executable), '--verify-workspace', str(fixture / 'workspace.voxworkspace'),
+                    str(expected_path), str(report_path)], check=True, timeout=120)
+    report = json.loads(report_path.read_text(encoding='utf-8'))
+    observed = {key: value for key, value in expected.items() if key != 'sources'}
+    if (report.get('passed') is not True or report.get('errors') != []
+            or not matches_expected(report, observed)):
+        raise ValueError(f'Installed runtime failed workspace restoration: {report}')
+    return report
 
 
 def sha256(path):
@@ -134,6 +186,28 @@ def run_installer(executable, *options):
             stop_tree(process)
 
 
+def stop_scoped_applications(root):
+    cleanup = """
+    $prefix = $env:VOXPLANE_SMOKE_ROOT + [IO.Path]::DirectorySeparatorChar
+    $ErrorActionPreference = 'Stop'
+    for ($i = 0; $i -lt 5; $i++) {
+        $running = Get-CimInstance Win32_Process | Where-Object {
+            $_.ExecutablePath -and $_.ExecutablePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)
+        }
+        if (!$running) { exit 0 }
+        foreach ($p in $running) {
+            if (Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue) {
+                & taskkill /PID $p.ProcessId /T /F | Out-Null
+            }
+        }
+        Start-Sleep -Milliseconds 300
+    }
+    throw 'A smoke-test process survived cleanup'
+    """
+    subprocess.run(['powershell', '-NoProfile', '-Command', cleanup], check=True, timeout=60,
+                   env=dict(os.environ, VOXPLANE_SMOKE_ROOT=str(root)))
+
+
 def verify_upgrade(root, kind, old, new_package, settings, reports):
     folder = root / kind
     folder.mkdir()
@@ -149,10 +223,10 @@ def verify_upgrade(root, kind, old, new_package, settings, reports):
         else:
             run_installer(root / old.name, '/SP-', '/NOCLOSEAPPLICATIONS', f'/DIR={folder}')
 
-        workspace = folder / '升级 test.voxworkspace'
-        workspace_data = json.dumps({'format': 'VoxenraWorkspace', 'version': 2, 'applicationVersion': old.version,
-                                     'series': [], 'tabs': [], 'search': 'previous release'}).encode()
-        workspace.write_bytes(workspace_data)
+        fixture = folder / '升级 workspace'
+        shutil.copytree(FIXTURES / 'v2.5.0', fixture)
+        workspace = fixture / 'workspace.voxworkspace'
+        workspace_data = workspace.read_bytes()
         health = root / kind / 'old-startup' / 'health.json'
         health.parent.mkdir()
         token = uuid.uuid4().hex
@@ -215,29 +289,22 @@ def verify_upgrade(root, kind, old, new_package, settings, reports):
         for path in settings:
             prefs = json.loads(path.read_text(encoding='utf-8'))
             assert prefs['appearance']['theme'] == 'graphite' and prefs['updates']['enabled'] is False
-        print(f'{kind} {old.version} → {__version__}: both versions acknowledged startup, '
-              'workspace and preferences preserved', flush=True)
+        runtime_reports = reports / kind
+        runtime_reports.mkdir(parents=True, exist_ok=True)
+        # The update helper intentionally leaves the candidate running. Stop only
+        # this isolated installation before another runtime reads its settings.
+        stop_scoped_applications(folder)
+        check_restored_workspace(folder / 'VoxPlane.exe', fixture, runtime_reports)
+        assert workspace.read_bytes() == workspace_data, 'Restoring rewrote the original workspace'
+        print(f'{kind} {old.version} → {__version__}: startup, settings and actual workspace '
+              'restoration verified; old-client update button NOT exercised', flush=True)
+        return {'status': 'passed', 'baseline': old.version, 'candidate': __version__,
+                'installation': 'manual_brand_migration' if legacy else 'current_helper',
+                'workspace_runtime': 'passed', 'settings': 'passed',
+                'old_client_update_button': 'not_exercised'}
     finally:
         # The helper deliberately leaves the new app (or restored old app) running.
-        cleanup = """
-        $prefix = $env:VOXPLANE_SMOKE_ROOT + [IO.Path]::DirectorySeparatorChar
-        $ErrorActionPreference = 'Stop'
-        for ($i = 0; $i -lt 5; $i++) {
-            $running = Get-CimInstance Win32_Process | Where-Object {
-                $_.ExecutablePath -and $_.ExecutablePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)
-            }
-            if (!$running) { exit 0 }
-            foreach ($p in $running) {
-                if (Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue) {
-                    & taskkill /PID $p.ProcessId /T /F | Out-Null
-                }
-            }
-            Start-Sleep -Milliseconds 300
-        }
-        throw 'A smoke-test process survived cleanup'
-        """
-        subprocess.run(['powershell', '-NoProfile', '-Command', cleanup], check=True, timeout=60,
-                       env=dict(os.environ, VOXPLANE_SMOKE_ROOT=str(root)))
+        stop_scoped_applications(root)
         setup_log = stage / 'setup.log'
         if setup_log.exists():
             shutil.copyfile(setup_log, reports / 'upgrade-setup.log')
@@ -246,37 +313,45 @@ def verify_upgrade(root, kind, old, new_package, settings, reports):
             run_installer(uninstall)
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--baseline', type=Path, default=FIXTURES / 'windows-baseline-v2.5.0.json')
+    args = parser.parse_args(argv)
     require_clean_runner()
-    metadata = json.loads(subprocess.check_output(['gh', 'api', f'repos/{REPOSITORY}/releases/latest']))
-    if version_tuple(metadata['tag_name']) >= version_tuple(__version__):
-        print(f"Skipping package upgrade: latest stable is {metadata['tag_name']}, build is {__version__}.")
-        return
-    packages = {'windows_portable': Path('dist/VoxPlane.exe'),
-                'windows_installer': Path(f'dist/installers/VoxPlane-{__version__}-windows-x64-setup.exe')}
     reports = Path('build/test-results/installer').resolve()
     reports.mkdir(parents=True, exist_ok=True)
-    with temporary_upgrade_directory(os.environ['RUNNER_TEMP']) as root:
-        releases = {}
-        for kind in packages:
-            old = previous_release(metadata, kind)
-            if old is None or not old.digest:
-                raise ValueError('Previous stable release lacks a GitHub SHA-256 digest')
-            subprocess.run(['gh', 'release', 'download', metadata['tag_name'], '--repo', REPOSITORY,
-                            '--pattern', old.name, '--dir', root], check=True, timeout=240)
-            download = root / old.name
-            if download.stat().st_size != old.size or sha256(download) != old.digest:
-                raise ValueError(f'Previous package does not match published size and SHA-256: {old.name}')
-            releases[kind] = old
-        os.environ.pop('GH_TOKEN', None)
-        # The one-file bootloader may leave extracted files when its process tree is stopped.
-        # Place bootloader and setup temporary files under the disposable smoke directory.
-        runtime_temp = root / 'runtime-temp'
-        runtime_temp.mkdir()
-        os.environ.update(TEMP=str(runtime_temp), TMP=str(runtime_temp))
-        for kind, new in packages.items():
-            with settings_sentinel() as settings:
-                verify_upgrade(root, kind, releases[kind], new, settings, reports)
+    result = {'status': 'failed', 'candidate': __version__, 'packages': {},
+              'old_client_update_button': 'not_exercised'}
+    try:
+        metadata, releases = load_baseline(args.baseline, __version__)
+        result.update(baseline=metadata['tag_name'], baseline_manifest_sha256=sha256(args.baseline))
+        packages = {'windows_portable': Path('dist/VoxPlane.exe'),
+                    'windows_installer': Path(f'dist/installers/VoxPlane-{__version__}-windows-x64-setup.exe')}
+        for package in packages.values():
+            if not package.is_file():
+                raise FileNotFoundError(package)
+        with temporary_upgrade_directory(os.environ['RUNNER_TEMP']) as root:
+            for old in releases.values():
+                subprocess.run(['gh', 'release', 'download', metadata['tag_name'], '--repo', REPOSITORY,
+                                '--pattern', old.name, '--dir', root], check=True, timeout=240)
+                download = root / old.name
+                if download.stat().st_size != old.size or sha256(download) != old.digest:
+                    raise ValueError(f'Previous package does not match pinned size and SHA-256: {old.name}')
+            os.environ.pop('GH_TOKEN', None)
+            # Keep one-file bootloader/setup temporary files in the disposable smoke directory.
+            runtime_temp = root / 'runtime-temp'
+            runtime_temp.mkdir()
+            os.environ.update(TEMP=str(runtime_temp), TMP=str(runtime_temp))
+            for kind, new in packages.items():
+                result['packages'][kind] = {'status': 'failed'}
+                with settings_sentinel() as settings:
+                    result['packages'][kind] = verify_upgrade(root, kind, releases[kind], new, settings, reports)
+        result['status'] = 'passed'
+    except Exception as error:
+        result['error'] = str(error)
+        raise
+    finally:
+        (reports / 'package-upgrade.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
 
 
 if __name__ == '__main__':

@@ -161,6 +161,14 @@ class ShortcutController(QObject):
                 return False
             view.setZoom(int(action.removeprefix('zoom-')))
             return True
+        if menu == 'rotate':
+            view = tab.activeViewport
+            if (view is None or not hasattr(view, 'applyTransformAction')
+                    or getattr(view, 'editBusy', False)
+                    or getattr(view, 'loadState', '') != 'ready'):
+                return False
+            view.applyTransformAction(action)
+            return True
         if menu == 'measure':
             view = tab.activeViewport
             if not getattr(view, 'hasPhysicalSpacing', False) or getattr(view, 'viewportRole', '') == 'curved':

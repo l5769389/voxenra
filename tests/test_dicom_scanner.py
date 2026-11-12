@@ -34,11 +34,8 @@ def create_path(tmp_path: Path) -> None:
 
 def test_iter_visible_files_skips_hidden_entries_and_recurses(tmp_path: Path) -> None:
     create_path(tmp_path)
-
-
-def test_iter_visible_files(tmp_path:Path) -> None:
-    create_path(tmp_path)
-    _iter_visible_files(tmp_path)
+    paths = [path.relative_to(tmp_path).as_posix() for path in _iter_visible_files(tmp_path)]
+    assert paths == ['a.txt', 'b.txt', 'visible/nested.txt']
 
 
 def test_read_instance_extracts_typed_identity_and_geometry(tmp_path: Path) -> None:

@@ -49,7 +49,9 @@
     ],
     "example": "pet-voxplane-2.6.0.png",
     "caption": "独立 PET MPR 与强度、单位设置。",
-    "icon": "pet-window"
+    "icon": "pet-window",
+    "prerequisites": "导入受支持的 PET；定量前检查实际可用的单位。",
+    "outcome": "理解显示范围与定量阈值，正确读取 ROI/VOI 统计。"
   },
   {
     "id": "fusion",
@@ -85,7 +87,9 @@
     ],
     "example": "fusion-voxplane-2.6.0.png",
     "caption": "CT、PET、FUSION 与 PET MIP。",
-    "icon": "fusion"
+    "icon": "fusion",
+    "prerequisites": "导入要配对的 CT 与 PET，核对患者与检查。",
+    "outcome": "建立融合视图并检查解剖位置是否对齐。"
   },
   {
     "id": "registration",
@@ -114,6 +118,8 @@
     ],
     "example": "registration-voxplane-2.6.0.png",
     "caption": "固定 CT，调整 PET 移动层。",
-    "icon": "registration"
+    "icon": "registration",
+    "prerequisites": "先打开 CT/PET 融合，确定需要调整的 PET。",
+    "outcome": "平移或旋转 PET，在三方向核对并保存变换。"
   }
 ]

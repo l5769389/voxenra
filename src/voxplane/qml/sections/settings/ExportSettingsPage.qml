@@ -12,8 +12,8 @@ ColumnLayout {
         sectionKey: "export-directory"
         settingsController: page.settingsController
         Layout.fillWidth: true
-        title: qsTrId("text.0653")
-        description: qsTrId("text.0846")
+        title: qsTrId("settings.sharedExportDirectory")
+        description: qsTrId("export.directoryHint")
         RowLayout {
             Layout.fillWidth: true
             Components.AppTextField {
@@ -42,43 +42,11 @@ ColumnLayout {
         }
     }
     SettingsSection {
-        sectionKey: "export-qa-report"
+        sectionKey: "export-screenshot"
         settingsController: page.settingsController
         Layout.fillWidth: true
-        title: qsTrId("qa.reportSettings")
-        description: qsTrId("qa.reportNameHint")
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("qa.reportSoftwareName")
-            color: Theme.textSecondary
-            font.pixelSize: 12
-        }
-        Components.AppTextField {
-            objectName: "reportSoftwareName"
-            Layout.fillWidth: true
-            maximumLength: 80
-            placeholderText: qsTrId("qa.reportNameEmpty")
-            Accessible.name: qsTrId("qa.reportSoftwareName")
-            text: page.settingsController.values.export.reportSoftwareName
-            selectByMouse: true
-            onEditingFinished: {
-                page.settingsController.setValue("export", "reportSoftwareName", text)
-                text = Qt.binding(function() { return page.settingsController.values.export.reportSoftwareName })
-            }
-        }
-    }
-    SettingsSection {
-        sectionKey: "export-formats"
-        settingsController: page.settingsController
-        Layout.fillWidth: true
-        title: qsTrId("text.0849")
-        description: qsTrId("text.0850")
-        Text {
-            Layout.fillWidth: true
-            text: qsTrId("text.0851")
-            color: Theme.textMuted
-            wrapMode: Text.Wrap
-            font.pixelSize: 12
-        }
+        title: qsTrId("screenshot.settingsTitle")
+        description: qsTrId("preset.defaultsHint")
+        ScreenshotSettingsPage { Layout.fillWidth: true; settingsController: page.settingsController }
     }
 }

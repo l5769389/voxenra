@@ -65,6 +65,21 @@ Canvas {
             ellipse(625, 92, 61, 61, Theme.diagramAccent)
             ellipse(625, 92, 33, 33, Theme.diagramPrimary)
             label(qsTrId("text.0939"), 540, 206)
+        } else if (chapter === "point-mtf") {
+            c.strokeStyle = Theme.diagramMuted
+            c.strokeRect(46, 30, 225, 160)
+            c.fillStyle = Theme.diagramBand; c.fillRect(68, 45, 180, 130)
+            c.fillStyle = Theme.diagramBackground; c.fillRect(98, 67, 120, 86)
+            c.fillStyle = Theme.diagramFill; c.fillRect(92, 63, 132, 94)
+            c.strokeStyle = Theme.diagramPrimary; c.strokeRect(92, 63, 132, 94)
+            c.fillStyle = Theme.diagramVolume; c.fillRect(114, 79, 88, 62)
+            line(150, 110, 166, 110, Theme.diagramText)
+            line(158, 102, 158, 118, Theme.diagramText)
+            label(qsTrId("manual.point-mtf.diagram0"), 320, 40)
+            label(qsTrId("manual.point-mtf.diagram1"), 320, 76, Theme.diagramPrimary)
+            label(qsTrId("manual.point-mtf.diagram2"), 320, 112)
+            label(qsTrId("manual.point-mtf.diagram3"), 320, 148)
+            label(qsTrId("manual.point-mtf.diagram4"), 320, 184)
         } else if (chapter === "quantification") {
             label(qsTrId("text.0940"), 38, 28)
             for (let i=0; i<12; ++i) {

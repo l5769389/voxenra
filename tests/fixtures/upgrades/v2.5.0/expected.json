@@ -1,0 +1,71 @@
+{
+  "series_count": 1,
+  "sources": [
+    {
+      "path": "images/1.dcm",
+      "sha256": "003e957060b8bce1c20be883a61696da55f8d3802f8ae31b63272103ed8b0710"
+    },
+    {
+      "path": "images/2.dcm",
+      "sha256": "b40c27995eaeb715eeaccec628f23b98771e9d63b51f9f6a93a45dbc66b409bb"
+    },
+    {
+      "path": "images/3.dcm",
+      "sha256": "31bf0df4ae8002c16103a3b827ccc89dcdf9d6e0a5a5e7998adb868d8dca8437"
+    }
+  ],
+  "tabs": [
+    {
+      "type": "2d",
+      "ready": true,
+      "view": {
+        "zoom": 1.5,
+        "pan_x": 4.25,
+        "rotation_degrees": 90
+      },
+      "measurements": [
+        {
+          "length_mm": 10
+        }
+      ],
+      "qa": {
+        "water_ct_hu": 7,
+        "noise_hu": 0,
+        "roi_count": 5,
+        "roi_diameter_mm": 10,
+        "edge_clearance_mm": 5
+      },
+      "center_hu": 7,
+      "image_shape": [
+        128,
+        128
+      ]
+    },
+    {
+      "type": "cpr",
+      "ready": true,
+      "paths": 1,
+      "points": [
+        [
+          40,
+          64,
+          2
+        ],
+        [
+          50,
+          64,
+          2
+        ],
+        [
+          60,
+          64,
+          2
+        ]
+      ],
+      "step_mm": 2,
+      "total_length_mm": 20,
+      "source_mismatch": false,
+      "curve_center_hu": 7
+    }
+  ]
+}

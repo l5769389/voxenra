@@ -1,0 +1,33 @@
+{
+  "tag_name": "v2.5.0",
+  "draft": false,
+  "prerelease": false,
+  "source_commit": "94672e137e9087943b30f5f3084d407bae96923a",
+  "evidence": "docs/validation/release-2.5.0.md",
+  "assets": [
+    {
+      "name": "Voxenra-2.5.0-windows-x64-setup.exe",
+      "state": "uploaded",
+      "size": 128708695,
+      "digest": "sha256:f94f753c896c5065303c6b05669d4278dfe49fb7150c42afbc210aff0451bc91",
+      "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-setup.exe"
+    },
+    {
+      "name": "Voxenra-2.5.0-windows-x64-setup.exe.sha256",
+      "state": "uploaded",
+      "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-setup.exe.sha256"
+    },
+    {
+      "name": "Voxenra-2.5.0-windows-x64-portable.exe",
+      "state": "uploaded",
+      "size": 195470472,
+      "digest": "sha256:68aff3fc6fe64e2cf87c88568296a0f11eb1efc7b9a8e9b212d4f27d3e3af524",
+      "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-portable.exe"
+    },
+    {
+      "name": "Voxenra-2.5.0-windows-x64-portable.exe.sha256",
+      "state": "uploaded",
+      "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.5.0/Voxenra-2.5.0-windows-x64-portable.exe.sha256"
+    }
+  ]
+}

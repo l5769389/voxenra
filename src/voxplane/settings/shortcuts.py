@@ -22,6 +22,8 @@ BINDINGS = {
     'measure:rect': ('measure', 'R', 'text.0323'), 'measure:ellipse': ('measure', 'E', 'text.0324'),
     'measure:curve': ('measure', 'V', 'measurement.curve'), 'measure:freehand': ('measure', 'F', 'measurement.freehand'),
     'annotate:arrow': ('annotate', 'A', 'text.0377'), 'annotate:text': ('annotate', 'T', 'text.0378'),
+    'rotate:mirror-h': ('rotate', 'H', 'text.0317'), 'rotate:mirror-v': ('rotate', 'V', 'text.0318'),
+    'rotate:ccw90': ('rotate', 'J', 'text.0320'), 'rotate:cw90': ('rotate', 'K', 'text.0319'),
     'paint': ('segmentation', 'B', 'seg.paint'), 'erase': ('segmentation', 'E', 'seg.erase'),
     'cpr-new': ('cpr-path', 'N', 'cpr.new'), 'cpr-edit': ('cpr-path', 'R', 'cpr.edit'),
     'cpr-start': ('cpr-path', 'S', 'cpr.markStart'), 'cpr-end': ('cpr-path', 'E', 'cpr.markEnd'),
@@ -39,7 +41,7 @@ DEFAULT_BINDINGS = {action: sequence for action, (_, sequence, _) in BINDINGS.it
 ACTION_LABELS = {action: label for action, (_, _, label) in BINDINGS.items()}
 MENU_LABELS = {'': 'input.generalReading', 'view-tools': 'input.viewToolMenus', 'scroll': 'text.0287',
                'preset-lists': 'input.presetLists', 'zoom': 'input.action.zoom',
-               'measure': 'text.0292', 'annotate': 'text.0307', 'segmentation': 'seg.manage', 'cpr-path': 'cpr.title'}
+               'rotate': 'text.0294', 'measure': 'text.0292', 'annotate': 'text.0307', 'segmentation': 'seg.manage', 'cpr-path': 'cpr.title'}
 RETIRED_ACTIONS = {'cpr-guides', 'cpr-details', 'cpr-advanced', 'cpr-interval'}
 
 FIXED = {'reopenClosedTab': ('workspace.reopenClosed', 'Ctrl+Shift+T'), 'newWorkspace': ('workspace.new.action', 'Ctrl+N'), 'open': ('input.action.open', 'Ctrl+O'), 'save': ('input.action.save', 'Ctrl+S'),

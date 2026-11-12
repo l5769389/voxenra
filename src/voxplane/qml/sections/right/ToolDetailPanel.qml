@@ -14,6 +14,7 @@ Rectangle {
     property var tabController: null
     property var exportController: null
     property Item exportItem: null
+    property Item tabExportItem: null
     property Item paletteHeadingHost: null
     property real availableHeight: Infinity
     signal manualRequested(string chapter)
@@ -128,6 +129,8 @@ Rectangle {
             controller: detailPanel.tabController.cprController
             exportController: detailPanel.exportController
             exportItem: detailPanel.exportItem
+            tabExportItem: detailPanel.tabExportItem
+            settingsController: detailPanel.toolController?.settingsController ?? null
         }
     }
     Component {
@@ -135,6 +138,8 @@ Rectangle {
         Panels.ExportPanel {
             exportController: detailPanel.exportController
             exportItem: detailPanel.exportItem
+            tabExportItem: detailPanel.tabExportItem
+            settingsController: detailPanel.toolController?.settingsController ?? null
             onManualRequested: detailPanel.manualRequested("export")
         }
     }

@@ -28,3 +28,41 @@ def test_external_nifti_roundtrip_preserves_asymmetric_volume(tmp_path,axes,reve
     np.testing.assert_array_equal(actual,pixels)
     from voxplane.core.local_segmentation import same_grid
     assert same_grid(actual.shape,matrix,pixels.shape,affine)
+
+
+@pytest.mark.skipif(not PYTHON.is_file(), reason='Local exchange Python is not installed')
+def test_external_nifti_has_independent_ras_coordinates_and_asymmetric_markers(tmp_path):
+    """Read the one-way NIfTI with nibabel, never through our NRRD importer."""
+    pixels = np.zeros((5, 7, 9), np.float32)
+    pixels[2, 3, 4] = 123
+    pixels[0, 1, 8] = 47
+    pixels[4, 6, 0] = -19
+    # Input axes are (z,y,x), patient convention LPS.
+    affine = np.array([[0, 0, .9, -23], [0, -.7, 0, 14],
+                       [2.4, 0, 0, 51], [0, 0, 0, 1.]])
+    write_nrrd(tmp_path / 'source.nrrd', pixels, affine)
+    script = '''
+import importlib.util, pathlib, sys
+import nibabel as nib
+import numpy as np
+spec = importlib.util.spec_from_file_location('bridge', sys.argv[1])
+bridge = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bridge)
+root = pathlib.Path(sys.argv[2])
+bridge.to_nifti(root)
+image = nib.load(root / 'source.nii.gz')
+assert image.shape == (9, 7, 5)
+# NIfTI voxel axes are (x,y,z), world convention RAS. These literal
+# expectations come from the declared source geometry, not the bridge.
+np.testing.assert_allclose(image.affine,
+    [[-.9, 0, 0, 23], [0, .7, 0, -14], [0, 0, 2.4, 51], [0, 0, 0, 1]], atol=1e-6)
+data = image.get_fdata()
+assert data[4, 3, 2] == 123
+assert data[8, 1, 0] == 47
+assert data[0, 6, 4] == -19
+assert np.count_nonzero(data) == 3
+np.testing.assert_allclose((image.affine @ [4, 3, 2, 1])[:3], [19.4, -11.9, 55.8], atol=1e-6)
+'''
+    run = subprocess.run([str(PYTHON), '-c', script, str(BRIDGE), str(tmp_path)],
+                         capture_output=True, text=True, timeout=60)
+    assert run.returncode == 0, run.stdout + run.stderr

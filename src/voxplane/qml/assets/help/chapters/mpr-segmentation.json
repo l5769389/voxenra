@@ -73,12 +73,15 @@
     "figure": "segmentation",
     "summary": "在 MPR 中创建、精修与交换分割，保留独立掩膜和重叠区域。",
     "related": [
+      "ai-setup",
       "quantification",
       "management"
     ],
     "caption": "合成模体流程演示：失败保留选择供重试，成功导入后关闭弹窗并显示结果；不代表模型精度或耗时。",
     "icon": "segmentation",
-    "example": "ai-workflow-voxplane-2.6.0.gif"
+    "example": "ai-workflow-voxplane-2.6.0.gif",
+    "prerequisites": "打开支持的 MPR/4D；确认源影像和当前时相。",
+    "outcome": "创建并检查分割，精修后保存或交换结果。"
   },
   {
     "id": "voi",
@@ -99,6 +102,16 @@
         "title": "翻页后轮廓变小",
         "body": "显示的是三维范围与当前切面的交集；远离中心会变小，超出范围会消失。回原切面继续编辑。**VOI 不使用分割阈值，PET MIP 不支持绘制。**",
         "messageId": "manual.voi.section2"
+      },
+      {
+        "messageId": "manual.voi.results",
+        "title": "3. 查看统计",
+        "body": "松开绘制或编辑后，等待范围统计完成。在结果中查看 **VOL**（体积，cm³）、**N**（有效体素数）、**MEAN / SD**（均值/标准差）及 **MIN / MAX**。强度单位按影像实际提供的 HU、SUV 或源单位显示。\n\nVOI 统计整个三维范围内的有效体素，不使用分割阈值。无有效体素时 N/VOL 为 0，其余为「—」，应检查位置与深度。"
+      },
+      {
+        "messageId": "manual.voi.save",
+        "title": "4. 保存与导出",
+        "body": "保存工作区可继续调整 VOI，并保留原始影像。需要分享数值时，打开 **导出 → 测量 CSV / 测量 PDF**，确认当前页签或全部页签范围，等待统计后保存。报告与可继续编辑的工作区用途不同。"
       }
     ],
     "figure": "voi",
@@ -109,10 +122,14 @@
     "summary": "在 MPR 中绘制球体或椭球，统计范围内全部有效体素。",
     "related": [
       "quantification",
-      "management"
+      "management",
+      "measurement-report",
+      "workspace"
     ],
     "caption": "CT / PET MPR 的范围绘制与统计。",
-    "icon": "voi"
+    "icon": "voi",
+    "prerequisites": "在支持 VOI 的 MPR/4D 切面中定位目标。",
+    "outcome": "绘制三维范围，读取体积和强度统计，并保存或导出。"
   },
   {
     "id": "interaction",
@@ -172,6 +189,60 @@
         "mac": "⌫"
       }
     ],
-    "icon": "pan"
+    "icon": "pan",
+    "prerequisites": "先绘制或选中一个分割范围或 VOI。",
+    "outcome": "根据光标区分移动、缩放和切面操作。"
+  },
+  {
+    "id": "ai-setup",
+    "category": "mpr-segmentation",
+    "title": "准备并运行本地自动分割",
+    "summary": "准备独立环境与模型，运行一次 CT 分割并核对结果。",
+    "icon": "segmentation",
+    "sections": [
+      {
+        "title": "1. 尚未安装环境",
+        "body": "打开本页下方的 TotalSegmentator 官方安装说明，使用独立虚拟环境或 Conda 环境，按平台安装 Python 和 PyTorch，再在该环境安装 TotalSegmentator。不要把它装进 VoxPlane 应用包。\n\n项目已实测组合为 TotalSegmentator 2.18.0、macOS / MPS。官方最新版本不等于本应用已验证版本；Windows 环境发现有自动测试，但未完成实机分割验收。不熟悉环境安装时，可请管理员按官方说明准备后再继续。",
+        "messageId": "manual.ai-setup.section0"
+      },
+      {
+        "title": "2. 准备 CT 快速模型",
+        "body": "按官方权重下载说明准备 CT 快速模型，确认模型根目录中存在 **Dataset297_TotalSegmentator_total_3mm_1559subj**。保留完整模型文件及配置，不能只复制目录名称。\n\nVoxPlane 的检测和分割流程不会替你安装依赖或下载模型；离线机器可按官方说明从联网机器复制准备好的模型。",
+        "messageId": "manual.ai-setup.section1"
+      },
+      {
+        "title": "3. 检测并选择环境",
+        "body": "打开 **设置 → AI → 本地自动分割 → 检测环境**。已有可发现环境可直接继续；未找到时展开 **高级配置**，选择该环境的 Python 解释器和模型目录。\n\nWindows 虚拟环境通常选择 Scripts/python.exe，Conda 环境通常选择根目录 python.exe；macOS 选择 bin/python。重新检测，确认依赖、模型和设备都通过；保存的设备不可用时需要主动改选。",
+        "messageId": "manual.ai-setup.section2"
+      },
+      {
+        "title": "4. 运行一次分割",
+        "body": "在 CT **MPR / 4D → 分割** 顶部点击 **自动分割**，核对序列及时相，选择器官并开始。输入为当前时相完整原始 HU 体数据，不是屏幕上裁剪或调窗后的画面。",
+        "messageId": "manual.ai-setup.section3"
+      },
+      {
+        "title": "5. 核对结果并保存",
+        "body": "成功后在分割列表核对器官、颜色和显隐，逐层检查位置和范围，必要时用画笔/橡皮精修。保存工作区或导出 SEG/NRRD。检测通过不保证结果正确；已有分割不会被重复运行自动覆盖。",
+        "messageId": "manual.ai-setup.section4"
+      },
+      {
+        "title": "失败或完成后没看到结果",
+        "body": "失败时保留部位选择，查看 **详情** 中的具体错误。检查环境、模型、设备与内存，处理后重试；GPU 失败不会自动切 CPU。\n\n切换过页签或时相时，返回运行目标并结束当前编辑，等待导入。取消不会导入半成品。恢复已保存工作区不需要重新运行 AI。",
+        "messageId": "manual.ai-setup.section5"
+      }
+    ],
+    "related": [
+      "segmentation",
+      "faq",
+      "export"
+    ],
+    "prerequisites": "需要可用的 Python/TotalSegmentator 环境、CT 快速模型和支持重建的原始 HU CT。首次准备需要网络下载依赖和模型。",
+    "outcome": "准备独立环境与模型，运行一次 CT 分割并核对结果。",
+    "references": [
+      {
+        "title": "TotalSegmentator · Installation / Model weights",
+        "url": "https://github.com/wasserth/TotalSegmentator#installation"
+      }
+    ]
   }
 ]

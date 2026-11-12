@@ -73,7 +73,8 @@ class VolumeViewportController(ViewportController):
         self._crop_mode = "inside"
         self._tools.activeInteractionChanged.connect(self._tool_changed)
 
-    def snapshot_image(self):
+    def snapshot_image(self, *, directions=True):
+        """Capture the native frame; optional marker suppression never changes reading state."""
         from PySide6.QtGui import QImage
         from vtkmodules.vtkRenderingCore import vtkWindowToImageFilter
         from vtkmodules.util.numpy_support import vtk_to_numpy
@@ -81,21 +82,32 @@ class VolumeViewportController(ViewportController):
         if (self._host is None or self._load_state != "ready" or not self._host.frame_ready
                 or not self._host.surface_ready()):
             raise ValueError(_msg('text.0551'))
-        window = self._host.backend.window
-        self._host.backend.render(self.state, False, self.display_state, self.visible_mask)
-        capture = vtkWindowToImageFilter()
-        capture.SetInput(window)
-        capture.SetInputBufferTypeToRGB()
-        capture.ReadFrontBufferOff()
-        capture.Update()
-        data = capture.GetOutput()
-        width, height, _ = data.GetDimensions()
-        scalars = data.GetPointData().GetScalars()
-        if width <= 0 or height <= 0 or scalars is None:
-            raise ValueError(_msg('text.0552'))
-        pixels = vtk_to_numpy(scalars).reshape(height, width, 3)
-        pixels = np.ascontiguousarray(pixels[::-1])
-        return QImage(pixels.data, width, height, pixels.strides[0], QImage.Format_RGB888).copy()
+        backend = self._host.backend
+        window = backend.window
+        marker_enabled = bool(backend.marker.GetEnabled())
+        suppress_marker = not directions and marker_enabled
+        try:
+            if suppress_marker:
+                backend.marker.SetEnabled(False)
+            backend.render(self.state, False, self.display_state, self.visible_mask)
+            capture = vtkWindowToImageFilter()
+            capture.SetInput(window)
+            capture.SetInputBufferTypeToRGB()
+            capture.ReadFrontBufferOff()
+            capture.Update()
+            data = capture.GetOutput()
+            width, height, _ = data.GetDimensions()
+            scalars = data.GetPointData().GetScalars()
+            if width <= 0 or height <= 0 or scalars is None:
+                raise ValueError(_msg('text.0552'))
+            pixels = vtk_to_numpy(scalars).reshape(height, width, 3)
+            pixels = np.ascontiguousarray(pixels[::-1])
+            return QImage(pixels.data, width, height, pixels.strides[0], QImage.Format_RGB888).copy()
+        finally:
+            if suppress_marker:
+                backend.marker.SetEnabled(marker_enabled)
+                backend.marker.InteractiveOff()
+                backend.render(self.state, False, self.display_state, self.visible_mask)
 
     @Property(QObject, notify=nativeWindowChanged)
     def nativeWindow(self):

@@ -16,6 +16,61 @@ def label(button):
     return next(i for i in descendants(button) if i.objectName() == 'toolActionLabel').property('text')
 
 
+def test_rotation_keys_follow_menu_remap_and_reset(sidebar_scene):
+    window, app, tab = reading_scene(sidebar_scene)
+    view = tab.activeViewport
+    app.settingsController.setValue('appearance', 'toolLabels', True)
+    app.settingsController.setValue('layout', 'rightPanelWidth', 420)
+    click(window, find(window, 'primaryTool-rotate'))
+    for action, key in [('mirror-h', 'H'), ('mirror-v', 'V'), ('cw90', 'K'), ('ccw90', 'J')]:
+        assert label(find(window, 'rotateAction-rotate:' + action)).endswith('(' + key + ')')
+    QTest.keyClick(window, Qt.Key_K)
+    assert view.rotationDegrees == 90
+    QTest.keyClick(window, Qt.Key_J)
+    assert view.rotationDegrees == 0
+    QTest.keyClick(window, Qt.Key_H)
+    QTest.keyClick(window, Qt.Key_V)
+    assert view.viewport_state.horizontal_flip and view.viewport_state.vertical_flip
+    QTest.keyClick(window, Qt.Key_R)
+    assert not view.viewport_state.horizontal_flip and not view.viewport_state.vertical_flip
+    assert app.shortcutController.assign('rotate:cw90', 'F7')
+    assert not app.shortcutController.assign('rotate:cw90', 'R')
+    QTest.keyClick(window, Qt.Key_K)
+    assert view.rotationDegrees == 0
+    QTest.keyClick(window, Qt.Key_F7)
+    assert view.rotationDegrees == 90
+    search = find(window, 'sidebarPatientSearch')
+    click(window, search)
+    QTest.keyClick(window, Qt.Key_H)
+    assert search.property('text').lower() == 'h'
+    assert not view.viewport_state.horizontal_flip
+    search.setProperty('text', '')
+    visible_viewport(window).forceActiveFocus()
+    app.feedbackController.show()
+    wait_until(lambda: window.property('shortcutPopupOpen'))
+    QTest.keyClick(window, Qt.Key_F7)
+    QTest.keyClick(window, Qt.Key_H)
+    assert view.rotationDegrees == 90 and not view.viewport_state.horizontal_flip
+    QTest.keyClick(window, Qt.Key_Escape)
+    wait_until(lambda: not window.property('shortcutPopupOpen'))
+    click(window, find(window, 'primaryTool-window'))
+    field = find(window, 'windowWidthInput')
+    field.forceActiveFocus()
+    QTest.keyClick(window, Qt.Key_F7)
+    assert view.rotationDegrees == 90
+    assert not app.shortcutController.activate('rotate:cw90', tab.toolController, tab, 'window')
+    click(window, find(window, 'toggleRightPanel'))
+    click(window, find(window, 'compactTool-rotate'))
+    child = find(window, 'compactAction-rotate:cw90')
+    assert child.parentItem().property('tooltipText').endswith('(F7)')
+    QTest.keyClick(window, Qt.Key_F7)
+    assert view.rotationDegrees == 180
+    click(window, find(window, 'compactTool-rotate'))
+    QTest.keyClick(window, Qt.Key_F7)
+    assert view.rotationDegrees == 180
+    assert not sidebar_scene[3], sidebar_scene[3]
+
+
 def test_view_reset_follows_the_visible_tool_and_shared_remap(sidebar_scene, tmp_path):
     window, app, tab = reading_scene(sidebar_scene)
     vp = tab.activeViewport

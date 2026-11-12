@@ -72,6 +72,11 @@ class SettingsController(QObject):
         from .toolbar_settings_controller import ToolbarSettingsController
         return ToolbarSettingsController(self, owner)
 
+    @Slot(QObject, str, result=QObject)
+    def createPresetPreview(self, owner, kind):
+        from .preset_preview_controller import PresetPreviewController
+        return PresetPreviewController(self, kind, owner)
+
     @Property('QStringList', notify=changed)
     def navigationViewOrder(self):
         from voxplane.settings.toolbar import navigation_order
@@ -270,7 +275,7 @@ class SettingsController(QObject):
                          if key != "window" or not self._window_file_valid}
                 if self._window_file_valid and candidate["window"]["favorites"]:
                     saved["window"] = {"favorites": candidate["window"]["favorites"]}
-                payload = json.dumps({"schemaVersion": 3, **saved}, ensure_ascii=False, indent=2).encode("utf-8")
+                payload = json.dumps({"schemaVersion": 4, **saved}, ensure_ascii=False, indent=2).encode("utf-8")
                 if not target.open(QIODevice.WriteOnly) or target.write(payload) != len(payload) or not target.commit():
                     raise OSError("Cannot save settings")
             except OSError:
@@ -299,9 +304,56 @@ class SettingsController(QObject):
             return True
         candidate = deepcopy(self._data)
         candidate[section][key] = value
+        if section == 'export' and key == 'reportSoftwareName':
+            candidate['report']['softwareName'] = value
+        elif section == 'report' and key == 'softwareName':
+            candidate['export']['reportSoftwareName'] = value
         if unlink:
             candidate[section]["annotationFollowsCompleted"] = False
         return self._commit(section, candidate)
+
+    @Slot(str, "QVariant", result=bool)
+    def setExportOptions(self, kind, options):
+        from voxplane.settings.export_presets import validate_options
+        try:
+            validated = validate_options(kind, options)
+        except (TypeError, ValueError) as exc:
+            return self._error(_msg(str(exc) if str(exc).startswith('preset.') else 'preset.invalidOptions'))
+        candidate = deepcopy(self._data)
+        candidate[kind] = validated
+        if kind == 'report':
+            candidate['export']['reportSoftwareName'] = validated['softwareName']
+        return self._commit(kind, candidate)
+
+    @Slot(str, str, "QVariant", result=bool)
+    def saveExportPreset(self, kind, name, options):
+        from voxplane.settings.export_presets import validate_entries, validate_options, validate_name
+        try:
+            normalized = validate_options(kind, options)
+            entries = self.section('exportPresets')[kind]
+            entries.append(dict(id=uuid.uuid4().hex, name=validate_name(name), options=normalized))
+            entries = validate_entries(kind, entries)
+        except (TypeError, ValueError, KeyError) as exc:
+            return self._error(_msg(str(exc) if str(exc).startswith('preset.') else 'preset.invalidOptions'))
+        candidate = deepcopy(self._data)
+        candidate['exportPresets'][kind] = entries
+        return self._commit('exportPresets', candidate)
+
+    @Slot(str, str, result=bool)
+    def applyExportPreset(self, kind, identifier):
+        entry = next((p for p in self._data['exportPresets'].get(kind, []) if p['id']==identifier), None)
+        if entry is None:
+            return self._error(_msg('preset.notFound'))
+        return self.setExportOptions(kind, entry['options'])
+
+    @Slot(str, str, result=bool)
+    def deleteExportPreset(self, kind, identifier):
+        entries = self._data['exportPresets'].get(kind, [])
+        if not any(p['id']==identifier for p in entries):
+            return self._error(_msg('preset.notFound'))
+        candidate = deepcopy(self._data)
+        candidate['exportPresets'][kind] = [p for p in entries if p['id'] != identifier]
+        return self._commit('exportPresets', candidate)
 
     @Slot(str, result=bool)
     def resetSection(self, section):
@@ -320,6 +372,11 @@ class SettingsController(QObject):
             return self._error(_msg('text.0524'))
         candidate = deepcopy(self._data)
         candidate[section] = deepcopy(DEFAULTS[section])
+        if section == 'export':
+            for kind in ('screenshot', 'report'):
+                candidate[kind] = deepcopy(DEFAULTS[kind])
+        elif section == 'report':
+            candidate['export']['reportSoftwareName'] = ''
         return self._commit(section, candidate)
 
     @Slot(str, str, float, float, result=bool)

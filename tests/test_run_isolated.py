@@ -185,3 +185,37 @@ def test_workers_must_be_positive(monkeypatch, tmp_path, workers):
         run_isolated.main()
     assert error.value.code == 2
     assert not output.exists()
+
+@pytest.mark.parametrize('report', [None, '<testsuites/>', '<testsuites><testsuite tests="0" failures="0" errors="0" skipped="0"/></testsuites>', '<testsuites><testsuite tests="1" failures="1" errors="0" skipped="0"/></testsuites>'])
+def test_success_exit_without_successful_test_evidence_fails(monkeypatch, tmp_path, report):
+    _, output = configure(monkeypatch, tmp_path, ['test_empty.py'])
+    def run(command, **kwargs):
+        if report is not None:
+            report_path(command).write_text(report)
+        return subprocess.CompletedProcess(command, 0, 'nominal success')
+    monkeypatch.setattr(run_isolated.subprocess, 'run', run)
+    assert run_isolated.main() == 1
+    summary = json.loads((output / 'results.json').read_text())
+    assert summary['files'][0]['exit_code'] != 0
+
+
+@pytest.mark.parametrize('required, skipped', [(False, 1), (True, 1), (True, 0)])
+def test_required_stage_rejects_skips_but_optional_stage_allows_them(
+    monkeypatch, tmp_path, required, skipped,
+):
+    options = ['--fail-on-skip'] if required else []
+    _, output = configure(monkeypatch, tmp_path, ['test_native.py'], *options)
+
+    def run(command, **kwargs):
+        report_path(command).write_text(
+            f'<testsuites><testsuite tests="2" failures="0" errors="0" skipped="{skipped}"/></testsuites>'
+        )
+        return subprocess.CompletedProcess(command, 0, 'child finished')
+
+    monkeypatch.setattr(run_isolated.subprocess, 'run', run)
+    assert run_isolated.main() == int(required and skipped > 0)
+    summary = json.loads((output / 'results.json').read_text())
+    assert summary['totals']['skipped'] == skipped
+    assert summary['files'][0]['exit_code'] == int(required and skipped > 0)
+    log = (output / '001-test_native.log').read_text()
+    assert ('Required stage skipped tests' in log) == (required and skipped > 0)

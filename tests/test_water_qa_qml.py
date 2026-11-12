@@ -488,11 +488,12 @@ def test_qa_report_button_captures_current_view_and_restores_flags(qa_workspace,
     viewport = _find(window, 'testViewport')
     target = tmp_path / 'qa-screenshot.pdf'
     snapshots = []
-    original = qa.export_to
-    def save(path, **kwargs):
-        snapshots.append(kwargs['frozen'])
-        return original(path, **kwargs)
-    monkeypatch.setattr(qa, 'export_to', save)
+    from voxplane.core import water_qa_report
+    original = water_qa_report.pdf_bytes
+    def render(**kwargs):
+        snapshots.append(kwargs)
+        return original(**kwargs)
+    monkeypatch.setattr(water_qa_report, 'pdf_bytes', render)
     def choose(*args):
         # The screenshot already exists when the modal file dialog opens.
         assert not viewport.property('anonymousExport')
@@ -505,7 +506,15 @@ def test_qa_report_button_captures_current_view_and_restores_flags(qa_workspace,
     QTest.qWait(30)
     button = _find(window, 'exportQaReport')
     _click(window, button)
+    from test_measurement_qml import _visual_children
+    preview_button = next(i for i in _visual_children(window.contentItem()) if i.objectName() == 'reportGeneratePreview' and i.isVisible())
+    _click(window, preview_button)
+    wait_until(lambda: qa.previewController.ready or qa.reportError)
+    frozen_bytes = qa.previewController._data
+    save_button = next(i for i in _visual_children(window.contentItem()) if i.objectName() == 'reportSavePdf' and i.isVisible())
+    _click(window, save_button)
     wait_until(lambda: target.exists() or qa.reportError)
+    assert target.read_bytes() == frozen_bytes
     assert target.exists(), qa.reportMessage
     assert not qa.reportBusy and not qa.reportError
     image = snapshots[0]['screenshot']
@@ -617,4 +626,53 @@ def test_qa_footer_stays_visible_when_scrolling_and_changes_with_service(qa_work
         assert _find(window, 'serviceEntry-'+service).property('checked')
         assert any(item.objectName() == 'qaBottomActions' and item.isVisible()
                    for item in _visual_children(window.rootObject())) == (service == 'qa')
+    assert not warnings, warnings
+
+
+def test_mixed_diameter_display_and_same_value_keyboard_apply(qa_workspace, qt_app):
+    from PySide6.QtCore import QMetaObject
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    qa.setActiveDiameterMm(20)
+    wait_qa(qt_app, qa)
+    number = qa_control(window, 'waterQaSetting-roiDiameterMm')
+    field = number.property('contentItem')
+    roi = next(r for r in qa._result.rois if r.key == 'center')
+    sx = qa._frame.instance_meta.pixel_spacing[1]
+    qa.select_at(roi.column, roi.row)
+    qa.begin_drag(roi.column+roi.radius_mm/sx, roi.row)
+    qa.end_drag(roi.column+(roi.radius_mm-2)/sx, roi.row)
+    QTest.qWait(20)
+    assert qa.activeDiameterMixed
+    assert field.property('text') == '—'
+    field.forceActiveFocus()
+    QMetaObject.invokeMethod(field, 'selectAll')
+    QTest.keyClick(window, '2')
+    QTest.keyClick(window, '0')
+    QTest.keyClick(window, Qt.Key_Return)
+    wait_qa(qt_app, qa)
+    assert not qa.activeDiameterMixed
+    assert all(r.radius_mm == pytest.approx(10) for r in qa._result.rois if r.group == 'uniformity')
+    assert float(field.property('text')) == 20
+    assert not warnings, warnings
+
+
+def test_single_noise_diameter_field_updates_after_resize(qa_workspace, qt_app):
+    window, view, warnings = qa_workspace
+    qa = view.qaController
+    view._tool_controller.selectService('service:qa')
+    wait_qa(qt_app, qa)
+    qa.setActiveGroup('noise')
+    number = qa_control(window, 'waterQaSetting-roiDiameterMm')
+    field = number.property('contentItem')
+    roi = next(r for r in qa._result.rois if r.group == 'noise')
+    sx = qa._frame.instance_meta.pixel_spacing[1]
+    qa.select_at(roi.column, roi.row)
+    qa.begin_drag(roi.column+roi.radius_mm/sx, roi.row)
+    qa.end_drag(roi.column+(roi.radius_mm-4)/sx, roi.row)
+    QTest.qWait(20)
+    assert not qa.activeDiameterMixed
+    assert float(field.property('text')) == pytest.approx(2*(roi.radius_mm-4), abs=.05)
     assert not warnings, warnings

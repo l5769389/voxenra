@@ -51,8 +51,10 @@ Rectangle {
         {key: "workspace", title: qsTrId("text.0622"), subtitle: qsTrId("text.0813")},
         {key: "updates", title: qsTrId("updates.title"), subtitle: qsTrId("updates.enable")},
         {key: "sources", title: qsTrId("text.0815"), subtitle: qsTrId("text.0816"), group: qsTrId("text.0817")},
-        {key: "export", title: qsTrId("text.0315"), subtitle: qsTrId("text.0818"), group: qsTrId("text.0819")},
-        {key: "colormap", title: qsTrId("text.0309"), subtitle: qsTrId("text.0820"), group: qsTrId("text.0821")},
+        {key: "export", title: qsTrId("settings.screenshotExport"), subtitle: qsTrId("screenshot.settingsTitle"), group: qsTrId("text.0819")},
+        {key: "report", title: qsTrId("settings.reportExport"), subtitle: qsTrId("report.settingsTitle")},
+        {key: "initialDisplay", title: qsTrId("initialDisplay.title"), subtitle: qsTrId("initialDisplay.hint"), group: qsTrId("text.0821")},
+        {key: "colormap", title: qsTrId("text.0309"), subtitle: qsTrId("text.0820")},
         {key: "window", title: qsTrId("text.0822"), subtitle: qsTrId("text.0823")},
         {key: "crosshair", title: qsTrId("text.0824"), subtitle: qsTrId("text.0825")},
         {key: "corners", title: qsTrId("text.0826"), subtitle: qsTrId("text.0827")},
@@ -65,7 +67,7 @@ Rectangle {
     // Include the appearance/workspace entries when fitting the full navigation.
     readonly property bool compactNavigation: height < 720
     property real dragWidth: -1
-    readonly property real navigationLimit: Math.max(156, Math.min(300, width - 360 - 8))
+    readonly property real navigationLimit: Math.max(132, Math.min(300, width - 360 - 8))
     readonly property real navigationWidth: Math.min(navigationLimit,
         dragWidth >= 0 ? dragWidth : settingsController.values.layout.settingsNavigationWidth)
     property string revealCategoryKey: selectedCategory
@@ -112,7 +114,7 @@ Rectangle {
             color: Theme.panelBackground
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 12
+                anchors.margins: 8
                 spacing: page.compactNavigation ? 8 : 10
                 RowLayout {
                     Layout.fillWidth: true
@@ -159,12 +161,12 @@ Rectangle {
                         id: projectLink
                         objectName: "settingsProjectLink"
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 40
-                        Layout.preferredHeight: 40
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
                         iconName: "github"
-                        iconSize: 28
-                        padding: 6
-                        minimumButtonWidth: 40
+                        iconSize: 20
+                        padding: 4
+                        minimumButtonWidth: 28
                         textColor: Theme.textMuted
                         normalColor: "transparent"
                         Accessible.name: qsTrId("settings.projectPage")
@@ -270,7 +272,7 @@ Rectangle {
             Layout.preferredWidth: 8
             Layout.fillHeight: true
             currentWidth: page.navigationWidth
-            minimumWidth: 156
+            minimumWidth: 132
             maximumWidth: page.navigationLimit
             onWidthDragged: value => page.dragWidth = value
             onWidthCommitted: value => {

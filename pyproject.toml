@@ -1,6 +1,6 @@
 [project]
 name = "voxplane"
-version = "2.6.0"
+version = "2.7.0"
 description = "VoxPlane — DICOM viewing, MPR, PET/CT fusion and volume rendering."
 readme = "README.md"
 authors = [

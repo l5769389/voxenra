@@ -29,6 +29,7 @@ Rectangle {
     readonly property int tabStripHeight: 40
     readonly property bool imageWorkspace: ["2d", "compare2d", "comparempr", "mpr", "cpr", "4d", "petctfusion"].includes(workspaceController.activeTabType)
 
+    readonly property Item tabExportItem: workspaceLoader.item
     readonly property Item exportItem: workspaceLoader.item
         ? (workspaceLoader.item.activeExportItem !== undefined ? workspaceLoader.item.activeExportItem() : workspaceLoader.item) : null
 

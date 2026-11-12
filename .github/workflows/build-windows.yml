@@ -52,11 +52,27 @@ jobs:
 
     steps:
       # 固定 Action 提交，避免上游标签变化导致构建行为改变。
-      - name: Checkout source
+      - name: Checkout workflow tools
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
+          ref: ${{ github.sha }}
+
+      - name: Resolve immutable build source
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag || '' }}
+        run: |
+          cp scripts/windows_release.py "$RUNNER_TEMP/windows_release.py"
+          python "$RUNNER_TEMP/windows_release.py" resolve
+
+      - name: Checkout resolved source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ steps.source.outputs.source_sha }}
 
       - name: Set up uv and Python
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
@@ -108,34 +124,37 @@ jobs:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
           VOXPLANE_NATIVE_QA: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_window_chrome.py -k windows_native_caption --junitxml=build/test-results/windows-native-caption.xml --basetemp=build/test-results/windows-native-caption
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_window_chrome.py --fail-on-skip --output build/test-results/windows-native-caption
 
       - name: Verify native import dialog controls
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
           VOXPLANE_NATIVE_QA: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_import_dialog_chrome.py tests/test_import_ui.py --junitxml=build/test-results/windows-native-import.xml --basetemp=build/test-results/windows-native-import
+        run: |
+          uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_import_dialog_chrome.py --fail-on-skip --output build/test-results/windows-native-import-chrome
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_import_ui.py --output build/test-results/windows-native-import
 
       - name: Verify native popup keyboard isolation
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
           VOXPLANE_NATIVE_QA: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_dialog_default_actions.py tests/test_popup_shortcut_isolation.py --output build/test-results/windows-native-popup-keys
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_dialog_default_actions.py tests/test_popup_shortcut_isolation.py --fail-on-skip --output build/test-results/windows-native-popup-keys
 
       - name: Verify native Chinese PDF report
         env:
           QT_QPA_PLATFORM: windows
           VOXPLANE_NATIVE_QA: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_measurement_report_pdf.py --junitxml=build/test-results/windows-native-pdf.xml
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_measurement_report_pdf.py --fail-on-skip --output build/test-results/windows-native-pdf
 
       - name: Verify native workspace and background report exports
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
           VOXPLANE_NATIVE_QA: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_workspace_persistence.py --junitxml=build/test-results/windows-native-workspace.xml
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_workspace_persistence.py --fail-on-skip --output build/test-results/windows-native-workspace
 
       - name: Verify report and close-dialog regressions
         env:
@@ -179,13 +198,20 @@ jobs:
         env:
           QT_QPA_PLATFORM: windows
           QT_QUICK_BACKEND: software
-        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_water_qa_qml.py tests/test_water_qa_controller.py tests/test_qa_groups.py tests/test_qa_resize_air.py tests/test_qa_recalculate.py tests/test_qa_footer_shortcuts.py tests/test_water_qa_report.py tests/test_scalar_display.py tests/test_annotation_clipboard.py tests/test_viewport_scope.py tests/test_two_d_selector.py tests/test_manual.py tests/test_theme_ui.py --timeout 300 --output build/test-results/windows-native-2.6
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_water_qa_qml.py tests/test_water_qa_controller.py tests/test_qa_groups.py tests/test_qa_resize_air.py tests/test_qa_recalculate.py tests/test_qa_footer_shortcuts.py tests/test_water_qa_report.py tests/test_scalar_display.py tests/test_annotation_clipboard.py tests/test_viewport_scope.py tests/test_two_d_selector.py tests/test_manual.py tests/test_theme_ui.py --timeout 300 --fail-on-skip --output build/test-results/windows-native-2.6
+
+      - name: Verify native display and export presets
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_QUICK_BACKEND: software
+          VOXPLANE_NATIVE_QA: "1"
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_presets_settings_qml.py tests/test_report_dialog_qml.py tests/test_screenshot_preview.py tests/test_reading_menu_shortcuts.py tests/test_free_rotation_qml.py tests/test_measurement_qml.py --timeout 300 --fail-on-skip --output build/test-results/windows-native-2.7
 
       - name: Verify Direct3D scalar shader
         env:
           QT_QPA_PLATFORM: windows
           QSG_RHI_BACKEND: d3d11
-        run: uv run --locked --python 3.13 --group dev --group build python -m pytest tests/test_scalar_display.py --junitxml=build/test-results/windows-d3d-scalar.xml
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_scalar_display.py --fail-on-skip --output build/test-results/windows-d3d-scalar
 
       - name: Run tests
         env:
@@ -250,13 +276,13 @@ jobs:
           uv run --locked --python 3.13 --no-dev --group build python tests/manual/verify_windows_installer.py $setup.FullName
           exit $LASTEXITCODE
 
-      - name: Verify real updates from the latest stable Windows packages
+      - name: Verify pinned baseline installation and saved workspace migration
         if: inputs.console != true
         env:
           GH_TOKEN: ${{ github.token }}
           VOXPLANE_RUNNER_ENVIRONMENT: ${{ runner.environment }}
           QT_QUICK_BACKEND: software
-        run: uv run --locked --python 3.13 --no-dev --group build python tests/manual/verify_windows_package_updates.py
+        run: uv run --locked --python 3.13 --no-dev --group build python tests/manual/verify_windows_package_updates.py --baseline tests/fixtures/upgrades/windows-baseline-v2.5.0.json
 
       - name: Upload installer diagnostics
         if: always()
@@ -288,11 +314,19 @@ jobs:
             "$hash  $($_.Name)" | Set-Content "$($_.FullName).sha256" -Encoding utf8NoBOM
           }
 
+      - name: Record actual package provenance
+        shell: bash
+        env:
+          BUILD_SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          BUILD_CONSOLE: ${{ inputs.console }}
+        run: uv run --locked --python 3.13 --no-dev python "$RUNNER_TEMP/windows_release.py" record
+
       - name: Upload Windows packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.version.outputs.app_name }}-windows-x64${{ inputs.console && '-debug' || '' }}
           path: |
+            dist/windows-provenance.json
             dist/*.exe
             dist/*.sha256
             dist/installers/*.exe
@@ -322,9 +356,18 @@ jobs:
       RELEASE_APP_NAME: ${{ needs.build.outputs.app_name }}
 
     steps:
+      - name: Checkout release verification tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Set release helper path
+        run: echo "RELEASE_HELPER=$GITHUB_WORKSPACE/scripts/windows_release.py" >> "$GITHUB_ENV"
+
       - name: Validate existing build provenance
-        if: inputs.artifact_run_id != ''
         env:
+          REUSED_ARTIFACT: ${{ inputs.artifact_run_id != '' }}
           BUILD_CONSOLE: ${{ inputs.console }}
         run: |
           python3 - <<'PY'
@@ -350,8 +393,9 @@ jobs:
           while target["type"] == "tag":
               target = api(f"git/tags/{target['sha']}")["object"]
           run = api(f"actions/runs/{run_id}")
-          if (target["type"] != "commit" or run["head_sha"] != target["sha"]
-                  or run["status"] != "completed" or run["conclusion"] != "success"
+          if (target["type"] != "commit"
+                  or (os.environ["REUSED_ARTIFACT"] == "true" and
+                      (run["status"] != "completed" or run["conclusion"] != "success"))
                   or run["path"] != ".github/workflows/build-windows.yml"):
               raise SystemExit("Artifact must come from a successful Windows build of this exact tag commit")
           content = api(f"contents/pyproject.toml?ref={target['sha']}")
@@ -362,7 +406,7 @@ jobs:
           source = base64.b64decode(branding["content"]).decode("utf-8")
           name = re.search(r'^APP_NAME = "([A-Za-z0-9]+)"$', source, re.MULTILINE).group(1)
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
-              output.write(f"RELEASE_APP_NAME={name}\n")
+              output.write(f"RELEASE_APP_NAME={name}\nRELEASE_SOURCE_SHA={target['sha']}\n")
           print(f"Verified {name} build {run_id} at {target['sha']} for {tag}")
           PY
 
@@ -371,6 +415,7 @@ jobs:
 
       - name: Prepare and verify Release assets
         run: |
+          python3 "$RELEASE_HELPER" verify
           python3 - <<'PY'
           import hashlib
           import os
@@ -400,9 +445,4 @@ jobs:
 
       - name: Upload assets to matching Release
         run: |
-          # 复用已有 Release；新标签先建立草稿，方便与 macOS 包一并发布。
-          if ! gh release view "$RELEASE_TAG" --json tagName > /dev/null; then
-            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_APP_NAME $RELEASE_TAG" --generate-notes
-          fi
-          # 仅替换本版本 Windows 文件，保留 macOS 附件、说明和发布状态。
-          gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          python3 "$RELEASE_HELPER" publish

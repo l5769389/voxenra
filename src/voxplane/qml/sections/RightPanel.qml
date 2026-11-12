@@ -24,6 +24,7 @@ Rectangle {
     property var tabController: null
     property var exportController: null
     property Item exportItem: null
+    property Item tabExportItem: null
     signal manualRequested(string chapter)
     readonly property var volumeController: viewportController && viewportController.viewportType === "volume"
         ? viewportController : null
@@ -181,6 +182,7 @@ Rectangle {
                 tabController: rightPanel.tabController
                 exportController: rightPanel.exportController
                 exportItem: rightPanel.exportItem
+                tabExportItem: rightPanel.tabExportItem
                 onManualRequested: chapter => rightPanel.manualRequested(chapter)
             }
 
@@ -296,6 +298,7 @@ Rectangle {
                 tabController: rightPanel.tabController
                 exportController: rightPanel.exportController
                 exportItem: rightPanel.exportItem
+                tabExportItem: rightPanel.tabExportItem
             }
             Basic.ScrollBar.vertical: Components.AppScrollBar { width: 3 }
         }

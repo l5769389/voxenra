@@ -478,6 +478,7 @@ ApplicationWindow {
             onManualRequested: chapter => window.workspaceController.openManual(chapter)
             exportController: window.exportController
             exportItem: centerView.exportItem
+            tabExportItem: centerView.tabExportItem
             visible: window.hasTabs && !window.maximizedReadingArea
                 && ["tag", "settings", "pacs", "manual"].indexOf(window.workspaceController.activeTabType) < 0
             Layout.minimumWidth: visible ? actualWidth : 0

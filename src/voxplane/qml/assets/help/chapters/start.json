@@ -53,7 +53,9 @@
     ],
     "example": "overview-voxplane-2.6.0.png",
     "caption": "左侧选序列，右侧选工具，中间操作影像。",
-    "icon": "manual"
+    "icon": "manual",
+    "prerequisites": "准备一组本地 DICOM 文件、文件夹或压缩包。",
+    "outcome": "能打开一组影像、调整显示，并保存可继续编辑的工作区。"
   },
   {
     "id": "supported-images",
@@ -99,7 +101,9 @@
       "pet-units",
       "faq"
     ],
-    "icon": "info"
+    "icon": "info",
+    "prerequisites": "确认影像的模态和文件来源；不确定时先尝试 2D。",
+    "outcome": "知道哪些视图可以使用，以及按钮不可用时该检查什么。"
   },
   {
     "id": "workspace",
@@ -202,7 +206,9 @@
     ],
     "example": "workspace-voxplane-2.6.0.png",
     "caption": "临时工作区的保存入口与自动恢复开关。",
-    "icon": "workspace"
+    "icon": "workspace",
+    "prerequisites": "先导入影像；保存工作区时准备好存储位置。",
+    "outcome": "保存、重新打开或恢复工作状态，同时保留原始影像。"
   },
   {
     "id": "local-import",
@@ -248,7 +254,9 @@
     ],
     "example": "image-sources-voxplane-2.6.0.png",
     "caption": "文件夹、单个文件和压缩包可一起选择。",
-    "icon": "folder"
+    "icon": "folder",
+    "prerequisites": "准备本地影像；加密和分卷压缩包先在外部处理。",
+    "outcome": "在左侧看到导入的序列，并能打开、收藏来源或排查失败。"
   },
   {
     "id": "pacs",
@@ -296,6 +304,8 @@
       76,
       544,
       668
-    ]
+    ],
+    "prerequisites": "向管理员取得服务器协议、地址和授权；DIMSE 还需登记接收信息。",
+    "outcome": "查询检查并实际导入一个序列，确认完整连接路径可用。"
   }
 ]

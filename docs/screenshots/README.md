@@ -132,7 +132,7 @@ VoxPlane 的实际应用界面：当前界面截图与操作动画。[中文首�
 </tr>
 <tr>
 <td width="50%"><b>显示设置</b><br><a href="22-display-settings-voxplane-2.6.0.png"><img src="22-display-settings-voxplane-2.6.0.png" alt="显示设置" width="100%"></a></td>
-<td width="50%"><b>离线手册</b><br><a href="74-offline-manual-voxplane-2.6.0.png"><img src="74-offline-manual-voxplane-2.6.0.png" alt="离线手册" width="100%"></a></td>
+<td width="50%"><b>离线手册</b><br><a href="78-manual-tasks-voxplane-2.7.0.png"><img src="78-manual-tasks-voxplane-2.7.0.png" alt="离线手册" width="100%"></a></td>
 </tr>
 </table>
 
@@ -157,3 +157,11 @@ VoxPlane 的实际应用界面：当前界面截图与操作动画。[中文首�
 CPR、外观与语言使用 2.3.0 的中英文界面。其他示例沿用相应版本的界面，按钮文字及快捷键提示可能不同。自动分割为合成模体及模拟推理输出的流程演示，不表示模型精度或耗时。
 
 - [更新摘要（中文）](43-update-settings-voxplane-2.6.0.png) · [Update summary (English)](en/43-update-settings-voxplane-2.6.0.png)
+
+## 2.7.0 显示与导出预设
+
+当前版本原生窗口截图，使用内置示例；报告按页面宽度显示并可滚动。
+
+- [影像初始显示](75-initial-display-voxplane-2.7.0.png) · [English](en/75-initial-display-voxplane-2.7.0.png)
+- [报告预设](76-report-presets-voxplane-2.7.0.png) · [English](en/76-report-presets-voxplane-2.7.0.png)
+- [截图预设](77-screenshot-presets-voxplane-2.7.0.png) · [English](en/77-screenshot-presets-voxplane-2.7.0.png)

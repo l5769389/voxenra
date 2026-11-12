@@ -235,15 +235,18 @@ ColumnLayout {
                     || !panel.ready || (!!panel.result.phantom && panel.result.rois.some(r => ["left", "right", "top", "bottom"].includes(r.key))))
                 editable: true
                 live: false
+                readonly property bool mixed: setting.modelData.field === "activeDiameterMm"
+                    && !!panel.controller?.activeDiameterMixed
+                onMixedChanged: discardDraft()
                 readonly property var editContext: [panel.controller, panel.inputContext, panel.group]
                 stepSize: 10
                 function modelValue() { return Math.round((panel.controller ? panel.controller[setting.modelData.field] : 20)*10) }
-                textFromValue: function(value, locale) { return Number(value/10).toLocaleString(locale, "f", 1) }
+                textFromValue: function(value, locale) { return mixed ? "—" : Number(value/10).toLocaleString(locale, "f", 1) }
                 valueFromText: function(text, locale) { return Math.round(Number.fromLocaleString(locale, text)*10) }
                 validator: DoubleValidator { bottom: number.from/10; top: number.to/10; decimals: 1; locale: number.locale.name }
                 function discardDraft() {
                     value = Qt.binding(function() { return number.modelValue() })
-                    contentItem.text = textFromValue(modelValue(), locale)
+                    contentItem.text = Qt.binding(function() { return number.textFromValue(number.value, number.locale) })
                 }
                 onEditContextChanged: discardDraft()
                 onEnabledChanged: if (!enabled) discardDraft()
@@ -270,6 +273,12 @@ ColumnLayout {
                     validator: number.validator
                     inputMethodHints: Qt.ImhDigitsOnly
                     selectByMouse: true
+                    onEditingFinished: {
+                        // SpinBox emits valueModified only for a changed number.
+                        // Applying the backing value must also resolve mixed circles.
+                        if (number.mixed && acceptableInput && number.enabled && panel.inputReady)
+                            panel.controller.setActiveDiameterMm(Number.fromLocaleString(number.locale, text))
+                    }
                     Keys.onEscapePressed: event => { number.discardDraft(); event.accepted = true }
                 }
                 up.indicator: Rectangle {

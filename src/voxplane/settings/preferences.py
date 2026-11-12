@@ -1,5 +1,8 @@
 """Validated JSON schema for user preferences (no image or patient data)."""
 from voxplane.settings.shortcuts import DEFAULT_BINDINGS
+from voxplane.settings import display_defaults, screenshot_presets
+from voxplane.core import report_options
+from voxplane.settings.export_presets import validate_entries
 from voxplane.i18n import message as _msg
 from copy import deepcopy
 from math import isfinite
@@ -24,6 +27,10 @@ CORNERS = ("topLeft", "topRight", "bottomLeft", "bottomRight")
 METRICS = {"mean": _msg('text.0039'), "std": _msg('text.0040'), "minimum": _msg('text.0041'),
            "maximum": _msg('text.0042'), "area": _msg('text.0043'), "dimensions": _msg('text.0044'), "count": _msg('text.0045')}
 DEFAULTS = {
+    "initialDisplay": deepcopy(display_defaults.DEFAULTS),
+    "screenshot": deepcopy(screenshot_presets.DEFAULTS),
+    "report": deepcopy(report_options.DEFAULTS),
+    "exportPresets": {"screenshot": [], "report": []},
     "appearance": {"theme": "dark", "language": "zh-CN", "interfaceScale": 100,
                    "toolLabels": True, "sidebarLabels": True},
     "input": {"reverseWheel": False, "rightButton": "zoom", "middleButton": "selected",
@@ -33,7 +40,7 @@ DEFAULTS = {
     "privacy": {"hideIdentity": False},
     "updates": {"enabled": True, "dismissedVersion": ""},
     "workspace": {"automaticRecovery": True, "exitBehavior": "ask"},
-    "layout": {"rightPanelCollapsed": False, "rightPanelWidth": 300, "settingsNavigationWidth": 180, "manualNavigationWidth": 260,
+    "layout": {"rightPanelCollapsed": False, "rightPanelWidth": 300, "settingsNavigationWidth": 144, "manualNavigationWidth": 260,
                "rememberedMprLayout": "", "rememberedFourDLayout": "", "settingsCollapsedGroups": []},
     "export": {"directory": "", "reportSoftwareName": ""},
     "paletteList": {"favorites": []},
@@ -63,6 +70,11 @@ def validate_value(section, key, value):
     if section not in DEFAULTS or key not in DEFAULTS[section]:
         raise ValueError(_msg('text.0046'))
     default = DEFAULTS[section][key]
+    if section in ("initialDisplay", "screenshot", "report"):
+        module = {"initialDisplay": display_defaults, "screenshot": screenshot_presets, "report": report_options}[section]
+        return module.validate_options({key: value})[key]
+    if section == "exportPresets":
+        return validate_entries(key, value)
     if section == "toolbar":
         from voxplane.settings.toolbar import validate_toolbar
         value = validate_toolbar(key, value)
@@ -157,7 +169,7 @@ def validate_value(section, key, value):
         value = int(value)
     elif isinstance(default, (int, float)):
         limits = {"fontSize": (10, 20), "lineHeight": (1, 1.8), "lineWidth": (1, 6), "annotationSize": (8, 28),
-                  "mtfSensitivityPercent": (1, 100), "cardTransparency": (0, 100), "rightPanelWidth": (240, 420), "settingsNavigationWidth": (156, 300), "manualNavigationWidth": (220, 400)}
+                  "mtfSensitivityPercent": (1, 100), "cardTransparency": (0, 100), "rightPanelWidth": (240, 420), "settingsNavigationWidth": (132, 300), "manualNavigationWidth": (220, 400)}
         # Preserve legacy narrow-panel preferences at the new usable minimum.
         if key == "rightPanelWidth" and type(value) in (int, float) and 220 <= value < 240:
             value = 240
@@ -205,6 +217,14 @@ def normalize_settings(raw):
     # Move calculation preferences out of annotation appearance. Existing
     # service values win, including an explicit reset to defaults.
     raw = deepcopy(raw)
+    # Compact the previous default once; preserve other user-chosen widths.
+    layout = raw.get("layout")
+    if isinstance(layout, dict) and raw.get("schemaVersion", 0) in (0, 1, 2, 3) and layout.get("settingsNavigationWidth") == 180:
+        layout["settingsNavigationWidth"] = DEFAULTS["layout"]["settingsNavigationWidth"]
+    if isinstance(raw.get("export"), dict) and "reportSoftwareName" in raw["export"]:
+        report = raw.get("report", {})
+        if isinstance(report, dict) and "softwareName" not in report:
+            raw["report"] = dict(report, softwareName=raw["export"]["reportSoftwareName"])
     shortcuts = raw.get("shortcuts")
     if isinstance(shortcuts, dict) and isinstance(shortcuts.get("bindings"), dict):
         from voxplane.settings.shortcuts import RETIRED_ACTIONS, migrate_scroll_defaults
@@ -253,4 +273,5 @@ def normalize_settings(raw):
     group_names = {"measurement-mtf": "services-mtf", "measurement-thickness": "services-fwhm"}
     data["layout"]["settingsCollapsedGroups"] = list(dict.fromkeys(
         group_names.get(key, key) for key in data["layout"]["settingsCollapsedGroups"]))
+    data["export"]["reportSoftwareName"] = data["report"]["softwareName"]
     return data

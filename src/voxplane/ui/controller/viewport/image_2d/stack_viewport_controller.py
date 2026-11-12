@@ -113,7 +113,7 @@ class StackViewportController(Image2DViewportController):
                 if initial or state.slice_index is None
                 else state.slice_index
             ),
-            window=(None if initial else self._pet_display.target.window
+            window=(state.window if initial else self._pet_display.target.window
                     if self.isPetViewport and self._pet_display.target else state.window),
             inverted=False if initial else state.inverted,
             color_map=state.display_style.color_map,

@@ -9,6 +9,7 @@ Item {
     objectName: "volumeViewport"
     required property var viewportController
     property bool activeViewport: true
+    property bool capturingPng: false
     property var attachedController: null
     property bool presentationReported: false
     signal presentationReady(bool success)
@@ -88,6 +89,7 @@ Item {
 
     RowLayout {
         id: fusionHeader
+        opacity: root.capturingPng ? 0 : 1
         visible: root.viewportController?.isFusionVolume === true
         anchors.top: parent.top
         anchors.left: parent.left

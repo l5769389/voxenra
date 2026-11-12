@@ -100,3 +100,43 @@ def test_report_category_matches_title_metadata_and_roi_content(qt_app, tmp_path
     if kind == 'air':
         assert ('Δ中心' if language == 'zh-CN' else 'ΔCenter') not in text and '-999' in text
     doc.close()
+
+
+@pytest.mark.parametrize('precision, values', [
+    (2, ('12.35', '2.35', '-3.46', '45.68', '6.79', '23.46', '34.57', '9.88', '76.54')),
+    (3, ('12.346', '2.346', '-3.457', '45.679', '6.789', '23.457', '34.568', '9.876', '76.543')),
+])
+def test_report_numeric_values_stay_associated_with_labels_and_units(qt_app, tmp_path, precision, values):
+    from voxplane.model.water_qa import WaterPhantom, WaterQaSettings, WaterQaRoi, WaterQaResult
+    from voxplane.i18n.messages import builtin
+    roi = WaterQaRoi('probe', 'Probe', 23.4567, 34.5678, 4.938, 57, 76.5432,
+                     12.3456, 2.3456, -3.4567, 45.6789, 6.7891)
+    missing = replace(roi, key='missing', label='Missing', delta_center_hu=None)
+    result = WaterQaResult(WaterPhantom(80, 90, 50.125, 1), WaterQaSettings(),
+                           (roi, missing), 1.125, 2.25, 3.375, 4.5, 5.625, 6.75, 7.875,
+                           noise_percent=8.125)
+    doc, text = read_pdf(tmp_path, pdf_bytes(result, slice_number=26, spacing=(.625, .875),
+                         screenshot=picture(), decimal_places=precision,
+                         translations=builtin('en-US')['messages']))
+    compact = ''.join(text.split())
+    # Explicit references: no formatter or result-analysis helper builds expectations.
+    summary = [('WaterCTnumber', '1.12', '1.125', 'HU'),
+               ('NoiseSD', '2.25', '2.250', 'HU'),
+               ('Noise', '8.12', '8.125', '%'),
+               ('Uniformity', '3.38', '3.375', 'HU'),
+               ('Consistency', '4.50', '4.500', 'HU'),
+               ('Horizontaldifference', '5.62', '5.625', 'HU'),
+               ('Verticaldifference', '6.75', '6.750', 'HU'),
+               ('Noiserange', '7.88', '7.875', 'HU')]
+    for label, two, three, unit in summary:
+        assert label + (two if precision == 2 else three) + unit in compact
+    mean, sd, minimum, maximum, delta, x, y, diameter, area = values
+    assert 'Probe' + mean + sd + minimum + maximum + '57' + delta in compact
+    assert 'Missing' + mean + sd + minimum + maximum + '57—' in compact
+    assert 'Probe/CTnumberanduniformity' + x + y + diameter + area in compact
+    assert 'MeanHUSDHUMinimumHU' in compact
+    assert 'MaximumHUPixelsΔcenterHU' in compact
+    assert 'XpxYpxDiametermmSampledareamm2' in compact
+    assert ('Pixelspacing(row×column):0.62×0.88mm' if precision == 2 else 'Pixelspacing(row×column):0.625×0.875mm') in compact
+    assert ('Waterphantomdiameter:100.25mm' if precision == 2 else 'Waterphantomdiameter:100.250mm') in compact
+    doc.close()

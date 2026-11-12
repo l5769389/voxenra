@@ -25,8 +25,17 @@ jobs:
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
+          QT_QUICK_BACKEND: software
           PYTHONUTF8: "1"
-        run: uv run --locked --python 3.13 --group dev --group build python -m pytest -q
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py --timeout 300
+      - name: Upload regression diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: VoxPlane-installer-test-results-${{ runner.os }}-${{ runner.arch }}
+          path: build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Build macOS DMG (ad-hoc signed)
         if: runner.os == 'macOS'
         run: bash scripts/build_macos.sh

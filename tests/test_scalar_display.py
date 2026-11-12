@@ -19,7 +19,7 @@ def test_packed_texture_precision_padding_and_byte_boundaries():
     encoded, lower, span = pack_scalar(p)
     decoded = unpack_scalar(encoded,lower,span)
     assert np.isnan(decoded[0,0])
-    np.testing.assert_allclose(decoded[1:],p[1:],atol=.004,rtol=0)
+    np.testing.assert_allclose(decoded[np.isfinite(p)],p[np.isfinite(p)],atol=.004,rtol=0)
     # Grayscale mapping and LUT follow the same scalar path in software fallback.
     f=ScalarDisplayFrame(p,WindowLevel(0,350),True,'hotIron')
     result = resample_display(f,241,189)

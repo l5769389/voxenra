@@ -45,7 +45,7 @@ def test_all_settings_pages_keep_actions_inside_form(scene, theme, locale, tmp_p
     app.workspaceController.openSettings()
     find(window, 'settingsPage')
     categories = ['appearance', 'input', 'privacy', 'workspace', 'updates', 'sources',
-                  'export', 'colormap', 'window', 'crosshair', 'corners', 'scale',
+                  'export', 'report', 'initialDisplay', 'colormap', 'window', 'crosshair', 'corners', 'scale',
                   'measurement', 'roi', 'services', 'ai']
     output = Path(os.environ.get('VOXPLANE_LAYOUT_CAPTURES', tmp_path))
     output.mkdir(parents=True, exist_ok=True)
@@ -83,7 +83,7 @@ def ancestors(item):
 def test_english_window_headers_and_narrow_navigation_do_not_clip(scene):
     scene[1].languageController.selectLanguage('en-US')
     window, app, warnings = open_page(scene, 'window', 1280)
-    app.settingsController.setValue('layout', 'settingsNavigationWidth', 156)
+    app.settingsController.setValue('layout', 'settingsNavigationWidth', 132)
     QTest.qWait(40)
     assert not window.grabWindow().isNull()
     for name in ['windowHeaderWW', 'windowHeaderWL']:

@@ -40,7 +40,10 @@ def test_navigation_reveals_keyboard_focus_and_external_selection(sidebar_scene,
     app.settingsController.selectCategory('appearance')
     first = find(window, 'settingsCategory-appearance')
     first.forceActiveFocus(Qt.TabFocusReason)
-    for _ in range(16):
+    categories = find(window, 'settingsPage').property('categories').toVariant()
+    steps = len(categories) - 1
+    assert any(category['key'] == 'initialDisplay' for category in categories)
+    for _ in range(steps):
         QTest.keyClick(window, Qt.Key_Tab)
     last = find(window, 'settingsCategory-ai')
     scroll = find(window, 'settingsCategoryScroll')
@@ -49,7 +52,7 @@ def test_navigation_reveals_keyboard_focus_and_external_selection(sidebar_scene,
     QTest.keyClick(window, Qt.Key_Space)
     assert app.settingsController.activeCategory == 'ai'
     assert window.grabWindow().save(str(tmp_path / 'keyboard-last-category.png'))
-    for _ in range(16):
+    for _ in range(steps):
         QTest.keyClick(window, Qt.Key_Backtab)
     assert first.hasActiveFocus()
     wait_until(lambda: fully_visible(first, scroll))

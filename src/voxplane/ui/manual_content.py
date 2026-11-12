@@ -20,7 +20,7 @@ def manual_content():
         category['title'] = _msg('manual.category.' + category['id'])
     for chapter in content['chapters']:
         prefix = 'manual.' + chapter['id'] + '.'
-        for field in ('title', 'summary', 'caption'):
+        for field in ('title', 'summary', 'caption', 'prerequisites', 'outcome'):
             if field in chapter: chapter[field] = _msg(prefix + field)
         for index, section in enumerate(chapter['sections']):
             section_id = section.get('messageId', prefix + f'section{index}')

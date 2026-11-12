@@ -12,6 +12,7 @@ Item {
 
     property bool capturingPng: false
     property bool anonymousExport: false
+    property bool captureParameters: true
     required property var viewportController
     readonly property var metadataItems: [
         {
@@ -71,6 +72,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             objectName: "montageHeader"
+            opacity: montageRoot.captureParameters ? 1 : 0
             Layout.preferredHeight: headerContents.implicitHeight + 24
             color: Theme.panelBackgroundSoft
 
@@ -110,6 +112,7 @@ Item {
                     }
 
                     RowLayout {
+                        opacity: montageRoot.capturingPng ? 0 : 1
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         spacing: 4
                         Repeater {
@@ -286,7 +289,7 @@ Item {
                     z: 30
                     color: "transparent"
                     radius: tile.radius
-                    border.width: tileHover.hovered ? 1 : 0
+                    border.width: !montageRoot.capturingPng && tileHover.hovered ? 1 : 0
                     border.color: Theme.selectionBorder
                 }
 

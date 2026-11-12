@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Controls.Basic as Basic
 import "../../../components" as Components
 import "../../../theme"
+import "../../settings" as Settings
 
 ColumnLayout {
     id: panel
@@ -11,6 +12,11 @@ ColumnLayout {
     required property var controller
     required property var exportController
     required property Item exportItem
+    property Item tabExportItem: exportItem
+    property var settingsController: null
+    property var screenshotDraft: ({})
+    Component.onCompleted: screenshotDraft = Object.assign({}, settingsController?.values?.screenshot ?? {})
+    ScreenshotPreviewDialog { preview: panel.exportController.screenshotPreview }
     spacing: 10
     Components.DelayedActivity { id: feedback; active: panel.visible && (panel.exportController?.busy ?? false) }
     Components.PanelHeading { title: qsTrId("cpr.exportTitle"); explanation: qsTrId("cpr.exportHint") }
@@ -22,19 +28,26 @@ ColumnLayout {
         enabled: !(panel.exportController?.busy ?? false)
         onActivated: panel.controller.setExportScope(["curved", "cross", "combined"][currentIndex])
     }
-    Components.AppCheckBox {
-        id: anonymous
-        objectName: "cprExportAnonymous"
+    Components.ScreenshotOptions {
         Layout.fillWidth: true
-        text: qsTrId("text.0141")
-        checked: true
+        options: panel.screenshotDraft
+        enabled: !panel.exportController?.busy
+        onEdited: options => panel.screenshotDraft = options
+    }
+    Settings.ExportPresetPicker {
+        Layout.fillWidth: true
+        visible: !!panel.settingsController
+        settingsController: panel.settingsController
+        kind: "screenshot"
+        options: panel.screenshotDraft
+        onSelected: options => panel.screenshotDraft = options
     }
     Components.AppButton {
         objectName: "cprExportPng"
         Layout.fillWidth: true
-        text: qsTrId("text.0461")
+        text: qsTrId("screenshot.export")
         enabled: panel.exportController?.canExportPng ?? false
-        onClicked: panel.exportController.exportPng(panel.exportItem, Screen.devicePixelRatio, anonymous.checked)
+        onClicked: panel.exportController.previewScreenshot(panel.exportItem, panel.tabExportItem, panel.screenshotDraft)
     }
     Basic.ProgressBar {
         objectName: "cprExportProgress"

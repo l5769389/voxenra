@@ -455,3 +455,27 @@ def test_manual_check_failure_preserves_cached_release_but_reports_error(updater
     network.last.deliver(json.dumps(release_payload('1.6.0')).encode())
     assert controller.state == 'current' and not controller.hasUpdate
     assert not controller.cachedResultMessage
+
+@pytest.mark.parametrize('phase', ['checking', 'checksum', 'downloading'])
+def test_actual_request_timer_aborts_cleans_up_and_allows_retry(updater, phase):
+    from test_dicom_tags import wait_until
+    controller, settings, network = updater
+    controller.check()
+    if phase != 'checking':
+        network.last.deliver(json.dumps(release_payload()).encode())
+        controller.install()
+    if phase == 'downloading':
+        network.last.deliver(f'{DIGEST}  {controller._release.name}'.encode())
+        network.last.deliver(PAYLOAD[:4], complete=False)
+    reply = network.last
+    assert controller._timer.isActive()
+    # Shorten only the duration; keep production timer start/connection and real event delivery.
+    controller._timer.setInterval(10)
+    wait_until(lambda: controller.state == 'error')
+    assert reply.aborted and not controller.busy
+    assert controller._reply is None and controller._file is None
+    assert not controller._timer.isActive()
+    controller.check()
+    assert controller.state == 'checking' and network.last is not reply
+    network.last.deliver(json.dumps(release_payload('1.6.0')).encode())
+    assert controller.state == 'current' and not controller.busy
