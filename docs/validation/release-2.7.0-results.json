@@ -924,5 +924,439 @@
     "languages": 2,
     "passed": true,
     "old_client_button": "not_exercised"
+  },
+  "deployed_website": {
+    "workflow": {
+      "conclusion": "success",
+      "headSha": "14828ebac802e6dd3368eb2996387d6a92f3c72a",
+      "status": "completed",
+      "url": "https://github.com/junforge-dev/voxplane/actions/runs/43375088787"
+    },
+    "pages": [
+      {
+        "url": "https://junforge-dev.github.io/voxplane/",
+        "status": 200,
+        "images": [
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/voxplane-mark.svg",
+            "bytes": 1183,
+            "sha256": "0ffed52a8a987a878cacabdb219fefaf08844c8cc70fed434d26a647eab4177a",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/hero-mpr-1600.webp?v=cb97e75633c0",
+            "bytes": 102382,
+            "sha256": "cb97e75633c0a5b04c72f281aba4cb366762fd36381f1945a11bfb797a444a01",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-zip-drag-animated-1100.webp?v=61c2d971e0bf",
+            "bytes": 83536,
+            "sha256": "61c2d971e0bf567564cac3c58d54f3443fdb33a2148a99dc41af7669dbb278f7",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-pacs-1600.webp?v=add54d9da75e",
+            "bytes": 36976,
+            "sha256": "add54d9da75e62075709134e90ce17037bfd173c2d4dd55978cff1fabbb30989",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-workspace-overview-1600.webp?v=f02cb91a0c0f",
+            "bytes": 25972,
+            "sha256": "f02cb91a0c0f7d90ece47e5aa987805cf0a92859f7df8d2bf86f1f2892769f90",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-dimse-settings-1280.webp?v=6b09bb26ac86",
+            "bytes": 35160,
+            "sha256": "6b09bb26ac86dacf46c635f8de3541feae6ae76a25b15c27607238ff5c7d9e32",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-dimse-import-animated-1280.webp?v=412e4f308acf",
+            "bytes": 97220,
+            "sha256": "412e4f308acfb009bc3a7a8df4247dfa9514ff4aa49e577be3a0953c9d9dd487",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-ai-segmentation-animated-1280.webp?v=8ef949c50f52",
+            "bytes": 126526,
+            "sha256": "8ef949c50f529b54ec0d8341b1c6f93d5ff6cc023d07cf69191eb1cf284505ef",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-mr-reading-1600.webp?v=8fde0e9ed96e",
+            "bytes": 87292,
+            "sha256": "8fde0e9ed96e9f8f21e2c8966a3fb3731c261486e248a1383447956c2fc7372e",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-4d-animated-1100.webp?v=a85cb107a900",
+            "bytes": 203290,
+            "sha256": "a85cb107a900f142a4b6fe8e6f58f9402a570397d3cda7a56f2aae26330fa9b8",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-cpr-reference-1440.webp?v=9a3f07805159",
+            "bytes": 67846,
+            "sha256": "9a3f07805159c857126803c2a2d89301d4fd276fdd3c4ca33f65d48411c5c854",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-fusion-1600.webp?v=26d8e07a3709",
+            "bytes": 52748,
+            "sha256": "26d8e07a37099cae574d589b2667b0042cfa661dad38292603af94d7a729cce6",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-measurements-1440.webp?v=6a990d959726",
+            "bytes": 52628,
+            "sha256": "6a990d9597266596af8be808d3fee761d35887a0ee14b42e4c231c3b95473d1d",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-analysis-animated-1100.webp?v=4dcbbc44c459",
+            "bytes": 70940,
+            "sha256": "4dcbbc44c459214cef79d4d5059dbd67a783f82cb3a7d271a95115562f4a357c",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-toolbar-animated-1280.webp?v=a8bbbe39427c",
+            "bytes": 63840,
+            "sha256": "a8bbbe39427ca90dbb5ab42224f04673454479542f57d71210649850f1820fa8",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-focus-animated-1280.webp?v=46553feed3a7",
+            "bytes": 117130,
+            "sha256": "46553feed3a7d11b81ab2d392b67360db51266a6898a6a5a12499c01fa1d1285",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-water-qa-1600.webp?v=35a4b4c6b23e",
+            "bytes": 90380,
+            "sha256": "35a4b4c6b23e33b12ac0552b32e676803f35dd382d586450d86bd7c201c83d6d",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-mtf-1600.webp?v=11a62b5a47a1",
+            "bytes": 45532,
+            "sha256": "11a62b5a47a11de477265db142453c623eb0ec0cda721e7200658eebe4892aaf",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-theme-dark-1600.webp?v=5ce2646b83e7",
+            "bytes": 92548,
+            "sha256": "5ce2646b83e7b35b4a55aaab7abeedd9363d1a3fb97a1b3085b82d472b0a3194",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-theme-graphite-1600.webp?v=21465de346c0",
+            "bytes": 83408,
+            "sha256": "21465de346c01cadf0ad29327d697b4979545b17bef597016a11a0271287c742",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/feature-theme-light-1600.webp?v=9242d28b85a4",
+            "bytes": 93384,
+            "sha256": "9242d28b85a4cea8c488c78c16a935e7745b48b6765cac5fc3cdfb650370fe1d",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/macos.svg",
+            "bytes": 500,
+            "sha256": "f1581a5cb15b4da9bcff6752fe18e4666b874a3b14632e59ddb0d4165bc60cc7",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/windows.svg",
+            "bytes": 177,
+            "sha256": "b57edcd46e3a9e936b8347cd7c01000fb212faf591d82d8643218d3065c11cef",
+            "matches_candidate": true
+          }
+        ],
+        "all_images_match_candidate": true
+      },
+      {
+        "url": "https://junforge-dev.github.io/voxplane/en-us/",
+        "status": 200,
+        "images": [
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/voxplane-mark.svg",
+            "bytes": 1183,
+            "sha256": "0ffed52a8a987a878cacabdb219fefaf08844c8cc70fed434d26a647eab4177a",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-hero-mpr-1600.webp?v=4bae02056868",
+            "bytes": 102678,
+            "sha256": "4bae02056868d93624bfac8ee2c28b7ad3d669f1eceb8ed1e4a921989300689e",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-zip-drag-animated-1100.webp?v=e7b127d9b79c",
+            "bytes": 84184,
+            "sha256": "e7b127d9b79ce0232c4dd598d9f71fea1e99d6a6e6cf082ccb5ddc9354a61958",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-pacs-1600.webp?v=ad8b31b4a90b",
+            "bytes": 39946,
+            "sha256": "ad8b31b4a90b5a4097916134a164d8d4d0bc7bb6e364c10235754cc89b8b700c",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-workspace-overview-1600.webp?v=c587eb87d767",
+            "bytes": 27340,
+            "sha256": "c587eb87d76771394329dceb8ee524ccac470d6f431b8e6865654c5e7667bb4a",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-dimse-settings-1280.webp?v=115e70172f1a",
+            "bytes": 41880,
+            "sha256": "115e70172f1a44950214f407345cfd5662906d8a47353bcd5a93a43a6102e426",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-dimse-import-animated-1280.webp?v=a69cc589e3f2",
+            "bytes": 103282,
+            "sha256": "a69cc589e3f2f58d72d69946df8fa35b35e01cc6afd3e1e1fbbb2f4c6f69de5a",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-ai-segmentation-animated-1280.webp?v=4a0a8fd508bc",
+            "bytes": 136578,
+            "sha256": "4a0a8fd508bc78fe97eabaf055057c8d1d9da8f6c06c362a023e956c375b464a",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-mr-reading-1600.webp?v=184fa06f8d09",
+            "bytes": 89384,
+            "sha256": "184fa06f8d09a4109cb21e0b7c453c0257217fecbf1006e7f2dace97472e3f36",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-4d-animated-1100.webp?v=26620d8d3298",
+            "bytes": 203562,
+            "sha256": "26620d8d3298a2e51e1a4f4776d441d9a23d0c4785af1679c2ac12390a7bb117",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-cpr-reference-1440.webp?v=1e3815d5bd16",
+            "bytes": 71534,
+            "sha256": "1e3815d5bd166521478df3005ed90074a1f74e3cc38b88e9bba0870467c2ddb9",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-fusion-1600.webp?v=8f22c505295b",
+            "bytes": 53860,
+            "sha256": "8f22c505295bb64f8615a0c8d4975033534858b588a76844999a6c192287c50e",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-measurements-1440.webp?v=f91ee86e7459",
+            "bytes": 53364,
+            "sha256": "f91ee86e7459c5198f7c3e3375657c222b0e0b60a721c29e0a74031f41fd88cd",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-analysis-animated-1100.webp?v=3f147fa9300a",
+            "bytes": 73186,
+            "sha256": "3f147fa9300a392c6c83a3b221acff272f97266502ace1bd5ae57985d05fbdaf",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-toolbar-animated-1280.webp?v=e2f18bb171b5",
+            "bytes": 70966,
+            "sha256": "e2f18bb171b5c1d29d3ea61991a7f6b4b2746fd7c61d44d644879f23bd6c5881",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-focus-animated-1280.webp?v=9e6ab139204d",
+            "bytes": 118860,
+            "sha256": "9e6ab139204df513e0c1842a2435b9a9b9ca314e11aa11a88a8420b1039a3b43",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-water-qa-1600.webp?v=f4f07f43fcff",
+            "bytes": 94734,
+            "sha256": "f4f07f43fcffbf877a3d53f605d5d6e85d7d024643456f8e790eae0e033220f9",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-mtf-1600.webp?v=5af7bc727505",
+            "bytes": 46462,
+            "sha256": "5af7bc72750541f7410c365d305c17c32c26c3c0f52d7a9f78dd88eaa8c8f5cc",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-theme-dark-1600.webp?v=d0c1259c148b",
+            "bytes": 93228,
+            "sha256": "d0c1259c148b5b3abe7bda2e59c7786ead2f8db227257f1867d202f6ecb89df1",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-theme-graphite-1600.webp?v=61db90b7c990",
+            "bytes": 84836,
+            "sha256": "61db90b7c990cbb300b024c20179afc64aee56ef45491ddcb03e345043f2944e",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-feature-theme-light-1600.webp?v=abadf46817cb",
+            "bytes": 93770,
+            "sha256": "abadf46817cbe13d3ca2a66076de231f3fa9004ef7951c09af6f589d07c44d6f",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/macos.svg",
+            "bytes": 500,
+            "sha256": "f1581a5cb15b4da9bcff6752fe18e4666b874a3b14632e59ddb0d4165bc60cc7",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/windows.svg",
+            "bytes": 177,
+            "sha256": "b57edcd46e3a9e936b8347cd7c01000fb212faf591d82d8643218d3065c11cef",
+            "matches_candidate": true
+          }
+        ],
+        "all_images_match_candidate": true
+      },
+      {
+        "url": "https://junforge-dev.github.io/voxplane/zh/",
+        "status": 200,
+        "images": [
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/voxplane-mark.svg",
+            "bytes": 1183,
+            "sha256": "0ffed52a8a987a878cacabdb219fefaf08844c8cc70fed434d26a647eab4177a",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/hero-mpr-1600.webp?v=cb97e75633c0",
+            "bytes": 102382,
+            "sha256": "cb97e75633c0a5b04c72f281aba4cb366762fd36381f1945a11bfb797a444a01",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/manual.svg",
+            "bytes": 270,
+            "sha256": "4a2bc4df83e9ad6849f54187ac423edcc1cbe4906d29b5697872283d8da726b3",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/nav-view-mpr.svg",
+            "bytes": 323,
+            "sha256": "c1e68fc8cbeeacbfa37f9731461986605975ba763dc289b83cbe6b511faf0a75",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/measure.svg",
+            "bytes": 288,
+            "sha256": "2d5119622046283fb838a8925447a629cd18447e5dc68a809199aabc695f27a4",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/segmentation.svg",
+            "bytes": 287,
+            "sha256": "83f4a309cc72ad1d00c768aa5b21e64e6c6270f70a28969494c5f5598ce1e51f",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/fusion.svg",
+            "bytes": 335,
+            "sha256": "0992a12e0449310c68ecfbe0e0ffaafe3ac8a53c9898de90dc9820fbe7925659",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/service.svg",
+            "bytes": 351,
+            "sha256": "5fc8de1d38a5af48dc2d2519fbcb1d621b6dde510181a38ff49a8666beca3905",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/settings.svg",
+            "bytes": 396,
+            "sha256": "cd6108052a77c454b43c93bc49fab81bcf3109ecf23803cc1a97df871dc782f5",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/export.svg",
+            "bytes": 228,
+            "sha256": "669231e643705ef4e94048da181df802d38016a82c7186f90e74c23a116d3d16",
+            "matches_candidate": true
+          }
+        ],
+        "all_images_match_candidate": true
+      },
+      {
+        "url": "https://junforge-dev.github.io/voxplane/en/",
+        "status": 200,
+        "images": [
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/voxplane-mark.svg",
+            "bytes": 1183,
+            "sha256": "0ffed52a8a987a878cacabdb219fefaf08844c8cc70fed434d26a647eab4177a",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/en-hero-mpr-1600.webp?v=4bae02056868",
+            "bytes": 102678,
+            "sha256": "4bae02056868d93624bfac8ee2c28b7ad3d669f1eceb8ed1e4a921989300689e",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/manual.svg",
+            "bytes": 270,
+            "sha256": "4a2bc4df83e9ad6849f54187ac423edcc1cbe4906d29b5697872283d8da726b3",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/nav-view-mpr.svg",
+            "bytes": 323,
+            "sha256": "c1e68fc8cbeeacbfa37f9731461986605975ba763dc289b83cbe6b511faf0a75",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/measure.svg",
+            "bytes": 288,
+            "sha256": "2d5119622046283fb838a8925447a629cd18447e5dc68a809199aabc695f27a4",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/segmentation.svg",
+            "bytes": 287,
+            "sha256": "83f4a309cc72ad1d00c768aa5b21e64e6c6270f70a28969494c5f5598ce1e51f",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/fusion.svg",
+            "bytes": 335,
+            "sha256": "0992a12e0449310c68ecfbe0e0ffaafe3ac8a53c9898de90dc9820fbe7925659",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/service.svg",
+            "bytes": 351,
+            "sha256": "5fc8de1d38a5af48dc2d2519fbcb1d621b6dde510181a38ff49a8666beca3905",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/settings.svg",
+            "bytes": 396,
+            "sha256": "cd6108052a77c454b43c93bc49fab81bcf3109ecf23803cc1a97df871dc782f5",
+            "matches_candidate": true
+          },
+          {
+            "url": "https://junforge-dev.github.io/voxplane/assets/icons/export.svg",
+            "bytes": 228,
+            "sha256": "669231e643705ef4e94048da181df802d38016a82c7186f90e74c23a116d3d16",
+            "matches_candidate": true
+          }
+        ],
+        "all_images_match_candidate": true
+      }
+    ]
   }
 }
