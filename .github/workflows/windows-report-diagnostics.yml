@@ -30,6 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [offscreen, windows]
+        finish_pending: ["no", "yes"]
     env:
       QT_QPA_PLATFORM: ${{ matrix.platform }}
       QT_QUICK_BACKEND: software
@@ -39,6 +40,9 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       UV_PROJECT_ENVIRONMENT: .venv-build-windows
       VOXPLANE_QA_ITERATIONS: ${{ inputs.iterations }}
+      VOXPLANE_FINISH_PENDING: ${{ matrix.finish_pending }}
+      PYTEST_ADDOPTS: "-s"
+      PYTEST_PLUGINS: lifecycle_probe
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -60,6 +64,26 @@ jobs:
           New-Item -Path $key -Force | Out-Null
           New-ItemProperty -Path $key -Name DumpFolder -PropertyType ExpandString -Value "$pwd\build\lifecycle-diagnostics\dumps" -Force | Out-Null
           New-ItemProperty -Path $key -Name DumpType -PropertyType DWord -Value 1 -Force | Out-Null
+          @'
+          import os
+          from PySide6.QtCore import QObject
+          def pytest_runtest_call(item):
+              if item.name != 'test_settings_initializes_from_recent_image_and_does_not_reset_live_draft':
+                  return
+              import test_tab_windows
+              original = test_tab_windows.detached
+              def inspect(app, tab):
+                  manager = app.windowManager
+                  window = manager.windows[manager.mainWorkspace.windowId]
+                  loader = window.findChild(QObject, 'workspaceLoader')
+                  print('TRANSFER BEFORE:', loader.property('status'), loader.property('asynchronous'), flush=True)
+                  if os.environ['VOXPLANE_FINISH_PENDING'] == 'yes':
+                      loader.setProperty('asynchronous', False)
+                      print('TRANSFER COMPLETED:', loader.property('status'), flush=True)
+                  return original(app, tab)
+              item._request.getfixturevalue('monkeypatch').setattr(test_tab_windows, 'detached', inspect)
+          '@ | Set-Content build/lifecycle-diagnostics/lifecycle_probe.py
+          "PYTHONPATH=$pwd\build\lifecycle-diagnostics" | Out-File $env:GITHUB_ENV -Append
       - name: Repeat confirmation and tab-transfer cases
         shell: pwsh
         run: |
@@ -73,7 +97,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: windows-lifecycle-${{ matrix.platform }}
+          name: windows-lifecycle-${{ matrix.platform }}-${{ matrix.finish_pending }}
           path: build/lifecycle-diagnostics/
           retention-days: 14
 
