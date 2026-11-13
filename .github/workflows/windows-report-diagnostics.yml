@@ -15,13 +15,68 @@ on:
       scenario:
         description: "Diagnostic scenario"
         type: choice
-        options: [reports, volume, release, presets]
+        options: [reports, volume, release, presets, lifecycle]
         default: reports
 
 permissions:
   contents: read
 
 jobs:
+  lifecycle:
+    if: inputs.scenario == 'lifecycle'
+    runs-on: windows-2022
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [offscreen, windows]
+    env:
+      QT_QPA_PLATFORM: ${{ matrix.platform }}
+      QT_QUICK_BACKEND: software
+      PYTHONUTF8: "1"
+      PYTHONUNBUFFERED: "1"
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      UV_PROJECT_ENVIRONMENT: .venv-build-windows
+      VOXPLANE_QA_ITERATIONS: ${{ inputs.iterations }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          version: "0.11.26"
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Prepare native crash diagnostics
+        shell: pwsh
+        run: |
+          ./scripts/prepare_windows_test_graphics.ps1
+          Set-DisplayResolution -Width 1920 -Height 1080 -Force
+          New-Item -ItemType Directory -Force build/lifecycle-diagnostics/dumps | Out-Null
+          $key = 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\python.exe'
+          New-Item -Path $key -Force | Out-Null
+          New-ItemProperty -Path $key -Name DumpFolder -PropertyType ExpandString -Value "$pwd\build\lifecycle-diagnostics\dumps" -Force | Out-Null
+          New-ItemProperty -Path $key -Name DumpType -PropertyType DWord -Value 1 -Force | Out-Null
+      - name: Repeat confirmation and tab-transfer cases
+        shell: pwsh
+        run: |
+          $failed = $false
+          for ($iteration = 1; $iteration -le [int]$env:VOXPLANE_QA_ITERATIONS; $iteration++) {
+            uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_new_workspace_qml.py tests/test_toolbar_categories.py --workers 2 --timeout 180 --output "build/lifecycle-diagnostics/round-$iteration"
+            if ($LASTEXITCODE -ne 0) { $failed = $true }
+          }
+          Get-WinEvent -FilterHashtable @{LogName='Application'; Id=1000,1001; StartTime=(Get-Date).AddMinutes(-30)} -ErrorAction SilentlyContinue | Format-List * | Out-File build/lifecycle-diagnostics/events.txt
+          if ($failed) { exit 1 }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: windows-lifecycle-${{ matrix.platform }}
+          path: build/lifecycle-diagnostics/
+          retention-days: 14
+
   presets:
     if: inputs.scenario == 'presets'
     runs-on: windows-2022
