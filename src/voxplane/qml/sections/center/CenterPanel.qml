@@ -174,15 +174,37 @@ Rectangle {
                             active: Qt.binding(() => centerPanel.workspaceController.activeTabType === "manual"
                                 && workspaceLoader.status === Loader.Ready)
                         })
+                    } else if (["compare2d", "mpr", "4d", "petctfusion"].includes(type)) {
+                        // The retiring page must not rebuild its Repeater from
+                        // the next tab's models while Loader is cancelling its
+                        // incubation. Capture this page's owner and viewport set
+                        // as initial properties; only its own selection stays live.
+                        const tab = loadedTab
+                        setSource(Qt.resolvedUrl("viewportArea/ViewportLayout.qml"), {
+                            viewportController: Qt.binding(() => tab.activeViewport),
+                            hasTabs: true,
+                            tabType: type,
+                            currentTabAllViewports: centerPanel.currentTabAllViewports.filter(
+                                view => view?.setViewportSize !== undefined)
+                        })
                     } else {
                         sourceComponent = type === "tag" ? tagComponent
                         : type === "3d" ? volumeComponent
                         : type === "comparempr" ? compareMprComponent
-                        : type === "montage" ? montageComponent : type === "2d" ? twoDComponent : imageComponent
+                        : type === "montage" ? montageComponent : twoDComponent
                     }
                     active = true
                 }
                 Component.onCompleted: openCurrentTab()
+                Connections {
+                    target: workspaceLoader.item
+                    ignoreUnknownSignals: true
+                    function onViewportActivated(viewportId) {
+                        const tab = workspaceLoader.loadedTab
+                        if (tab && tab === centerPanel.workspaceController.activeTab)
+                            tab.activateViewport(viewportId)
+                    }
+                }
                 Connections {
                     target: centerPanel.workspaceController
                     function onActiveTabChanged() { workspaceLoader.openCurrentTab() }
@@ -224,27 +246,6 @@ Rectangle {
             tabController: workspaceLoader.loadedTab
         }
     }
-    Component {
-        id: imageComponent
-        ViewportSection.ViewportLayout {
-            // Loader and workspace signals can update in different orders.
-            // Never hand a volume controller to a still-live image component.
-            viewportController: centerPanel.imageWorkspace
-                && centerPanel.viewportController?.workspaceTab === workspaceLoader.loadedTab
-                ? centerPanel.viewportController : null
-            hasTabs: centerPanel.hasTabs
-            tabType: centerPanel.workspaceController.activeTabType
-            currentTabAllViewports: centerPanel.imageWorkspace
-                ? centerPanel.currentTabAllViewports.filter(view => view?.setViewportSize !== undefined) : []
-            onViewportActivated: viewportId => {
-                const activeTab = centerPanel.workspaceController.activeTab
-                if (activeTab) {
-                    activeTab.activateViewport(viewportId)
-                }
-            }
-        }
-    }
-
     Component {
         id: volumeComponent
         ViewportSection.VolumeViewport {

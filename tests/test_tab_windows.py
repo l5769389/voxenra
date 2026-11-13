@@ -48,6 +48,31 @@ def test_active_tab_observers_see_the_matching_window_viewport(sidebar_scene):
     assert not warnings, warnings
 
 
+def test_retiring_mpr_page_never_receives_another_tabs_viewports(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    from PySide6.QtQml import QQmlEngine, QQmlExpression
+    session = app.windowManager.mainWorkspace
+    session.createTab(records[0].series_instance_uid, 'MPR owner', 'mpr')
+    original = session.activeTab
+    loader = window.findChild(QObject, 'workspaceLoader')
+    def page_ready():
+        return QQmlExpression(QQmlEngine.contextForObject(loader), loader,
+                             'status === Loader.Ready').evaluate()[0]
+    wait_until(lambda: session.activeLoadState.status == 'ready' and page_ready())
+    page = loader.property('item')
+    foreign_models = []
+    def model_changed():
+        views = page.property('currentTabAllViewports')
+        if hasattr(views, 'toVariant'):
+            views = views.toVariant()
+        foreign_models.extend(view for view in views if view.workspaceTab is not original)
+    page.currentTabAllViewportsChanged.connect(model_changed)
+    session.createTab(records[1].series_instance_uid, 'Next 2D', '2d')
+    wait_until(lambda: session.activeLoadState.status == 'ready' and page_ready())
+    assert not foreign_models, 'A retiring MPR repeater received the next tab before being destroyed'
+    assert not warnings, warnings
+
+
 @pytest.mark.parametrize('view_type', ['2d', 'mpr'])
 @pytest.mark.parametrize('incubation_ms', [0, 1, 3, 8])
 def test_detach_image_during_incremental_page_construction(sidebar_scene, view_type, incubation_ms):
