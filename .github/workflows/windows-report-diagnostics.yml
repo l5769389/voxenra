@@ -15,13 +15,126 @@ on:
       scenario:
         description: "Diagnostic scenario"
         type: choice
-        options: [reports, volume, release, presets, lifecycle, transfer_dump]
+        options: [reports, volume, release, presets, lifecycle, transfer_dump, native_stack]
         default: reports
 
 permissions:
   contents: read
 
 jobs:
+  native_stack:
+    if: inputs.scenario == 'native_stack'
+    runs-on: windows-2022
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: windows
+      QT_QUICK_BACKEND: software
+      PYTHONUTF8: "1"
+      PYTHONUNBUFFERED: "1"
+      UV_PROJECT_ENVIRONMENT: .venv-build-windows
+      VOXPLANE_QA_ITERATIONS: ${{ inputs.iterations }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          version: "0.11.26"
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Prepare synthetic test exception stack recorder
+        shell: pwsh
+        run: |
+          ./scripts/prepare_windows_test_graphics.ps1
+          Set-DisplayResolution -Width 1920 -Height 1080 -Force
+          New-Item -ItemType Directory -Force build/native-stack | Out-Null
+          @'
+          #include <windows.h>
+          #include <dbghelp.h>
+          #include <stdio.h>
+          #include <string.h>
+          #include <wchar.h>
+          static wchar_t output[MAX_PATH];
+          static volatile LONG captured = 0;
+          static LONG CALLBACK record(EXCEPTION_POINTERS *info) {
+              if (info->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION || InterlockedExchange(&captured, 1)) return EXCEPTION_CONTINUE_SEARCH;
+              HANDLE process = GetCurrentProcess();
+              SymRefreshModuleList(process);
+              FILE *file = _wfopen(output, L"w");
+              if (!file) return EXCEPTION_CONTINUE_SEARCH;
+              CONTEXT context = *info->ContextRecord;
+              STACKFRAME64 frame = {0};
+              frame.AddrPC.Offset = context.Rip; frame.AddrPC.Mode = AddrModeFlat;
+              frame.AddrStack.Offset = context.Rsp; frame.AddrStack.Mode = AddrModeFlat;
+              frame.AddrFrame.Offset = context.Rbp; frame.AddrFrame.Mode = AddrModeFlat;
+              fprintf(file, "Access violation; thread %lu\n", GetCurrentThreadId());
+              for (int n=0; n<64; ++n) {
+                  DWORD64 address = frame.AddrPC.Offset;
+                  MEMORY_BASIC_INFORMATION memory;
+                  char module[MAX_PATH] = "unknown";
+                  DWORD64 base = 0;
+                  if (VirtualQuery((void*)address, &memory, sizeof(memory))) {
+                      base = (DWORD64)memory.AllocationBase;
+                      GetModuleFileNameA((HMODULE)base, module, MAX_PATH);
+                  }
+                  char *name = strrchr(module, '\\'); name = name ? name+1 : module;
+                  char buffer[sizeof(SYMBOL_INFO)+MAX_SYM_NAME] = {0};
+                  SYMBOL_INFO *symbol = (SYMBOL_INFO*)buffer;
+                  symbol->SizeOfStruct=sizeof(SYMBOL_INFO); symbol->MaxNameLen=MAX_SYM_NAME;
+                  DWORD64 displacement=0;
+                  fprintf(file, "%02d %s+0x%llx", n, name, address-base);
+                  if (SymFromAddr(process,address,&displacement,symbol)) fprintf(file," %s+0x%llx",symbol->Name,displacement);
+                  fprintf(file,"\n"); fflush(file);
+                  if (!StackWalk64(IMAGE_FILE_MACHINE_AMD64,process,GetCurrentThread(),&frame,&context,NULL,SymFunctionTableAccess64,SymGetModuleBase64,NULL)) break;
+              }
+              fclose(file);
+              return EXCEPTION_CONTINUE_SEARCH;
+          }
+          __declspec(dllexport) int install(const wchar_t *path) {
+              wcscpy_s(output, MAX_PATH, path);
+              SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+              SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS | SYMOPT_FAIL_CRITICAL_ERRORS);
+              if (!SymInitialize(GetCurrentProcess(), NULL, TRUE)) return 0;
+              return AddVectoredExceptionHandler(1,record) != NULL;
+          }
+          '@ | Set-Content build/native-stack/recorder.c
+          $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          @"
+          @call "$vs/VC/Auxiliary/Build/vcvars64.bat"
+          cl /nologo /LD /O2 build/native-stack/recorder.c /Febuild/native-stack/recorder.dll /link dbghelp.lib
+          "@ | Set-Content build/native-stack/compile.cmd
+          cmd /c build/native-stack/compile.cmd
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          import ctypes, pathlib, sys
+          import pytest
+          recorder = ctypes.WinDLL(str(pathlib.Path('build/native-stack/recorder.dll').resolve()))
+          recorder.install.argtypes=[ctypes.c_wchar_p]
+          assert recorder.install(str(pathlib.Path('build/native-stack/stack.txt').resolve()))
+          raise SystemExit(pytest.main(sys.argv[1:]))
+          '@ | Set-Content build/native-stack/runner.py
+      - name: Capture exception function addresses without process memory
+        shell: pwsh
+        run: |
+          for ($iteration=1; $iteration -le [int]$env:VOXPLANE_QA_ITERATIONS; $iteration++) {
+            uv run --locked --python 3.13 --group dev --group build python build/native-stack/runner.py tests/test_toolbar_categories.py -vv -s --tb=short *> "build/native-stack/round-$iteration.log"
+            Get-Content "build/native-stack/round-$iteration.log"
+            if (Test-Path build/native-stack/stack.txt) { break }
+          }
+          if (-not (Test-Path build/native-stack/stack.txt)) { throw 'No native exception captured' }
+          Get-Content build/native-stack/stack.txt
+          exit 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: windows-native-stack
+          path: |
+            build/native-stack/stack.txt
+            build/native-stack/round-*.log
+          retention-days: 14
+
   transfer_dump:
     if: inputs.scenario == 'transfer_dump'
     runs-on: windows-2022
