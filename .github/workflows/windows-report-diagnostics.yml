@@ -65,7 +65,7 @@ jobs:
           $python = (Get-Content build/transfer-dump/interpreter.txt -Raw).Trim()
           $env:PYTHONPATH = "$pwd/.venv-build-windows/Lib/site-packages;$pwd/src;$pwd/tests"
           for ($iteration = 1; $iteration -le [int]$env:VOXPLANE_QA_ITERATIONS; $iteration++) {
-            & $env:TRANSFER_DUMP_TOOL -accepteula -e 1 -f C0000005 -mm -n 1 -k -x "$pwd/build/transfer-dump/dumps" $python -m pytest tests/test_toolbar_categories.py -vv -s --tb=short *> "build/transfer-dump/round-$iteration.log"
+            & $env:TRANSFER_DUMP_TOOL -accepteula -e 1 -f C0000005 -mm -n 1 -x "$pwd/build/transfer-dump/dumps" $python -m pytest tests/test_toolbar_categories.py -vv -s --tb=short *> "build/transfer-dump/round-$iteration.log"
             Get-Content "build/transfer-dump/round-$iteration.log"
             if (Get-ChildItem build/transfer-dump/dumps -Filter '*.dmp') { break }
           }
