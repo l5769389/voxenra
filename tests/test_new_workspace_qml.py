@@ -10,6 +10,39 @@ from test_tag_qml import find, click
 from test_workspace_dialog_layout import workspace_dialog
 
 
+def click_confirmation(window, button, role, *, inspect=None, dispatch_delay=0):
+    """Wait for the real modal; layout settling may outlast a fixed timer."""
+    chooser = QTimer()
+    chooser.setInterval(10)
+    handled, errors = [], []
+
+    def choose():
+        alert = QApplication.activeModalWidget()
+        if alert is None:
+            return
+        chooser.stop()
+        try:
+            assert isinstance(alert, QMessageBox)
+            assert alert.objectName() == 'workspaceNewConfirmation'
+            if inspect:
+                inspect(alert)
+            QTest.mouseClick(alert.button(role), Qt.LeftButton)
+            handled.append(True)
+        except BaseException as error:
+            errors.append(error)
+            alert.reject()
+
+    chooser.timeout.connect(choose)
+    chooser.start()
+    try:
+        QTest.qWait(dispatch_delay)
+        click(window, button)
+    finally:
+        chooser.stop()
+    assert not errors, errors
+    assert handled == [True]
+
+
 @pytest.mark.parametrize('locale', ['zh-CN', 'en-US', 'pt-BR'])
 @pytest.mark.parametrize('theme', ['dark', 'light'])
 def test_dialog_new_cancel_then_discard_returns_empty_home(sidebar_scene, tmp_path, locale, theme):
@@ -28,20 +61,13 @@ def test_dialog_new_cancel_then_discard_returns_empty_home(sidebar_scene, tmp_pa
     assert button.width() >= button.implicitWidth()
     native.grabWindow().save(str(tmp_path / f'new-workspace-{locale}-{theme}.png'))
     decisions = []
-    def choose(role):
-        alert = QApplication.activeModalWidget()
-        if alert is None:
-            decisions.append('missing confirmation')
-            return
+    def inspect(alert):
         decisions.append((alert.objectName(), alert.checkBox() is None))
         alert.grab().save(str(tmp_path / f'new-confirm-{locale}-{theme}.png'))
-        QTest.mouseClick(alert.button(role), Qt.LeftButton)
-    QTimer.singleShot(150, lambda: choose(QMessageBox.Cancel))
-    click(native, button)
+    click_confirmation(native, button, QMessageBox.Cancel, inspect=inspect)
     assert decisions == [('workspaceNewConfirmation', True)]
     assert dialog.property('visible') and ws.activeTab is tab
-    QTimer.singleShot(150, lambda: choose(QMessageBox.Discard))
-    click(native, button)
+    click_confirmation(native, button, QMessageBox.Discard, inspect=inspect)
     wait_until(lambda: not dialog.property('visible'))
     assert decisions == [('workspaceNewConfirmation', True)] * 2
     assert not doc.hasContent and not doc.path and not doc.dirty
@@ -98,7 +124,8 @@ def test_new_closes_detached_tabs_and_returns_to_main(sidebar_scene, monkeypatch
     assert not warnings, warnings
 
 
-def test_save_and_create_from_real_confirmation(sidebar_scene, tmp_path, monkeypatch):
+@pytest.mark.parametrize('dispatch_delay', [0, 250])
+def test_save_and_create_from_real_confirmation(sidebar_scene, tmp_path, monkeypatch, dispatch_delay):
     from voxplane.core.workspace_document import read_document
     from test_workspace_persistence import draw_length
     window, app, records, warnings = sidebar_scene
@@ -112,11 +139,8 @@ def test_save_and_create_from_real_confirmation(sidebar_scene, tmp_path, monkeyp
     monkeypatch.setattr('voxplane.ui.controller.workspace_document_controller.QFileDialog.getSaveFileName',
                         lambda *args: (str(path), ''))
     dialog, native = workspace_dialog(window)
-    def save():
-        alert = QApplication.activeModalWidget()
-        QTest.mouseClick(alert.button(QMessageBox.Save), Qt.LeftButton)
-    QTimer.singleShot(150, save)
-    click(native, dialog.findChild(QObject, 'newWorkspace'))
+    click_confirmation(native, dialog.findChild(QObject, 'newWorkspace'), QMessageBox.Save,
+                       dispatch_delay=dispatch_delay)
     wait_until(lambda: not doc.busy and not dialog.property('visible'))
     assert not doc.hasContent and not doc.dirty and not doc.path
     assert find(window, 'workspaceEmptyState').isVisible()

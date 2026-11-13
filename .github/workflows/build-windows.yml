@@ -222,6 +222,13 @@ jobs:
           VOXPLANE_NATIVE_QA: "1"
         run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_presets_settings_qml.py tests/test_report_dialog_qml.py tests/test_screenshot_preview.py tests/test_reading_menu_shortcuts.py tests/test_free_rotation_qml.py tests/test_measurement_qml.py --timeout 300 --fail-on-skip --output build/test-results/windows-native-2.7
 
+      - name: Verify native tab transfers and workspace confirmations
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_QUICK_BACKEND: software
+          VOXPLANE_NATIVE_QA: "1"
+        run: uv run --locked --python 3.13 --group dev --group build python tests/run_isolated.py tests/test_new_workspace_qml.py tests/test_toolbar_categories.py tests/test_tab_windows.py --timeout 300 --fail-on-skip --output build/test-results/windows-native-transfers
+
       - name: Verify Direct3D scalar shader
         env:
           QT_QPA_PLATFORM: windows

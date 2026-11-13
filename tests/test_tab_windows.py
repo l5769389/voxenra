@@ -31,6 +31,65 @@ def detached(app, tab):
     return session, manager.windows[session.windowId]
 
 
+def test_active_tab_observers_see_the_matching_window_viewport(sidebar_scene):
+    window, app, records, warnings = sidebar_scene
+    tabs = open_tabs(app, records)
+    session = app.windowManager.mainWorkspace
+    observed = []
+    def observe():
+        observed.append(window.property('viewportController') is session.activeViewport)
+    session.activeTabChanged.connect(observe)
+    try:
+        for tab in tabs:
+            session.activateTabId(tab.tab_config.tab_id)
+    finally:
+        session.activeTabChanged.disconnect(observe)
+    assert observed and all(observed), observed
+    assert not warnings, warnings
+
+
+@pytest.mark.parametrize('view_type', ['2d', 'mpr'])
+@pytest.mark.parametrize('incubation_ms', [0, 1, 3, 8])
+def test_detach_image_during_incremental_page_construction(sidebar_scene, view_type, incubation_ms):
+    """Pixel readiness must not make a partially built page unsafe to transfer."""
+    from PySide6.QtQml import QQmlEngine, QQmlExpression, QQmlIncubationController
+    window, app, records, warnings = sidebar_scene
+    manager = app.windowManager
+    main = manager.mainWorkspace
+    main.createTab(records[0].series_instance_uid, 'Keep', 'mpr' if view_type == '2d' else '2d')
+    keep = main.activeTab
+    loader = window.findChild(QObject, 'workspaceLoader')
+    engine = QQmlEngine.contextForObject(loader).engine()
+    def ready():
+        return QQmlExpression(QQmlEngine.contextForObject(loader), loader,
+                             'status === Loader.Ready').evaluate()[0]
+    wait_until(lambda: main.activeLoadState.status == 'ready' and ready())
+    previous = engine.incubationController()
+    controlled = QQmlIncubationController()
+    engine.setIncubationController(controlled)
+    try:
+        main.createTab(records[1].series_instance_uid, 'Move immediately', view_type)
+        wait_until(lambda: main.activeLoadState.status == 'ready')
+        moving = main.activeTab
+        if incubation_ms:
+            controlled.incubateFor(incubation_ms)
+        assert manager.detachTab(moving.tab_config.tab_id)
+    finally:
+        engine.setIncubationController(previous)
+    wait_until(lambda: not manager._transfers)
+    target = manager.owner(moving.tab_config.tab_id)
+    assert target.detached and target.activeTab is moving
+    assert main.activeTab is keep
+    assert loader.property('loadedTab') is keep
+    destination = manager.windows[target.windowId].findChild(QObject, 'workspaceLoader')
+    assert destination.property('loadedTab') is moving
+    assert target.activeViewport is moving.activeViewport
+    assert manager.moveTab(moving.tab_config.tab_id, main.windowId, len(main.tabs))
+    wait_until(lambda: not manager._transfers and main.activeTab is moving)
+    assert loader.property('loadedTab') is moving
+    assert not warnings, warnings
+
+
 @pytest.mark.parametrize('theme', ['dark', 'light'])
 @pytest.mark.parametrize('language', ['zh-CN', 'en-US'])
 def test_reorder_menu_and_pointer_actions(sidebar_scene, theme, language):

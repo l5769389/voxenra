@@ -113,8 +113,11 @@ class WindowWorkspaceController(QObject):
         self._active = tab_id
         if tab_id:
             self._mru = [tab_id] + [key for key in self._mru if key != tab_id]
-        self.activeTabChanged.emit()
+        # Retarget viewport bindings before the tab notification rebuilds page
+        # and tool subtrees. Otherwise those handlers combine the new tab with
+        # the previous window viewport during a switch or cross-window move.
         self.activeViewportChanged.emit()
+        self.activeTabChanged.emit()
 
     def _remove(self, tab_id):
         if tab_id not in self._ids:
