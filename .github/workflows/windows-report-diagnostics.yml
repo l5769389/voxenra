@@ -78,12 +78,45 @@ jobs:
           if (-not $dump) { throw 'No access-violation dump captured; inspect round logs' }
           $debugger = 'C:/Program Files (x86)/Windows Kits/10/Debuggers/x64/cdb.exe'
           if (Test-Path $debugger) { & $debugger -z $dump.FullName -c '.ecxr; kb; q' *> build/transfer-dump/native-stack.txt }
+          # Only module names/offsets leave the runner. Never upload memory dumps.
+          @'
+          import pathlib, struct
+          data = next(pathlib.Path('build/transfer-dump/dumps').glob('*.dmp')).read_bytes()
+          def u32(p): return struct.unpack_from('<I', data, p)[0]
+          def u64(p): return struct.unpack_from('<Q', data, p)[0]
+          streams = {u32(p): u32(p+8) for p in range(u32(12), u32(12)+12*u32(8), 12)}
+          modules = []
+          for p in range(streams[4]+4, streams[4]+4+108*u32(streams[4]), 108):
+              rva = u32(p+20)
+              name = data[rva+4:rva+4+u32(rva)].decode('utf-16le').replace('\\', '/').rsplit('/',1)[-1]
+              modules.append((u64(p), u32(p+8), name))
+          def mapped(address):
+              return next((f'{name}+0x{address-base:x}' for base,size,name in modules if base <= address < base+size), None)
+          e = streams[6]
+          context = u32(e+164)
+          rip, rsp = u64(context+248), u64(context+152)
+          output = [f'Exception 0x{u32(e+8):x}: {mapped(rip)}']
+          for p in range(streams[3]+4, streams[3]+4+48*u32(streams[3]), 48):
+              if u32(p) != u32(e): continue
+              start, size, rva = u64(p+24), u32(p+32), u32(p+36)
+              for address in range(max(rsp,start), min(start+size,rsp+4096), 8):
+                  target = mapped(u64(rva+address-start))
+                  if target: output.append(f'stack+0x{address-rsp:x}: {target}')
+          pathlib.Path('build/transfer-dump/module-offsets.txt').write_text('\n'.join(output))
+          '@ | Set-Content build/transfer-dump/summarize.py
+          & $python build/transfer-dump/summarize.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item build/transfer-dump/dumps -Recurse -Force
           exit 0
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: windows-transfer-dump
-          path: build/transfer-dump/
+          path: |
+            build/transfer-dump/module-offsets.txt
+            build/transfer-dump/native-stack.txt
+            build/transfer-dump/capture-tool.txt
+            build/transfer-dump/modules/
           retention-days: 14
 
   lifecycle:
