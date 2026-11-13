@@ -105,7 +105,7 @@ jobs:
           @call "$vs/VC/Auxiliary/Build/vcvars64.bat"
           cl /nologo /LD /O2 build/native-stack/recorder.c /Febuild/native-stack/recorder.dll /link dbghelp.lib
           "@ | Set-Content build/native-stack/compile.cmd
-          cmd /c build/native-stack/compile.cmd
+          cmd /c build\native-stack\compile.cmd
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           @'
           import ctypes, pathlib, sys
