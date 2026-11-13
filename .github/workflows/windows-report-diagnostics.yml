@@ -15,13 +15,77 @@ on:
       scenario:
         description: "Diagnostic scenario"
         type: choice
-        options: [reports, volume, release, presets, lifecycle]
+        options: [reports, volume, release, presets, lifecycle, transfer_dump]
         default: reports
 
 permissions:
   contents: read
 
 jobs:
+  transfer_dump:
+    if: inputs.scenario == 'transfer_dump'
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: windows
+      QT_QUICK_BACKEND: software
+      PYTHONUTF8: "1"
+      PYTHONUNBUFFERED: "1"
+      UV_PROJECT_ENVIRONMENT: .venv-build-windows
+      VOXPLANE_QA_ITERATIONS: ${{ inputs.iterations }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          version: "0.11.26"
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Prepare signed Microsoft crash capture tool
+        shell: pwsh
+        run: |
+          ./scripts/prepare_windows_test_graphics.ps1
+          Set-DisplayResolution -Width 1920 -Height 1080 -Force
+          New-Item -ItemType Directory -Force build/transfer-dump/dumps, build/transfer-dump/modules | Out-Null
+          Invoke-WebRequest https://download.sysinternals.com/files/Procdump.zip -OutFile "$env:RUNNER_TEMP/Procdump.zip"
+          Expand-Archive "$env:RUNNER_TEMP/Procdump.zip" "$env:RUNNER_TEMP/Procdump"
+          $tool = "$env:RUNNER_TEMP/Procdump/procdump64.exe"
+          $signature = Get-AuthenticodeSignature $tool
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') { throw 'Unexpected ProcDump signature' }
+          Get-FileHash $tool | Format-List | Out-File build/transfer-dump/capture-tool.txt
+          "TRANSFER_DUMP_TOOL=$tool" | Out-File $env:GITHUB_ENV -Append
+          uv run --locked --python 3.13 --group dev --group build python -c "import sys; print(sys._base_executable)" | Set-Content build/transfer-dump/interpreter.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture native access violation with symbols and module images
+        shell: pwsh
+        run: |
+          $python = (Get-Content build/transfer-dump/interpreter.txt -Raw).Trim()
+          $env:PYTHONPATH = "$pwd/.venv-build-windows/Lib/site-packages;$pwd/src;$pwd/tests"
+          for ($iteration = 1; $iteration -le [int]$env:VOXPLANE_QA_ITERATIONS; $iteration++) {
+            & $env:TRANSFER_DUMP_TOOL -accepteula -e 1 -f C0000005 -mm -n 1 -k -x "$pwd/build/transfer-dump/dumps" $python -m pytest tests/test_toolbar_categories.py -vv -s --tb=short *> "build/transfer-dump/round-$iteration.log"
+            Get-Content "build/transfer-dump/round-$iteration.log"
+            if (Get-ChildItem build/transfer-dump/dumps -Filter '*.dmp') { break }
+          }
+          foreach ($name in 'Qt6Core.dll','Qt6Qml.dll','Qt6Quick.dll','Qt6QuickTemplates2.dll','Qt6QuickControls2.dll','pyside6.abi3.dll','QtCore.pyd','QtQml.pyd') {
+            Copy-Item ".venv-build-windows/Lib/site-packages/PySide6/$name" build/transfer-dump/modules -ErrorAction Continue
+          }
+          Copy-Item .venv-build-windows/Lib/site-packages/shiboken6/shiboken6.abi3.dll build/transfer-dump/modules
+          Copy-Item (Join-Path (Split-Path $python) 'python313.dll') build/transfer-dump/modules
+          $dump = Get-ChildItem build/transfer-dump/dumps -Filter '*.dmp' | Select-Object -First 1
+          if (-not $dump) { throw 'No access-violation dump captured; inspect round logs' }
+          $debugger = 'C:/Program Files (x86)/Windows Kits/10/Debuggers/x64/cdb.exe'
+          if (Test-Path $debugger) { & $debugger -z $dump.FullName -c '.ecxr; kb; q' *> build/transfer-dump/native-stack.txt }
+          exit 0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: windows-transfer-dump
+          path: build/transfer-dump/
+          retention-days: 14
+
   lifecycle:
     if: inputs.scenario == 'lifecycle'
     runs-on: windows-2022
