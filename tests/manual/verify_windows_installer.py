@@ -6,10 +6,18 @@ import shutil
 import subprocess
 import sys
 import time
-import winreg
+
+
+def verify_runtime_contents(runtime):
+    """PDF previews require QtPdf; unused browser and PDF UI modules stay out."""
+    assert (runtime / "PySide6/Qt6Pdf.dll").is_file(), "PDF preview runtime is missing"
+    assert not list(runtime.rglob("*WebEngine*")), "Unused WebEngine runtime"
+    for name in ("Qt6PdfWidgets.dll", "Qt6PdfQuick.dll"):
+        assert not list(runtime.rglob(name)), f"Unused PDF UI runtime: {name}"
 
 
 def main():
+    import winreg
     if (sys.platform != "win32" or os.environ.get("GITHUB_ACTIONS") != "true"
             or os.environ.get("RUNNER_OS") != "Windows"):
         raise SystemExit("Installer smoke is restricted to disposable GitHub Windows runners")
@@ -54,8 +62,7 @@ def main():
         install("in-place-upgrade")
         assert not stale.exists(), "Obsolete Qt files survived upgrade"
         assert user.read_bytes() == b"synthetic user file"
-        assert not list((current / "_internal").rglob("*WebEngine*"))
-        assert not list((current / "_internal").rglob("Qt6Pdf*.dll"))
+        verify_runtime_contents(current / "_internal")
         env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software")
         app = subprocess.Popen([str(current / "VoxPlane.exe")], env=env)
         try:
