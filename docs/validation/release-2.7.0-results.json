@@ -1,0 +1,928 @@
+{
+  "version": "2.7.0",
+  "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+  "mac": {
+    "full": {
+      "files": 314,
+      "counts": {
+        "tests": 4314,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 95
+      },
+      "failed": [],
+      "skipped_reasons": {
+        "Chinese PDF glyph coverage requires the native macOS or Windows font database": 1,
+        "Requires a native macOS or Windows desktop": 1,
+        "Desktop mouse-grab acceptance requires a native window platform": 1,
+        "requires native desktop window": 7,
+        "Requires a native desktop and VTK window": 1,
+        "Set VOXPLANE_MR_SAMPLE_DIR to the public sample directory": 14,
+        "Requires a native desktop OpenGL window": 9,
+        "Native first-exposure positioning needs a desktop window": 1,
+        "Opt-in OrbStack DIMSE lab": 10,
+        "Requires native caption and VTK windows": 1,
+        "Requires native macOS AppKit": 1,
+        "Requires a native VTK desktop window": 3,
+        "Native QVTK canvas": 1,
+        "Requires native VTK child windows": 2,
+        "Opt-in Docker PACS lab": 14,
+        "Needs native desktop and OpenGL": 1,
+        "Set VOXPLANE_COMPRESSED_SAMPLE_DIR to fixed public fixture directory": 5,
+        "Set VOXPLANE_COMPRESSED_SAMPLE_DIR": 1,
+        "PET intensity controls use the shared PET display controller": 1,
+        "Native Windows PowerShell handoff": 1,
+        "Native Windows PowerShell replacement": 2,
+        "Native Windows installer handoff and rollback": 2,
+        "Native VTK requires a desktop surface": 4,
+        "Requires native window controls": 2,
+        "Requires the native Windows desktop": 2,
+        "Set VOXPLANE_ENHANCED_CT_SAMPLE_DIR to the public sample directory": 2,
+        "Requires a native desktop OpenGL surface": 1,
+        "Requires native window capture": 1,
+        "Native views and captures": 3
+      }
+    },
+    "native": {
+      "files": 16,
+      "counts": {
+        "tests": 314,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    }
+  },
+  "windows": {
+    "controller-lifetimes": {
+      "files": 10,
+      "counts": {
+        "tests": 114,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "failed": [],
+      "skipped_reasons": {
+        "Desktop mouse-grab acceptance requires a native window platform": 1
+      }
+    },
+    "cpr-update-regressions": {
+      "files": 2,
+      "counts": {
+        "tests": 32,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "report-close-regressions": {
+      "files": 3,
+      "counts": {
+        "tests": 53,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    ".": {
+      "files": 314,
+      "counts": {
+        "tests": 4314,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 121
+      },
+      "failed": [],
+      "skipped_reasons": {
+        "Chinese PDF glyph coverage requires the native macOS or Windows font database": 1,
+        "POSIX ownership protocol": 7,
+        "Requires a native macOS or Windows desktop": 1,
+        "Desktop mouse-grab acceptance requires a native window platform": 1,
+        "requires native desktop window": 7,
+        "Requires a native desktop and VTK window": 1,
+        "Set VOXPLANE_MR_SAMPLE_DIR to the public sample directory": 14,
+        "Requires a native desktop OpenGL window": 9,
+        "Native first-exposure positioning needs a desktop window": 1,
+        "Opt-in OrbStack DIMSE lab": 10,
+        "Requires native caption and VTK windows": 1,
+        "Requires native macOS AppKit": 1,
+        "Requires a native VTK desktop window": 3,
+        "Local TotalSegmentator Python is not installed": 4,
+        "Local exchange Python is not installed": 1,
+        "Native QVTK canvas": 1,
+        "Release-job shell harness requires POSIX; direct Python helper tests run on Windows": 6,
+        "Exercises Ubuntu release-job bash and POSIX gh shim": 3,
+        "Chinese PDF glyph coverage runs against the native Windows font database": 5,
+        "Requires native VTK child windows": 2,
+        "Opt-in Docker PACS lab": 14,
+        "Needs native desktop and OpenGL": 1,
+        "Set VOXPLANE_COMPRESSED_SAMPLE_DIR to fixed public fixture directory": 5,
+        "Set VOXPLANE_COMPRESSED_SAMPLE_DIR": 1,
+        "PET intensity controls use the shared PET display controller": 1,
+        "Native macOS DMG and app replacement": 5,
+        "Native VTK requires a desktop surface": 4,
+        "Requires native window controls": 2,
+        "Requires the native Windows desktop": 2,
+        "Set VOXPLANE_ENHANCED_CT_SAMPLE_DIR to the public sample directory": 2,
+        "Requires a native desktop OpenGL surface": 1,
+        "Requires native window capture": 1,
+        "Native views and captures": 3
+      }
+    },
+    "transitions-1": {
+      "files": 8,
+      "counts": {
+        "tests": 98,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "transitions-2": {
+      "files": 8,
+      "counts": {
+        "tests": 98,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "transitions-3": {
+      "files": 8,
+      "counts": {
+        "tests": 98,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "viewport-presentation": {
+      "files": 2,
+      "counts": {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "failed": [],
+      "skipped_reasons": {
+        "Requires a native desktop OpenGL window": 3
+      }
+    },
+    "windows-d3d-scalar": {
+      "files": 1,
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-2.6": {
+      "files": 13,
+      "counts": {
+        "tests": 165,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-2.7": {
+      "files": 6,
+      "counts": {
+        "tests": 138,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-caption": {
+      "files": 1,
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-import": {
+      "files": 1,
+      "counts": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-import-chrome": {
+      "files": 1,
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-pdf": {
+      "files": 1,
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-popup-keys": {
+      "files": 2,
+      "counts": {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-transfers": {
+      "files": 3,
+      "counts": {
+        "tests": 63,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-volume": {
+      "files": 2,
+      "counts": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-native-workspace": {
+      "files": 1,
+      "counts": {
+        "tests": 32,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failed": [],
+      "skipped_reasons": {}
+    },
+    "windows-update-helper": {
+      "files": 1,
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 5
+      },
+      "failed": [],
+      "skipped_reasons": {
+        "Native macOS DMG and app replacement": 5
+      }
+    }
+  },
+  "mac_package": {
+    "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+    "version": "2.7.0",
+    "architecture": "arm64",
+    "sha256": "aba218a2a79262f69ed2e02b6fab6194d81b6970c9e885e5a0a95db8a1b4d0be",
+    "size": 132223926,
+    "signing": "ad-hoc; not notarized",
+    "resources_equal_to_source": [
+      "qml/assets/help/corners-voxplane-2.6.0.png",
+      "qml/assets/help/workspace-voxplane-2.6.0.png",
+      "qml/assets/help/water-qa-voxplane-2.6.0.png",
+      "qml/assets/help/en/corners-voxplane-2.6.0.png",
+      "qml/assets/help/en/workspace-voxplane-2.6.0.png",
+      "qml/assets/help/en/water-qa-voxplane-2.6.0.png",
+      "qml/shaders/scalar_display.frag.qsb",
+      "qml/sections/center/viewportArea/ScalarImage.qml"
+    ]
+  },
+  "windows_packages": {
+    "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+    "run_id": "43361874733",
+    "provenance_verified": true,
+    "portable_architecture": "x64",
+    "test_mesa_excluded": true,
+    "signing": "unsigned",
+    "upgrade": {
+      "status": "passed",
+      "candidate": "2.7.0",
+      "packages": {
+        "windows_portable": {
+          "status": "passed",
+          "baseline": "2.5.0",
+          "candidate": "2.7.0",
+          "installation": "manual_brand_migration",
+          "workspace_runtime": "passed",
+          "settings": "passed",
+          "old_client_update_button": "not_exercised"
+        },
+        "windows_installer": {
+          "status": "passed",
+          "baseline": "2.5.0",
+          "candidate": "2.7.0",
+          "installation": "manual_brand_migration",
+          "workspace_runtime": "passed",
+          "settings": "passed",
+          "old_client_update_button": "not_exercised"
+        }
+      },
+      "old_client_update_button": "not_exercised",
+      "baseline": "v2.5.0",
+      "baseline_manifest_sha256": "43480ba4dd3aa08a78b91b2fbdef40a0747da771a698fd0d3845b2528a8b7c8f"
+    },
+    "workspace_restored": [
+      "windows-installer/windows_portable/workspace-restored.json",
+      "windows-installer/windows_installer/workspace-restored.json"
+    ]
+  },
+  "mac_upgrade": {
+    "from": "2.6.0",
+    "to": "2.7.0",
+    "method": "real package with current update helper; isolated installation",
+    "old_client_button": "not_exercised",
+    "startup_health_acknowledged": true,
+    "old_workspace_restored": true,
+    "settings_preserved": true,
+    "package_sha256": "aba218a2a79262f69ed2e02b6fab6194d81b6970c9e885e5a0a95db8a1b4d0be"
+  },
+  "public_release": {
+    "tag": "v2.7.0",
+    "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+    "draft": false,
+    "url": "https://github.com/junforge-dev/voxplane/releases/tag/v2.7.0",
+    "assets": [
+      {
+        "name": "VoxPlane-2.7.0-macos-arm64.dmg",
+        "size": 132223926,
+        "digest": "sha256:aba218a2a79262f69ed2e02b6fab6194d81b6970c9e885e5a0a95db8a1b4d0be",
+        "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-macos-arm64.dmg"
+      },
+      {
+        "name": "VoxPlane-2.7.0-macos-arm64.dmg.sha256",
+        "size": 97,
+        "digest": "sha256:d0f3b5c60d6a7e38d5bbb429d9ce14feaceefa40df433a0b2237b72b272be411",
+        "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-macos-arm64.dmg.sha256"
+      },
+      {
+        "name": "VoxPlane-2.7.0-windows-x64-portable.exe",
+        "size": 208576451,
+        "digest": "sha256:7aaa70e1e9479a8a8f7c8542986e4bacf8be67dbc8344a889db4c9921402ee92",
+        "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-portable.exe"
+      },
+      {
+        "name": "VoxPlane-2.7.0-windows-x64-portable.exe.sha256",
+        "size": 106,
+        "digest": "sha256:89f25ab1c1c755d5e123f57c16af4fa4432f2f9418b980908a76d06df020813b",
+        "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-portable.exe.sha256"
+      },
+      {
+        "name": "VoxPlane-2.7.0-windows-x64-setup.exe",
+        "size": 131489345,
+        "digest": "sha256:62c11347a2c5861c0e8df833e2a33f4794f9a29fcffd87a90d1645dcab16ceef",
+        "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-setup.exe"
+      },
+      {
+        "name": "VoxPlane-2.7.0-windows-x64-setup.exe.sha256",
+        "size": 103,
+        "digest": "sha256:58b5c07c78b79e630e7b9c1805760575a22e2352c8f8e8ec6e2927036f70cd1a",
+        "browser_download_url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-setup.exe.sha256"
+      }
+    ]
+  },
+  "source_integrity": {
+    "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+    "tracked_blobs": 1965,
+    "unchanged": true
+  },
+  "bundle_integrity": {
+    "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+    "entries": 1805,
+    "mounted_equals_build": true
+  },
+  "resources": {
+    "count": 460,
+    "equal": true
+  },
+  "windows_resources": {
+    "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+    "count": 460,
+    "equal": true,
+    "comparison": "binary exact; UTF-8 text may normalize CRLF to LF",
+    "line_ending_only_differences": [
+      "voxplane/qml/Main.qml",
+      "voxplane/qml/assets/brand/voxplane-mark.svg",
+      "voxplane/qml/assets/cursors/annotate-arrow.svg",
+      "voxplane/qml/assets/cursors/annotate-text.svg",
+      "voxplane/qml/assets/cursors/crosshair-move.svg",
+      "voxplane/qml/assets/cursors/crosshair-rotate.svg",
+      "voxplane/qml/assets/cursors/fillColor.svg",
+      "voxplane/qml/assets/cursors/measure-angle.svg",
+      "voxplane/qml/assets/cursors/measure-curve.svg",
+      "voxplane/qml/assets/cursors/measure-ellipse.svg",
+      "voxplane/qml/assets/cursors/measure-freehand.svg",
+      "voxplane/qml/assets/cursors/measure-line.svg",
+      "voxplane/qml/assets/cursors/measure-rect.svg",
+      "voxplane/qml/assets/cursors/mtf.svg",
+      "voxplane/qml/assets/cursors/pan.svg",
+      "voxplane/qml/assets/cursors/qa.svg",
+      "voxplane/qml/assets/cursors/resize.svg",
+      "voxplane/qml/assets/cursors/rotate-3d.svg",
+      "voxplane/qml/assets/cursors/rotate.svg",
+      "voxplane/qml/assets/cursors/scroll.svg",
+      "voxplane/qml/assets/cursors/segmentation-erase.svg",
+      "voxplane/qml/assets/cursors/segmentation-paint.svg",
+      "voxplane/qml/assets/cursors/segmentation.svg",
+      "voxplane/qml/assets/cursors/strokeColor.svg",
+      "voxplane/qml/assets/cursors/voi.svg",
+      "voxplane/qml/assets/cursors/volume-crop.svg",
+      "voxplane/qml/assets/cursors/window.svg",
+      "voxplane/qml/assets/cursors/zoom.svg",
+      "voxplane/qml/assets/help/chapters/measure.json",
+      "voxplane/qml/assets/help/chapters/mpr-segmentation.json",
+      "voxplane/qml/assets/help/chapters/output.json",
+      "voxplane/qml/assets/help/chapters/pet.json",
+      "voxplane/qml/assets/help/chapters/service.json",
+      "voxplane/qml/assets/help/chapters/settings.json",
+      "voxplane/qml/assets/help/chapters/start.json",
+      "voxplane/qml/assets/help/chapters/views.json",
+      "voxplane/qml/assets/help/manual.json",
+      "voxplane/qml/assets/help/tutorials.json",
+      "voxplane/qml/assets/icons/README.md",
+      "voxplane/qml/assets/icons/add.svg",
+      "voxplane/qml/assets/icons/annotate-arrow.svg",
+      "voxplane/qml/assets/icons/annotate-text.svg",
+      "voxplane/qml/assets/icons/annotate.svg",
+      "voxplane/qml/assets/icons/auto-segmentation.svg",
+      "voxplane/qml/assets/icons/check.svg",
+      "voxplane/qml/assets/icons/chevron-down.svg",
+      "voxplane/qml/assets/icons/chevron-left.svg",
+      "voxplane/qml/assets/icons/chevron-right.svg",
+      "voxplane/qml/assets/icons/chevron-up.svg",
+      "voxplane/qml/assets/icons/cine-4d-play.svg",
+      "voxplane/qml/assets/icons/cine-4d-stop.svg",
+      "voxplane/qml/assets/icons/cine-pause.svg",
+      "voxplane/qml/assets/icons/cine-play.svg",
+      "voxplane/qml/assets/icons/cine-stop.svg",
+      "voxplane/qml/assets/icons/clear.svg",
+      "voxplane/qml/assets/icons/close.svg",
+      "voxplane/qml/assets/icons/copy.svg",
+      "voxplane/qml/assets/icons/cpr-path.svg",
+      "voxplane/qml/assets/icons/cpr-results.svg",
+      "voxplane/qml/assets/icons/crop-inside.svg",
+      "voxplane/qml/assets/icons/crop-outside.svg",
+      "voxplane/qml/assets/icons/crosshair-rotate.svg",
+      "voxplane/qml/assets/icons/delete.svg",
+      "voxplane/qml/assets/icons/export-dicom.svg",
+      "voxplane/qml/assets/icons/export-png.svg",
+      "voxplane/qml/assets/icons/export.svg",
+      "voxplane/qml/assets/icons/feedback.svg",
+      "voxplane/qml/assets/icons/folder.svg",
+      "voxplane/qml/assets/icons/fullscreen.svg",
+      "voxplane/qml/assets/icons/fusion.svg",
+      "voxplane/qml/assets/icons/fwhm.svg",
+      "voxplane/qml/assets/icons/github.svg",
+      "voxplane/qml/assets/icons/help.svg",
+      "voxplane/qml/assets/icons/hidden.svg",
+      "voxplane/qml/assets/icons/import.svg",
+      "voxplane/qml/assets/icons/info.svg",
+      "voxplane/qml/assets/icons/invert.svg",
+      "voxplane/qml/assets/icons/layout-bottom.svg",
+      "voxplane/qml/assets/icons/layout-columns.svg",
+      "voxplane/qml/assets/icons/layout-left.svg",
+      "voxplane/qml/assets/icons/layout-quad.svg",
+      "voxplane/qml/assets/icons/layout-right.svg",
+      "voxplane/qml/assets/icons/layout-rows.svg",
+      "voxplane/qml/assets/icons/layout-top.svg",
+      "voxplane/qml/assets/icons/locked.svg",
+      "voxplane/qml/assets/icons/manual.svg",
+      "voxplane/qml/assets/icons/measure-angle.svg",
+      "voxplane/qml/assets/icons/measure-curve.svg",
+      "voxplane/qml/assets/icons/measure-ellipse.svg",
+      "voxplane/qml/assets/icons/measure-freehand.svg",
+      "voxplane/qml/assets/icons/measure-line.svg",
+      "voxplane/qml/assets/icons/measure-rect.svg",
+      "voxplane/qml/assets/icons/measure.svg",
+      "voxplane/qml/assets/icons/mip.svg",
+      "voxplane/qml/assets/icons/mirror-h.svg",
+      "voxplane/qml/assets/icons/mirror-v.svg",
+      "voxplane/qml/assets/icons/more.svg",
+      "voxplane/qml/assets/icons/mtf.svg",
+      "voxplane/qml/assets/icons/nav-compare-2d.svg",
+      "voxplane/qml/assets/icons/nav-compare-mpr.svg",
+      "voxplane/qml/assets/icons/nav-load-file.svg",
+      "voxplane/qml/assets/icons/nav-pacs.svg",
+      "voxplane/qml/assets/icons/nav-view-2d.svg",
+      "voxplane/qml/assets/icons/nav-view-3d.svg",
+      "voxplane/qml/assets/icons/nav-view-4d.svg",
+      "voxplane/qml/assets/icons/nav-view-mpr.svg",
+      "voxplane/qml/assets/icons/nav-view-tag.svg",
+      "voxplane/qml/assets/icons/nav-view-tile.svg",
+      "voxplane/qml/assets/icons/open-folder.svg",
+      "voxplane/qml/assets/icons/palette.svg",
+      "voxplane/qml/assets/icons/pan.svg",
+      "voxplane/qml/assets/icons/pet-window.svg",
+      "voxplane/qml/assets/icons/pseudocolor.svg",
+      "voxplane/qml/assets/icons/qa.svg",
+      "voxplane/qml/assets/icons/redo.svg",
+      "voxplane/qml/assets/icons/registration.svg",
+      "voxplane/qml/assets/icons/remove-bed.svg",
+      "voxplane/qml/assets/icons/reset.svg",
+      "voxplane/qml/assets/icons/rotate-3d-variant.svg",
+      "voxplane/qml/assets/icons/rotate-3d.svg",
+      "voxplane/qml/assets/icons/rotate-ccw90.svg",
+      "voxplane/qml/assets/icons/rotate-cw90.svg",
+      "voxplane/qml/assets/icons/rotate.svg",
+      "voxplane/qml/assets/icons/save.svg",
+      "voxplane/qml/assets/icons/scroll.svg",
+      "voxplane/qml/assets/icons/segmentation.svg",
+      "voxplane/qml/assets/icons/service.svg",
+      "voxplane/qml/assets/icons/settings.svg",
+      "voxplane/qml/assets/icons/shield.svg",
+      "voxplane/qml/assets/icons/slice-next.svg",
+      "voxplane/qml/assets/icons/slice-previous.svg",
+      "voxplane/qml/assets/icons/star-filled.svg",
+      "voxplane/qml/assets/icons/star.svg",
+      "voxplane/qml/assets/icons/status-pending.svg",
+      "voxplane/qml/assets/icons/tab-close-all.svg",
+      "voxplane/qml/assets/icons/tab-close-others.svg",
+      "voxplane/qml/assets/icons/tab-close-right.svg",
+      "voxplane/qml/assets/icons/tab-detach.svg",
+      "voxplane/qml/assets/icons/tab-return.svg",
+      "voxplane/qml/assets/icons/undo.svg",
+      "voxplane/qml/assets/icons/unlocked.svg",
+      "voxplane/qml/assets/icons/view-tile.svg",
+      "voxplane/qml/assets/icons/viewport-settings.svg",
+      "voxplane/qml/assets/icons/visible.svg",
+      "voxplane/qml/assets/icons/voi.svg",
+      "voxplane/qml/assets/icons/volume-bed.svg",
+      "voxplane/qml/assets/icons/volume-crop.svg",
+      "voxplane/qml/assets/icons/window.svg",
+      "voxplane/qml/assets/icons/workspace.svg",
+      "voxplane/qml/assets/icons/zoom.svg",
+      "voxplane/qml/assets/languages/en-US.json",
+      "voxplane/qml/assets/languages/pt-BR.json",
+      "voxplane/qml/assets/languages/zh-CN.json",
+      "voxplane/qml/components/AppButton.qml",
+      "voxplane/qml/components/AppCheckBox.qml",
+      "voxplane/qml/components/AppComboBox.qml",
+      "voxplane/qml/components/AppDateField.qml",
+      "voxplane/qml/components/AppDialog.qml",
+      "voxplane/qml/components/AppDialogFooter.qml",
+      "voxplane/qml/components/AppIcon.qml",
+      "voxplane/qml/components/AppLinkButton.qml",
+      "voxplane/qml/components/AppNumberField.qml",
+      "voxplane/qml/components/AppScrollBar.qml",
+      "voxplane/qml/components/AppSlider.qml",
+      "voxplane/qml/components/AppTextField.qml",
+      "voxplane/qml/components/AppToolTip.qml",
+      "voxplane/qml/components/ApplicationTitleBar.qml",
+      "voxplane/qml/components/ColorMapIcon.qml",
+      "voxplane/qml/components/DelayedActivity.qml",
+      "voxplane/qml/components/DialogKeys.qml",
+      "voxplane/qml/components/HelpButton.qml",
+      "voxplane/qml/components/MDI_NOTICE.md",
+      "voxplane/qml/components/ModalityBadge.qml",
+      "voxplane/qml/components/PanelHeading.qml",
+      "voxplane/qml/components/PopupScope.qml",
+      "voxplane/qml/components/PopupShortcuts.js",
+      "voxplane/qml/components/ReadingShortcuts.qml",
+      "voxplane/qml/components/RecoveryLocationPopup.qml",
+      "voxplane/qml/components/ScreenshotOptions.qml",
+      "voxplane/qml/components/ScrollFocus.js",
+      "voxplane/qml/components/SelectableText.qml",
+      "voxplane/qml/components/SeriesDragArea.qml",
+      "voxplane/qml/components/SeriesViewShortcuts.qml",
+      "voxplane/qml/components/ShortcutCaption.js",
+      "voxplane/qml/components/ShortcutLabel.qml",
+      "voxplane/qml/components/ToolFlyout.qml",
+      "voxplane/qml/components/ToolbarAction.qml",
+      "voxplane/qml/components/WidthResizeHandle.qml",
+      "voxplane/qml/components/WorkspaceSaveIndicator.qml",
+      "voxplane/qml/sections/CompactSeriesRail.qml",
+      "voxplane/qml/sections/CompareSeriesDialog.qml",
+      "voxplane/qml/sections/ExportDialog.qml",
+      "voxplane/qml/sections/FeedbackDialog.qml",
+      "voxplane/qml/sections/FusionSeriesDialog.qml",
+      "voxplane/qml/sections/ImportTaskDialog.qml",
+      "voxplane/qml/sections/LeftPanel.qml",
+      "voxplane/qml/sections/RightPanel.qml",
+      "voxplane/qml/sections/SidebarContainer.qml",
+      "voxplane/qml/sections/UpdateDialog.qml",
+      "voxplane/qml/sections/WorkspaceDialog.qml",
+      "voxplane/qml/sections/center/CenterPanel.qml",
+      "voxplane/qml/sections/center/TabBarSection.qml",
+      "voxplane/qml/sections/center/TabDragPreview.qml",
+      "voxplane/qml/sections/center/TagPanel.qml",
+      "voxplane/qml/sections/center/WorkspaceEmptyState.qml",
+      "voxplane/qml/sections/center/WorkspaceLoadingState.qml",
+      "voxplane/qml/sections/center/viewportArea/ColorBar.qml",
+      "voxplane/qml/sections/center/viewportArea/CompareMprViewportLayout.qml",
+      "voxplane/qml/sections/center/viewportArea/CprPage.qml",
+      "voxplane/qml/sections/center/viewportArea/CprPathOverlay.qml",
+      "voxplane/qml/sections/center/viewportArea/CrosshairLayer.qml",
+      "voxplane/qml/sections/center/viewportArea/CursorGlyph.qml",
+      "voxplane/qml/sections/center/viewportArea/CursorPolicy.js",
+      "voxplane/qml/sections/center/viewportArea/DirectionOverlay.qml",
+      "voxplane/qml/sections/center/viewportArea/ImageCanvas.qml",
+      "voxplane/qml/sections/center/viewportArea/InteractionLayer.qml",
+      "voxplane/qml/sections/center/viewportArea/LabelPlacement.js",
+      "voxplane/qml/sections/center/viewportArea/MontageViewport.qml",
+      "voxplane/qml/sections/center/viewportArea/MprReferenceViewport.qml",
+      "voxplane/qml/sections/center/viewportArea/MprSlabGuideLayer.qml",
+      "voxplane/qml/sections/center/viewportArea/MprVoiOverlay.qml",
+      "voxplane/qml/sections/center/viewportArea/Overlay.qml",
+      "voxplane/qml/sections/center/viewportArea/ScalarImage.qml",
+      "voxplane/qml/sections/center/viewportArea/ScaleBar.qml",
+      "voxplane/qml/sections/center/viewportArea/SegmentationMaskImage.qml",
+      "voxplane/qml/sections/center/viewportArea/SliceSlider.qml",
+      "voxplane/qml/sections/center/viewportArea/TextAnnotationLayer.qml",
+      "voxplane/qml/sections/center/viewportArea/TwoDViewSelector.qml",
+      "voxplane/qml/sections/center/viewportArea/TwoDViewportLayout.qml",
+      "voxplane/qml/sections/center/viewportArea/Viewport.qml",
+      "voxplane/qml/sections/center/viewportArea/ViewportFrame.qml",
+      "voxplane/qml/sections/center/viewportArea/ViewportLayout.qml",
+      "voxplane/qml/sections/center/viewportArea/ViewportPinchHandler.qml",
+      "voxplane/qml/sections/center/viewportArea/VolumeViewport.qml",
+      "voxplane/qml/sections/center/viewportArea/WaterQaOverlay.qml",
+      "voxplane/qml/sections/center/viewportArea/measurementLayer/AngleMeasurementItem.qml",
+      "voxplane/qml/sections/center/viewportArea/measurementLayer/LengthMeasurementItem.qml",
+      "voxplane/qml/sections/center/viewportArea/measurementLayer/MeasurementItem.qml",
+      "voxplane/qml/sections/center/viewportArea/measurementLayer/MeasurementLayer.qml",
+      "voxplane/qml/sections/center/viewportArea/measurementLayer/RoiMeasurementItem.qml",
+      "voxplane/qml/sections/center/viewportArea/measurementLayer/RoiMetricCard.qml",
+      "voxplane/qml/sections/manual/ManualNavigation.qml",
+      "voxplane/qml/sections/manual/ManualScreenshot.qml",
+      "voxplane/qml/sections/manual/OperationManual.qml",
+      "voxplane/qml/sections/manual/VoiManualFigure.qml",
+      "voxplane/qml/sections/pacs/PacsBrowser.qml",
+      "voxplane/qml/sections/right/CompactToolRail.qml",
+      "voxplane/qml/sections/right/PrimaryToolBar.qml",
+      "voxplane/qml/sections/right/ToolDetailPanel.qml",
+      "voxplane/qml/sections/right/ToolLabels.js",
+      "voxplane/qml/sections/right/ToolResetBar.qml",
+      "voxplane/qml/sections/right/components/CprActions.qml",
+      "voxplane/qml/sections/right/components/ToolActionButton.qml",
+      "voxplane/qml/sections/right/panels/AnalysisInfoPopup.qml",
+      "voxplane/qml/sections/right/panels/AnnotatePanel.qml",
+      "voxplane/qml/sections/right/panels/AutomaticSegmentationDialog.qml",
+      "voxplane/qml/sections/right/panels/CompareMprPanel.qml",
+      "voxplane/qml/sections/right/panels/CprExportPanel.qml",
+      "voxplane/qml/sections/right/panels/CprPanel.qml",
+      "voxplane/qml/sections/right/panels/CprParameterField.qml",
+      "voxplane/qml/sections/right/panels/ExportPanel.qml",
+      "voxplane/qml/sections/right/panels/FusionBlendPanel.qml",
+      "voxplane/qml/sections/right/panels/FusionCtWindowPanel.qml",
+      "voxplane/qml/sections/right/panels/FwhmResults.qml",
+      "voxplane/qml/sections/right/panels/ImportPanel.qml",
+      "voxplane/qml/sections/right/panels/MeasurePanel.qml",
+      "voxplane/qml/sections/right/panels/MeasurementResults.qml",
+      "voxplane/qml/sections/right/panels/MipPanel.qml",
+      "voxplane/qml/sections/right/panels/MprLayoutPanel.qml",
+      "voxplane/qml/sections/right/panels/MprVoiPanel.qml",
+      "voxplane/qml/sections/right/panels/MtfChart.qml",
+      "voxplane/qml/sections/right/panels/MtfResults.qml",
+      "voxplane/qml/sections/right/panels/PetColorPanel.qml",
+      "voxplane/qml/sections/right/panels/PetIntensityPanel.qml",
+      "voxplane/qml/sections/right/panels/PetRegistrationPanel.qml",
+      "voxplane/qml/sections/right/panels/PetVolumePanel.qml",
+      "voxplane/qml/sections/right/panels/PetWorkspacePanel.qml",
+      "voxplane/qml/sections/right/panels/PlaybackPanel.qml",
+      "voxplane/qml/sections/right/panels/PseudoColorPanel.qml",
+      "voxplane/qml/sections/right/panels/RampProfileChart.qml",
+      "voxplane/qml/sections/right/panels/ReportDialog.qml",
+      "voxplane/qml/sections/right/panels/RoiGeometryEditor.qml",
+      "voxplane/qml/sections/right/panels/RotateToolPanel.qml",
+      "voxplane/qml/sections/right/panels/ScalarMappingPanel.qml",
+      "voxplane/qml/sections/right/panels/ScreenshotPreviewDialog.qml",
+      "voxplane/qml/sections/right/panels/ScrollToolPanel.qml",
+      "voxplane/qml/sections/right/panels/SegmentationDisplaySettings.qml",
+      "voxplane/qml/sections/right/panels/ServicePanel.qml",
+      "voxplane/qml/sections/right/panels/StandalonePetVolumePanel.qml",
+      "voxplane/qml/sections/right/panels/TwoDLayoutPanel.qml",
+      "voxplane/qml/sections/right/panels/ViewportSettingsPanel.qml",
+      "voxplane/qml/sections/right/panels/VolumeCropPanel.qml",
+      "voxplane/qml/sections/right/panels/VolumeDirectionPanel.qml",
+      "voxplane/qml/sections/right/panels/VolumePresetPanel.qml",
+      "voxplane/qml/sections/right/panels/WaterQaResults.qml",
+      "voxplane/qml/sections/right/panels/WindowLevelToolPanel.qml",
+      "voxplane/qml/sections/right/panels/ZoomToolPanel.qml",
+      "voxplane/qml/sections/settings/AiSettingsPage.qml",
+      "voxplane/qml/sections/settings/AppearanceSettingsPage.qml",
+      "voxplane/qml/sections/settings/ColorMapsPage.qml",
+      "voxplane/qml/sections/settings/CornerLayoutEditor.qml",
+      "voxplane/qml/sections/settings/CornerSettingsPage.qml",
+      "voxplane/qml/sections/settings/CrosshairSettingsPage.qml",
+      "voxplane/qml/sections/settings/DataSourcesPage.qml",
+      "voxplane/qml/sections/settings/DisplaySettingsPage.qml",
+      "voxplane/qml/sections/settings/ExportPresetPicker.qml",
+      "voxplane/qml/sections/settings/ExportSettingsPage.qml",
+      "voxplane/qml/sections/settings/GradientStrip.qml",
+      "voxplane/qml/sections/settings/InitialDisplaySettings.qml",
+      "voxplane/qml/sections/settings/InputSettingsPage.qml",
+      "voxplane/qml/sections/settings/LocalSegmentationSettings.qml",
+      "voxplane/qml/sections/settings/MeasurementCardPreview.qml",
+      "voxplane/qml/sections/settings/MeasurementSettingsPage.qml",
+      "voxplane/qml/sections/settings/PacsProfileDialog.qml",
+      "voxplane/qml/sections/settings/PresetPreview.qml",
+      "voxplane/qml/sections/settings/PrivacySettingsPage.qml",
+      "voxplane/qml/sections/settings/ReportSettingsContent.qml",
+      "voxplane/qml/sections/settings/ReportSettingsPage.qml",
+      "voxplane/qml/sections/settings/RoiSettingsPage.qml",
+      "voxplane/qml/sections/settings/ScaleSettingsPage.qml",
+      "voxplane/qml/sections/settings/ScreenshotSettingsPage.qml",
+      "voxplane/qml/sections/settings/SectionState.js",
+      "voxplane/qml/sections/settings/ServiceToolsSettingsPage.qml",
+      "voxplane/qml/sections/settings/SettingColor.qml",
+      "voxplane/qml/sections/settings/SettingSlider.qml",
+      "voxplane/qml/sections/settings/SettingsPage.qml",
+      "voxplane/qml/sections/settings/SettingsSearchIndex.js",
+      "voxplane/qml/sections/settings/SettingsSection.qml",
+      "voxplane/qml/sections/settings/SettingsSplit.qml",
+      "voxplane/qml/sections/settings/ToolbarEditorTile.qml",
+      "voxplane/qml/sections/settings/ToolbarOrderList.qml",
+      "voxplane/qml/sections/settings/ToolbarSettingsPage.qml",
+      "voxplane/qml/sections/settings/UpdateSettingsPage.qml",
+      "voxplane/qml/sections/settings/WindowTemplatesPage.qml",
+      "voxplane/qml/sections/settings/WorkspaceSettingsPage.qml",
+      "voxplane/qml/shaders/README.md",
+      "voxplane/qml/shaders/scalar_display.frag",
+      "voxplane/qml/theme/I18n.qml",
+      "voxplane/qml/theme/PaletteData.js",
+      "voxplane/qml/theme/Theme.qml",
+      "voxplane/qml/theme/palettes.json",
+      "voxplane/qml/theme/qmldir"
+    ]
+  },
+  "browser": {
+    "languages": 2,
+    "widths": [
+      375,
+      768,
+      1280,
+      1920
+    ],
+    "layout_checks": 32,
+    "task_navigation_search_keyboard_pagination_language": "passed"
+  },
+  "metal": {
+    "passed": 4
+  },
+  "frozen_mac_codecs": {
+    "passed": 4
+  },
+  "windows_settings_reproducer": {
+    "before_run": "43222914450",
+    "warning_failures": 7,
+    "access_violations": 1,
+    "after_run": "43226213846",
+    "passed": 100,
+    "skipped": 0
+  },
+  "tab_transfer_regression": {
+    "commit": "d1411d5a5d715db728c5f4e2370c5f1634a85c44",
+    "run": "43359906123",
+    "all_passed": true,
+    "rounds": 48,
+    "tests": 1104,
+    "configurations": [
+      {
+        "platform": "offscreen",
+        "finish_pending": "no",
+        "rounds": 12,
+        "tests": 276,
+        "skipped": 0
+      },
+      {
+        "platform": "offscreen",
+        "finish_pending": "yes",
+        "rounds": 12,
+        "tests": 276,
+        "skipped": 0
+      },
+      {
+        "platform": "windows",
+        "finish_pending": "no",
+        "rounds": 12,
+        "tests": 276,
+        "skipped": 0
+      },
+      {
+        "platform": "windows",
+        "finish_pending": "yes",
+        "rounds": 12,
+        "tests": 276,
+        "skipped": 0
+      }
+    ],
+    "same_product_and_test_trees_as_final": true
+  },
+  "expanded_tab_test_budget": {
+    "run": 43361449086,
+    "commit": "d1411d5a5d715db728c5f4e2370c5f1634a85c44",
+    "tests": 40,
+    "skipped": 1,
+    "seconds": 205.538,
+    "failures": 0,
+    "errors": 0,
+    "old_timeout": 180,
+    "new_timeout": 300
+  },
+  "visual_review": {
+    "commit": "b985fc4dbb75cd507b11fecea51af6f36aebfd3d",
+    "method": "Viewed actual native QQuickWindow captures",
+    "screens": [
+      "report-graphite-1800.png",
+      "screenshot-dark-1800.png",
+      "initialDisplay-light-1800.png"
+    ],
+    "result": "Preview area enlarged; proportional rendering; readable aligned corner information; no obscuring desktop windows; controls and preview separated clearly"
+  },
+  "public_download_links": [
+    {
+      "name": "VoxPlane-2.7.0-macos-arm64.dmg",
+      "url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-macos-arm64.dmg",
+      "unauthenticated_status": 200,
+      "size": 132223926
+    },
+    {
+      "name": "VoxPlane-2.7.0-macos-arm64.dmg.sha256",
+      "url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-macos-arm64.dmg.sha256",
+      "unauthenticated_status": 200,
+      "size": 97
+    },
+    {
+      "name": "VoxPlane-2.7.0-windows-x64-portable.exe",
+      "url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-portable.exe",
+      "unauthenticated_status": 200,
+      "size": 208576451
+    },
+    {
+      "name": "VoxPlane-2.7.0-windows-x64-portable.exe.sha256",
+      "url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-portable.exe.sha256",
+      "unauthenticated_status": 200,
+      "size": 106
+    },
+    {
+      "name": "VoxPlane-2.7.0-windows-x64-setup.exe",
+      "url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-setup.exe",
+      "unauthenticated_status": 200,
+      "size": 131489345
+    },
+    {
+      "name": "VoxPlane-2.7.0-windows-x64-setup.exe.sha256",
+      "url": "https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-setup.exe.sha256",
+      "unauthenticated_status": 200,
+      "size": 103
+    }
+  ],
+  "old_update_parser_equivalence": {
+    "src/voxplane/core/app_updates.py": true,
+    "src/voxplane/core/release_notes.py": true
+  },
+  "previous_client_release_parsing": {
+    "version": "2.6.0",
+    "platforms": 3,
+    "languages": 2,
+    "passed": true,
+    "old_client_button": "not_exercised"
+  }
+}

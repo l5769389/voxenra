@@ -1,18 +1,63 @@
 # VoxPlane 2.7.0 发布验收
 
-本版基于 v2.6.0。候选提交固定后重新执行完整回归、受影响原生界面、macOS 打包和 Windows Actions。最终运行、包哈希与跳过原因在发布后的验收补充中记录；本文件不预先宣称尚未执行的检查通过。
+日期：2026-11-13。安装包来源提交：`b985fc4dbb75cd507b11fecea51af6f36aebfd3d`。
 
-| 用户要求 | 实现与验收入口 |
+[正式版本](https://github.com/junforge-dev/voxplane/releases/tag/v2.7.0) · [Windows 完整验收](https://github.com/junforge-dev/voxplane/actions/runs/43361874733) · [机器可读结果](release-2.7.0-results.json)
+
+## 功能与验证范围
+
+| 本版内容 | 主要验证 |
 | --- | --- |
-| 显示默认值与具体窗值 | initial_display / presets_settings_qml / mr |
-| 截图预设、实际预览、保存相同内容 | screenshot_presets / screenshot_preview / export_presets |
-| 报告选项、窄设置栏与大预览 | report_presets / report_dialog_qml / presets_settings_qml |
-| 镜像、旋转、重置与测量 | measurement_qml / free_rotation_qml / annotation_clipboard |
-| 菜单内快捷键与弹窗隔离 | reading_menu_shortcuts / popup_shortcut_isolation |
-| QA 撤销恢复与实际圆尺寸 | qa_audit_regressions / water_qa_qml |
-| MPR 半体素画笔 | segmentation_half_voxel / segmentation_render_cache |
-| 教程与主页 | manual_tasks / manual_tasks_site / manual_site / 浏览器布局与任务导航 |
-| 固定构建提交与不可变正式附件 | windows_release_integrity / package_upgrade_gate / Windows provenance |
-| 旧工作区与设置迁移 | packaged_workspace_check / pinned baseline Windows package upgrade |
+| 影像初始显示与预设 | 源窗值默认、WW/WL 明示、保存与删除预设、窄窗口及三种主题 |
+| 截图与报告 | 输出预览、比例与版式、匿名及署名选项、中文 PDF、保存内容与预览一致 |
+| 旋转、镜像、重置及快捷键 | 测量跟随图像变换、视口状态隔离、输入框及弹窗快捷键优先 |
+| QA | 撤销后的自动计算、圆形尺寸、报告内容与工作区恢复 |
+| 教程与网站 | 同源生成、任务导航、步骤搜索、旧章节入口、双语及响应式布局 |
+| 页签与对象生命周期 | 设置/PACS 分离后返回影像、工具恢复、设置页快速关闭重开、PDF 读取器释放 |
 
-本版保留现有工作区格式，不修改 MTF、FWHM、QA 计算算法。macOS 为 ad-hoc 签名且未公证；Windows 无 Authenticode 签名。外部 PACS、可选影像样本、其他硬件及原生平台测试按实际执行范围分别记录。
+## 合并与构建顺序
+
+先将功能分支合入 main，并核对旧发布分支均已合并，再删除本地及远端多余分支。最终 Mac 包和 Windows 运行均在此后从同一 main 提交构建；未复用合并前的包。保留已有工作树与未提交的历史验证资料。
+
+## 最终候选测试
+
+- macOS 完整测试：314 个文件，4219 通过、95 条件跳过，0 失败／错误，进程退出码 0。
+- macOS 受影响原生界面：16 个文件，314 通过、0 条件跳过，0 失败／错误，进程退出码 0。测试实际移动鼠标与切换焦点；对最终提交重新执行，未沿用旧候选的通过结果。
+- Windows 完整测试：314 个文件，4193 通过、121 条件跳过，0 失败／错误，进程退出码 0。额外的原生、重复切换、生命周期和安装测试分别记录在结果 JSON。
+- Windows 必测原生阶段没有用跳过代替通过；Direct3D 灰度着色器与原生导出预设检查通过。
+- Mac Metal 灰度显示 4 项通过；实际冻结应用的 RLE、JPEG-LS、JPEG 2000、JPEG 解码 4 项通过。Windows 安装版和便携版也执行冻结应用解码验证。
+- 打包后 460 个 QML、教程与着色器资源与源码一致；Windows 文本按平台换行符归一化比较，图片与编译后的着色器按字节比较。测试专用 Mesa 驱动未进入 Windows 便携包。
+- 双语网站生成 39 章；375、768、1280、1920 像素宽度下 32 项布局检查通过。搜索、清空、任务入口、键盘导航、分页和语言切换通过。
+
+完整测试中的条件跳过主要涉及其他操作系统、需原生窗口的独立验收、可选外部 PACS 和未配置的额外影像样本。每个跳过原因及数量见结果 JSON；没有将这些项目写成已通过。
+
+## 发布前修复与回归
+
+- Windows 报告预览未及时销毁 PDF 读取器，导致临时文件仍被占用；修复销毁时序并补充通知前释放回归。测试文件 URL 改为平台正确的本地路径转换。
+- 设置/PACS 页签分离时，隐藏的操作栏持有正在销毁页面的导出对象；限制为可见时引用，并验证独立窗口重新打开影像后缩放工具恢复。修复前运行 [43213631491](https://github.com/junforge-dev/voxplane/actions/runs/43213631491) 失败，修复后 [43215223737](https://github.com/junforge-dev/voxplane/actions/runs/43215223737) 通过。
+- Windows 设置页异步构建期间的弹窗对象失效：独立诊断 [43222914450](https://github.com/junforge-dev/voxplane/actions/runs/43222914450) 连续 8 轮复现，其中 7 轮警告失败、1 轮访问冲突。设置页改为完整构建弹窗树后再显示，补充打开阶段及快速关闭重开检查；[43226213846](https://github.com/junforge-dev/voxplane/actions/runs/43226213846) 连续 4 轮共 100 项通过、0 跳过，最终提交另行完整验收。
+- 页签切换时先发布匹配的新视口，避免 active-tab 通知期间混用旧视口；确认弹窗测试改为等真实弹窗创建后再操作，并加入 250 ms 延迟派发回归。
+- Windows 页签分离崩溃通过 [原生调用栈诊断](https://github.com/junforge-dev/voxplane/actions/runs/43358974636) 定位到 Repeater 更新模型时的孵化对象清理。旧 MPR 页面在销毁前收到新 2D 页签的视口列表；新增用例修复前失败、修复后通过。页面改为固定自己的视口集合并仅跟随自己的活动视口。修复提交 d1411d5 的 [48 轮回归](https://github.com/junforge-dev/voxplane/actions/runs/43359906123) 全部通过；该提交与最终提交的产品源码及测试目录一致，最终提交另执行完整平台测试。诊断只保留函数地址，不上传进程内存。
+- 页签测试扩充到 40 项后，原 180 秒预算不足；[独立诊断](https://github.com/junforge-dev/voxplane/actions/runs/43361449086) 实际完成约 206 秒，0 失败。仅将该阶段单文件预算改为 300 秒，并对最终提交重新完整验收。
+- 完整双语媒体编码保留所有检查，Windows 单文件测试预算由 300 秒调整至 900 秒。没有过滤 Qt 警告或把失败测试改成跳过。
+
+- 安装包验收中旧规则错误禁止了报告预览必需的 Qt PDF 核心库；改为明确要求核心库并排除未使用的 WebEngine/PDF UI 组件，补充 4 项回归。随后从 main 重新打包与验收。
+
+## 安装与升级边界
+
+- macOS：实际 2.6.0 应用在隔离目录通过当前更新辅助程序替换为本版 DMG，完成启动确认及旧工作区恢复。主题设置、原始像素、10 mm 测量、5 个 QA 圆和 20 mm CPR 路径保留。未替换日常安装的应用。
+- Windows：安装版与单文件便携版均以固定、校验过的 2.5.0 包为迁移基线，实际新包启动并恢复旧工作区，分别生成 `workspace-restored.json`；`package-upgrade.json` 为 passed。另验收默认安装目录与覆盖安装。
+- 旧客户端“更新”按钮完整交互为 `not_exercised`；安装迁移及当前辅助程序成功不等同于旧按钮全流程通过。2.6.0 客户端对正式 Release 的版本、摘要和三平台附件解析另行核验。
+- Windows 验收运行在 GitHub Actions Windows 云主机，不能代表所有显卡、医院 PACS 或外部数据。
+
+## 发布附件
+
+三个安装包与三个校验文件先上传草稿，逐个完整下载并核对来源提交、大小和 SHA-256，再公开发布；公开后再次下载复核。macOS 为 Apple Silicon、ad-hoc 签名且未公证；Windows x64 未作 Authenticode 签名。
+
+| 安装包 | SHA-256 |
+| --- | --- |
+| VoxPlane-2.7.0-macos-arm64.dmg | `aba218a2a79262f69ed2e02b6fab6194d81b6970c9e885e5a0a95db8a1b4d0be` |
+| VoxPlane-2.7.0-windows-x64-portable.exe | `7aaa70e1e9479a8a8f7c8542986e4bacf8be67dbc8344a889db4c9921402ee92` |
+| VoxPlane-2.7.0-windows-x64-setup.exe | `62c11347a2c5861c0e8df833e2a33f4794f9a29fcffd87a90d1645dcab16ceef` |
+
+发布后的下载入口与验收记录提交不改变上述安装包来源。

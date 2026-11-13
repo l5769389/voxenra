@@ -1,7 +1,7 @@
 {
-  "version": "2.6.0",
-  "tag": "v2.6.0",
-  "macos": "VoxPlane-2.6.0-macos-arm64.dmg",
-  "windows_installer": "VoxPlane-2.6.0-windows-x64-setup.exe",
-  "windows_portable": "VoxPlane-2.6.0-windows-x64-portable.exe"
+  "version": "2.7.0",
+  "tag": "v2.7.0",
+  "macos": "VoxPlane-2.7.0-macos-arm64.dmg",
+  "windows_installer": "VoxPlane-2.7.0-windows-x64-setup.exe",
+  "windows_portable": "VoxPlane-2.7.0-windows-x64-portable.exe"
 }

@@ -10,7 +10,7 @@
 
 A cross-platform DICOM workspace for CT, MR, and PET viewing, reconstruction, fusion, measurement, and segmentation. Includes **local AI auto-segmentation with TotalSegmentator**, with results ready to review, refine, and save.
 
-[macOS · Apple Silicon](https://github.com/junforge-dev/voxplane/releases/download/v2.6.0/VoxPlane-2.6.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/junforge-dev/voxplane/releases/download/v2.6.0/VoxPlane-2.6.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/junforge-dev/voxplane/releases/download/v2.6.0/VoxPlane-2.6.0-windows-x64-portable.exe) · [Releases](https://github.com/junforge-dev/voxplane/releases)
+[macOS · Apple Silicon](https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-macos-arm64.dmg) · [Windows · Installer](https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-setup.exe) · [Windows · Portable](https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-portable.exe) · [Releases](https://github.com/junforge-dev/voxplane/releases)
 
 
 VoxPlane is the new name for Voxenra, with the same logo. Version 2.5.0 and earlier require a one-time manual installation. First launch copies existing settings and workspace records while preserving the originals. See [upgrade notes](docs/releases/v2.6.0.md).

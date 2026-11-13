@@ -10,7 +10,7 @@
 
 面向 CT、MR 与 PET 的跨平台 DICOM 工作台，集阅片、三维重建、影像融合与测量分割于一体。支持 **基于 TotalSegmentator 的本地 AI 自动分割**，结果可直接查看、精修和保存。
 
-[macOS · Apple Silicon](https://github.com/junforge-dev/voxplane/releases/download/v2.6.0/VoxPlane-2.6.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/junforge-dev/voxplane/releases/download/v2.6.0/VoxPlane-2.6.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/junforge-dev/voxplane/releases/download/v2.6.0/VoxPlane-2.6.0-windows-x64-portable.exe) · [版本记录](https://github.com/junforge-dev/voxplane/releases)
+[macOS · Apple Silicon](https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-macos-arm64.dmg) · [Windows · 安装版](https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-setup.exe) · [Windows · 便携版](https://github.com/junforge-dev/voxplane/releases/download/v2.7.0/VoxPlane-2.7.0-windows-x64-portable.exe) · [版本记录](https://github.com/junforge-dev/voxplane/releases)
 
 
 VoxPlane 是 Voxenra 的新名称，Logo 保持不变。2.5.0 及更早版本需要手动安装一次新版本；首次启动自动复制旧设置与工作区记录，原文件保留。详见 [升级说明](docs/releases/v2.6.0.md)。
