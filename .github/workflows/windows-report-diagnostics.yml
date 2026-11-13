@@ -67,6 +67,7 @@ jobs:
           @'
           import os
           from PySide6.QtCore import QObject
+          from PySide6.QtQml import QQmlEngine, QQmlExpression
           def pytest_runtest_call(item):
               if item.name != 'test_settings_initializes_from_recent_image_and_does_not_reset_live_draft':
                   return
@@ -76,10 +77,12 @@ jobs:
                   manager = app.windowManager
                   window = manager.windows[manager.mainWorkspace.windowId]
                   loader = window.findChild(QObject, 'workspaceLoader')
-                  print('TRANSFER BEFORE:', loader.property('status'), loader.property('asynchronous'), flush=True)
+                  def status():
+                      return QQmlExpression(QQmlEngine.contextForObject(loader), loader, 'Number(status)').evaluate()[0]
+                  print('TRANSFER BEFORE:', status(), loader.property('asynchronous'), flush=True)
                   if os.environ['VOXPLANE_FINISH_PENDING'] == 'yes':
                       loader.setProperty('asynchronous', False)
-                      print('TRANSFER COMPLETED:', loader.property('status'), flush=True)
+                      print('TRANSFER COMPLETED:', status(), flush=True)
                   return original(app, tab)
               item._request.getfixturevalue('monkeypatch').setattr(test_tab_windows, 'detached', inspect)
           '@ | Set-Content build/lifecycle-diagnostics/lifecycle_probe.py
